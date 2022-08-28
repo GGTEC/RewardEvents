@@ -2,6 +2,9 @@
 
 Esse aplicativo permite usar as recompensas da twitch para executar eventos personalizados.
 
+- Galeria de prints do programa
+<a href="https://www.canva.com/design/DAFKks4wM3U/EP88RFgZN_BnwPm1zjFDdA/view#8">Galeria</a>
+
 ## Funções
 
 Com o aplicativo é possivel = 
