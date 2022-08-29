@@ -37,11 +37,6 @@ Com o aplicativo é possivel =
 
 - Faça o Download do arquivo RewardEvents.Zip em [Releases] e use EXTRAIR AQUI para criar a pasta RewardEvents, o programa estará dentro desta pasta.
 
-# Ativação
-
-- Para conseguir a sua Key entre em contato comigo via [Discord]
-- Para ativar insira a chave de ativação sem espaços e o programa estará ativo.
-
 # Setup ou primeira configuração
 
 - O setup precisa ser executado somente uma vez.
