@@ -656,31 +656,31 @@ def new_sound():
     command_entry.grid(row=2, column=1,padx=20, pady=10)
     
     user_level_label = customtkinter.CTkLabel(topsound, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
+    user_level_label.grid(row=3,column=0,padx=20,pady=10, sticky='W')
     
-    user_level_switch = customtkinter.CTkSwitch(topsound, text=" ", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10)
+    user_level_switch = customtkinter.CTkSwitch(topsound, text="", text_font=("default_theme", "13"),)
+    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
 
     redem_path_label = customtkinter.CTkLabel(topsound, text="Arquivo de audio*:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_path_label.grid(row=3,column=0, padx=20, pady=10,sticky='W')
+    redem_path_label.grid(row=4,column=0, padx=20, pady=10,sticky='W')
 
     redem_path = customtkinter.CTkEntry(topsound,width=200,textvariable=path_text,state=DISABLED)
-    redem_path.grid(row=3,column=1,padx=20,pady=(0,10))
+    redem_path.grid(row=4,column=1,padx=20,pady=(0,10))
 
     redem_path_button = customtkinter.CTkButton(topsound,width=200, text="Selecionar arquivo:", text_font=("default_theme","13"),command=select_file)
-    redem_path_button.grid(row=4,columnspan=2,padx=20, pady=10,sticky='WE')
+    redem_path_button.grid(row=5,columnspan=2,padx=20, pady=10,sticky='WE')
 
     redem_time_label = customtkinter.CTkLabel(topsound,text="Tempo da notificação no OBS*:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_time_label.grid(row=5,column=0, padx=20,pady=10, sticky='W')
+    redem_time_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
 
     redem_time = customtkinter.CTkEntry(topsound,width=200)
-    redem_time.grid(row=5,column=1, padx=20, pady=10)
+    redem_time.grid(row=6,column=1, padx=20, pady=10)
     
     chat_response_label = customtkinter.CTkLabel(topsound,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    chat_response_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
+    chat_response_label.grid(row=7,column=0, padx=20,pady=10, sticky='W')
 
     chat_response_entry = customtkinter.CTkEntry(topsound,width=200)
-    chat_response_entry.grid(row=6,column=1, padx=20, pady=10)
+    chat_response_entry.grid(row=7,column=1, padx=20, pady=10)
 
     submit_buttom = customtkinter.CTkButton(topsound,text='Salvar',command = create_new_sound)
     submit_buttom.grid(row=8, column=1,padx=20, pady=(10,20), sticky='e')
@@ -783,8 +783,8 @@ def new_tts():
     user_level_Switch_label = customtkinter.CTkLabel(toptts, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     user_level_Switch_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
     
-    user_level_Switch = customtkinter.CTkSwitch(toptts, text=" ", text_font=("default_theme", "13"),)
-    user_level_Switch.grid(row=3, column=1,padx=20, pady=10)
+    user_level_Switch = customtkinter.CTkSwitch(toptts, text="", text_font=("default_theme", "13"),)
+    user_level_Switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
     
     redem_time_label = customtkinter.CTkLabel(toptts,text="Tempo da notificação no OBS*:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     redem_time_label.grid(row=5,column=0, padx=20,pady=10, sticky='W')
@@ -902,8 +902,8 @@ def new_scene():
     user_level_label = customtkinter.CTkLabel(top_scene, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
     
-    user_level_switch = customtkinter.CTkSwitch(top_scene, text=" ", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10)
+    user_level_switch = customtkinter.CTkSwitch(top_scene, text="", text_font=("default_theme", "13"),)
+    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
 
     scene_label_current = customtkinter.CTkLabel(top_scene,text="Cena Atual:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     scene_label_current.grid(row=4,column=0, padx=20,pady=10, sticky='W')
@@ -1027,10 +1027,10 @@ def new_message():
     command_entry.grid(row=2, column=1,padx=10, pady=10)
     
     user_level_label = customtkinter.CTkLabel(new_message_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
+    user_level_label.grid(row=3,column=0,padx=10,pady=10,sticky='W')
     
-    user_level_switch = customtkinter.CTkSwitch(new_message_top, text=" ", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10)
+    user_level_switch = customtkinter.CTkSwitch(new_message_top, text="", text_font=("default_theme", "13"),)
+    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
 
     message_label = customtkinter.CTkLabel(new_message_top,text="Mensagem no Chat:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     message_label.grid(row=4,column=0, padx=10,pady=10, sticky='W')
@@ -1144,8 +1144,8 @@ def new_filter():
     user_level_label = customtkinter.CTkLabel(new_filter_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
     
-    user_level_switch = customtkinter.CTkSwitch(new_filter_top, text=" ", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10)
+    user_level_switch = customtkinter.CTkSwitch(new_filter_top, text="", text_font=("default_theme", "13"),)
+    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
 
     obs_source_label = customtkinter.CTkLabel(new_filter_top,text="Nome da Fonte do OBS:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     obs_source_label.grid(row=4, column=0, padx=20, pady=10, sticky='W')
@@ -1272,13 +1272,16 @@ def new_key():
     command_entry.grid(row=2, column=2, columnspan=2, padx=10, pady=20)
     
     user_level_label = customtkinter.CTkLabel(new_key_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
+    user_level_label.grid(row=3,column=0, columnspan=2,padx=20,pady=10,sticky='W')
     
-    user_level_switch = customtkinter.CTkSwitch(new_key_top, text=" ", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10)
+    user_level_switch = customtkinter.CTkSwitch(new_key_top, text="", text_font=("default_theme", "13"),)
+    user_level_switch.grid(row=3, column=2, columnspan=2,padx=50, pady=10, sticky='e')
     
-    press_again_switch = customtkinter.CTkSwitch(new_key_top, text="Pressionar a tecla novamente depois do tempo ?", text_font=("default_theme", "13"),)
-    press_again_switch.grid(row=4, column=0, columnspan=4, pady=10)
+    press_again_switch_label = customtkinter.CTkLabel(new_key_top, text="Pressionar a tecla novamente depois do tempo ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    press_again_switch_label.grid(row=4, column=0, columnspan=2, padx=20, pady=10, sticky='W')
+    
+    press_again_switch = customtkinter.CTkSwitch(new_key_top, text="", text_font=("default_theme", "13"),)
+    press_again_switch.grid(row=4, column=2, columnspan=2,padx=50, pady=10, sticky='e')
     
     time_press = customtkinter.CTkLabel(new_key_top, text="Tempo para pressionar novamente:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     time_press.grid(row=5,column=0, columnspan=2,pady=10,padx=20,sticky='W')
@@ -1409,8 +1412,8 @@ def new_source():
     user_level_label = customtkinter.CTkLabel(new_source_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
     
-    user_level_switch = customtkinter.CTkSwitch(new_source_top, text=" ", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10)
+    user_level_switch = customtkinter.CTkSwitch(new_source_top, text="", text_font=("default_theme", "13"),)
+    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
 
     obs_source_label_source = customtkinter.CTkLabel(new_source_top,text="Nome da fonte no OBS:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     obs_source_label_source.grid(row=4,column=0, padx=20,pady=10, sticky='W')
@@ -1522,8 +1525,8 @@ def new_clip():
     user_level_label = customtkinter.CTkLabel(new_clip_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
     
-    user_level_switch = customtkinter.CTkSwitch(new_clip_top, text=" ", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10)
+    user_level_switch = customtkinter.CTkSwitch(new_clip_top, text="", text_font=("default_theme", "13"),)
+    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
 
     submit_buttom7 = customtkinter.CTkButton(new_clip_top,text='Salvar',command = create_new_clip)
     submit_buttom7.grid(row=4, column=1,padx=20, pady=20, sticky='e')
@@ -1792,20 +1795,27 @@ def edit_simple_command():
     var_edit_commands = customtkinter.StringVar(value='Selecione um comando')
     
     title_command_edit = customtkinter.CTkLabel(edit_simple_command, text="Editar comando", text_font=("default_theme","13"))
-    title_command_edit.grid(row=0, column=0 ,padx=20, pady=10)
+    title_command_edit.grid(row=0, column=0 ,columnspan=2,padx=20, pady=10)
+    
+    combobox_label = customtkinter.CTkLabel(edit_simple_command, text="Comando", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    combobox_label.grid(row=1, column=0 , pady=10, sticky='w')
     
     combobox_message = customtkinter.CTkComboBox(edit_simple_command, values=list(commands_list.keys()),
                                                  variable=var_edit_commands, width=300, command = select_command_edit)
     
-    combobox_message.grid(row=1, column=0, padx=20, pady=10)
+    combobox_message.grid(row=1, column=1, padx=20, pady=10, sticky='e')
+    
+    edit_command_label = customtkinter.CTkLabel(edit_simple_command, text="Novo comando", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    edit_command_label.grid(row=2, column=0 , pady=20, sticky='w')
     
     edit_command_entry = customtkinter.CTkEntry(edit_simple_command, width=300)
-    edit_command_entry.grid(row=2, column=0, padx=20, pady=(15, 5))
+    edit_command_entry.grid(row=2, column=1, padx=20, pady=10, sticky='e')
     
-    user_level_edit = customtkinter.CTkSwitch(edit_simple_command, 
-                                                           text="Somente moderador pode usar o comando ?", 
-                                                           text_font=("default_theme", "13"),)
-    user_level_edit.grid(row=3, column=0, columnspan=2, pady=10)
+    user_level_edit_label = customtkinter.CTkLabel(edit_simple_command, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    user_level_edit_label.grid(row=3, column=0 ,padx=20, pady=10, sticky='w')
+    
+    user_level_edit = customtkinter.CTkSwitch(edit_simple_command,text="",text_font=("default_theme", "13"),)
+    user_level_edit.grid(row=3, column=1,padx=15, pady=10, sticky='e')
 
     del_command_buttom = customtkinter.CTkButton(edit_simple_command, text='Salvar', command = edit_command_confirm)
     del_command_buttom.grid(row=4, column=1, padx=20, pady=(20,60), sticky='e')
@@ -2779,7 +2789,6 @@ def receive_commands(tid):
         
         command_file_tts = open('src/config/prefix_tts.json', "r", encoding='utf-8') 
         command_data_tts = json.load(command_file_tts) 
-            
         
         prefix = command_data_prefix['prefix']
         command_tts = command_data_tts['command']
