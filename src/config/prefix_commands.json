@@ -1,0 +1,12 @@
+{
+    "prefix": "!",
+    "STATUS_COMMANDS": 1,
+    "STATUS_ERROR_TIME": 1,
+    "STATUS_ERROR_USER": 1,
+    "STATUS_RESPONSE": 1,
+    "STATUS_CLIP": 1,
+    "STATUS_TTS": 1,
+    "STATUS_TIMER": 1,
+    "delay_date": "",
+    "delay_config": ""
+}

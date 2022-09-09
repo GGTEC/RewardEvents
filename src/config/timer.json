@@ -1,9 +1,8 @@
 {
     "TIMERMESSAGE": {
-        "TYPE": "SOURCE",
-        "TIME": 600,
-        "TIME_MAX": 1200,
-        "ENABLE": "1",
+        "TIME": 120,
+        "TIME_MAX": 120,
+        "ENABLE": "0",
         "MESSAGES": {
         }
     }

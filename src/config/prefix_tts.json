@@ -1,5 +1,8 @@
 {
-    "command": "",
+    "command": "!tts",
+    "status": 1,
     "redeem": "",
-    "user_level": ""
+    "user_level": "",
+    "delay_date": "",
+    "delay_config": ""
 }
