@@ -1805,7 +1805,7 @@ def edit_simple_command():
     
     combobox_message.grid(row=1, column=1, padx=20, pady=10, sticky='e')
     
-    edit_command_label = customtkinter.CTkLabel(edit_simple_command, text="Novo comando", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    edit_command_label = customtkinter.CTkLabel(edit_simple_command, text="Conteúdo da resposta", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     edit_command_label.grid(row=2, column=0 , pady=20, sticky='w')
     
     edit_command_entry = customtkinter.CTkEntry(edit_simple_command, width=300)
@@ -2960,7 +2960,7 @@ def update_check():
     response_json = json.loads(response.text)
     version = response_json['tag_name']
 
-    if version != 'v1.0':
+    if version != 'v1.8':
         update_info = messagebox.askquestion('Update','Nova versão encontrada, deseja efetuar o download ?')
         if update_info == 'yes':
             update_windown()
@@ -3168,7 +3168,7 @@ logo_image_src= ImageTk.PhotoImage(PIL.Image.open("src/about.png").resize((170, 
 logo_image = customtkinter.CTkLabel(tab7, image=logo_image_src)
 logo_image.grid(row=1, column=0,  pady=20)
 
-about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v1.0", text_font=("default_theme", "12"))
+about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v1.8", text_font=("default_theme", "12"))
 about_name.grid(row=2, column=0, pady=10, padx=20)
 
 dev_name = customtkinter.CTkLabel(tab7, text=f"Dev By GG_TEC", text_font=("default_theme", "12"))
