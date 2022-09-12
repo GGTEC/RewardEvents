@@ -18,7 +18,7 @@ Com o aplicativo é possivel =
 7. Resposta no chat com recompensa;
 8. Criar clipes com recompensa ou manualmente por meio de um botão na tela principal;
 9. Criar comandos para cada evento opcionalmente;
-10. Criar comandos simples para respostas no chat;
+10. Criar comandos simples para respostas no chat (Qualquer prefix é aceito ou nenhum se preferir);
 11. Configurar mensagens automaticas para serem enviadas no chat em um intervalo personalizavél.
 
 
