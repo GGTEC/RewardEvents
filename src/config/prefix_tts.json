@@ -2,6 +2,7 @@
     "command": "!tts",
     "status": 1,
     "redeem": "",
+    "caracters": "60",
     "user_level": "",
     "delay_date": "",
     "delay_config": ""

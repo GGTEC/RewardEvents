@@ -1,0 +1,12 @@
+{
+    "STATUS_COMMANDS": 1,
+    "STATUS_ERROR_TIME": 1,
+    "STATUS_ERROR_USER": 1,
+    "STATUS_RESPONSE": 1,
+    "STATUS_CLIP": 1,
+    "STATUS_TTS": 1,
+    "STATUS_TIMER": 1,
+    "STATUS_BOT": 1,
+    "delay_date": "12/09/2022 01:50:17",
+    "delay_config": "50"
+}

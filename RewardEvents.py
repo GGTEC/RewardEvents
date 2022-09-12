@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from ast import If
 import json
 import time
 import customtkinter
@@ -9,7 +10,6 @@ import apitoken
 import keyboard
 import pygame
 import PIL.Image
-import random
 import _thread
 import requests as req
 import auth_user
@@ -17,11 +17,12 @@ import auth_bot
 import subprocess
 import wget
 import check_delay_file
-from  load_files import check_files
+import textwrap
+import smt
+from load_files import check_files
 from tooltiptkinter import CreateToolTip
 from math import trunc
 from gtts import gTTS
-from random import randint
 from PIL import ImageTk
 from requests.structures import CaseInsensitiveDict
 from twitchAPI.pubsub import PubSub
@@ -33,18 +34,7 @@ from tkinter import ttk
 from tkinter import filedialog as fd
 from ttkthemes import ThemedStyle
 from obswebsocket import obsws, requests
-from twitch_chat_irc import twitch_chat_irc
 from twitchAPI.twitch import Twitch, AuthScope
-
-
-check_files()
-                
-def run_cmd(command):
-    subprocess.call(command, creationflags=0x08000000)
-    
-def callback_whisper(uuid: UUID, data: dict) -> None:
-    received_type = 'redeem'
-    receive_redeem(data,received_type)
 
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("dark-blue")
@@ -84,57 +74,14 @@ frame.add(tab6, text ='Perfil')
 frame.add(tab7, text ='Sobre')
 
 path_text = customtkinter.StringVar()
-count = 0
-
-def replace_all(text, dic):
-    
-    for i, j in dic.items():
-        text = text.replace(i, j)
-        
-    return text
-
-def con_chat():
-    
-    global connection,con_status
-    con_status = '0'
-    
-    try:
-        
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-        if TOKEN and TOKENBOT:
-            
-            connection = twitch_chat_irc.TwitchChatIRC(BOTNAME, TOKENBOT)
-            status_send_label.configure(text="Conectado!")
-            con_status = '1'
-            
-            url = f"https://api.twitch.tv/helix/streams?user_id={USERID}"
-
-            headers = CaseInsensitiveDict()
-            headers["Authorization"] = "Bearer "+ TOKEN
-            headers["Client-Id"] = apitoken.CLIENTID
-
-            resp = req.get(url, headers=headers)
-            data_count = json.loads(resp.text)
-            try:
-                count = data_count['data'][0]['viewer_count']
-                view_count.configure(text=f'Spec : {count}')
-            except:
-                view_count.configure(text=f'Spec : Offline')      
-    except:
-        
-        con_status = '0'
-        status_send_label.configure(text="Desconectado!")
-    
-def keep_conn_chat(tid):
-        while True:
-            con_chat()
-            time.sleep(120)
-
+count_tts = 0
+                    
 class Obsconect:
     def __init__(self):
         super().__init__()
         self.ws = None
         self.conn_status = '0'
+        self.sources_list = None
 
     def conect_obs(self):
 
@@ -150,9 +97,10 @@ class Obsconect:
             self.ws = obsws(obs_host_data_atual, obs_port_int, obs_password_data_atual)
             self.ws.connect()
             status_obs.configure(text=f"Conectado!")
+            
             self.conn_status = '1'
         except:
-            pass    
+            self.conn_status = '0'   
             
     def show_filter(self,source_name,filter_name,time_show_int):
         
@@ -201,59 +149,111 @@ class Obsconect:
             time.sleep(time_show_int)
             self.ws.call(requests.SetSceneItemProperties(source_name,visible= False))
     
-obs_con = Obsconect()
-               
-def send_message(message,type_message):
-    
-    USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-    
-    global connection
-    
-    status_commands_check = open('src/config/prefix_commands.json')
-    status_commands_data = json.load(status_commands_check)
-    
-    status_error_time = status_commands_data['STATUS_ERROR_TIME']
-    status_error_user = status_commands_data['STATUS_ERROR_USER']
-    status_response = status_commands_data['STATUS_RESPONSE']
-    status_clip = status_commands_data['STATUS_CLIP']
-    status_tts = status_commands_data['STATUS_TTS']
-    status_timer = status_commands_data['STATUS_TIMER']
-    
-    
-    if TOKEN and TOKENBOT:
+    def get_sources(self):
         
-        if type_message == 'ERROR_TIME':
+        if self.conn_status == "1":
+        
+            source_name_list = []
             
-            if status_error_time == 1:
-                connection.send(USERNAME, message)
-                    
-        elif type_message == 'RESPONSE':
+            sources = self.ws.call(requests.GetSourcesList())
+            for s in sources.getSources():
+                name = s['name']
+                source_name_list.append(name)
+        elif self.conn_status == "0":
+            source_name_list = ['Obs Desconectado']
             
-            if status_response == 1:
-                connection.send(USERNAME, message)
+        return source_name_list
+    
+    def get_scenes(self):
+        
+        if self.conn_status == "1":
+        
+            scene_name_list = []
+            
+            scenes = self.ws.call(requests.GetSceneList())
+            for s in scenes.getScenes():
+                name = s['name']
+                scene_name_list.append(name)
                 
-        elif type_message == 'ERROR_USER':
+        elif self.conn_status == "0":
+            scene_name_list = ['Obs Desconectado']
             
-            if status_error_user == 1:
-                connection.send(USERNAME, message)
-                    
-        elif type_message == 'CLIP':
+        return scene_name_list
+    
+    def get_filter_source(self,source):
+        
+        if self.conn_status == "1":
+        
+            filter_source_list = []
             
-            if status_clip == 1:
-                connection.send(USERNAME, message)
-                    
-        elif type_message == 'ERROR_TTS':
-            
-            if status_tts == 1:
-                connection.send(USERNAME, message)
+            filters = self.ws.call(requests.GetSourceFilters(source))
+            for s in filters.getFilters():
+                name = s['name']
+                filter_source_list.append(name)
                 
-        elif type_message == 'TIMER':
+        elif self.conn_status == "0":
+            filter_source_list = ['Obs Desconectado']
             
-            if status_timer == 1:
-                connection.send(USERNAME, message)
-    else:
-        messagebox.showerror('Erro','Conta não autenticada.')
+        return filter_source_list
+    
+obs_con = Obsconect()
+
+check_files()
                 
+def run_cmd(command):
+    subprocess.call(command, creationflags=0x08000000)
+    
+def callback_whisper(uuid: UUID, data: dict) -> None:
+    received_type = 'redeem'
+    receive_redeem(data,received_type)
+    
+def replace_all(text, dic):
+    
+    for i, j in dic.items():
+        text = text.replace(i, j)
+        
+    return text
+
+def get_spec(tid):
+    
+    while True:
+    
+        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+        
+        if TOKEN and TOKENBOT:
+            
+            url = f"https://api.twitch.tv/helix/streams?user_id={USERID}"
+
+            headers = CaseInsensitiveDict()
+            headers["Authorization"] = "Bearer "+ TOKEN
+            headers["Client-Id"] = apitoken.CLIENTID
+
+            resp = req.get(url, headers=headers)
+            data_count = json.loads(resp.text)
+            data_count_keys = data_count['data']
+            
+            if data_count_keys == []:
+                view_count.configure(text=f'Spec : Offline') 
+            else:
+                count = data_count['data'][0]['viewer_count']
+                view_count.configure(text=f'Spec : {count}')
+                        
+        else:
+            view_count.configure(text=f'Spec : Offline') 
+            
+        time.sleep(120)
+
+def keep_conn_chat(tid):
+    
+    while True:
+        conn_chat_status = smt.conect_chat()
+        
+        if conn_chat_status == True:
+            status_send_label.configure(text='Conectado')
+        else:
+            status_send_label.configure(text='Desconectado')
+        time.sleep(120)
+                    
 def receive_redeem(data_rewards,received_type):
     
     USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
@@ -271,10 +271,12 @@ def receive_redeem(data_rewards,received_type):
         redem_reward_name = data_rewards['data']['redemption']['reward']['title']
         redem_by_user = data_rewards['data']['redemption']['user']['display_name']
         
-        try:
-            redem_reward_image = data_rewards['data']['redemption']['reward']['image']['url_4x']
-        except:
+        if data_rewards['data']['redemption']['reward']['image'] == None:
+            
             redem_reward_image = data_rewards['data']['redemption']['reward']['default_image']['url_4x']
+        else:
+            redem_reward_image = data_rewards['data']['redemption']['reward']['image']['url_4x']
+            
             
         img_data = req.get(redem_reward_image).content
         with open('src/Request.png', 'wb') as handler:
@@ -325,14 +327,21 @@ def receive_redeem(data_rewards,received_type):
             aliases = {'{user}': redem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
             response_redus = replace_all(chat_response, aliases)
                     
-            send_message(response_redus,'RESPONSE')
+            smt.send_message(response_redus,'RESPONSE')
             
         obs_con.show_notifc(redem_reward_name,redem_by_user,int_time_show)
 
     def playtts():
         
         
-        global count
+        global count_tts
+        
+        
+        command_file_tts = open('src/config/prefix_tts.json', "r", encoding='utf-8') 
+        command_data_tts = json.load(command_file_tts) 
+        
+        caracters = command_data_tts['caracters']
+        caraters_int = int(caracters)
         
         try:
             user_input = data_rewards['data']['redemption']['user_input']
@@ -343,11 +352,13 @@ def receive_redeem(data_rewards,received_type):
         send_response_value = path[redem_reward_name]['send_response']
         int_time_show = int(time_show)
         
+        user_input_short = textwrap.shorten(user_input, width=caraters_int ,placeholder=" ")
+        
         language = 'pt-br'
         
-        tts = gTTS(text=user_input, lang=language, slow=False)
+        tts = gTTS(text=user_input_short, lang=language, slow=False)
         
-        tts.save(f'src/files/tts_sound{count%2}.mp3')
+        tts.save(f'src/files/tts_sound{count_tts%2}.mp3')
         
         
         tts_playing = pygame.mixer.music.get_busy()
@@ -356,7 +367,7 @@ def receive_redeem(data_rewards,received_type):
                 tts_playing = pygame.mixer.music.get_busy()
                 time.sleep(2)  
         
-        pygame.mixer.music.load(f'src/files/tts_sound{count%2}.mp3')
+        pygame.mixer.music.load(f'src/files/tts_sound{count_tts%2}.mp3')
         pygame.mixer.music.play()
         
         if send_response_value:
@@ -366,9 +377,9 @@ def receive_redeem(data_rewards,received_type):
             aliases = {'{user}': redem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
             response_redus = replace_all(chat_response, aliases)
                     
-            send_message(response_redus,'RESPONSE')
+            smt.send_message(response_redus,'RESPONSE')
 
-        count += 1
+        count_tts += 1
         
         obs_con.show_notifc(redem_reward_name,redem_by_user,int_time_show)
 
@@ -388,7 +399,7 @@ def receive_redeem(data_rewards,received_type):
             aliases = {'{user}': redem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
             response_redus = replace_all(chat_response, aliases)
                     
-            send_message(response_redus,'RESPONSE')
+            smt.send_message(response_redus,'RESPONSE')
             
         obs_con.scene(scene_name,time_show,return_scene,princial_scene_name)
 
@@ -399,7 +410,7 @@ def receive_redeem(data_rewards,received_type):
         aliases = {'{user}': redem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
         response_redus = replace_all(message, aliases)
                 
-        send_message(response_redus,'RESPONSE')
+        smt.send_message(response_redus,'RESPONSE')
 
     def changefilter():
 
@@ -417,7 +428,7 @@ def receive_redeem(data_rewards,received_type):
             aliases = {'{user}': redem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
             response_redus = replace_all(chat_response, aliases)
                     
-            send_message(response_redus,'RESPONSE')
+            smt.send_message(response_redus,'RESPONSE')
         
         obs_con.show_filter(source_name,filter_name,time_show_int)
         
@@ -438,7 +449,7 @@ def receive_redeem(data_rewards,received_type):
                 aliases = {'{user}': redem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
                 response_redus = replace_all(chat_response, aliases)
                     
-                send_message(response_redus,'RESPONSE')
+                smt.send_message(response_redus,'RESPONSE')
                 
             time_press = int(time_press_value)
             received = [*keyskeyboard.keys()][6:]
@@ -463,7 +474,7 @@ def receive_redeem(data_rewards,received_type):
                 aliases = {'{user}': redem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
                 response_redus = replace_all(chat_response, aliases)
                     
-                send_message(response_redus,'RESPONSE')
+                smt.send_message(response_redus,'RESPONSE')
                 
             received = [*keyskeyboard.keys()][6:]
             
@@ -487,7 +498,7 @@ def receive_redeem(data_rewards,received_type):
             aliases_source = {'{user}': redem_by_user,'{command}': command_receive, '{prefix}': prefix,'{user_level}': user_level, '{user_id}': user_id_command}
             response_redus_source = replace_all(chat_response_source, aliases_source)
             
-            send_message(response_redus_source,'RESPONSE')
+            smt.send_message(response_redus_source,'RESPONSE')
         
         obs_con.show_source(source_name,time_show_int)
         
@@ -512,13 +523,13 @@ def receive_redeem(data_rewards,received_type):
             response_error = 'None'
             response_create = response_clip['data'][0]['id']
             
-            send_message(f"/me Um novo clip foi criado por = {redem_by_user}, confira! https://clips.twitch.tv/{response_create}","CLIP")
+            smt.send_message(f"/me Um novo clip foi criado por = {redem_by_user}, confira! https://clips.twitch.tv/{response_create}","CLIP")
             
         except:
             response_error = response_clip['message']
 
             if response_error:
-                send_message('/me Erro ao criar o clip','CLIP')
+                smt.send_message('/me Erro ao criar o clip','CLIP')
 
     eventos = {
         'SOUND' : playsound,
@@ -531,64 +542,322 @@ def receive_redeem(data_rewards,received_type):
         'TTS' : playtts
     }
     
-    try:
-        if TOKEN and TOKENBOT:
-            redem_type = path[redem_reward_name]['TYPE']
-            if redem_type in eventos:
-                eventos[redem_type]()
-    except:
-        pass
-       
-def new_sound():
+    if TOKEN and TOKENBOT:
+        redem_type = path[redem_reward_name]['TYPE']
+        if redem_type in eventos:
+            eventos[redem_type]()
     
-    topsound = customtkinter.CTkToplevel(app)
-    topsound.title('RewardEvents - Reproduzir som')    
+def new_event_top():
     
-    def select_file():
-        global filename
+    new_event_top = customtkinter.CTkToplevel(app)
+    new_event_top.title('RewardEvents - Novo Evento')
+    
+    def new_sound():
 
-        filetypes = (
-            ('audio files', '*.mp3'),
-            ('All files', '*.*')
-        )
-
-        filename = fd.askopenfilename(
-            parent=topsound,
-            title='Open a file',
-            initialdir='src/files',
-            filetypes=filetypes)
-        
-        path_text.set(filename)
+        topsound = customtkinter.CTkToplevel(app)
+        topsound.title('RewardEvents - Reproduzir som')    
     
-    def create_new_sound():
+        def select_file():
+            global filename
+
+            filetypes = (
+                ('audio files', '*.mp3'),
+                ('All files', '*.*')
+            )
+
+            filename = fd.askopenfilename(
+                parent=topsound,
+                title='Open a file',
+                initialdir='src/files',
+                filetypes=filetypes)
+            
+            path_text.set(filename)
         
-        title = redem_title.get()
-        command_event = command_entry.get()
-        audio_dir = redem_path.get()
-        time_in_screm = redem_time.get()
-        chat_response = chat_response_entry.get()
-        user_level_check = user_level_switch.get()
+        def create_new_sound():
+            
+            title = redem_title.get()
+            command_event = command_entry.get()
+            audio_dir = redem_path.get()
+            time_in_screm = redem_time.get()
+            chat_response = chat_response_entry.get()
+            user_level_check = user_level_switch.get()
+            
+            if not [x for x in (title, audio_dir, time_in_screm) if x is None]:
+                try:
+                    if chat_response is None:
+                        
+                        send_response = 0
+                    else:
+                        
+                        send_response = 1
+                        
+                        old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
+                        new_data = json.load(old_data)
+
+                        new_data[title] = {
+                                            'TYPE': 'SOUND',
+                                            'PATH': audio_dir,
+                                            'COMMAND': command_event, 
+                                            'send_response': send_response, 
+                                            'chat_response':chat_response, 
+                                            'TEMPO':time_in_screm 
+                                        }
+                        old_data.close()
+
+                        old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
+                        json.dump(new_data, old_data_write, indent = 4,ensure_ascii=False)
+                        
+                        old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
+                        new_data_command = json.load(old_data_command)
+                        
+                        if user_level_check:
+                            user_level_data = "mod"
+                        else:
+                            user_level_data = ""
+                        
+                        new_data_command[command_event] = {'RECOMPENSA': title,'user_level':user_level_data}
+                        old_data.close()
+                        
+                        old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
+                        json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
+                        
+                        messagebox.showinfo("Sucesso!",f"Evento de audio '{title}' criado com sucesso!",parent=topsound)
+                        
+                except:
+                    messagebox.showinfo("Erro!",f"Erro ao criar evento!",parent=topsound)
+            else:
+                messagebox.showinfo("Erro!",f"Preencha os campos com (*)",parent=topsound)
+    
+        def update_titles_combox():
+            
+            USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+            twitch = Twitch(apitoken.CLIENTID,
+                            apitoken.CLIENTSECRET,
+                            target_app_auth_scope=[AuthScope.USER_EDIT])
+
+            scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
+            scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
+
+            twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
+            
+            list_titles = []
+            path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
+            path = json.load(path_file)
+            list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
+            for indx in list_rewards['data'][0:] :
+                
+                if indx['title'] not in path:   
+                    list_titles.append(indx['title'])
+
+            return list_titles
+    
+        messages_combox = update_titles_combox() 
+            
+        tittleredem1 = customtkinter.CTkLabel(topsound, text="Criar um som para uma recompensa", text_font=("default_theme","15"))
+        tittleredem1.grid(row=0, column=0, columnspan=2, pady=20,)
+
+        redem_title_label = customtkinter.CTkLabel(topsound, text="Recompensa* :", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_title_label.grid(row=1,column=0,padx=20,pady=10,sticky='W')
         
-        if not [x for x in (title, audio_dir, time_in_screm) if x is None]:
-            try:
-                if chat_response is None:
-                    
-                    send_response = 0
-                else:
-                    
-                    send_response = 1
-                    
+        redem_title = customtkinter.CTkComboBox(topsound,values=list(messages_combox),width=200)
+        redem_title.grid(row=1,column=1 ,padx=20, pady=10)
+        
+        command_label = customtkinter.CTkLabel(topsound, text="Comando para o chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_label.grid(row=2,column=0,padx=20,pady=10,sticky='W')
+        
+        command_entry = customtkinter.CTkEntry(topsound,width=200)
+        command_entry.grid(row=2, column=1,padx=20, pady=10)
+        
+        user_level_label = customtkinter.CTkLabel(topsound, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        user_level_label.grid(row=3,column=0,padx=20,pady=10, sticky='W')
+        
+        user_level_switch = customtkinter.CTkSwitch(topsound, text="", text_font=("default_theme", "13"),)
+        user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
+
+        redem_path_label = customtkinter.CTkLabel(topsound, text="Arquivo de audio*:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_path_label.grid(row=4,column=0, padx=20, pady=10,sticky='W')
+
+        redem_path = customtkinter.CTkEntry(topsound,width=200,textvariable=path_text,state=DISABLED)
+        redem_path.grid(row=4,column=1,padx=20,pady=(0,10))
+
+        redem_path_button = customtkinter.CTkButton(topsound,width=200, text="Selecionar arquivo:", text_font=("default_theme","13"),command=select_file)
+        redem_path_button.grid(row=5,columnspan=2,padx=20, pady=10,sticky='WE')
+
+        redem_time_label = customtkinter.CTkLabel(topsound,text="Tempo da notificação no OBS*:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_time_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
+
+        redem_time = customtkinter.CTkEntry(topsound,width=200)
+        redem_time.grid(row=6,column=1, padx=20, pady=10)
+        
+        chat_response_label = customtkinter.CTkLabel(topsound,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        chat_response_label.grid(row=7,column=0, padx=20,pady=10, sticky='W')
+
+        chat_response_entry = customtkinter.CTkEntry(topsound,width=200)
+        chat_response_entry.grid(row=7,column=1, padx=20, pady=10)
+
+        submit_buttom = customtkinter.CTkButton(topsound,text='Salvar',command = create_new_sound)
+        submit_buttom.grid(row=8, column=1,padx=20, pady=(10,20), sticky='e')
+        
+        topsound.mainloop()
+  
+    def new_tts():
+        
+        toptts = customtkinter.CTkToplevel(app)
+        toptts.title('RewardEvents - Reproduzir tts')
+        
+        def create_new_tts():
+            
+            title = redem_title.get()
+            time_in_screm = redem_time.get()
+            command_event = command_entry.get()
+            user_level_check = user_level_Switch.get()
+            chat_response = chat_response_entry.get()
+            caraters = caracter_limit.get
+            
+            if not [x for x in (title, time_in_screm) if x is None]:
+                try:
+                    if chat_response is None:
+                        send_response = 0
+                    else:
+                        send_response = 1
+                        
                     old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
                     new_data = json.load(old_data)
 
-                    new_data[title] = {
-                                        'TYPE': 'SOUND',
-                                        'PATH': audio_dir,
-                                        'COMMAND': command_event, 
-                                        'send_response': send_response, 
-                                        'chat_response':chat_response, 
-                                        'TEMPO':time_in_screm 
-                                       }
+                    new_data[title] = {'TYPE': 'TTS','send_response':send_response, 
+                                    'chat_response':chat_response, 'COMMAND':command_event,'TEMPO':time_in_screm}
+                    old_data.close()
+
+                    old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
+                    json.dump(new_data, old_data_write, indent = 4,ensure_ascii=False)
+                    
+                    old_data_command = open('src/config/prefix_tts.json' , 'r', encoding='utf-8') 
+                    new_data_command = json.load(old_data_command)
+                    
+                    command_tts = f"!{command_event}" 
+                    
+                    if user_level_check:
+                        user_level_data = "mod"
+                    else:
+                        user_level_data = ""
+
+                    new_data_command = {'command':command_tts,'redeem': title,'user_level': user_level_data, 'caraters': caraters}
+                    
+                    old_data.close()
+                    
+                    old_data_write_command = open('src/config/prefix_tts.json' , 'w', encoding='utf-8') 
+                    json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
+                    
+                    
+                    messagebox.showinfo("Sucesso!",f"Evento de tts '{title}' criado com sucesso!",parent=toptts)
+                except:
+                    messagebox.showinfo("Erro!",f"Erro ao criar evento!",parent=toptts)
+            else:
+                messagebox.showinfo("Erro!",f"Preencha os campos com (*)",parent=toptts)
+                
+        def update_titles_combox():
+            
+            USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+            twitch = Twitch(apitoken.CLIENTID,
+                            apitoken.CLIENTSECRET,
+                            target_app_auth_scope=[AuthScope.USER_EDIT])
+
+            scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
+            scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
+
+            twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
+            
+            list_titles = []
+            path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
+            path = json.load(path_file)
+            list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
+            for indx in list_rewards['data'][0:] :
+                
+                if indx['title'] not in path:   
+                    list_titles.append(indx['title'])
+
+            return list_titles
+        
+        messages_combox = update_titles_combox()         
+                
+        tittleredem1 = customtkinter.CTkLabel(toptts, text="Criar um resgate de texto para fala", text_font=("default_theme","15"))
+        tittleredem1.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+
+        redem_title_label = customtkinter.CTkLabel(toptts, text="Recompensa* :", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_title_label.grid(row=1,column=0,padx=20,pady=10,sticky='W')
+
+        redem_title = customtkinter.CTkComboBox(toptts,values=list(messages_combox),width=200)
+        redem_title.grid(row=1,column=1 ,padx=20, pady=10)
+        
+        command_label = customtkinter.CTkLabel(toptts, text="Comando para o chat(opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_label.grid(row=2,column=0,padx=20,pady=10,sticky='W')
+        
+        command_entry = customtkinter.CTkEntry(toptts,width=200)
+        command_entry.grid(row=2, column=1,padx=20, pady=10)
+        
+        user_level_Switch_label = customtkinter.CTkLabel(toptts, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        user_level_Switch_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
+        
+        user_level_Switch = customtkinter.CTkSwitch(toptts, text="", text_font=("default_theme", "13"),)
+        user_level_Switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
+        
+        caracter_limit_label = customtkinter.CTkLabel(toptts, text="Limite de letras ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        caracter_limit_label.grid(row=4,column=0,padx=20,pady=10,sticky='W')
+        
+        caracter_limit = customtkinter.CTkEntry(toptts,width=200)
+        caracter_limit.grid(row=4, column=1,padx=20, pady=10, sticky='e')
+        
+        redem_time_label = customtkinter.CTkLabel(toptts,text="Tempo da notificação no OBS*:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_time_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
+
+        redem_time = customtkinter.CTkEntry(toptts,width=200)
+        redem_time.grid(row=6,column=1, padx=20, pady=10)
+        
+        chat_response_label = customtkinter.CTkLabel(toptts,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        chat_response_label.grid(row=7,column=0, padx=20,pady=10, sticky='W')
+
+        chat_response_entry = customtkinter.CTkEntry(toptts,width=200)
+        chat_response_entry.grid(row=7,column=1, padx=20, pady=10)
+
+        submit_buttom = customtkinter.CTkButton(toptts,text='Salvar',command = create_new_tts)
+        submit_buttom.grid(row=8, column=1,padx=20, pady=(10,30), sticky='e')
+        
+        toptts.mainloop()
+                
+    def new_scene():
+        
+        top_scene = customtkinter.CTkToplevel(app)
+        top_scene.title('RewardEvents - Mudar Cena')
+        
+        def create_scene():
+            
+            title_redem = redem_title1.get()
+            current_scene_name = scene_entry_current.get()
+            scene_name = scene_entry.get()
+            time_to_change = time_scene_entry.get()
+            command_event = command_entry.get()
+            chat_response = chat_response_entry.get()
+            return_scene_value = return_scene_switch.get()
+            user_level_check = user_level_switch.get()
+
+            if not [x for x in (title_redem, current_scene_name, scene_name) if x is None]:
+                
+                try:
+                    if chat_response is None:
+                        send_response = 0
+                    else:
+                        send_response = 1
+                        
+                    if user_level_check:
+                        user_level_data = "mod"
+                    else:
+                        user_level_data = ""
+                        
+                    old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
+                    new_data = json.load(old_data)
+
+                    new_data[title_redem] = {'TYPE': 'SCENE','SCENENAME': scene_name,'send_response':send_response,'COMMAND': command_event,
+                                            'chat_response':chat_response,'return_scene':return_scene_value,'TIME':time_to_change,'CURRENTSCENENAME': current_scene_name}
                     old_data.close()
 
                     old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
@@ -597,945 +866,706 @@ def new_sound():
                     old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
                     new_data_command = json.load(old_data_command)
                     
-                    if user_level_check:
-                        user_level_data = "mod"
-                    else:
-                        user_level_data = ""
-                    
-                    new_data_command[command_event] = {'RECOMPENSA': title,'user_level':user_level_data}
+                    new_data_command[command_event] = {'RECOMPENSA': title_redem,'user_level': user_level_data}
                     old_data.close()
                     
                     old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
                     json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
                     
-                    messagebox.showinfo("Sucesso!",f"Evento de audio '{title}' criado com sucesso!",parent=topsound)
                     
-            except:
-                messagebox.showinfo("Erro!",f"Erro ao criar evento!",parent=topsound)
-        else:
-            messagebox.showinfo("Erro!",f"Preencha os campos com (*)",parent=topsound)
-       
-    def update_titles_combox():
-        
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-        twitch = Twitch(apitoken.CLIENTID,
-                        apitoken.CLIENTSECRET,
-                        target_app_auth_scope=[AuthScope.USER_EDIT])
+                    messagebox.showinfo("Sucesso!",f"O evento de cena '{title_redem}' Foi criado!",parent=top_scene)
+                except:
+                    messagebox.showerror("Erro","Erro ao criar o evento.",parent=top_scene)
+            else:
+                messagebox.showerror("Erro","Preencha os campos com *!",parent=top_scene)
 
-        scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-        scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-        twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-        
-        list_titles = []
-        path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-        path = json.load(path_file)
-        list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-        for indx in list_rewards['data'][0:] :
+        def update_titles_combox():
             
-            if indx['title'] not in path:   
-                list_titles.append(indx['title'])
+            USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+            twitch = Twitch(apitoken.CLIENTID,
+                            apitoken.CLIENTSECRET,
+                            target_app_auth_scope=[AuthScope.USER_EDIT])
 
-        return list_titles
+            scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
+            scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
+
+            twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
+            
+                    
+            list_titles = []
+            path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
+            path = json.load(path_file)
+            list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
+            for indx in list_rewards['data'][0:] :
+                
+                if indx['title'] not in path:   
+                    list_titles.append(indx['title'])
+
+            return list_titles
+        
+        messages_combox = update_titles_combox()   
+                    
+        tittleredem1 = customtkinter.CTkLabel(top_scene, text="Mudança de cena com recompensa", text_font=("default_theme","15"))
+        tittleredem1.grid(row=0, column=0, columnspan=2, pady=20)
+
+        redem_title_label1 = customtkinter.CTkLabel(top_scene, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_title_label1.grid(row=1,column=0,padx=20,pady=10,sticky='W')
+
+        redem_title1 = customtkinter.CTkComboBox(top_scene,values=list(messages_combox),width=200)
+        redem_title1.grid(row=1,column=1 ,padx=20, pady=10)
+        
+        command_label = customtkinter.CTkLabel(top_scene, text="Comando para o chat (Opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_label.grid(row=2,column=0,padx=20,pady=10,sticky='W')
+        
+        command_entry = customtkinter.CTkEntry(top_scene,width=200)
+        command_entry.grid(row=2, column=1,padx=20, pady=10)
+        
+        user_level_label = customtkinter.CTkLabel(top_scene, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
+        
+        user_level_switch = customtkinter.CTkSwitch(top_scene, text="", text_font=("default_theme", "13"),)
+        user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
+
+        scene_label_current = customtkinter.CTkLabel(top_scene,text="Cena Atual:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        scene_label_current.grid(row=4,column=0, padx=20,pady=10, sticky='W')
+
+        scene_entry_current = customtkinter.CTkOptionMenu(top_scene,values=list(obs_con.get_scenes()), width=200, dynamic_resizing=True)
+        scene_entry_current.grid(row=4,column=1, padx=20, pady=10)
+
+        scene_label = customtkinter.CTkLabel(top_scene,text="Mudar para a cena:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        scene_label.grid(row=5,column=0, padx=20, pady=10, sticky='W')
+
+        scene_entry = customtkinter.CTkOptionMenu(top_scene,values=list(obs_con.get_scenes()), width=200, dynamic_resizing=True)
+        scene_entry.grid(row=5,column=1, padx=20, pady=10)
+        
+        return_scene = customtkinter.CTkLabel(top_scene, text='Retornar para cena anterior ?', text_font=("default_theme","13"))
+        return_scene.grid(row=6, column=0, padx=20, pady=10, sticky='w')
+
+        return_scene_switch = customtkinter.CTkSwitch(top_scene, text=" ",)
+        return_scene_switch.grid(row=6, column=1, padx=20, pady=10, sticky='e')
+
+        time_scene_label = customtkinter.CTkLabel(top_scene,text="Tempo para voltar para \na cena anterior:", text_font=("default_theme","13"),anchor="center", justify=CENTER)
+        time_scene_label.grid(row=7,column=0, padx=20, pady=10, sticky='W')
+
+        time_scene_entry = customtkinter.CTkEntry(top_scene,width=200)
+        time_scene_entry.grid(row=7,column=1, padx=20, pady=10)
+
+        chat_response_label = customtkinter.CTkLabel(top_scene,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        chat_response_label.grid(row=8,column=0, padx=20,pady=10, sticky='W')
+
+        chat_response_entry = customtkinter.CTkEntry(top_scene,width=200)
+        chat_response_entry.grid(row=8,column=1, padx=20, pady=10)
+        
+        submit_buttom3 = customtkinter.CTkButton(top_scene,text='Salvar',command = create_scene)
+        submit_buttom3.grid(row=9, column=1,padx=20, pady=(10,20), sticky='e')
+        
+        top_scene.mainloop()
+        
+    def new_message():
+        
+        new_message_top = customtkinter.CTkToplevel(app)
+        new_message_top.title('RewardEvents - Resposta no chat')
+        
+        def create_message():
+        
+            title = redem_title2.get()
+            message = message_entry.get()
+            command_event = command_entry.get()
+            user_level_check = user_level_switch.get()
+
+            if not [x for x in (title, message) if x is None]:
+                try:
+                    
+                    if user_level_check:
+                        user_level_data = "mod"
+                    else:
+                        user_level_data = ""
+                        
+                    old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
+                    new_data = json.load(old_data)
+
+                    new_data[title] = {'TYPE': 'MESSAGE', 'COMMAND': command_event, 'MESSAGELABEL': message,}
+                    old_data.close()
+
+                    old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
+                    json.dump(new_data, old_data_write, indent = 4, ensure_ascii=False)
+                    
+                    old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
+                    new_data_command = json.load(old_data_command)
+                    
+                    new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
+                    old_data.close()
+                    
+                    old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
+                    json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
+                    
+                    
+                    messagebox.showinfo("Sucesso!","Evento de mensagem criado com sucesso!",parent=new_message_top)
+                except:
+                    messagebox.showerror("Erro","Erro ao criar o evento de mensagem.",parent=new_message_top)
+            else:
+                messagebox.showerror("Erro","Preencha todos os campos.",parent=new_message_top)
+        
+        def update_titles_combox():
+            
+            USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+            twitch = Twitch(apitoken.CLIENTID,
+                            apitoken.CLIENTSECRET,
+                            target_app_auth_scope=[AuthScope.USER_EDIT])
+
+            scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
+            scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
+
+            twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')  
+            
+                
+            list_titles = []
+            path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
+            path = json.load(path_file)
+            list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
+            for indx in list_rewards['data'][0:] :
+                
+                if indx['title'] not in path:   
+                    list_titles.append(indx['title'])
+
+            return list_titles
+        
+        messages_combox = update_titles_combox()  
+                
+        tittleredem2 = customtkinter.CTkLabel(new_message_top, text="Resposta no chat com recompensa", text_font=("default_theme","15"))
+        tittleredem2.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+
+        redem_title_label2 = customtkinter.CTkLabel(new_message_top, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_title_label2.grid(row=1,column=0,pady=10,padx=10,sticky='W')
+
+        redem_title2 = customtkinter.CTkComboBox(new_message_top,values=list(messages_combox),width=200)
+        redem_title2.grid(row=1,column=1 ,padx=10, pady=10)
+        
+        command_label = customtkinter.CTkLabel(new_message_top, text="Comando para o chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_label.grid(row=2,column=0,pady=10,padx=10,sticky='W')
+        
+        command_entry = customtkinter.CTkEntry(new_message_top,width=200)
+        command_entry.grid(row=2, column=1,padx=10, pady=10)
+        
+        user_level_label = customtkinter.CTkLabel(new_message_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        user_level_label.grid(row=3,column=0,padx=10,pady=10,sticky='W')
+        
+        user_level_switch = customtkinter.CTkSwitch(new_message_top, text="", text_font=("default_theme", "13"),)
+        user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
+
+        message_label = customtkinter.CTkLabel(new_message_top,text="Mensagem no Chat:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        message_label.grid(row=4,column=0, padx=10,pady=10, sticky='W')
+
+        message_entry = customtkinter.CTkEntry(new_message_top,width=200)
+        message_entry.grid(row=4,column=1, padx=10, pady=10)
+
+        submit_buttom4 = customtkinter.CTkButton(new_message_top,text='Salvar',command = create_message)
+        submit_buttom4.grid(row=5, column=1,padx=20, pady=(10,20), sticky='e')
+        
+        new_message_top.mainloop()
+        
+    def new_filter():
+        
+        new_filter_top = customtkinter.CTkToplevel(app)
+        new_filter_top.title('RewardEvents - Novo filtro')
+                
+        def create_new_filter():
+            
+            title = redem_title3.get()
+            filter_name = obs_filter_entry.get()
+            source_name = obs_source_entry.get()
+            time_showing = time_filter_entry.get()
+            command_event = command_entry.get()
+            chat_response = chat_response_entry.get()
+            user_level_check = user_level_switch.get()
+            
+            if not [x for x in (title, filter_name,source_name,time_showing) if x is None]:
+                try:
+                    
+                    if chat_response is None:
+                        send_response = 0
+                    else:
+                        send_response = 1
+                    
+                    if user_level_check:
+                        user_level_data = "mod"
+                    else:
+                        user_level_data = ""    
+                        
+                    old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
+                    new_data = json.load(old_data)
+
+                    new_data[title] = {'TYPE': 'FILTER','SOURCE': source_name, 'send_response':send_response, 'chat_response':chat_response, 
+                                    'COMMAND': command_event, 'FILTER':filter_name, 'TIME':time_showing}
+                    old_data.close()
+
+                    old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
+                    json.dump(new_data, old_data_write, indent = 4, ensure_ascii=False)
+                    
+                    
+                    old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
+                    new_data_command = json.load(old_data_command)
+
+                    new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
+                    old_data.close()
+
+                    old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
+                    json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
+                    
+                    
+                    messagebox.showinfo("Sucesso",f"Evento de filtro '{title}' criado com sucesso",parent=new_filter_top)
+                except:
+                    messagebox.showerror("Erro","Erro ao criar o evento.",parent=new_filter_top)
+            else:
+                messagebox.showerror("Erro","Preencha todos os campos",parent=new_filter_top)            
+
+        def update_filter(source):
+            
+            filters = obs_con.get_filter_source(source)
+            
+            if not filters:
+                obs_filter_entry.configure(values=['Sem filtros na fonte'])
+            else:
+                obs_filter_entry.configure(values=list(filters))
+                
+        def update_titles_combox():
+            
+            
+            USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+            twitch = Twitch(apitoken.CLIENTID,
+                            apitoken.CLIENTSECRET,
+                            target_app_auth_scope=[AuthScope.USER_EDIT])
+
+            scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
+            scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
+
+            twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')  
+                
+            list_titles = []
+            path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
+            path = json.load(path_file)
+            list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
+            for indx in list_rewards['data'][0:] :
+                
+                if indx['title'] not in path:   
+                    list_titles.append(indx['title'])
+
+            return list_titles
+        
+        messages_combox = update_titles_combox()  
+            
+        tittleredem3 = customtkinter.CTkLabel(new_filter_top, text="Aplicar filtro no OBS com recompensa", text_font=("default_theme","15"))
+        tittleredem3.grid(row=0, column=0, columnspan=2, pady=20)
+
+        redem_title_label3 = customtkinter.CTkLabel(new_filter_top, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_title_label3.grid(row=1,column=0, padx=20, pady=10, sticky='W')
+
+        redem_title3 = customtkinter.CTkComboBox(new_filter_top,values=list(messages_combox),width=200)
+        redem_title3.grid(row=1,column=1 ,padx=10, pady=10)
+        
+        command_label = customtkinter.CTkLabel(new_filter_top, text="Comando para o chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_label.grid(row=2, column=0, padx=20, pady=10, sticky='W')
+
+        command_entry = customtkinter.CTkEntry(new_filter_top,width=200)
+        command_entry.grid(row=2, column=1,padx=20, pady=10)
+        
+        user_level_label = customtkinter.CTkLabel(new_filter_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
+        
+        user_level_switch = customtkinter.CTkSwitch(new_filter_top, text="", text_font=("default_theme", "13"),)
+        user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
+
+        obs_source_label = customtkinter.CTkLabel(new_filter_top,text="Nome da Fonte do OBS:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        obs_source_label.grid(row=4, column=0, padx=20, pady=10, sticky='W')
+
+        obs_source_entry = customtkinter.CTkOptionMenu(new_filter_top,values=list(obs_con.get_sources()), width=200, dynamic_resizing=True,command=update_filter)
+        obs_source_entry.grid(row=4, column=1, padx=20, pady=10)
+
+        obs_filter_label = customtkinter.CTkLabel(new_filter_top,text="Nome do filtro presente \nna fonte:", text_font=("default_theme","13"),anchor="center", justify=CENTER)
+        obs_filter_label.grid(row=5, column=0, padx=20, pady=10, sticky='W')
+
+        obs_filter_entry = customtkinter.CTkOptionMenu(new_filter_top,values=['Selecione uma fonte'], width=200, dynamic_resizing=True)
+        obs_filter_entry.grid(row=5,column=1, padx=20, pady=10)
+
+        time_filter_label = customtkinter.CTkLabel(new_filter_top,text="Tempo com o filtro ativo:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        time_filter_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
+
+        time_filter_entry = customtkinter.CTkEntry(new_filter_top,width=200)
+        time_filter_entry.grid(row=6,column=1, padx=20, pady=10)
+        
+        chat_response_label = customtkinter.CTkLabel(new_filter_top,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        chat_response_label.grid(row=7,column=0, padx=20,pady=10, sticky='W')
+
+        chat_response_entry = customtkinter.CTkEntry(new_filter_top,width=200)
+        chat_response_entry.grid(row=7,column=1, padx=20, pady=10)
+
+        submit_buttom5 = customtkinter.CTkButton(new_filter_top,text='Salvar',command = create_new_filter)
+        submit_buttom5.grid(row=8, column=1,padx=20, pady=(10,20), sticky='e')
+        
+        new_filter_top.mainloop()
+        
+    def new_key():
+        
+        new_key_top = customtkinter.CTkToplevel(app)
+        new_key_top.title('RewardEvents - Atalho')
+        
+        def create_new_key():
+            
+            title = redem_title4.get()
+            time_press_again = time_press_entry.get()
+            press_again = time_press_entry.get()
+            command_event = command_entry.get()
+            key1 = combobox1.get()
+            key2 = combobox2.get()
+            key3 = combobox3.get()
+            key4 = combobox4.get()
+            chat_response = chat_response_entry.get()
+            user_level_check = user_level_switch.get()
+
+            try:
+                if chat_response is None:
+                    send_response = 0
+                else:
+                    send_response = 1
+                    
+                if user_level_check:
+                    user_level_data = "mod"
+                else:
+                    user_level_data = ""
+                    
+                old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
+                new_data = json.load(old_data)
+
+                new_data[title] = {'TYPE': 'KEYPRESS','press_again':press_again ,'send_response':send_response, 'chat_response':chat_response,
+                                    'COMMAND': command_event, 'TIME': time_press_again,'KEY1':key1, 'KEY2':key2, 'KEY3':key3, 'KEY4':key4}
+                old_data.close()
+
+                old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
+                json.dump(new_data, old_data_write, indent = 4, ensure_ascii=False)
+                
+                old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
+                new_data_command = json.load(old_data_command)
+
+                new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
+                old_data.close()
+
+                old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
+                json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
+                
+                
+                messagebox.showinfo("Sucesso",f"Evento de atalho no teclado '{title}' criado com sucesso!",parent=new_key_top)
+            except:
+                messagebox.showerror("Erro","Erro ao criar o evento.",parent=new_key_top)
+
+        def update_titles_combox():
+            
+            USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+            twitch = Twitch(apitoken.CLIENTID,
+                            apitoken.CLIENTSECRET,
+                            target_app_auth_scope=[AuthScope.USER_EDIT])
+
+            scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
+            scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
+
+            twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
+            
+            
+            list_titles = []
+            path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
+            path = json.load(path_file)
+            list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
+            for indx in list_rewards['data'][0:] :
+                
+                if indx['title'] not in path:   
+                    list_titles.append(indx['title'])
+
+            return list_titles
+        
+        messages_combox = update_titles_combox() 
+        
+        
+        tittleredem4 = customtkinter.CTkLabel(new_key_top, text="Executar um atalho com recompensa", text_font=("default_theme","15"))
+        tittleredem4.grid(row=0, column=0, columnspan=4, padx=20, pady=20,)
+
+        redem_title_label4 = customtkinter.CTkLabel(new_key_top, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_title_label4.grid(row=1,column=0, columnspan=2,pady=10,padx=20,sticky='W')
+
+        redem_title4 = customtkinter.CTkComboBox(new_key_top,values=list(messages_combox),width=200)
+        redem_title4.grid(row=1,column=2, columnspan=2, padx=10, pady=10)
+        
+        command_label = customtkinter.CTkLabel(new_key_top, text="Comando para o chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_label.grid(row=2,column=0, columnspan=2,pady=10,padx=20,sticky='W')
+
+        command_entry = customtkinter.CTkEntry(new_key_top,width=200)
+        command_entry.grid(row=2, column=2, columnspan=2, padx=10, pady=20)
+        
+        user_level_label = customtkinter.CTkLabel(new_key_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        user_level_label.grid(row=3,column=0, columnspan=2,padx=20,pady=10,sticky='W')
+        
+        user_level_switch = customtkinter.CTkSwitch(new_key_top, text="", text_font=("default_theme", "13"),)
+        user_level_switch.grid(row=3, column=2, columnspan=2,padx=50, pady=10, sticky='e')
+        
+        press_again_switch_label = customtkinter.CTkLabel(new_key_top, text="Pressionar a tecla novamente depois do tempo ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        press_again_switch_label.grid(row=4, column=0, columnspan=2, padx=20, pady=10, sticky='W')
+        
+        press_again_switch = customtkinter.CTkSwitch(new_key_top, text="", text_font=("default_theme", "13"),)
+        press_again_switch.grid(row=4, column=2, columnspan=2,padx=50, pady=10, sticky='e')
+        
+        time_press = customtkinter.CTkLabel(new_key_top, text="Tempo para pressionar novamente:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        time_press.grid(row=5,column=0, columnspan=2,pady=10,padx=20,sticky='W')
+
+        time_press_entry = customtkinter.CTkEntry(new_key_top,width=200)
+        time_press_entry.grid(row=5, column=2, columnspan=2,padx=10, pady=20)
+
+        selectkeys = customtkinter.CTkLabel(new_key_top, text="Selecione as teclas:\n\n CUIDADO E ATENÇÃO!!", text_font=("default_theme","15"))
+        selectkeys.grid(row=6, column=0, columnspan=4, padx=20, pady=20,)
+
+        combobox1 = customtkinter.CTkComboBox(new_key_top,values=["ctrl","NONE"],width=100)
+        combobox1.grid(row=7,column=0,padx=20, pady=10)
+
+        combobox2 = customtkinter.CTkComboBox(new_key_top,values=["shift","alt","space","NONE"],width=100)
+        combobox2.grid(row=7,column=1,padx=20, pady=10)
+
+        combobox3 = customtkinter.CTkComboBox(new_key_top,values=["1","2","3","4","5","6","7","8","9","NONE"],width=100)
+        combobox3.grid(row=7,column=2,padx=20, pady=10)
+
+        combobox4 = customtkinter.CTkComboBox(new_key_top,width=100,
+                                            values=["q","w","e","r","t","y","u","i","o","p","a","s","d","f","g","h","j","k","l","ç","z","x","c","v","b","n","m","NONE"])
+        combobox4.grid(row=7,column=3,padx=20, pady=10)
+        
+        chat_response_label = customtkinter.CTkLabel(new_key_top,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        chat_response_label.grid(row=8,column=0, columnspan=2, padx=20,pady=10, sticky='W')
+
+        chat_response_entry = customtkinter.CTkEntry(new_key_top,width=200)
+        chat_response_entry.grid(row=8,column=2, columnspan=2, padx=20, pady=10)
+
+        submit_buttom6 = customtkinter.CTkButton(new_key_top,text='Salvar',command = create_new_key)
+        submit_buttom6.grid(row=9, column=3,padx=20, pady=(10,30), sticky='e')
+        
+        new_key_top.mainloop()
+        
+    def new_source():
+        
+        new_source_top = customtkinter.CTkToplevel(app)
+        new_source_top.title('RewardEvents - Alternar Source')
+        
+        def create_new_source():
+            
+            title = redem_title5.get()
+            source_name = obs_source_entry_source.get()
+            time_showing = time_filter_entry_source.get()
+            command_event = command_entry.get()
+            chat_response = chat_response_entry.get()
+            user_level_check = user_level_switch.get()
+            
+            if not [x for x in (title, source_name,time_showing) if x is None]:
+                try:
+                    if chat_response is None:
+                        send_response = 0
+                    else:
+                        send_response = 1
+                        
+                    if user_level_check:
+                        user_level_data = "mod"
+                    else:
+                        user_level_data = ""
+                        
+                    old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
+                    new_data = json.load(old_data)
+
+                    new_data[title] = {'TYPE': 'SOURCE','send_response':send_response, 'chat_response':chat_response,
+                                    'COMMAND': command_event, 'SOURCENAME': source_name,'TIME':time_showing}
+                    old_data.close()
+
+                    old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
+                    json.dump(new_data, old_data_write, indent = 4 ,ensure_ascii=False)
+                    old_data_write.close()
+                    
+                    old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
+                    new_data_command = json.load(old_data_command)
+
+                    new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
+                    old_data.close()
+
+                    old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
+                    json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
+                    
+                    messagebox.showinfo("Sucesso",f"Evento de fonte '{title}' criado com sucesso.",parent=new_source_top)
+                except:
+                    messagebox.showerror("Erro","Erro ao criar o evento.",parent=new_source_top)
+            else:
+                messagebox.showerror("Erro","Preencha todos os campos.",parent=new_source_top)
+
+        def update_titles_combox():
+            
+            USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+            twitch = Twitch(apitoken.CLIENTID,
+                            apitoken.CLIENTSECRET,
+                            target_app_auth_scope=[AuthScope.USER_EDIT])
+
+            scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
+            scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
+
+            twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
+            
+            list_titles = []
+            path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
+            path = json.load(path_file)
+            list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
+            for indx in list_rewards['data'][0:] :
+                
+                if indx['title'] not in path:   
+                    list_titles.append(indx['title'])
+
+            return list_titles
+        
+        messages_combox = update_titles_combox() 
+        
+        
+        tittleredem5 = customtkinter.CTkLabel(new_source_top, text="Exibir e ocultar uma Fonte do obs com recompensa", text_font=("default_theme","15"))
+        tittleredem5.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+
+        redem_title_label5 = customtkinter.CTkLabel(new_source_top, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_title_label5.grid(row=1,column=0,pady=10,padx=20,sticky='W')
+
+        redem_title5 = customtkinter.CTkComboBox(new_source_top,values=list(messages_combox),width=200)
+        redem_title5.grid(row=1,column=1 ,padx=10, pady=10)
+        
+        command_label = customtkinter.CTkLabel(new_source_top, text="Comando para o chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_label.grid(row=2,column=0,pady=10,padx=20,sticky='W')
+
+        command_entry = customtkinter.CTkEntry(new_source_top,width=200)
+        command_entry.grid(row=2, column=1,padx=10, pady=10)
+        
+        user_level_label = customtkinter.CTkLabel(new_source_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
+        
+        user_level_switch = customtkinter.CTkSwitch(new_source_top, text="", text_font=("default_theme", "13"),)
+        user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
+
+        obs_source_label_source = customtkinter.CTkLabel(new_source_top,text="Nome da fonte no OBS:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        obs_source_label_source.grid(row=4,column=0, padx=20,pady=10, sticky='W')
+
+        obs_source_entry_source = customtkinter.CTkOptionMenu(new_source_top,values=list(obs_con.get_sources()), width=200, dynamic_resizing=True)
+        obs_source_entry_source.grid(row=4,column=1, padx=20, pady=10)
+
+        time_filter_label = customtkinter.CTkLabel(new_source_top,text="Tempo exibindo:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        time_filter_label.grid(row=5,column=0, padx=20,pady=10, sticky='W')
+
+        time_filter_entry_source = customtkinter.CTkEntry(new_source_top,width=200)
+        time_filter_entry_source.grid(row=5,column=1, padx=20, pady=10)
+        
+        chat_response_label = customtkinter.CTkLabel(new_source_top,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        chat_response_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
+
+        chat_response_entry = customtkinter.CTkEntry(new_source_top,width=200)
+        chat_response_entry.grid(row=6,column=1, padx=20, pady=10)
+
+        submit_buttom6 = customtkinter.CTkButton(new_source_top,text='Salvar',command = create_new_source)
+        submit_buttom6.grid(row=7, column=1,padx=20, pady=(10,20), sticky='e')
+
+        new_source_top.mainloop()
     
-    messages_combox = update_titles_combox() 
+    def new_clip():
+        
+        new_clip_top = customtkinter.CTkToplevel(app)
+        new_clip_top.title('RewardEvents - Criar um clip')
+        
+        def create_new_clip():
+            
+            title = redem_title6.get()
+            command_event = command_entry.get()
+            user_level_check = user_level_switch.get()
+
+            if title:
+                try:
+                    if user_level_check:
+                        
+                        user_level_data = "mod"
+                        
+                    else:
+                        user_level_data = ""
+                        
+                    old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
+                    new_data = json.load(old_data)
+
+                    new_data[title] = {'TYPE': 'CLIP','COMMAND': command_event,}
+                    old_data.close()
+
+                    old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
+                    json.dump(new_data, old_data_write, indent = 4,ensure_ascii=False)
+                    
+                    old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
+                    new_data_command = json.load(old_data_command)
+
+                    new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
+                    old_data.close()
+
+                    old_data_write_command = open('src/config/commands.json' , 'w') 
+                    json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
+                    
+                    messagebox.showinfo("Sucesso",f"Evento de fonte '{title}' criado com sucesso.",parent=new_clip_top)
+                except:
+                    messagebox.showerror("Erro","Erro ao criar o evento.",parent=new_clip_top)
+            else:
+                messagebox.showerror("Erro","Preencha o titulo.",parent=new_clip_top)
+
+        def update_titles_combox():
+            
+            USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+            twitch = Twitch(apitoken.CLIENTID,
+                            apitoken.CLIENTSECRET,
+                            target_app_auth_scope=[AuthScope.USER_EDIT])
+
+            scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
+            scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
+
+            twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
+            
+            list_titles = []
+            path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
+            path = json.load(path_file)
+            list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
+            for indx in list_rewards['data'][0:] :
+                
+                if indx['title'] not in path:   
+                    list_titles.append(indx['title'])
+
+            return list_titles
+        
+        messages_combox = update_titles_combox()  
+
+        tittleredem6 = customtkinter.CTkLabel(new_clip_top, text="Recompensa para criar clips de 30 segundos", text_font=("default_theme","15"))
+        tittleredem6.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+
+        redem_title_label6 = customtkinter.CTkLabel(new_clip_top, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        redem_title_label6.grid(row=1,column=0,pady=20,padx=20,sticky='W')
+
+        redem_title6 = customtkinter.CTkComboBox(new_clip_top,values=list(messages_combox),width=200)
+        redem_title6.grid(row=1,column=1 ,padx=20, pady=20)
+        
+        command_label = customtkinter.CTkLabel(new_clip_top, text="Comando para o chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_label.grid(row=2,column=0,pady=20,padx=20,sticky='W')
+
+        command_entry = customtkinter.CTkEntry(new_clip_top,width=200)
+        command_entry.grid(row=2, column=1, pady=20,padx=20)
+        
+        user_level_label = customtkinter.CTkLabel(new_clip_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
+        
+        user_level_switch = customtkinter.CTkSwitch(new_clip_top, text="", text_font=("default_theme", "13"),)
+        user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
+
+        submit_buttom7 = customtkinter.CTkButton(new_clip_top,text='Salvar',command = create_new_clip)
+        submit_buttom7.grid(row=4, column=1,padx=20, pady=20, sticky='e')
+
+        new_clip_top.mainloop()
            
-    tittleredem1 = customtkinter.CTkLabel(topsound, text="Criar um som para uma recompensa", text_font=("default_theme","15"))
-    tittleredem1.grid(row=0, column=0, columnspan=2, pady=20,)
-
-    redem_title_label = customtkinter.CTkLabel(topsound, text="Recompensa* :", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_title_label.grid(row=1,column=0,padx=20,pady=10,sticky='W')
-    
-    redem_title = customtkinter.CTkComboBox(topsound,values=list(messages_combox),width=200)
-    redem_title.grid(row=1,column=1 ,padx=20, pady=10)
-    
-    command_label = customtkinter.CTkLabel(topsound, text="Comando para o chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    command_label.grid(row=2,column=0,padx=20,pady=10,sticky='W')
-    
-    command_entry = customtkinter.CTkEntry(topsound,width=200)
-    command_entry.grid(row=2, column=1,padx=20, pady=10)
-    
-    user_level_label = customtkinter.CTkLabel(topsound, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_label.grid(row=3,column=0,padx=20,pady=10, sticky='W')
-    
-    user_level_switch = customtkinter.CTkSwitch(topsound, text="", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
-
-    redem_path_label = customtkinter.CTkLabel(topsound, text="Arquivo de audio*:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_path_label.grid(row=4,column=0, padx=20, pady=10,sticky='W')
-
-    redem_path = customtkinter.CTkEntry(topsound,width=200,textvariable=path_text,state=DISABLED)
-    redem_path.grid(row=4,column=1,padx=20,pady=(0,10))
-
-    redem_path_button = customtkinter.CTkButton(topsound,width=200, text="Selecionar arquivo:", text_font=("default_theme","13"),command=select_file)
-    redem_path_button.grid(row=5,columnspan=2,padx=20, pady=10,sticky='WE')
-
-    redem_time_label = customtkinter.CTkLabel(topsound,text="Tempo da notificação no OBS*:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_time_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
-
-    redem_time = customtkinter.CTkEntry(topsound,width=200)
-    redem_time.grid(row=6,column=1, padx=20, pady=10)
-    
-    chat_response_label = customtkinter.CTkLabel(topsound,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    chat_response_label.grid(row=7,column=0, padx=20,pady=10, sticky='W')
-
-    chat_response_entry = customtkinter.CTkEntry(topsound,width=200)
-    chat_response_entry.grid(row=7,column=1, padx=20, pady=10)
-
-    submit_buttom = customtkinter.CTkButton(topsound,text='Salvar',command = create_new_sound)
-    submit_buttom.grid(row=8, column=1,padx=20, pady=(10,20), sticky='e')
-    
-    topsound.mainloop()
-  
-def new_tts():
-    
-    toptts = customtkinter.CTkToplevel(app)
-    toptts.title('RewardEvents - Reproduzir tts')
-    
-    def create_new_tts():
+    def select_event_type():
+        value_combox = events_combox.get()
         
-        title = redem_title.get()
-        time_in_screm = redem_time.get()
-        command_event = command_entry.get()
-        user_level_check = user_level_Switch.get()
-        chat_response = chat_response_entry.get()
-        
-        if not [x for x in (title, time_in_screm) if x is None]:
-            try:
-                if chat_response is None:
-                    send_response = 0
-                else:
-                    send_response = 1
-                old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
-                new_data = json.load(old_data)
-
-                new_data[title] = {'TYPE': 'TTS','send_response':send_response, 
-                                   'chat_response':chat_response, 'COMMAND':command_event,'TEMPO':time_in_screm}
-                old_data.close()
-
-                old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
-                json.dump(new_data, old_data_write, indent = 4,ensure_ascii=False)
-                
-                old_data_command = open('src/config/prefix_tts.json' , 'r', encoding='utf-8') 
-                new_data_command = json.load(old_data_command)
-                
-                command_tts = f"!{command_event}" 
-                
-                if user_level_check:
-                    user_level_data = "mod"
-                else:
-                    user_level_data = ""
-
-                new_data_command = {'command':command_tts,'redeem': title,'user_level': user_level_data}
-                
-                old_data.close()
-                
-                old_data_write_command = open('src/config/prefix_tts.json' , 'w', encoding='utf-8') 
-                json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
-                
-                
-                messagebox.showinfo("Sucesso!",f"Evento de tts '{title}' criado com sucesso!",parent=toptts)
-            except:
-                messagebox.showinfo("Erro!",f"Erro ao criar evento!",parent=toptts)
-        else:
-            messagebox.showinfo("Erro!",f"Preencha os campos com (*)",parent=toptts)
+        events_receive = {
             
-    def update_titles_combox():
-        
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-        twitch = Twitch(apitoken.CLIENTID,
-                        apitoken.CLIENTSECRET,
-                        target_app_auth_scope=[AuthScope.USER_EDIT])
-
-        scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-        scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-        twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-        
-        list_titles = []
-        path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-        path = json.load(path_file)
-        list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-        for indx in list_rewards['data'][0:] :
-            
-            if indx['title'] not in path:   
-                list_titles.append(indx['title'])
-
-        return list_titles
-    
-    messages_combox = update_titles_combox()         
-            
-    tittleredem1 = customtkinter.CTkLabel(toptts, text="Criar um resgate de texto para fala", text_font=("default_theme","15"))
-    tittleredem1.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
-
-    redem_title_label = customtkinter.CTkLabel(toptts, text="Recompensa* :", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_title_label.grid(row=1,column=0,padx=20,pady=10,sticky='W')
-
-    redem_title = customtkinter.CTkComboBox(toptts,values=list(messages_combox),width=200)
-    redem_title.grid(row=1,column=1 ,padx=20, pady=10)
-    
-    command_label = customtkinter.CTkLabel(toptts, text="Comando para o chat(opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    command_label.grid(row=2,column=0,padx=20,pady=10,sticky='W')
-    
-    command_entry = customtkinter.CTkEntry(toptts,width=200)
-    command_entry.grid(row=2, column=1,padx=20, pady=10)
-    
-    user_level_Switch_label = customtkinter.CTkLabel(toptts, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_Switch_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
-    
-    user_level_Switch = customtkinter.CTkSwitch(toptts, text="", text_font=("default_theme", "13"),)
-    user_level_Switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
-    
-    redem_time_label = customtkinter.CTkLabel(toptts,text="Tempo da notificação no OBS*:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_time_label.grid(row=5,column=0, padx=20,pady=10, sticky='W')
-
-    redem_time = customtkinter.CTkEntry(toptts,width=200)
-    redem_time.grid(row=5,column=1, padx=20, pady=10)
-    
-    chat_response_label = customtkinter.CTkLabel(toptts,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    chat_response_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
-
-    chat_response_entry = customtkinter.CTkEntry(toptts,width=200)
-    chat_response_entry.grid(row=6,column=1, padx=20, pady=10)
-
-    submit_buttom = customtkinter.CTkButton(toptts,text='Salvar',command = create_new_tts)
-    submit_buttom.grid(row=7, column=1,padx=20, pady=(10,30), sticky='e')
-    
-    toptts.mainloop()
-            
-def new_scene():
-    
-    top_scene = customtkinter.CTkToplevel(app)
-    top_scene.title('RewardEvents - Mudar Cena')
-    
-    def create_scene():
-        
-        title_redem = redem_title1.get()
-        current_scene_name = scene_entry_current.get()
-        scene_name = scene_entry.get()
-        time_to_change = time_scene_entry.get()
-        command_event = command_entry.get()
-        chat_response = chat_response_entry.get()
-        return_scene_value = return_scene_switch.get()
-        user_level_check = user_level_switch.get()
-
-        if not [x for x in (title_redem, current_scene_name, scene_name) if x is None]:
-            
-            try:
-                if chat_response is None:
-                    send_response = 0
-                else:
-                    send_response = 1
-                    
-                if user_level_check:
-                    user_level_data = "mod"
-                else:
-                    user_level_data = ""
-                    
-                old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
-                new_data = json.load(old_data)
-
-                new_data[title_redem] = {'TYPE': 'SCENE','SCENENAME': scene_name,'send_response':send_response,'COMMAND': command_event,
-                                         'chat_response':chat_response,'return_scene':return_scene_value,'TIME':time_to_change,'CURRENTSCENENAME': current_scene_name}
-                old_data.close()
-
-                old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
-                json.dump(new_data, old_data_write, indent = 4,ensure_ascii=False)
-                
-                old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
-                new_data_command = json.load(old_data_command)
-                
-                new_data_command[command_event] = {'RECOMPENSA': title_redem,'user_level': user_level_data}
-                old_data.close()
-                
-                old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
-                json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
-                
-                
-                messagebox.showinfo("Sucesso!",f"O evento de cena '{title_redem}' Foi criado!",parent=top_scene)
-            except:
-                messagebox.showerror("Erro","Erro ao criar o evento.",parent=top_scene)
-        else:
-            messagebox.showerror("Erro","Preencha os campos com *!",parent=top_scene)
-
-    def update_titles_combox():
-        
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-        twitch = Twitch(apitoken.CLIENTID,
-                        apitoken.CLIENTSECRET,
-                        target_app_auth_scope=[AuthScope.USER_EDIT])
-
-        scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-        scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-        twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-        
-                
-        list_titles = []
-        path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-        path = json.load(path_file)
-        list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-        for indx in list_rewards['data'][0:] :
-            
-            if indx['title'] not in path:   
-                list_titles.append(indx['title'])
-
-        return list_titles
-    
-    messages_combox = update_titles_combox()   
-                
-    tittleredem1 = customtkinter.CTkLabel(top_scene, text="Mudança de cena com recompensa", text_font=("default_theme","15"))
-    tittleredem1.grid(row=0, column=0, columnspan=2, pady=20)
-
-    redem_title_label1 = customtkinter.CTkLabel(top_scene, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_title_label1.grid(row=1,column=0,padx=20,pady=10,sticky='W')
-
-    redem_title1 = customtkinter.CTkComboBox(top_scene,values=list(messages_combox),width=200)
-    redem_title1.grid(row=1,column=1 ,padx=20, pady=10)
-    
-    command_label = customtkinter.CTkLabel(top_scene, text="Comando para o chat:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    command_label.grid(row=2,column=0,padx=20,pady=10,sticky='W')
-    
-    command_entry = customtkinter.CTkEntry(top_scene,width=200)
-    command_entry.grid(row=2, column=1,padx=20, pady=10)
-    
-    user_level_label = customtkinter.CTkLabel(top_scene, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
-    
-    user_level_switch = customtkinter.CTkSwitch(top_scene, text="", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
-
-    scene_label_current = customtkinter.CTkLabel(top_scene,text="Cena Atual:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    scene_label_current.grid(row=4,column=0, padx=20,pady=10, sticky='W')
-
-    scene_entry_current = customtkinter.CTkEntry(top_scene,width=200)
-    scene_entry_current.grid(row=4,column=1, padx=20, pady=10)
-
-    scene_label = customtkinter.CTkLabel(top_scene,text="Mudar para a cena:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    scene_label.grid(row=5,column=0, padx=20, pady=10, sticky='W')
-
-    scene_entry = customtkinter.CTkEntry(top_scene,width=200)
-    scene_entry.grid(row=5,column=1, padx=20, pady=10)
-    
-    return_scene = customtkinter.CTkLabel(top_scene, text='Retornar para cena anterior ?', text_font=("default_theme","13"))
-    return_scene.grid(row=6, column=0, padx=20, pady=10, sticky='w')
-
-    return_scene_switch = customtkinter.CTkSwitch(top_scene, text=" ",)
-    return_scene_switch.grid(row=6, column=1, padx=20, pady=10, sticky='e')
-
-    time_scene_label = customtkinter.CTkLabel(top_scene,text="Tempo para voltar para \na cena anterior:", text_font=("default_theme","13"),anchor="center", justify=CENTER)
-    time_scene_label.grid(row=7,column=0, padx=20, pady=10, sticky='W')
-
-    time_scene_entry = customtkinter.CTkEntry(top_scene,width=200)
-    time_scene_entry.grid(row=7,column=1, padx=20, pady=10)
-
-    chat_response_label = customtkinter.CTkLabel(top_scene,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    chat_response_label.grid(row=8,column=0, padx=20,pady=10, sticky='W')
-
-    chat_response_entry = customtkinter.CTkEntry(top_scene,width=200)
-    chat_response_entry.grid(row=8,column=1, padx=20, pady=10)
-    
-    submit_buttom3 = customtkinter.CTkButton(top_scene,text='Salvar',command = create_scene)
-    submit_buttom3.grid(row=9, column=1,padx=20, pady=(10,20), sticky='e')
-    
-    top_scene.mainloop()
-    
-def new_message():
-    
-    new_message_top = customtkinter.CTkToplevel(app)
-    new_message_top.title('RewardEvents - Resposta no chat')
-    
-    def create_message():
-    
-        title = redem_title2.get()
-        message = message_entry.get()
-        command_event = command_entry.get()
-        user_level_check = user_level_switch.get()
-
-        if not [x for x in (title, message) if x is None]:
-            try:
-                
-                if user_level_check:
-                    user_level_data = "mod"
-                else:
-                    user_level_data = ""
-                    
-                old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
-                new_data = json.load(old_data)
-
-                new_data[title] = {'TYPE': 'MESSAGE', 'COMMAND': command_event, 'MESSAGELABEL': message,}
-                old_data.close()
-
-                old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
-                json.dump(new_data, old_data_write, indent = 4, ensure_ascii=False)
-                
-                old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
-                new_data_command = json.load(old_data_command)
-                
-                new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
-                old_data.close()
-                
-                old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
-                json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
-                
-                
-                messagebox.showinfo("Sucesso!","Evento de mensagem criado com sucesso!",parent=new_message_top)
-            except:
-                messagebox.showerror("Erro","Erro ao criar o evento de mensagem.",parent=new_message_top)
-        else:
-            messagebox.showerror("Erro","Preencha todos os campos.",parent=new_message_top)
-       
-    def update_titles_combox():
-        
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-        twitch = Twitch(apitoken.CLIENTID,
-                        apitoken.CLIENTSECRET,
-                        target_app_auth_scope=[AuthScope.USER_EDIT])
-
-        scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-        scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-        twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')  
-        
-              
-        list_titles = []
-        path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-        path = json.load(path_file)
-        list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-        for indx in list_rewards['data'][0:] :
-            
-            if indx['title'] not in path:   
-                list_titles.append(indx['title'])
-
-        return list_titles
-    
-    messages_combox = update_titles_combox()  
-            
-    tittleredem2 = customtkinter.CTkLabel(new_message_top, text="Resposta no chat com recompensa", text_font=("default_theme","15"))
-    tittleredem2.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
-
-    redem_title_label2 = customtkinter.CTkLabel(new_message_top, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_title_label2.grid(row=1,column=0,pady=10,padx=10,sticky='W')
-
-    redem_title2 = customtkinter.CTkComboBox(new_message_top,values=list(messages_combox),width=200)
-    redem_title2.grid(row=1,column=1 ,padx=10, pady=10)
-    
-    command_label = customtkinter.CTkLabel(new_message_top, text="Comando para o chat:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    command_label.grid(row=2,column=0,pady=10,padx=10,sticky='W')
-    
-    command_entry = customtkinter.CTkEntry(new_message_top,width=200)
-    command_entry.grid(row=2, column=1,padx=10, pady=10)
-    
-    user_level_label = customtkinter.CTkLabel(new_message_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_label.grid(row=3,column=0,padx=10,pady=10,sticky='W')
-    
-    user_level_switch = customtkinter.CTkSwitch(new_message_top, text="", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
-
-    message_label = customtkinter.CTkLabel(new_message_top,text="Mensagem no Chat:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    message_label.grid(row=4,column=0, padx=10,pady=10, sticky='W')
-
-    message_entry = customtkinter.CTkEntry(new_message_top,width=200)
-    message_entry.grid(row=4,column=1, padx=10, pady=10)
-
-    submit_buttom4 = customtkinter.CTkButton(new_message_top,text='Salvar',command = create_message)
-    submit_buttom4.grid(row=5, column=1,padx=20, pady=(10,20), sticky='e')
-    
-    new_message_top.mainloop()
-      
-def new_filter():
-    
-    new_filter_top = customtkinter.CTkToplevel(app)
-    new_filter_top.title('RewardEvents - Novo filtro')
-    
-    
-    def create_new_filter():
-        
-        title = redem_title3.get()
-        filter_name = obs_filter_entry.get()
-        source_name = obs_source_entry.get()
-        time_showing = time_filter_entry.get()
-        command_event = command_entry.get()
-        chat_response = chat_response_entry.get()
-        user_level_check = user_level_switch.get()
-        
-        if not [x for x in (title, filter_name,source_name,time_showing) if x is None]:
-            try:
-                
-                if chat_response is None:
-                    send_response = 0
-                else:
-                    send_response = 1
-                
-                if user_level_check:
-                    user_level_data = "mod"
-                else:
-                    user_level_data = ""    
-                    
-                old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
-                new_data = json.load(old_data)
-
-                new_data[title] = {'TYPE': 'FILTER','SOURCE': source_name, 'send_response':send_response, 'chat_response':chat_response, 
-                                   'COMMAND': command_event, 'FILTER':filter_name, 'TIME':time_showing}
-                old_data.close()
-
-                old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
-                json.dump(new_data, old_data_write, indent = 4, ensure_ascii=False)
-                
-                
-                old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
-                new_data_command = json.load(old_data_command)
-
-                new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
-                old_data.close()
-
-                old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
-                json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
-                
-                
-                messagebox.showinfo("Sucesso",f"Evento de filtro '{title}' criado com sucesso",parent=new_filter_top)
-            except:
-                messagebox.showerror("Erro","Erro ao criar o evento.",parent=new_filter_top)
-        else:
-            messagebox.showerror("Erro","Preencha todos os campos",parent=new_filter_top)            
-
-
-    def update_titles_combox():
-        
-        
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-        twitch = Twitch(apitoken.CLIENTID,
-                        apitoken.CLIENTSECRET,
-                        target_app_auth_scope=[AuthScope.USER_EDIT])
-
-        scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-        scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-        twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')  
-              
-        list_titles = []
-        path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-        path = json.load(path_file)
-        list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-        for indx in list_rewards['data'][0:] :
-            
-            if indx['title'] not in path:   
-                list_titles.append(indx['title'])
-
-        return list_titles
-    
-    messages_combox = update_titles_combox()  
-        
-    tittleredem3 = customtkinter.CTkLabel(new_filter_top, text="Aplicar filtro no OBS com recompensa", text_font=("default_theme","15"))
-    tittleredem3.grid(row=0, column=0, columnspan=2, pady=20)
-
-    redem_title_label3 = customtkinter.CTkLabel(new_filter_top, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_title_label3.grid(row=1,column=0, padx=20, pady=10, sticky='W')
-
-    redem_title3 = customtkinter.CTkComboBox(new_filter_top,values=list(messages_combox),width=200)
-    redem_title3.grid(row=1,column=1 ,padx=10, pady=10)
-    
-    command_label = customtkinter.CTkLabel(new_filter_top, text="Comando para o chat:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    command_label.grid(row=2, column=0, padx=20, pady=10, sticky='W')
-
-    command_entry = customtkinter.CTkEntry(new_filter_top,width=200)
-    command_entry.grid(row=2, column=1,padx=20, pady=10)
-    
-    user_level_label = customtkinter.CTkLabel(new_filter_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
-    
-    user_level_switch = customtkinter.CTkSwitch(new_filter_top, text="", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
-
-    obs_source_label = customtkinter.CTkLabel(new_filter_top,text="Nome da Fonte do OBS:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    obs_source_label.grid(row=4, column=0, padx=20, pady=10, sticky='W')
-
-    obs_source_entry = customtkinter.CTkEntry(new_filter_top,width=200)
-    obs_source_entry.grid(row=4, column=1, padx=20, pady=10)
-
-    obs_filter_label = customtkinter.CTkLabel(new_filter_top,text="Nome do filtro presente \nna fonte:", text_font=("default_theme","13"),anchor="center", justify=CENTER)
-    obs_filter_label.grid(row=5, column=0, padx=20, pady=10, sticky='W')
-
-    obs_filter_entry = customtkinter.CTkEntry(new_filter_top,width=200)
-    obs_filter_entry.grid(row=5,column=1, padx=20, pady=10)
-
-    time_filter_label = customtkinter.CTkLabel(new_filter_top,text="Tempo com o filtro ativo:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    time_filter_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
-
-    time_filter_entry = customtkinter.CTkEntry(new_filter_top,width=200)
-    time_filter_entry.grid(row=6,column=1, padx=20, pady=10)
-    
-    chat_response_label = customtkinter.CTkLabel(new_filter_top,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    chat_response_label.grid(row=7,column=0, padx=20,pady=10, sticky='W')
-
-    chat_response_entry = customtkinter.CTkEntry(new_filter_top,width=200)
-    chat_response_entry.grid(row=7,column=1, padx=20, pady=10)
-
-    submit_buttom5 = customtkinter.CTkButton(new_filter_top,text='Salvar',command = create_new_filter)
-    submit_buttom5.grid(row=8, column=1,padx=20, pady=(10,20), sticky='e')
-    
-    new_filter_top.mainloop()
-    
-def new_key():
-    
-    new_key_top = customtkinter.CTkToplevel(app)
-    new_key_top.title('RewardEvents - Atalho')
-    
-    def create_new_key():
-        
-        title = redem_title4.get()
-        time_press_again = time_press_entry.get()
-        press_again = time_press_entry.get()
-        command_event = command_entry.get()
-        key1 = combobox1.get()
-        key2 = combobox2.get()
-        key3 = combobox3.get()
-        key4 = combobox4.get()
-        chat_response = chat_response_entry.get()
-        user_level_check = user_level_switch.get()
-
-        try:
-            if chat_response is None:
-                send_response = 0
-            else:
-                send_response = 1
-                
-            if user_level_check:
-                user_level_data = "mod"
-            else:
-                user_level_data = ""
-                
-            old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
-            new_data = json.load(old_data)
-
-            new_data[title] = {'TYPE': 'KEYPRESS','press_again':press_again ,'send_response':send_response, 'chat_response':chat_response,
-                                'COMMAND': command_event, 'TIME': time_press_again,'KEY1':key1, 'KEY2':key2, 'KEY3':key3, 'KEY4':key4}
-            old_data.close()
-
-            old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
-            json.dump(new_data, old_data_write, indent = 4, ensure_ascii=False)
-            
-            old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
-            new_data_command = json.load(old_data_command)
-
-            new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
-            old_data.close()
-
-            old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
-            json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
-            
-            
-            messagebox.showinfo("Sucesso",f"Evento de atalho no teclado '{title}' criado com sucesso!",parent=new_key_top)
-        except:
-            messagebox.showerror("Erro","Erro ao criar o evento.",parent=new_key_top)
-
-    def update_titles_combox():
-        
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-        twitch = Twitch(apitoken.CLIENTID,
-                        apitoken.CLIENTSECRET,
-                        target_app_auth_scope=[AuthScope.USER_EDIT])
-
-        scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-        scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-        twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-        
-        
-        list_titles = []
-        path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-        path = json.load(path_file)
-        list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-        for indx in list_rewards['data'][0:] :
-            
-            if indx['title'] not in path:   
-                list_titles.append(indx['title'])
-
-        return list_titles
-    
-    messages_combox = update_titles_combox() 
-    
-    
-    tittleredem4 = customtkinter.CTkLabel(new_key_top, text="Executar um atalho com recompensa", text_font=("default_theme","15"))
-    tittleredem4.grid(row=0, column=0, columnspan=4, padx=20, pady=20,)
-
-    redem_title_label4 = customtkinter.CTkLabel(new_key_top, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_title_label4.grid(row=1,column=0, columnspan=2,pady=10,padx=20,sticky='W')
-
-    redem_title4 = customtkinter.CTkComboBox(new_key_top,values=list(messages_combox),width=200)
-    redem_title4.grid(row=1,column=2, columnspan=2, padx=10, pady=10)
-    
-    command_label = customtkinter.CTkLabel(new_key_top, text="Comando para o chat:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    command_label.grid(row=2,column=0, columnspan=2,pady=10,padx=20,sticky='W')
-
-    command_entry = customtkinter.CTkEntry(new_key_top,width=200)
-    command_entry.grid(row=2, column=2, columnspan=2, padx=10, pady=20)
-    
-    user_level_label = customtkinter.CTkLabel(new_key_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_label.grid(row=3,column=0, columnspan=2,padx=20,pady=10,sticky='W')
-    
-    user_level_switch = customtkinter.CTkSwitch(new_key_top, text="", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=2, columnspan=2,padx=50, pady=10, sticky='e')
-    
-    press_again_switch_label = customtkinter.CTkLabel(new_key_top, text="Pressionar a tecla novamente depois do tempo ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    press_again_switch_label.grid(row=4, column=0, columnspan=2, padx=20, pady=10, sticky='W')
-    
-    press_again_switch = customtkinter.CTkSwitch(new_key_top, text="", text_font=("default_theme", "13"),)
-    press_again_switch.grid(row=4, column=2, columnspan=2,padx=50, pady=10, sticky='e')
-    
-    time_press = customtkinter.CTkLabel(new_key_top, text="Tempo para pressionar novamente:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    time_press.grid(row=5,column=0, columnspan=2,pady=10,padx=20,sticky='W')
-
-    time_press_entry = customtkinter.CTkEntry(new_key_top,width=200)
-    time_press_entry.grid(row=5, column=2, columnspan=2,padx=10, pady=20)
-
-    selectkeys = customtkinter.CTkLabel(new_key_top, text="Selecione as teclas:\n\n CUIDADO E ATENÇÃO!!", text_font=("default_theme","15"))
-    selectkeys.grid(row=6, column=0, columnspan=4, padx=20, pady=20,)
-
-    combobox1 = customtkinter.CTkComboBox(new_key_top,values=["ctrl","NONE"],width=100)
-    combobox1.grid(row=7,column=0,padx=20, pady=10)
-
-    combobox2 = customtkinter.CTkComboBox(new_key_top,values=["shift","alt","space","NONE"],width=100)
-    combobox2.grid(row=7,column=1,padx=20, pady=10)
-
-    combobox3 = customtkinter.CTkComboBox(new_key_top,values=["1","2","3","4","5","6","7","8","9","NONE"],width=100)
-    combobox3.grid(row=7,column=2,padx=20, pady=10)
-
-    combobox4 = customtkinter.CTkComboBox(new_key_top,width=100,
-                                        values=["q","w","e","r","t","y","u","i","o","p","a","s","d","f","g","h","j","k","l","ç","z","x","c","v","b","n","m","NONE"])
-    combobox4.grid(row=7,column=3,padx=20, pady=10)
-    
-    chat_response_label = customtkinter.CTkLabel(new_key_top,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    chat_response_label.grid(row=8,column=0, columnspan=2, padx=20,pady=10, sticky='W')
-
-    chat_response_entry = customtkinter.CTkEntry(new_key_top,width=200)
-    chat_response_entry.grid(row=8,column=2, columnspan=2, padx=20, pady=10)
-
-    submit_buttom6 = customtkinter.CTkButton(new_key_top,text='Salvar',command = create_new_key)
-    submit_buttom6.grid(row=9, column=3,padx=20, pady=(10,30), sticky='e')
-    
-    new_key_top.mainloop()
-    
-def new_source():
-    
-    new_source_top = customtkinter.CTkToplevel(app)
-    new_source_top.title('RewardEvents - Alternar Source')
-    
-    def create_new_source():
-        
-        title = redem_title5.get()
-        source_name = obs_source_entry_source.get()
-        time_showing = time_filter_entry_source.get()
-        command_event = command_entry.get()
-        chat_response = chat_response_entry.get()
-        user_level_check = user_level_switch.get()
-        
-        if not [x for x in (title, source_name,time_showing) if x is None]:
-            try:
-                if chat_response is None:
-                    send_response = 0
-                else:
-                    send_response = 1
-                    
-                if user_level_check:
-                    user_level_data = "mod"
-                else:
-                    user_level_data = ""
-                    
-                old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
-                new_data = json.load(old_data)
-
-                new_data[title] = {'TYPE': 'SOURCE','send_response':send_response, 'chat_response':chat_response,
-                                   'COMMAND': command_event, 'SOURCENAME': source_name,'TIME':time_showing}
-                old_data.close()
-
-                old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
-                json.dump(new_data, old_data_write, indent = 4 ,ensure_ascii=False)
-                old_data_write.close()
-                
-                old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
-                new_data_command = json.load(old_data_command)
-
-                new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
-                old_data.close()
-
-                old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
-                json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
-                
-                messagebox.showinfo("Sucesso",f"Evento de fonte '{title}' criado com sucesso.",parent=new_source_top)
-            except:
-                messagebox.showerror("Erro","Erro ao criar o evento.",parent=new_source_top)
-        else:
-            messagebox.showerror("Erro","Preencha todos os campos.",parent=new_source_top)
-
-    def update_titles_combox():
-        
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-        twitch = Twitch(apitoken.CLIENTID,
-                        apitoken.CLIENTSECRET,
-                        target_app_auth_scope=[AuthScope.USER_EDIT])
-
-        scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-        scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-        twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-        
-        list_titles = []
-        path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-        path = json.load(path_file)
-        list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-        for indx in list_rewards['data'][0:] :
-            
-            if indx['title'] not in path:   
-                list_titles.append(indx['title'])
-
-        return list_titles
-    
-    messages_combox = update_titles_combox() 
-    
-    
-    tittleredem5 = customtkinter.CTkLabel(new_source_top, text="Exibir e ocultar uma Fonte do obs com recompensa", text_font=("default_theme","15"))
-    tittleredem5.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
-
-    redem_title_label5 = customtkinter.CTkLabel(new_source_top, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_title_label5.grid(row=1,column=0,pady=10,padx=20,sticky='W')
-
-    redem_title5 = customtkinter.CTkComboBox(new_source_top,values=list(messages_combox),width=200)
-    redem_title5.grid(row=1,column=1 ,padx=10, pady=10)
-    
-    command_label = customtkinter.CTkLabel(new_source_top, text="Comando para o chat:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    command_label.grid(row=2,column=0,pady=10,padx=20,sticky='W')
-
-    command_entry = customtkinter.CTkEntry(new_source_top,width=200)
-    command_entry.grid(row=2, column=1,padx=10, pady=10)
-    
-    user_level_label = customtkinter.CTkLabel(new_source_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
-    
-    user_level_switch = customtkinter.CTkSwitch(new_source_top, text="", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
-
-    obs_source_label_source = customtkinter.CTkLabel(new_source_top,text="Nome da fonte no OBS:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    obs_source_label_source.grid(row=4,column=0, padx=20,pady=10, sticky='W')
-
-    obs_source_entry_source = customtkinter.CTkEntry(new_source_top,width=200)
-    obs_source_entry_source.grid(row=4,column=1, padx=20, pady=10)
-
-    time_filter_label = customtkinter.CTkLabel(new_source_top,text="Tempo exibindo:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    time_filter_label.grid(row=5,column=0, padx=20,pady=10, sticky='W')
-
-    time_filter_entry_source = customtkinter.CTkEntry(new_source_top,width=200)
-    time_filter_entry_source.grid(row=5,column=1, padx=20, pady=10)
-    
-    chat_response_label = customtkinter.CTkLabel(new_source_top,text="Resposta no chat (opcional):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    chat_response_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
-
-    chat_response_entry = customtkinter.CTkEntry(new_source_top,width=200)
-    chat_response_entry.grid(row=6,column=1, padx=20, pady=10)
-
-    submit_buttom6 = customtkinter.CTkButton(new_source_top,text='Salvar',command = create_new_source)
-    submit_buttom6.grid(row=7, column=1,padx=20, pady=(10,20), sticky='e')
-
-    new_source_top.mainloop()
-   
-def new_clip():
-    
-    new_clip_top = customtkinter.CTkToplevel(app)
-    new_clip_top.title('RewardEvents - Criar um clip')
-    
-    def create_new_clip():
-        
-        title = redem_title6.get()
-        command_event = command_entry.get()
-        user_level_check = user_level_switch.get()
-
-        if title:
-            try:
-                if user_level_check:
-                    
-                    user_level_data = "mod"
-                    
-                else:
-                    user_level_data = ""
-                    
-                old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
-                new_data = json.load(old_data)
-
-                new_data[title] = {'TYPE': 'CLIP','COMMAND': command_event,}
-                old_data.close()
-
-                old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
-                json.dump(new_data, old_data_write, indent = 4,ensure_ascii=False)
-                
-                old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
-                new_data_command = json.load(old_data_command)
-
-                new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
-                old_data.close()
-
-                old_data_write_command = open('src/config/commands.json' , 'w') 
-                json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
-                
-                messagebox.showinfo("Sucesso",f"Evento de fonte '{title}' criado com sucesso.",parent=new_clip_top)
-            except:
-                messagebox.showerror("Erro","Erro ao criar o evento.",parent=new_clip_top)
-        else:
-            messagebox.showerror("Erro","Preencha o titulo.",parent=new_clip_top)
-
-    def update_titles_combox():
-        
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-        twitch = Twitch(apitoken.CLIENTID,
-                        apitoken.CLIENTSECRET,
-                        target_app_auth_scope=[AuthScope.USER_EDIT])
-
-        scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-        scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-        twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-        
-        list_titles = []
-        path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-        path = json.load(path_file)
-        list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-        for indx in list_rewards['data'][0:] :
-            
-            if indx['title'] not in path:   
-                list_titles.append(indx['title'])
-
-        return list_titles
-    
-    messages_combox = update_titles_combox()  
-
-    tittleredem6 = customtkinter.CTkLabel(new_clip_top, text="Recompensa para criar clips de 30 segundos", text_font=("default_theme","15"))
-    tittleredem6.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
-
-    redem_title_label6 = customtkinter.CTkLabel(new_clip_top, text="Recompensa:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    redem_title_label6.grid(row=1,column=0,pady=20,padx=20,sticky='W')
-
-    redem_title6 = customtkinter.CTkComboBox(new_clip_top,values=list(messages_combox),width=200)
-    redem_title6.grid(row=1,column=1 ,padx=20, pady=20)
-    
-    command_label = customtkinter.CTkLabel(new_clip_top, text="Comando para o chat:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    command_label.grid(row=2,column=0,pady=20,padx=20,sticky='W')
-
-    command_entry = customtkinter.CTkEntry(new_clip_top,width=200)
-    command_entry.grid(row=2, column=1, pady=20,padx=20)
-    
-    user_level_label = customtkinter.CTkLabel(new_clip_top, text="Somente moderador pode usar o comando ?", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-    user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
-    
-    user_level_switch = customtkinter.CTkSwitch(new_clip_top, text="", text_font=("default_theme", "13"),)
-    user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
-
-    submit_buttom7 = customtkinter.CTkButton(new_clip_top,text='Salvar',command = create_new_clip)
-    submit_buttom7.grid(row=4, column=1,padx=20, pady=20, sticky='e')
-
-    new_clip_top.mainloop()
-
-def create_event():
-    
-    events_receive = {
         'Reproduzir Audio' : new_sound,
         'Texto falado google' : new_tts,
         'Mudar cena OBS' : new_scene,
@@ -1545,12 +1575,25 @@ def create_event():
         'Resposta no chat' : new_message,
         'Criar um Clip': new_clip
     }
+        
+        if value_combox in events_receive:
+            events_receive[value_combox]()
     
-    value_combox = events_combox.get()
-    
-    if value_combox in events_receive:
-        events_receive[value_combox]()
        
+    events_combox_list = ['Reproduzir Audio','Texto falado google','Mudar cena OBS','Exibir/Ocultar Filtro OBS',
+                      'Exibir/Ocultar Fonte OBS','Atalho no teclado','Resposta no chat','Criar um Clip']
+
+    events_combox_label = customtkinter.CTkLabel(new_event_top, text='Selecione o tipo de Evento :', text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    events_combox_label.grid(row=1,column=0,padx=20,pady=(30,10),sticky='W')
+
+    events_combox = customtkinter.CTkComboBox(new_event_top,values=events_combox_list,width=200)
+    events_combox.grid(row=1,column=1 ,padx=20, pady=(30,10))
+    
+    select_event_buttom = customtkinter.CTkButton(new_event_top,text="Criar",text_font=("default_theme","13"), command=select_event_type)
+    select_event_buttom.grid(row=2,column=1 ,padx=20, pady=(10,30),sticky='e')
+    
+    new_event_top.mainloop()
+    
 def del_event():
     
     del_event_top = customtkinter.CTkToplevel(app)
@@ -1662,7 +1705,7 @@ def new_simple_command():
     tittleredem2_new_simple = customtkinter.CTkLabel(new_simple, text="Resposta no chat por comando", text_font=("default_theme","15"))
     tittleredem2_new_simple.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-    command_label_new_simple = customtkinter.CTkLabel(new_simple, text="Comando (sem '!'):", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    command_label_new_simple = customtkinter.CTkLabel(new_simple, text="Comando:", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     command_label_new_simple.grid(row=2,column=0,pady=10,padx=10,sticky='W')
     
     command_entry_new_simple = customtkinter.CTkEntry(new_simple,width=200)
@@ -1835,13 +1878,13 @@ def edit_delay_commands():
             
             if edit_delay_command_value.isnumeric():
                 try:
-                    time_delay_file = open('src/config/prefix_commands.json')
+                    time_delay_file = open('src/config/commands_config.json')
                     time_delay_data = json.load(time_delay_file)
 
                     time_delay_data['delay_config'] = edit_delay_command_value
                     time_delay_file.close()
                     
-                    time_delay_write = open('src/config/prefix_commands.json' , 'w', encoding='utf-8') 
+                    time_delay_write = open('src/config/commands_config.json' , 'w', encoding='utf-8') 
                     json.dump(time_delay_data, time_delay_write, indent = 4, ensure_ascii=False)
                     time_delay_write.close()
                     
@@ -1882,7 +1925,7 @@ def edit_delay_commands():
             
     def delay_atual():
         
-        time_delay_file = open('src/config/prefix_commands.json')
+        time_delay_file = open('src/config/commands_config.json')
         time_delay_data = json.load(time_delay_file)
         
         time_delay_tts_file = open('src/config/prefix_tts.json')
@@ -2023,9 +2066,9 @@ def config_obs_not_top():
     
     def salvar_conf_not():
     
-        group_name_value = group_name_entry.get()
-        text_name_value = text_name_entry.get()
-        text_user_name_value = text_user_name_entry.get()
+        group_name_value = group_name_combox.get()
+        text_name_value = text_name_combox.get()
+        text_user_name_value = text_user_name_combox.get()
         
         if not [x for x in (group_name_value, text_name_value, text_user_name_value) if x is None]:
                         
@@ -2039,23 +2082,6 @@ def config_obs_not_top():
         else:
             messagebox.showerror('Config ERRO!', 'PREENCHA TODOS OS CAMPOS!',parent=top_config_obs_notifc)
             
-    def get_obs_confg_atual():
-        
-        file_obs_atual_source = open("src/config/notfic.json")
-        data_obs_atual_source = json.load(file_obs_atual_source)
-        
-        try:
-            group_name_var = customtkinter.StringVar(value=f"{data_obs_atual_source['TEXT_TITLE_REDEEM']}")
-            text_name_var = customtkinter.StringVar(value=f"{data_obs_atual_source['TEXT_USER_REDEM']}")
-            text_user_name_var = customtkinter.StringVar(value=f"{data_obs_atual_source['NOTF_GROUP_OBS']}")
-            
-            group_name_entry.configure(textvariable=group_name_var)
-            text_name_entry.configure(textvariable=text_name_var)
-            text_user_name_entry.configure(textvariable=text_user_name_var)
-            
-        except:
-            pass
-            
         
     title_notif = customtkinter.CTkLabel(top_config_obs_notifc, text="Configuração de notificações No OBS", text_font=("default_theme", "13"))
     title_notif.grid(row=7, column=0, columnspan=2, padx=20, pady=(25,15))
@@ -2063,25 +2089,24 @@ def config_obs_not_top():
     group_name = customtkinter.CTkLabel(top_config_obs_notifc, text="Nome do grupo:", text_font=("default_theme", "11"), anchor="w")
     group_name.grid(row=8, column=0, padx=20, pady=(15, 5), sticky='W')
 
-    group_name_entry = customtkinter.CTkEntry(top_config_obs_notifc, width=200)
-    group_name_entry.grid(row=8, column=1, padx=20, pady=(20, 5))
+    group_name_combox = customtkinter.CTkOptionMenu(top_config_obs_notifc,values=list(obs_con.get_sources()), width=200,dynamic_resizing=True)
+    group_name_combox.grid(row=8, column=1, padx=20, pady=(20, 5))
 
     text_name = customtkinter.CTkLabel(top_config_obs_notifc, text="Titulo da recompensa: ", text_font=("default_theme", "11"), anchor="w")
     text_name.grid(row=9, column=0, padx=20, pady=(5, 5), sticky='W')
 
-    text_name_entry = customtkinter.CTkEntry(top_config_obs_notifc, width=200)
-    text_name_entry.grid(row=9, column=1, padx=20, pady=(5, 5))
+    text_name_combox = customtkinter.CTkOptionMenu(top_config_obs_notifc,values=list(obs_con.get_sources()), width=200)
+    text_name_combox.grid(row=9, column=1, padx=20, pady=(20, 5))
 
     text_user_name = customtkinter.CTkLabel(top_config_obs_notifc, text="Usuário que resgatou: ", text_font=("default_theme", "11"), anchor="w")
     text_user_name.grid(row=10, column=0, padx=20, pady=(5, 15), sticky='W')
 
-    text_user_name_entry = customtkinter.CTkEntry(top_config_obs_notifc, width=200)
-    text_user_name_entry.grid(row=10, column=1, padx=20, pady=(5, 15))
+    text_user_name_combox = customtkinter.CTkOptionMenu(top_config_obs_notifc,values=list(obs_con.get_sources()), width=200)
+    text_user_name_combox.grid(row=10, column=1, padx=20, pady=(20, 5))
 
     salvar = customtkinter.CTkButton(top_config_obs_notifc, text='Salvar', command=salvar_conf_not)
     salvar.grid(row=11, column=1,padx=20, pady=(10,10), sticky='e')
     
-    get_obs_confg_atual()
     
     top_config_obs_notifc.mainloop()
   
@@ -2094,13 +2119,13 @@ def config_messages_top():
     
         status_value = timer_status_value.get()
         
-        timer_data_file = open('src/config/prefix_commands.json' , 'r', encoding="utf-8") 
+        timer_data_file = open('src/config/commands_config.json' , 'r', encoding="utf-8") 
         timer_data = json.load(timer_data_file)
         
         timer_data['STATUS_TIMER'] = status_value
         timer_data_file.close()
         
-        old_data_write = open('src/config/prefix_commands.json' , 'w', encoding="utf-8") 
+        old_data_write = open('src/config/commands_config.json' , 'w', encoding="utf-8") 
         json.dump(timer_data, old_data_write, indent = 4,ensure_ascii=False)
         old_data_write.close()    
 
@@ -2108,13 +2133,13 @@ def config_messages_top():
 
         tts_status_value = tts_option.get()
         
-        tts_data_file = open('src/config/prefix_commands.json' , 'r', encoding="utf-8") 
+        tts_data_file = open('src/config/commands_config.json' , 'r', encoding="utf-8") 
         tts_data = json.load(tts_data_file)
         
         tts_data['STATUS_TTS'] = tts_status_value
         tts_data_file.close()
         
-        old_data_write = open('src/config/prefix_commands.json' , 'w', encoding="utf-8") 
+        old_data_write = open('src/config/commands_config.json' , 'w', encoding="utf-8") 
         json.dump(tts_data, old_data_write, indent = 4, ensure_ascii=False)
         old_data_write.close()
         
@@ -2122,13 +2147,13 @@ def config_messages_top():
 
         command_status_value = commands_option.get()
         
-        command_data_file = open('src/config/prefix_commands.json' , 'r', encoding="utf-8") 
+        command_data_file = open('src/config/commands_config.json' , 'r', encoding="utf-8") 
         command_data = json.load(command_data_file)
         
         command_data['STATUS_COMMANDS'] = command_status_value
         command_data_file.close()
         
-        old_data_write = open('src/config/prefix_commands.json' , 'w', encoding="utf-8") 
+        old_data_write = open('src/config/commands_config.json' , 'w', encoding="utf-8") 
         json.dump(command_data, old_data_write, indent = 4, ensure_ascii=False)
         old_data_write.close()
 
@@ -2136,13 +2161,13 @@ def config_messages_top():
 
         response_status_value = response_option.get()
         
-        response_data_file = open('src/config/prefix_commands.json' , 'r', encoding="utf-8") 
+        response_data_file = open('src/config/commands_config.json' , 'r', encoding="utf-8") 
         response_data = json.load(response_data_file)
         
         response_data['STATUS_RESPONSE'] = response_status_value
         response_data_file.close()
         
-        old_data_write = open('src/config/prefix_commands.json' , 'w', encoding="utf-8") 
+        old_data_write = open('src/config/commands_config.json' , 'w', encoding="utf-8") 
         json.dump(response_data, old_data_write, indent = 4, ensure_ascii=False)
         old_data_write.close()
 
@@ -2150,13 +2175,13 @@ def config_messages_top():
 
         clip_status_value = clip_option.get()
         
-        clip_data_file = open('src/config/prefix_commands.json' , 'r', encoding="utf-8") 
+        clip_data_file = open('src/config/commands_config.json' , 'r', encoding="utf-8") 
         clip_data = json.load(clip_data_file)
         
         clip_data['STATUS_CLIP'] = clip_status_value
         clip_data_file.close()
         
-        old_data_write = open('src/config/prefix_commands.json' , 'w', encoding="utf-8") 
+        old_data_write = open('src/config/commands_config.json' , 'w', encoding="utf-8") 
         json.dump(clip_data, old_data_write, indent = 4, ensure_ascii=False)
         old_data_write.close()
 
@@ -2164,13 +2189,13 @@ def config_messages_top():
 
         user_error_status_value = user_error_option.get()
         
-        user_error_data_file = open('src/config/prefix_commands.json' , 'r', encoding="utf-8") 
+        user_error_data_file = open('src/config/commands_config.json' , 'r', encoding="utf-8") 
         user_error_data = json.load(user_error_data_file)
         
         user_error_data['STATUS_ERROR_USER'] = user_error_status_value
         user_error_data_file.close()
         
-        old_data_write = open('src/config/prefix_commands.json' , 'w', encoding="utf-8") 
+        old_data_write = open('src/config/commands_config.json' , 'w', encoding="utf-8") 
         json.dump(user_error_data, old_data_write, indent = 4, ensure_ascii=False)
         old_data_write.close()
     
@@ -2178,19 +2203,33 @@ def config_messages_top():
 
         time_status_value = time_option.get()
         
-        time_data_file = open('src/config/prefix_commands.json' , 'r', encoding="utf-8") 
+        time_data_file = open('src/config/commands_config.json' , 'r', encoding="utf-8") 
         time_data = json.load(time_data_file)
         
         time_data['STATUS_ERROR_TIME'] = time_status_value
         time_data_file.close()
         
-        old_data_write = open('src/config/prefix_commands.json' , 'w', encoding="utf-8") 
+        old_data_write = open('src/config/commands_config.json' , 'w', encoding="utf-8") 
         json.dump(time_data, old_data_write, indent = 4, ensure_ascii=False)
+        old_data_write.close()
+        
+    def bot_status():
+
+        bot_status_value_opt = bot_status_value.get()
+        
+        bot_data_file = open('src/config/commands_config.json' , 'r', encoding="utf-8") 
+        bot_data = json.load(bot_data_file)
+        
+        bot_data['STATUS_BOT'] = bot_status_value_opt
+        bot_data_file.close()
+        
+        old_data_write = open('src/config/commands_config.json' , 'w', encoding="utf-8") 
+        json.dump(bot_data, old_data_write, indent = 4, ensure_ascii=False)
         old_data_write.close()
     
     def get_all_status_value():
         
-        status_data_file = open('src/config/prefix_commands.json' , 'r', encoding="utf-8") 
+        status_data_file = open('src/config/commands_config.json' , 'r', encoding="utf-8") 
         status_data = json.load(status_data_file)
         
         status_error_time = status_data['STATUS_ERROR_TIME']
@@ -2200,6 +2239,7 @@ def config_messages_top():
         status_tts = status_data['STATUS_TTS']
         status_timer = status_data['STATUS_TIMER']
         status_commands = status_data['STATUS_COMMANDS']
+        status_bot = status_data['STATUS_BOT']
         
         if status_tts == 1:
             tts_option.select()
@@ -2221,6 +2261,8 @@ def config_messages_top():
             
         if status_timer == 1:
             timer_status_value.select()
+        if status_bot == 1:
+            bot_status_value.select()
 
 
     title_status = customtkinter.CTkLabel(top_config_messages, text='Status de comandos e mensagens/respostas', text_font=("default_theme","15"))
@@ -2263,10 +2305,16 @@ def config_messages_top():
     user_error_option.grid(row=7, column=1, padx=20, pady=5, sticky='e')
     
     timer_status_value_label = customtkinter.CTkLabel(top_config_messages,text="Ativar Timer ?", text_font=("default_theme","13"))
-    timer_status_value_label.grid(row=8, column=0, pady=(5,20),sticky='w')
+    timer_status_value_label.grid(row=8, column=0, pady=5,sticky='w')
 
     timer_status_value = customtkinter.CTkSwitch(top_config_messages,text=" ",command=timer_status)
-    timer_status_value.grid(row=8, column=1, padx=20, pady=(5,20), sticky='e')
+    timer_status_value.grid(row=8, column=1, padx=20, pady=5, sticky='e')
+    
+    bot_status_value_label = customtkinter.CTkLabel(top_config_messages,text="Status de conexão no chat ?", text_font=("default_theme","13"))
+    bot_status_value_label.grid(row=9, column=0,padx=20, pady=(5,20),sticky='w')
+    
+    bot_status_value = customtkinter.CTkSwitch(top_config_messages,text=" ",command=bot_status)
+    bot_status_value.grid(row=9, column=1, padx=20, pady=(5,20), sticky='e')
     
     get_all_status_value()
     
@@ -2309,13 +2357,13 @@ def self_clip():
         response_error = 'None'
         response_create = response_clip['data'][0]['id']
         
-        send_message(f"/me Um novo clip foi criado, confira! https://clips.twitch.tv/{response_create}",'CLIP')
+        smt.send_message(f"/me Um novo clip foi criado, confira! https://clips.twitch.tv/{response_create}",'CLIP')
         
     except:
         response_error = response_clip['message']
 
         if response_error:
-            send_message('/me Erro ao criar o clip','CLIP')
+            smt.send_message('/me Erro ao criar o clip','CLIP')
 
 def new_timer():
     
@@ -2331,13 +2379,13 @@ def new_timer():
             timer_data_file = open('src/config/timer.json' , 'r', encoding='utf-8') 
             timer_data = json.load(timer_data_file)
             
-            timer_message = timer_data['TIMERMESSAGE']['MESSAGES']
+            timer_message = timer_data['MESSAGES']
             
             qnt = len(timer_message) + 1
             int_qnt = int(qnt)
             
             
-            timer_data['TIMERMESSAGE']['MESSAGES'][int_qnt] = new_message_timer
+            timer_data['MESSAGES'][int_qnt] = new_message_timer
             timer_data_file.close()
             
             try:
@@ -2378,8 +2426,8 @@ def timer_interval():
         timer_data_file = open('src/config/timer.json' , 'r', encoding='utf-8') 
         timer_data = json.load(timer_data_file)
         
-        timer_data['TIMERMESSAGE']['TIME'] = int(value_min)
-        timer_data['TIMERMESSAGE']['TIME_MAX'] = int(value_max)
+        timer_data['TIME'] = int(value_min)
+        timer_data['TIME_MAX'] = int(value_max)
         
         timer_data_file.close()
         
@@ -2423,7 +2471,7 @@ def edit_timer():
         timer_data_file = open('src/config/timer.json' , 'r', encoding='utf-8') 
         timer_data = json.load(timer_data_file)
         
-        timer_message = timer_data['TIMERMESSAGE']['MESSAGES']
+        timer_message = timer_data['MESSAGES']
         
         def get_key(val):
             
@@ -2445,7 +2493,7 @@ def edit_timer():
         timer_data_file = open('src/config/timer.json' , 'r', encoding='utf-8') 
         timer_data = json.load(timer_data_file)
         
-        timer_data['TIMERMESSAGE']['MESSAGES'][timer_message_key] = edit_message_value
+        timer_data['MESSAGES'][timer_message_key] = edit_message_value
         timer_data_file.close()
         
         try:
@@ -2465,7 +2513,7 @@ def edit_timer():
         
         message_data_file = open('src/config/timer.json' , 'r',encoding='utf-8') 
         message_data = json.load(message_data_file)
-        message_del = message_data['TIMERMESSAGE']['MESSAGES']
+        message_del = message_data['MESSAGES']
         message_data_file.close()
     
         return message_del
@@ -2502,7 +2550,7 @@ def del_timer():
         message_del_file = open('src/config/timer.json' , 'r', encoding='utf-8') 
         message_del_date = json.load(message_del_file)
 
-        message_list = message_del_date['TIMERMESSAGE']['MESSAGES']
+        message_list = message_del_date['MESSAGES']
         
         message_del_file.close()
         
@@ -2514,7 +2562,7 @@ def del_timer():
         key_value = key_list[position]
         
         try:
-            del message_del_date['TIMERMESSAGE']['MESSAGES'][key_value]
+            del message_del_date['MESSAGES'][key_value]
             
             message_del_file_write = open('src/config/timer.json' , 'w', encoding='utf-8') 
             json.dump(message_del_date, message_del_file_write, indent = 4,ensure_ascii=False)
@@ -2531,7 +2579,7 @@ def del_timer():
         
         message_data_file = open('src/config/timer.json' , 'r',encoding='utf-8') 
         message_data = json.load(message_data_file)
-        message_del = message_data['TIMERMESSAGE']['MESSAGES']
+        message_del = message_data['MESSAGES']
         message_data_file.close()
     
         return message_del
@@ -2550,33 +2598,6 @@ def del_timer():
     del_timer_buttom.grid(row=10, column=1,padx=20, pady=10,sticky='e')
     
     del_timer_top.mainloop()
-            
-def timer(tid):
-    
-    while True:
-        
-        with open('src/config/timer.json' , 'r', encoding='utf-8') as timer_data_file:
-            timer_data = json.load(timer_data_file)
-        
-        timer_data_timer = timer_data['TIMERMESSAGE']['TIME']
-        timer_data_timer_max = timer_data['TIMERMESSAGE']['TIME_MAX']
-        
-        timer_int = int(timer_data_timer)
-        timer_max_int = int(timer_data_timer_max)
-        
-        try:
-            timer_message = timer_data['TIMERMESSAGE']['MESSAGES']
-            message_value = [*timer_message.values()]
-            message = random.choice(list(message_value))
-            
-            send_message(message,'TIMER')
-            
-        except:
-            pass
-            
-        next_timer = randint(timer_int,timer_max_int)
-        
-        time.sleep(next_timer)
       
 def top_auth():
     
@@ -2771,17 +2792,17 @@ def con_pubsub():
     else:
         if messagebox.showinfo('Erro','Execute o processo de autenticação.'):
             top_auth()
-           
+             
 def receive_commands(tid):
     
     USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-         
-    def do_something(message):
-        
+    
+    def do_somenthing(message):    
+            
         command_file = open('src/config/commands.json', "r", encoding='utf-8') 
         command_data = json.load(command_file) 
         
-        command_file_prefix = open('src/config/prefix_commands.json', "r", encoding='utf-8') 
+        command_file_prefix = open('src/config/commands_config.json', "r", encoding='utf-8') 
         command_data_prefix = json.load(command_file_prefix)
         
         command_file_simple = open('src/config/simple_commands.json', "r", encoding='utf-8') 
@@ -2790,133 +2811,141 @@ def receive_commands(tid):
         command_file_tts = open('src/config/prefix_tts.json', "r", encoding='utf-8') 
         command_data_tts = json.load(command_file_tts) 
         
-        prefix = command_data_prefix['prefix']
+        
         command_tts = command_data_tts['command']
         user_type_tts = command_data_tts['user_level']
         
-        command = message['message']
+        command_string = message['message']
+        command = command_string.split()[0]
+        prefix = command[0]
+        result_command_check = {key:val for key, val in command_data.items() 
+                                    if key.startswith(command)}
+        
         user = message['display-name'] 
         user_type = message['user-type'] 
         user_id_command = message['user-id']
         
         check_tts = command.startswith(command_tts)
-        check_command = command.startswith(prefix)
+
         
-        try:
+        result_command_simple = {key:val for key, val in command_data_simple.items() 
+                                    if key.startswith(command)}
+
+        status_commands = command_data_prefix['STATUS_COMMANDS']  
+        status_tts = command_data_tts['status']
+        
             
-            if check_tts:
+        if check_tts:
+            
+            if status_tts == 1:
                 
-                status_tts = command_data_tts['status']
-
-                if status_tts == 1:
-                    message_delay,check_time = check_delay_file.check_delay() 
-                        
-                    if check_time:
+                message_delay,check_time = check_delay_file.check_delay() 
                     
-                        if user_type == user_type_tts or user_id_command == USERID:
-                            
-                            receive = command.split(command_tts,1)[1]
-                            redeem = command_data_tts['redeem']
-                            
-                            data_rewards = {}
-                            data_rewards['USERNAME'] = user
-                            data_rewards['REDEEM'] = redeem
-                            data_rewards['USER_INPUT'] = receive
-                            data_rewards['USER_LEVEL'] = user_type
-                            data_rewards['USER_ID'] = user_id_command
-                            data_rewards['COMMAND'] = receive
-                            data_rewards['PREFIX'] = prefix
-                            
-                            received_type = 'command'
-                            
-                            receive_redeem(data_rewards,received_type)
-                    else:
-                        send_message(message_delay,'ERROR_TIME')
-                else:
-
-                    send_message("/me O comando '!tts' está desativado.","ERROR_TTS")
+                if check_time:
                 
-            elif check_command:
-
-                status_commands = command_data_prefix['STATUS_COMMANDS']    
-                    
-                if status_commands == 1:
-
-                    receive = command.split(prefix,1)[1]
+                    if user_type == user_type_tts or user_id_command == USERID:
                         
-                    if receive in command_data.keys():
+                        redeem = command_data_tts['redeem']
+                        user_input = command_string.split(command_tts,1)[1]
                         
-                        redeem = command_data[receive]['RECOMPENSA']
-                        user_level_simple = command_data[receive]['user_level']
+                        print(user_input)
                         
                         data_rewards = {}
                         data_rewards['USERNAME'] = user
                         data_rewards['REDEEM'] = redeem
-                        data_rewards['USER_INPUT'] = receive
+                        data_rewards['USER_INPUT'] = user_input
                         data_rewards['USER_LEVEL'] = user_type
                         data_rewards['USER_ID'] = user_id_command
-                        data_rewards['COMMAND'] = receive
+                        data_rewards['COMMAND'] = command
                         data_rewards['PREFIX'] = prefix
-
+                        
                         received_type = 'command'
                         
-                        if user_type == user_level_simple or user_id_command == USERID:
-                            
-                            message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                            
-                            if check_time_global:    
-                                receive_redeem(data_rewards,received_type)
-                            else:
-                                send_message(message_delay_global,'ERROR_TIME')
-                        else:
-                            send_message(f"/me Somente usuários com permissão {user_level_simple} podem usar !{receive}",'ERROR_USER')
-                        
-                    elif receive in command_data_simple.keys():
+                        receive_redeem(data_rewards,received_type)
+                else:
+                    smt.send_message(message_delay,'ERROR_TIME')
+            else:
+
+                smt.send_message("/me O comando '!tts' está desativado.","ERROR_TTS")
+                
+        elif status_commands == 1:
+                
+            if command in result_command_check.keys():
+                
+                redeem = command_data[command]['RECOMPENSA']
+                user_level_simple = command_data[command]['user_level']
+                
+                data_rewards = {}
+                data_rewards['USERNAME'] = user
+                data_rewards['REDEEM'] = redeem
+                data_rewards['USER_INPUT'] = command
+                data_rewards['USER_LEVEL'] = user_type
+                data_rewards['USER_ID'] = user_id_command
+                data_rewards['COMMAND'] = command
+                data_rewards['PREFIX'] = prefix
+
+                received_type = 'command'
+                
+                if user_type == user_level_simple or user_id_command == USERID:
                     
-                        response = command_data_simple[receive]['response']
-                        user_level_simple = command_data_simple[receive]['user_level']
-                            
-                        if user_type == user_level_simple or user_id_command == USERID:
-                            
-                            aliases = {'{user}': user,'{command}': receive, '{prefix}': prefix, '{user_level}': user_type, '{user_id}': user_id_command}
-                            response_redus = replace_all(response, aliases)
-                            
-                            message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                            if check_time_global:        
-                                send_message(response_redus,'RESPONSE')
-                            else:
-                                send_message(message_delay_global,'ERROR_TIME')
-                        else:
-                            send_message(f"/me Somente usuários com permissão {user_level_simple} podem usar !{receive}",'ERROR_USER')
+                    message_delay_global,check_time_global = check_delay_file.check_global_delay()
+                    
+                    if check_time_global == True:    
+                        
+                        receive_redeem(data_rewards,received_type)
+                        
+                    else:
+                        print('delay')
+                        smt.send_message(message_delay_global,'ERROR_TIME')
+                else:
+                    smt.send_message(f"/me Somente usuários com permissão {user_level_simple} podem usar !{command}",'ERROR_USER')
+                
+            elif command in result_command_simple.keys():
+            
+                response = command_data_simple[command]['response']
+                user_level_simple = command_data_simple[command]['user_level']
+                    
+                if user_type == user_level_simple or user_id_command == USERID:
+                    
+                    aliases = {'{user}': user,'{command}': command, '{prefix}': prefix, '{user_level}': user_type, '{user_id}': user_id_command}
+                    response_redus = replace_all(response, aliases)
+                    
+                    message_delay_global,check_time_global = check_delay_file.check_global_delay()
+                    
+                    if check_time_global:        
+                        
+                        smt.send_message(response_redus,'RESPONSE')
+                        
+                    else:
+                        
+                        smt.send_message(message_delay_global,'ERROR_TIME')
                 else:
                     
-                    send_message("/me Os comandos estão desativados.","RESPONSE")
-          
-        except:
-            pass
+                    smt.send_message(f"/me Somente usuários com permissão {user_level_simple} podem usar {command}",'ERROR_USER')
+        else:
+            
+            smt.send_message("/me Os comandos estão desativados.","RESPONSE")
     
     command_connected = 0
-    status_receive_label.configure(text="Aguarde!")
       
     while command_connected == 0:
         if TOKEN and TOKENBOT:
-            try:   
-                time.sleep(5)
-                command_connected = 1
-                status_receive_label.configure(text="Conectado!")   
-                send_message('Módulo para comandos conectado...','RESPONSE')  
-                connection.listen(USERNAME,on_message=do_something)
+            try: 
+                command_connected = 1  
+                smt.send_message('/me Módulo para comandos conectado...','STATUS_BOT')  
+                status_receive_label.configure(text="Conectado")
+                smt.connection.listen(USERNAME,on_message=do_somenthing)
             except:
                 command_connected = 0
-                status_receive_label.configure(text="Desconectado!,Aguarde...")
-                time.sleep(110)
+                status_receive_label.configure(text="Desconectado")
+                smt.send_message('/me Erro na conexão do modulo para receber comandos...','STATUS_BOT')  
+                time.sleep(10)
         else:
             time.sleep(110)
-
+    
 def close():
     if messagebox.askokcancel("Sair", "Confirmar saída"):
-        if con_status == '1':
-            connection.close_connection()
+        smt.connection.close_connection()
         app.destroy() 
         time.sleep(2)
         run_cmd(os._exit(0))
@@ -2960,7 +2989,7 @@ def update_check():
     response_json = json.loads(response.text)
     version = response_json['tag_name']
 
-    if version != 'v1.8':
+    if version != 'v2.0':
         update_info = messagebox.askquestion('Update','Nova versão encontrada, deseja efetuar o download ?')
         if update_info == 'yes':
             update_windown()
@@ -3001,24 +3030,16 @@ tab2.columnconfigure(0, weight=1)
 title_events = customtkinter.CTkLabel(tab2, text='Gerenciar Eventos', text_font=("default_theme","15"))
 title_events.grid(row=0, column=0, columnspan=2, padx=20, pady=(20,10))
 
-events_combox_list = ['Reproduzir Audio','Texto falado google','Mudar cena OBS','Exibir/Ocultar Filtro OBS',
-                      'Exibir/Ocultar Fonte OBS','Atalho no teclado','Resposta no chat','Criar um Clip']
-
-events_combox_label = customtkinter.CTkLabel(tab2, text='Selecione o Evento :', text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-events_combox_label.grid(row=1,column=0,padx=20,pady=10,sticky='W')
-
-events_combox = customtkinter.CTkComboBox(tab2,values=events_combox_list,width=200)
-events_combox.grid(row=1,column=1 ,padx=20, pady=10)
 
 plus_add_image = PhotoImage(file="src/icons/plus-square.png")
 del_image = PhotoImage(file="src/icons/del.png")
 
-create_event_buttom = customtkinter.CTkButton(tab2,image=plus_add_image, text='', width=150, height=150, command=create_event)
-create_event_buttom.grid(row=2,column=0, pady=(20,20))
-tooltip_create_event_buttom = CreateToolTip(create_event_buttom, text = 'Adicionar um evento ( selecione o tipo acima )')
+create_event_buttom = customtkinter.CTkButton(tab2,image=plus_add_image, text='', width=150, height=150, command=new_event_top)
+create_event_buttom.grid(row=2,column=0,padx=(60,25), pady=(20,20))
+tooltip_create_event_buttom = CreateToolTip(create_event_buttom, text = 'Adicionar um evento')
 
 del_event_buttom = customtkinter.CTkButton(tab2,image=del_image, text='', width=150, height=150, command=del_event)
-del_event_buttom.grid(row=2, column=1, pady=(20,20))
+del_event_buttom.grid(row=2, column=1,padx=(25,60), pady=(20,20))
 tooltip_del_event_buttom = CreateToolTip(del_event_buttom, text = 'Remover um evento')
 
 #COMANDOS
@@ -3075,8 +3096,6 @@ tooltip_interval_timer_buttom = CreateToolTip(interval_timer_buttom, text = 'Alt
 
 #CONFIG OBS
 tab5.columnconfigure(0, weight=1)
-
-
 
 config_notifc_image = PhotoImage(file="src/icons/config_notifc.png")
 obs_config = PhotoImage(file="src/icons/obs_config.png")
@@ -3168,7 +3187,7 @@ logo_image_src= ImageTk.PhotoImage(PIL.Image.open("src/about.png").resize((170, 
 logo_image = customtkinter.CTkLabel(tab7, image=logo_image_src)
 logo_image.grid(row=1, column=0,  pady=20)
 
-about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v1.8", text_font=("default_theme", "12"))
+about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.0", text_font=("default_theme", "12"))
 about_name.grid(row=2, column=0, pady=10, padx=20)
 
 dev_name = customtkinter.CTkLabel(tab7, text=f"Dev By GG_TEC", text_font=("default_theme", "12"))
@@ -3180,11 +3199,9 @@ update_check_buttom.grid(row=6, column=0, pady=(30,20))
 con_pubsub()
 update_check()
 
-
-_thread.start_new_thread(timer, (2,))
 _thread.start_new_thread(receive_commands, (3,))
-_thread.start_new_thread(keep_conn_chat, (4,))
-
+_thread.start_new_thread(get_spec, (4,))
+_thread.start_new_thread(keep_conn_chat, (5,))
 
 app.protocol("WM_DELETE_WINDOW", close)
 app.mainloop()

@@ -60,8 +60,9 @@ Siga o passo a passo abaixo para obter todas as informações necessárias para 
 3. Logue na sua conta e autorize o aplicativo para comunicar com a sua conta e coletar as informações necessárias para o funcionamento do aplicativo, as permissões coletadas são exibidas no momento em que é requisitada a autorização.
 
 
-## Passo 4 OBS STUDIO
-- Para comunicarmos com o OBS e modificar as informações precisamos instalar a ferramenta [OBS-WEBSOCKET]
+## Passo 4 OBS STUDIO 
+_É obrigatório estar conectado com o OBS studio para configurar qualquer tipo de evento ou configuração com relação ao OBS studio_
+- Para comunicarmos com o OBS e modificar as informações para isso precisamos instalar a ferramenta [OBS-WEBSOCKET]
 
 1. Instale o [OBS-WEBSOCKET];
 2. Abra o OBS studio, vá até a aba ferramentas e clique em WebSockets Server Settings
@@ -82,55 +83,82 @@ _Selecione no menu de opções qual evento deverá ser criado_
 
 
 ## Reproduzir Audio
-- _Titulo da recompensa_ = O titulo deve ser o idêntico ao da recompensa do canal da twitch
-- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando, não é necesssário utilizar o '!' antes do nome do comando
-- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando
-- __
-- _Arquivo de audio_ = Selecione por meio do botão qual será o arquivo de audio para ser reproduzido quando a recompensa for resgatada.
-- _Tempo da notificação no OBS_ = Quanto tempo a notificação ficará visivel na tela.
+
+- _Recompensa_ = Selecione a recompensa do canal na twitch;
+- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando;
+- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando;
+- _Arquivo de audio_ = Selecione o arquivo de audio para ser reproduzido quando a recompensa for resgatada;
+- _Tempo da notificação no OBS_ = Quanto tempo a notificação ficará visivel na tela;
+- _Resposta no chat_ = Envia a mensagem no chat do canal quando a recompensa for resgatada;
+
 
 ## Texto falado Google
 
-- _Titulo da recompensa_ = O titulo deve ser o idêntico ao da recompensa do canal da twitch
-- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando, não é necesssário utilizar o '!' antes do nome do - comando
-- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando
+- _Titulo da recompensa_ = Selecione a recompensa do canal na twitch;
+- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando;
+- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando;
+- _Limite de letras_ = Limite de letras para evitar flood;
+- _Tempo da notificação no obs_ = Quanto tempo a notificação ficará visivel na tela;
+- _Resposta no chat_ = Envia a mensagem no chat do canal quando a recompensa for resgatada;
+
 
 ## Mudar cena OBS
-## Exibit/ocultar Filtro OBS
-- _Titulo da recompensa_ = O titulo deve ser o idêntico ao da recompensa do canal da twitch
-- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando, não é necesssário utilizar o '!' antes do nome do comando
-- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando
+
+- _Recompensa_ = Selecione a recompensa do canal na twitch;
+- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando;
+- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando;
 - _Cena Atual_ = Deve ser a cena que está ativa no OBS studio
 - _Mudar para a cena_ = Deve ser a cena que será ativa no momento do resgate
-- _Tempo para voltar para a cena anterior_ = O tempo deve ser em segundos ex.:15
+- _Retornar para a cena anterior_ = Defina se o programa deve retornar para a _Cena Atual_ selecionada;
+- _Tempo para voltar para a cena anterior_ = O tempo deve ser em segundos ex.:15;
+- _Resposta no chat_ = Envia a mensagem no chat do canal quando a recompensa for resgatada;
 
 
-## Atalho no teclado
-- _Titulo da recompensa_ = O titulo deve ser o idêntico ao da recompensa do canal da twitch
-- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando, não é necesssário utilizar o '!' antes do nome do comando
-- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando
-- _Tempo para pressionar novamente_ = O tempo deve ser em segundos ex.:15
-- _Selecione as teclas_ = Selecione as teclas para serem pressionadas na ordem correta
+## Exibit/ocultar Filtro OBS
+
+- _Recompensa_ = Selecione a recompensa do canal na twitch;
+- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando;
+- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando;
+- _Nome da fonte do OBS_ = Seleciona a fonte que deve ter o filtro alterado;
+- _Nome do filtro presente na fonte_ = Selecione o nome do filtro que está configurado na fonte do OBS;
+- _Tempo com o filtro ativo_ = Quanto tempo o filtro deverá ficar ativo no OBS;
+- _Resposta no chat_ = Envia a mensagem no chat do canal quando a recompensa for resgatada;
 
 
 ## Exibir/ocultar fonte OBS
-- _Titulo da recompensa_ = O titulo deve ser o idêntico ao da recompensa do canal da twitch
-- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando, não é necesssário utilizar o '!' antes do nome do comando
-- _Nome da fonte no OBS_ = É o nome da fonte/source que será exibido/ocultado
-- _Tempo exibindo_ = É o tempo que a fonte ficará visível na tela
+
+- _Recompensa_ = Selecione a recompensa do canal na twitch;
+- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando;
+- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando;
+- _Nome da fonte no OBS_ = Selecione a fonte que deverá ser Exbida/Oculta;
+- _Tempo exibindo_ = É o tempo que a fonte ficará visível na tela;
+- _Resposta no chat_ = Envia a mensagem no chat do canal quando a recompensa for resgatada;
+
+
+## Atalho no teclado
+
+- _Recompensa_ = Selecione a recompensa do canal na twitch;
+- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando;
+- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando;
+- _Pressionar a tecla novamente depois do tempo_ = Selecione se deseja que a tecla seja pressionada novamente, util com atalhos para ativar/desativar funções em programas;
+- _Tempo para pressionar novamente_ = O tempo deve ser em segundos ex.:15;
+- _Selecione as teclas_ = Selecione as teclas para serem pressionadas na ordem correta;
+- _Resposta no chat_ = Envia a mensagem no chat do canal quando a recompensa for resgatada;
 
 
 ## Resposta no chat
-- _Titulo da recompensa_ = O titulo deve ser o idêntico ao da recompensa do canal da twitch
-- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando, não é necesssário utilizar o '!' antes do nome do comando
-- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando
-- _Mensagem no Chat_ = Qual mensagem deverá ser exibida no resgate
+
+- _Recompensa_ = Selecione a recompensa do canal na twitch;
+- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando;
+- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando;
+- _Mensagem no Chat_ = Qual mensagem deverá ser enviada no resgate;
 
 
 ## Criar um Clip
-- _Titulo da recompensa_ = O titulo deve ser o idêntico ao da recompensa do canal da twitch
-- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando, não é necesssário utilizar o '!' antes do nome do comando
-- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando
+
+- _Recompensa_ = Selecione a recompensa do canal na twitch;
+- _Comando para o chat_ = Esse campo é opcional, use se quiser que seja possivel executar o evento com um comando;
+- _Somente moderador pode usar o comando ?_ = Marcando essa opção faz com que somente moderador ou o próprio streamer utilize o comando;
 
 
 ## Excluir um evento
@@ -139,20 +167,24 @@ _Selecione no menu de opções qual evento deverá ser criado_
 ## Na aba superior COMANDOS é possível gerenciar os comandos simples
 
 ### Criar um comando simples
-- _Comando sem (!)_ = Cria um comando simples, não é necessário utilizar o ! antes da mensagem;
+
+- _Comando_ = Cria um comando simples (UTILIZE O PREFIXO QUE PREFERIR EX = !,?,@,#," OU ATÉ MESMO SEM PREFIXO E SOMENTE A PALAVRA);
 - _Mensagem no chat_ = Qual mensagem no chat o comando irá enviar;
 - _Somente moderador_ = Marcando essa opção faz que somente moderador ou o streamer possam utilizar o comando;
 
 ### Editar um comando simples
+
 - _Comando_ = Qual comando deve ter o conteúdo editdado
 - _Conteúdo da resposta_ = Insira a nova resposta
 - _Somente moderador pode usar o comando ?_ = Marcando essa opção faz que somente moderador ou o streamer possam utilizar o comando;
 
 ### Editar delay para comandos
+
 - _Editar delay para comandos gerais_ = Insira um valor em segundos para o delay entre os comandos.
 - _Editar delay para !tts_ = Insira um valor em segundos para o delay de comandos !tts.
 
 ### Excluir um comando
+
 - _Selecione o comando_ = Selecione qual comando deseja excluir.
 
 ## Timers
@@ -177,29 +209,33 @@ Na aba superior TIMERS é possível gerenciar as mensagens automáticas no chat
 
 ## Configurações
 ## Na aba configurações é possivel configurar =
+
 - conexão com o OBS studio;
 - Notificações enviadas ao obs studio por meio de fontes de texto quando uma recompensa for resgatada;
 - Quais tipos de mensagens o bot poderá enviar no chat e habilitar ou desabilitar comandos;
 
 ### Configurar conexão com o OBS studio
+
 - _OBS HOST_ = Insira o mesmo valor que se encontra na configuração do OBS studio Websocket;
 - _OBS PORT _ = Insira o mesmo valor que se encontra na configuração do OBS studio Websocket;
 - _OBS PASSWORD_ = Insira o mesmo valor que se encontra na configuração do OBS studio Websocket;
 - _Conectar automaticamente ao iniciar_ = Marcando essa caixa faz que o RewardEvents se conecte automaticamente ao OBS studio quando iniciar, sem essa opção marcada será necessário conectar manualmente;
 
 ### Configurar notificações no OBS studio
-- _Nome do grupo_ = Insira o nome do grupo no OBS studio que contem as fontes de texto, isso servirá para exbir e esconder os textos ao receber uma notificação;
-- _Titulo da recompensa_ = Insira o nome da fonte de texto do OBS que irá receber o nome da recompensa;
-- _Usuário que resgatou_ = Insira o nome da fotne de texto do OBS que irá receber o nome do usuário que resgatou a recompensa;
+
+- _Nome do grupo_ = Selecione o nome do grupo no OBS studio que contem as fontes de texto, isso servirá para exbir e esconder os textos ao receber uma notificação;
+- _Titulo da recompensa_ = Selecione o nome da fonte de texto do OBS que irá receber o nome da recompensa;
+- _Usuário que resgatou_ = Selecione o nome da fotne de texto do OBS que irá receber o nome do usuário que resgatou a recompensa;
 
 ### Status de comandos e mensagens/respostas
--_Habilitar comando !tts ?_ = Marcando essa opção habilita o comando !tts;
--_Habilitar comandos ?_ = Marcando essa opção habilita todos os comandos menos o !tts;
--_Ativar respostas de comandos?_ =  Marcando essa opção habilita as respostas no chat de todos os comandos;
--_Exibir delay para comandos ?_ = Marcando essa opção habilita a resposta de delay caso um usuário tente enviar o comando antes do tempo;
--_Exibir confirmações/erros de clipes ?_ = Marcando essa opção habilita as respostas de clipes utilizando comandos, resgates de recompensa e/ou botão na interface;
--_Exbir erro de permissão para comandos ?_ = Marcando essa opção habilita a mensagem de erro quando um usuário tentar utilizar um comando que não tem permissão;
--_Ativar timer ?_ = Ativa as mensagens automaticas no chat;
+- _Habilitar comando !tts ?_ = Marcando essa opção habilita o comando !tts;
+- _Habilitar comandos ?_ = Marcando essa opção habilita todos os comandos menos o !tts;
+- _Ativar respostas de comandos?_ =  Marcando essa opção habilita as respostas no chat de todos os comandos;
+- _Exibir delay para comandos ?_ = Marcando essa opção habilita a resposta de delay caso um usuário tente enviar o comando antes do tempo;
+- _Exibir confirmações/erros de clipes ?_ = Marcando essa opção habilita as respostas de clipes utilizando comandos, resgates de recompensa e/ou botão na interface;
+- _Exbir erro de permissão para comandos ?_ = Marcando essa opção habilita a mensagem de erro quando um usuário tentar utilizar um comando que não tem permissão;
+- _Ativar timer ?_ = Ativa as mensagens automaticas no chat;
+- _Status de conexão no chat :_ = Envia uma mensagem quando o sistema de comandos for conectado ao chat;
 
 
 <div align="left">
