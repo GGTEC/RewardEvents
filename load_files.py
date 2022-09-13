@@ -139,13 +139,13 @@ def check_files():
     else:
         timer_data_load = open('src/config/timer.json' , 'r', encoding='utf-8')
         timer_data_loads = json.load(timer_data_load) 
-        time_list = {"TIME","TIME_MAX","ENABLE","MESSAGES"}
+        time_list = {"TIME","TIME_MAX","LAST","MESSAGES"}
         
         if not all(key in timer_data_loads for key in time_list): 
             timer_data = {
-                "TIME": "120",
-                "TIME_MAX": "120",
-                "ENABLE": "0",
+                "TIME": 20,
+                "TIME_MAX": 120,
+                "LAST": "",
                 "MESSAGES": {}
                 }
         

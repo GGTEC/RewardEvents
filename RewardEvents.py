@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from ast import If
 import json
 import time
 import customtkinter
@@ -19,6 +18,7 @@ import wget
 import check_delay_file
 import textwrap
 import smt
+import timer_module
 from load_files import check_files
 from tooltiptkinter import CreateToolTip
 from math import trunc
@@ -35,6 +35,16 @@ from tkinter import filedialog as fd
 from ttkthemes import ThemedStyle
 from obswebsocket import obsws, requests
 from twitchAPI.twitch import Twitch, AuthScope
+
+
+def keep_conn_chat(tid):
+    
+    while True:
+        smt.conect_chat()
+        time.sleep(120)
+        
+_thread.start_new_thread(keep_conn_chat, (5,))   
+
 
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("dark-blue")
@@ -96,11 +106,12 @@ class Obsconect:
         try:
             self.ws = obsws(obs_host_data_atual, obs_port_int, obs_password_data_atual)
             self.ws.connect()
-            status_obs.configure(text=f"Conectado!")
+            status_obs.configure(text=f"Conectado")
             
             self.conn_status = '1'
         except:
-            self.conn_status = '0'   
+            self.conn_status = '0'
+            status_obs.configure(text=f"Desconectado")   
             
     def show_filter(self,source_name,filter_name,time_show_int):
         
@@ -237,23 +248,17 @@ def get_spec(tid):
             else:
                 count = data_count['data'][0]['viewer_count']
                 view_count.configure(text=f'Spec : {count}')
-                        
+                  
         else:
             view_count.configure(text=f'Spec : Offline') 
-            
-        time.sleep(120)
-
-def keep_conn_chat(tid):
-    
-    while True:
-        conn_chat_status = smt.conect_chat()
         
-        if conn_chat_status == True:
+        if smt.value == True:
             status_send_label.configure(text='Conectado')
         else:
-            status_send_label.configure(text='Desconectado')
+            status_send_label.configure(text='Desconectado')  
+            
         time.sleep(120)
-                    
+                 
 def receive_redeem(data_rewards,received_type):
     
     USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
@@ -543,9 +548,10 @@ def receive_redeem(data_rewards,received_type):
     }
     
     if TOKEN and TOKENBOT:
-        redem_type = path[redem_reward_name]['TYPE']
-        if redem_type in eventos:
-            eventos[redem_type]()
+        if redem_reward_name in path.keys():
+            redem_type = path[redem_reward_name]['TYPE']
+            if redem_type in eventos:
+                eventos[redem_type]()
     
 def new_event_top():
     
@@ -3163,7 +3169,7 @@ status_obs_label = customtkinter.CTkLabel(tab6, text=f"Conexão com OBS Studio:"
 status_obs_label.grid(row=8, column=0, pady=2, padx=20, sticky='w')
 
 status_obs = customtkinter.CTkLabel(tab6,width=100, text=f"", text_font=("default_theme", "11"))
-status_obs.grid(row=8, column=1, pady=2,padx=(0,10),sticky='e')
+status_obs.grid(row=8, column=1, pady=2, padx=5, sticky='e')
 
 deslogar = customtkinter.CTkButton(tab6, text='Limpar dados', command=clear_data)
 deslogar.grid(row=9, column=0, padx=20,pady=30)
@@ -3201,7 +3207,7 @@ update_check()
 
 _thread.start_new_thread(receive_commands, (3,))
 _thread.start_new_thread(get_spec, (4,))
-_thread.start_new_thread(keep_conn_chat, (5,))
+_thread.start_new_thread(timer_module.timer, (2,))
 
 app.protocol("WM_DELETE_WINDOW", close)
 app.mainloop()
