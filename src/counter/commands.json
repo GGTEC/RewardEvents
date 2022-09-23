@@ -1,0 +1,5 @@
+{
+    "reset_counter": "!r_deaths", 
+    "set_counter": "!a_deaths", 
+    "check_counter": "!deaths"
+}

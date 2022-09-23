@@ -1,0 +1,20 @@
+{
+    "response_reset_counter" : "/me Contador de mortes reiniciado.",
+    "response_set_counter" : "/me Contador de mortes aplicado para {value}.",
+    "response_counter" : "/me O contador de mortes está em {value}.",
+    "response_delay_error" : "/me Regarregando, aguarde {seconds} segundos...",
+    "clip_create_clip" : "/me Um novo clip foi criado por = {user}, confira! https://clips.twitch.tv/{clip_id}",
+    "clip_buttom_create_clip" : "/me Um novo clip foi criado , confira! https://clips.twitch.tv/{clip_id}",
+    "clip_error_clip" : "/me Erro ao criar o clip",
+    "error_tts_disabled": "/me O comando '!tts' está desativado.",
+    "error_user_level" : "/me Somente usuários com permissão {user_level_simple} podem usar !{command}.",
+    "response_user_giveway" : "/me O usuário {user} está na lista do sorteio.",
+    "response_nouser_giveway" : "/me Não encontrei o usuário {user} na lista do sorteio.",
+    "giveway_response_win": "/me Parabens {name} você ganhou o sorteio.",
+    "response_giveway_disabled": "/me Nenhum sorteio no momento.",
+    "giveway_response_user_add" : "/me O usuário {user} foi adicionado no sorteio.",
+    "giveway_status_enable" : "/me Um sorteio ('{giveway_name_data}') foi iniciado, resgate a recompensa para entrar.",
+    "giveway_status_disable" : "/me O sorteio ('{giveway_name_data}') foi pausado/desativado.",
+    "command_module_status" : "/me Módulo para comandos conectado...",
+    "commands_disabled" : "/me Os comandos estão desativados" 
+}

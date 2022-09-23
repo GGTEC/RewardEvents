@@ -1,9 +1,8 @@
 {
-    "command": "!tts",
-    "status": 1,
+    "command": "",
     "redeem": "",
-    "caracters": "60",
+    "caracters": "300",
     "user_level": "",
-    "delay_date": "",
-    "delay_config": ""
+    "delay_date": "22/09/2022 16:33:55",
+    "delay_config": "60"
 }

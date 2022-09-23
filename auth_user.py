@@ -33,6 +33,8 @@ class Webview_Auth:
     def get_current_url(self,window):
         window.load_url(OAUTH_URI)
 
+    def destroy(window):
+        window.destroy()
 
     def save_access_token(self,access_token):
         
@@ -82,7 +84,8 @@ class Webview_Auth:
                                     "<div class='card card-block w-50 mx-auto text-center' style='background-color: #4b1a6a;color:azure'>\n"
                                     "<div class='card-body'>\n<h1 class='card-title'>Sucesso!</h5>\n<p class='card-text'>Pode fechar esta pagina.</p>\n"
                                     "</div>\n</div>\n</div>\n</div>\n</div>\n</body>\n</html>")
-            
+                                    
+            self.destroy(self.window)
         except:
             pass
 

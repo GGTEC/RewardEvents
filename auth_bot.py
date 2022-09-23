@@ -15,7 +15,7 @@ OAUTH_URI = TWITCH_PREFIX + "oauth2/authorize?response_type=token&force_verify=t
 
 class Webview_Auth:
     def __init__(self):
-        self.window = webview.create_window('OAuth', '')
+        self.window = webview.create_window('OAuth', '',on_top=True)
         self.window.events.loaded += self.on_loaded
         webview.start(self.get_current_url, self.window)
     
@@ -30,6 +30,9 @@ class Webview_Auth:
                 
     def get_current_url(self,window):
         window.load_url(OAUTH_URI)
+
+    def destroy(window):
+        window.destroy()
 
     def save_access_token(self,access_token):
         
@@ -52,7 +55,6 @@ class Webview_Auth:
             out_file = open("src/auth/auth.json", "w") 
             json.dump(data, out_file, indent = 6)  
             out_file.close()
-            self.window.destroy()
             
             self.window.load_html("<!DOCTYPE html>\n"
                         "<html lang='pt'>\n"
@@ -73,6 +75,8 @@ class Webview_Auth:
                         "<div class='card card-block w-50 mx-auto text-center' style='background-color: #4b1a6a;color:azure'>\n"
                         "<div class='card-body'>\n<h1 class='card-title'>Sucesso!</h5>\n<p class='card-text'>Pode fechar esta pagina.</p>\n"
                         "</div>\n</div>\n</div>\n</div>\n</div>\n</body>\n</html>")
+
+            self.destroy(self.window)
         except:
             pass
 
