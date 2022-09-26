@@ -223,9 +223,9 @@ Na aba superior TIMERS é possível gerenciar as mensagens automáticas no chat
 
 ### Configurar notificações no OBS studio
 
-- _Nome do grupo_ = Selecione o nome do grupo no OBS studio que contem as fontes de texto, isso servirá para exbir e esconder os textos ao receber uma notificação;
-- _Titulo da recompensa_ = Selecione o nome da fonte de texto do OBS que irá receber o nome da recompensa;
-- _Usuário que resgatou_ = Selecione o nome da fotne de texto do OBS que irá receber o nome do usuário que resgatou a recompensa;
+- _Ativar notificações HTML ?_ = Ativar as notificações quando qualquer evento for resgatado.
+- _Fonte HTML OBS_ = Selecione a fonte no OBS Studio que contem o arquivo HTML devidamente configurado.
+- _Tempo exibindo notificações_ = Quanto tempo a notificação deverá ficar visível na tela.
 
 ### Status de comandos e mensagens/respostas
 - _Habilitar comando !tts ?_ = Marcando essa opção habilita o comando !tts;
