@@ -1,7 +1,6 @@
 {
-    "TIME": 300,
-    "TIME_MAX": 600,
+    "TIME": "120",
+    "TIME_MAX": "120",
     "LAST": "",
-    "MESSAGES": {
-    }
+    "MESSAGES": {}
 }

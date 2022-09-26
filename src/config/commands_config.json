@@ -6,7 +6,7 @@
     "STATUS_CLIP": 1,
     "STATUS_TTS": 1,
     "STATUS_TIMER": 1,
-    "STATUS_BOT": 1,
-    "delay_date": "22/09/2022 15:58:29",
-    "delay_config": "5"
+    "STATUS_BOT": 0,
+    "delay_date": "25/09/2022 12:38:57",
+    "delay_config": "60"
 }

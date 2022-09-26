@@ -1,0 +1,7 @@
+{
+    "execute_giveaway": "!sortear",
+    "clear_giveaway": "!limparsorteio",
+    "check_name": "!checksorteio",
+    "check_self_name": "!estounosorteio",
+    "add_user": "!add_sorteio"
+}

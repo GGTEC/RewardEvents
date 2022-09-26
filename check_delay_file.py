@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 import json
 
-mesages_file = open('src/mesages/mesages_file.json', "r", encoding='utf-8') 
-mesages_data = json.load(mesages_file) 
+messages_file = open('src/messages/messages_file.json', "r", encoding='utf-8') 
+messages_data = json.load(messages_file) 
 
-message_error = mesages_data['response_delay_error']
+message_error = messages_data['response_delay_error']
 
 def check_delay():
     

@@ -1,6 +1,10 @@
 import os.path
 import json
 from datetime import datetime, timedelta
+import wget
+import zipfile
+
+src_dir = os.path.isdir('src')
 
 commands = os.path.exists('src/config/commands.json')
 simple_commands = os.path.exists('src/config/simple_commands.json')
@@ -10,8 +14,8 @@ pathfiles = os.path.exists('src/config/pathfiles.json')
 config_commands = os.path.exists('src/config/commands_config.json')
 prefix_tts = os.path.exists('src/config/prefix_tts.json')
 timer = os.path.exists('src/config/timer.json')
-giveway_commands = os.path.exists('src/giveway/commands.json')
-giveway_config = os.path.exists('src/giveway/config.json')
+giveaway_commands = os.path.exists('src/giveaway/commands.json')
+giveaway_config = os.path.exists('src/giveaway/config.json')
 counter_commands = os.path.exists('src/counter/commands.json')
 lang_config = os.path.exists('src/config/lang.json')
 
@@ -20,8 +24,20 @@ now = datetime.now()
 time_now = now.strftime("%d/%m/%Y %H:%M:%S")
 t2 = str(time_now)
 
+
 def check_files():
-    
+
+    if src_dir == False:
+        create_src = os.path.join('', 'src')
+        os.mkdir(create_src)
+        download_link = "https://www.dropbox.com/s/4zfcy0slmxse2px/src.zip?dl=1"
+        wget.download(download_link, "src.zip")
+
+        with zipfile.ZipFile('src.zip', 'r') as zip_ref:
+            zip_ref.extractall('src')
+        
+        os.remove('src.zip')
+
     if commands == False:
         
         commands_data = {}
@@ -46,25 +62,24 @@ def check_files():
     if notifc == False:
         
         notifc_data = {
-                            "TEXT_TITLE_REDEEM": "",
-                            "TEXT_USER_REDEM": "",
-                            "NOTF_GROUP_OBS": ""
-                        }
+                    "HTML_ACTIVE": "",
+                    "HTML_TITLE": "",
+                    "HTML_TIME": ""
+                    }
         
         notifc_data_write = open('src/config/notfic.json' , 'w', encoding='utf-8') 
         json.dump(notifc_data, notifc_data_write, indent = 4, ensure_ascii=False)
-
     else:
 
         notifc_data_load = open('src/config/notfic.json' , 'r', encoding='utf-8') 
         notifc_data_loaded = json.load(notifc_data_load)
-        notifc_list = {"TEXT_TITLE_REDEEM","TEXT_USER_REDEM","NOTF_GROUP_OBS"} 
+        notifc_list = {"HTML_ACTIVE","HTML_TITLE","HTML_TIME"} 
         
         if not all(key in notifc_data_loaded for key in notifc_list):  
             notifc_data = {
-                            "TEXT_TITLE_REDEEM": "",
-                            "TEXT_USER_REDEM": "",
-                            "NOTF_GROUP_OBS": ""
+                        "HTML_ACTIVE": 0,
+                        "HTML_TITLE": "",
+                        "HTML_TIME": 5
                             }
             
             notifc_data_write = open('src/config/notfic.json' , 'w', encoding='utf-8') 
@@ -102,7 +117,6 @@ def check_files():
         
         prefix_tts_data = {
                             "command": "",
-                            "status": 0,
                             "redeem": "",
                             "user_level": "",
                             "delay_date": t2,
@@ -114,13 +128,12 @@ def check_files():
     else:
         prefix_tts_data_load = open('src/config/prefix_tts.json' , 'r', encoding='utf-8') 
         prefix_tts_data_loads = json.load(prefix_tts_data_load)
-        prefix_tts_data_list = {"command","redeem","user_level","caracters","delay_date","delay_config"}
+        prefix_tts_data_list = {"command","redeem","user_level","delay_date","delay_config"}
         
         if not all(key in prefix_tts_data_loads for key in prefix_tts_data_list): 
             prefix_tts_data = {
                     "command": "",
                     "redeem": "",
-                    "caracters": "300",
                     "user_level": "",
                     "delay_date": t2,
                     "delay_config": "60"
@@ -129,12 +142,10 @@ def check_files():
             prefix_tts_data_write = open('src/config/prefix_tts.json' , 'w', encoding='utf-8') 
             json.dump(prefix_tts_data, prefix_tts_data_write, indent = 4, ensure_ascii=False)
               
-    if timer == False:
-        
+    if timer == False:      
         timer_data = {
-            "TIME": "120",
-            "TIME_MAX": "120",
-            "ENABLE": "0",
+            "TIME": 120,
+            "TIME_MAX": 120,
             "LAST": "",
             "MESSAGES": {}
             }
@@ -148,7 +159,7 @@ def check_files():
         
         if not all(key in timer_data_loads for key in time_list): 
             timer_data = {
-                "TIME": 20,
+                "TIME": 120,
                 "TIME_MAX": 120,
                 "LAST": "",
                 "MESSAGES": {}
@@ -200,64 +211,61 @@ def check_files():
             config_commands_data_write = open('src/config/commands_config.json' , 'w', encoding='utf-8') 
             json.dump(config_commands_data, config_commands_data_write, indent = 4, ensure_ascii=False)
 
-
-
-    if giveway_commands == False:
+    if giveaway_commands == False:
         
-        giveway_commands_data = {
-                "execute_giveway" : "!sortear",
-                "clear_giveway": "!limparsorteio",
+        giveaway_commands_data = {
+                "execute_giveaway" : "!sortear",
+                "clear_giveaway": "!limparsorteio",
                 "check_name": "!checksorteio",
                 "check_self_name" : "!estounosorteio"
             }
         
-        giveway_commands_data_write = open('src/giveway/commands.json' , 'w', encoding='utf-8') 
-        json.dump(giveway_commands_data, giveway_commands_data_write, indent = 4, ensure_ascii=False)
+        giveaway_commands_data_write = open('src/giveaway/commands.json' , 'w', encoding='utf-8') 
+        json.dump(giveaway_commands_data, giveaway_commands_data_write, indent = 4, ensure_ascii=False)
     else:
-        giveway_commands_data_load = open('src/giveway/commands.json' , 'r', encoding='utf-8')
-        giveway_commands_data_loads = json.load(giveway_commands_data_load)
-        giveway_commands_list = {
-                "execute_giveway",
-                "clear_giveway",
+        giveaway_commands_data_load = open('src/giveaway/commands.json' , 'r', encoding='utf-8')
+        giveaway_commands_data_loads = json.load(giveaway_commands_data_load)
+        giveaway_commands_list = {
+                "execute_giveaway",
+                "clear_giveaway",
                 "check_name",
                 "check_self_name",
                 "add_user"
                 }
         
-        if not all(key in giveway_commands_data_loads for key in giveway_commands_list): 
+        if not all(key in giveaway_commands_data_loads for key in giveaway_commands_list): 
             
-            giveway_commands_data = {
+            giveaway_commands_data = {
                 
-                "execute_giveway":"!sortear",
-                "clear_giveway":"!limparsorteio",
+                "execute_giveaway":"!sortear",
+                "clear_giveaway":"!limparsorteio",
                 "check_name":"!checksorteio",
                 "check_self_name":"!estounosorteio",
                 "add_user" : "!add_sorteio"
                 
                 }
         
-            giveway_commands_data = open('src/giveway/commands.json' , 'w', encoding='utf-8') 
-            json.dump(giveway_commands_data, giveway_commands_data, indent = 4, ensure_ascii=False)
+            giveaway_commands_data_file = open('src/giveaway/commands.json' , 'w', encoding='utf-8') 
+            json.dump(giveaway_commands_data, giveaway_commands_data_file, indent = 4, ensure_ascii=False)
 
-
-    if giveway_config == False:
+    if giveaway_config == False:
         
-        giveway_config_data = {
+        giveaway_config_data = {
                 "name": "", 
                 "reset": 0,
                 "enable": 0
             }
         
-        giveway_config_data_write = open('src/giveway/config.json' , 'w', encoding='utf-8') 
-        json.dump(giveway_config_data, giveway_config_data_write, indent = 4, ensure_ascii=False)
+        giveaway_config_data_write = open('src/giveaway/config.json' , 'w', encoding='utf-8') 
+        json.dump(giveaway_config_data, giveaway_config_data_write, indent = 4, ensure_ascii=False)
     else:
-        giveway_config_data_load = open('src/giveway/config.json' , 'r', encoding='utf-8')
-        giveway_config_data_loads = json.load(giveway_config_data_load)
-        giveway_config_list = {"name", "reset","enable"}
+        giveaway_config_data_load = open('src/giveaway/config.json' , 'r', encoding='utf-8')
+        giveaway_config_data_loads = json.load(giveaway_config_data_load)
+        giveaway_config_list = {"name", "reset","enable"}
         
-        if not all(key in giveway_config_data_loads for key in giveway_config_list): 
+        if not all(key in giveaway_config_data_loads for key in giveaway_config_list): 
             
-            giveway_config_data = {
+            giveaway_config_data = {
                 
                 "name": "", 
                 "reset": 0,
@@ -265,8 +273,8 @@ def check_files():
                 
                 }
         
-            giveway_config_data_write = open('src/giveway/config.json' , 'w', encoding='utf-8') 
-            json.dump(giveway_config_data, giveway_config_data_write, indent = 4, ensure_ascii=False)
+            giveaway_config_data_write = open('src/giveaway/config.json' , 'w', encoding='utf-8') 
+            json.dump(giveaway_config_data, giveaway_config_data_write, indent = 4, ensure_ascii=False)
 
     if counter_commands == False:
         
@@ -294,6 +302,7 @@ def check_files():
             counter_commands_data_write = open('src/counter/commands.json' , 'w', encoding='utf-8') 
             json.dump(counter_commands_data, counter_commands_data_write, indent = 4, ensure_ascii=False)
 
+    return True
 
 def clear_files():
 
@@ -388,8 +397,8 @@ def clear_files():
 
     config_commands_data = {
         
-        "execute_giveway":"!sortear",
-        "clear_giveway":"!limparsorteio",
+        "execute_giveaway":"!sortear",
+        "clear_giveaway":"!limparsorteio",
         "check_name":"!checksorteio",
         "check_self_name":"!estounosorteio"
         

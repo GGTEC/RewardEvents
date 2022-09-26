@@ -1,44 +1,52 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
-import time
-import tkinter
-import customtkinter
-import os
-import auth
-import apitoken
-import keyboard
-import pygame
-import PIL.Image
-import _thread
-import requests as req
-import auth_user
-import auth_bot
-import subprocess
-import wget
-import check_delay_file
-import textwrap
-import smt
-import timer_module
-from random import randint
 from load_files import check_files
-from load_files import clear_files
-from tooltiptkinter import CreateToolTip
-from math import trunc
-from gtts import gTTS
-from PIL import ImageTk
-from requests.structures import CaseInsensitiveDict
-from twitchAPI.pubsub import PubSub
-from uuid import UUID
-from tkinter import *
-from tkinter import PhotoImage
-from tkinter import messagebox
-from tkinter import ttk
-from tkinter import filedialog as fd
-from ttkthemes import ThemedStyle
-from obswebsocket import obsws, requests
-from twitchAPI.twitch import Twitch, AuthScope
+import pyi_splash
+if check_files() == True:
+    import json
+    from sqlite3 import Time
+    import time
+    import tkinter
+    import customtkinter
+    import os
+    import auth
+    import apitoken
+    import keyboard
+    import pygame
+    import PIL.Image
+    import _thread
+    import requests as req
+    import auth_user
+    import auth_bot
+    import subprocess
+    import wget
+    import check_delay_file
+    import textwrap
+    import smt
+    import timer_module
+    import html_edit
+    from random import randint
+    from load_files import clear_files
+    from tooltiptkinter import CreateToolTip
+    from math import trunc
+    from gtts import gTTS
+    from PIL import ImageTk
+    from requests.structures import CaseInsensitiveDict
+    from twitchAPI.pubsub import PubSub
+    from uuid import UUID
+    from tkinter import *
+    from tkinter import PhotoImage
+    from tkinter import messagebox
+    from tkinter import ttk
+    from tkinter import filedialog as fd
+    from ttkthemes import ThemedStyle
+    from obswebsocket import obsws, requests
+    from twitchAPI.twitch import Twitch, AuthScope
+else:
+    import os
+    pyi_splash.close()
+    os._exit(1)
 
 
 def keep_conn_chat(tid):
@@ -59,7 +67,6 @@ def keep_conn_chat(tid):
         
 _thread.start_new_thread(keep_conn_chat, (5,))   
 
-
 lang_config_file = open('src/config/lang.json', 'r', encoding='utf-8')
 lang_config_data = json.load(lang_config_file)
 
@@ -67,7 +74,6 @@ lang_selected = lang_config_data['lang']
 
 lang_file = open(f'src/lang/{lang_selected}.json', 'r', encoding='utf-8')
 lang_data = json.load(lang_file)
-
 
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("dark-blue")
@@ -119,8 +125,8 @@ frame.add(tab7, text = lang_data['about'])
 path_text = customtkinter.StringVar()
 count_tts = 0
 
-mesages_file = open('src/mesages/mesages_file.json', "r", encoding='utf-8') 
-mesages_data = json.load(mesages_file)   
+messages_file = open('src/messages/messages_file.json', "r", encoding='utf-8') 
+messages_data = json.load(messages_file)   
 
 class Obsconect:
     def __init__(self):
@@ -129,7 +135,7 @@ class Obsconect:
         self.conn_status = '0'
         self.sources_list = None
 
-    def conect_obs(self):
+    def connect_obs(self):
 
         out_file_obs_atual = open("src/config/obs.json")
         data_obs_atual = json.load(out_file_obs_atual)
@@ -142,13 +148,12 @@ class Obsconect:
         try:
             self.ws = obsws(obs_host_data_atual, obs_port_int, obs_password_data_atual)
             self.ws.connect()
-            status_obs.configure(text=lang_data['conected'])
+            status_obs.configure(text=lang_data['connected'])
             self.conn_status = '1'
 
         except:
             self.conn_status = '0'
-            status_obs.configure(text=lang_data['disconected'])   
-
+            status_obs.configure(text=lang_data['disconnected'])   
             
     def show_filter(self,source_name,filter_name,time_show_int):
         
@@ -169,27 +174,28 @@ class Obsconect:
             else:
                 self.ws.call(requests.SetCurrentScene(scene_name))
             
-    def show_notifc(self,redem_reward_name,redem_by_user,int_time_show):
-        
+    def show_notifc_html(self):
+
         not_file = open('src/config/notfic.json') 
         not_data = json.load(not_file)
         
-        text_request_title= not_data["TEXT_TITLE_REDEEM"]
-        text_user_name = not_data["TEXT_USER_REDEM"]
-        group_obs = not_data["NOTF_GROUP_OBS"]
-        
+        html_source_title = not_data["HTML_TITLE"]
+        html_source_time = not_data["HTML_TIME"]
+        html_active = not_data["HTML_ACTIVE"]
+
+        def notifc_thread(tid):
+
+            self.ws.call(requests.SetSceneItemProperties(html_source_title,visible= True))
+
+            time.sleep(html_source_time)
+
+            self.ws.call(requests.SetSceneItemProperties(html_source_title,visible= False))
+
+
         if self.conn_status == "1":
-
-            self.ws.call(requests.SetTextGDIPlusProperties(text_request_title,text=redem_reward_name))
-            self.ws.call(requests.SetTextGDIPlusProperties(text_user_name,text=redem_by_user))
-            self.ws.call(requests.SetSceneItemProperties(group_obs,visible= True))
-
-            time.sleep(int_time_show)
-
-            self.ws.call(requests.SetSceneItemProperties(group_obs,visible= False))
-            self.ws.call(requests.SetTextGDIPlusProperties(text_user_name,text=lang_data['waiting']))
-            self.ws.call(requests.SetTextGDIPlusProperties(text_request_title,text=lang_data['waiting']))
-        
+                if html_active == 1:
+                    _thread.start_new_thread(notifc_thread, (7,))
+          
     def show_source(self,source_name,time_show_int):
         
         if self.conn_status == "1":
@@ -247,8 +253,6 @@ class Obsconect:
         return filter_source_list
     
 obs_con = Obsconect()
-
-check_files()
                 
 def run_cmd(command):
     subprocess.call(command, creationflags=0x08000000)
@@ -292,13 +296,13 @@ def get_spec(tid):
                 view_count.configure(text=f'{spec} : {count}')
 
             if smt.value == True:
-                status_send_label.configure(text= lang_data['conected'])
+                status_send_label.configure(text= lang_data['connected'])
             else:
-                status_send_label.configure(text= lang_data['disconected'])  
+                status_send_label.configure(text= lang_data['disconnected'])  
                   
         else:
             view_count.configure(text=f" {lang_data['spectators_label']} : {lang_data['spectators_off']}")
-            status_send_label.configure(text= lang_data['disconected'])  
+            status_send_label.configure(text= lang_data['disconnected'])  
         
             
         time.sleep(120)
@@ -313,8 +317,8 @@ def receive_redeem(data_rewards,received_type):
             if digit.isdigit():    
                 counter = int(digit)
                 
-    redem_reward_name = '0'
-    redem_by_user = '0'
+    redeem_reward_name = '0'
+    redeem_by_user = '0'
     user_input = '0'
     user_level =  '0'
     user_id_command = '0'
@@ -323,25 +327,29 @@ def receive_redeem(data_rewards,received_type):
         
     if received_type == 'redeem':
     
-        redem_reward_name = data_rewards['data']['redemption']['reward']['title']
-        redem_by_user = data_rewards['data']['redemption']['user']['display_name']
+        redeem_reward_name = data_rewards['data']['redemption']['reward']['title']
+        redeem_by_user = data_rewards['data']['redemption']['user']['display_name']
+        user_input_check = data_rewards['data']['redemption']
+
+        if 'user_input' in user_input_check.keys():
+            user_input = data_rewards['data']['redemption']['user_input']
         
         if data_rewards['data']['redemption']['reward']['image'] == None:
             
-            redem_reward_image = data_rewards['data']['redemption']['reward']['default_image']['url_4x']
+            redeem_reward_image = data_rewards['data']['redemption']['reward']['default_image']['url_4x']
         else:
-            redem_reward_image = data_rewards['data']['redemption']['reward']['image']['url_4x']
+            redeem_reward_image = data_rewards['data']['redemption']['reward']['image']['url_4x']
             
             
-        img_data = req.get(redem_reward_image).content
+        img_data = req.get(redeem_reward_image).content
         with open('src/Request.png', 'wb') as handler:
             handler.write(img_data)
             handler.close()
             
     elif received_type == 'command':
 
-        redem_reward_name = data_rewards['REDEEM']
-        redem_by_user = data_rewards['USERNAME']
+        redeem_reward_name = data_rewards['REDEEM']
+        redeem_by_user = data_rewards['USERNAME']
         user_input = data_rewards['USER_INPUT']
         user_level =  data_rewards['USER_LEVEL']
         user_id_command = data_rewards['USER_ID']
@@ -351,7 +359,7 @@ def receive_redeem(data_rewards,received_type):
         
 
     aliases = {
-            '{user}': redem_by_user,
+            '{user}': redeem_by_user,
             '{command}': command_receive, 
             '{prefix}': prefix,
             '{user_level}': user_level, 
@@ -363,19 +371,20 @@ def receive_redeem(data_rewards,received_type):
     request_img.configure(image=request_img_result)
     request_img.image = request_img_result
 
-    request_name.configure(text=redem_reward_name)
-    user_request.configure(text='  '+ redem_by_user + '  ')
+    html_edit.update_notif(redeem_reward_name,redeem_by_user)
+    obs_con.show_notifc_html()
+
+    request_name.configure(text=redeem_reward_name)
+    user_request.configure(text='  '+ redeem_by_user + '  ')
 
     path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
     path = json.load(path_file)    
         
     def playsound():
         
-        audio_path = path[redem_reward_name]['PATH']
-        time_show = path[redem_reward_name]['TEMPO']
-        send_response_value = path[redem_reward_name]['send_response']
-        int_time_show = int(time_show)
-        
+        audio_path = path[redeem_reward_name]['PATH']
+        send_response_value = path[redeem_reward_name]['send_response']
+
         tts_playing = pygame.mixer.music.get_busy()
         
         while tts_playing:
@@ -387,46 +396,22 @@ def receive_redeem(data_rewards,received_type):
         
         if send_response_value:
             
-            chat_response = path[redem_reward_name]['chat_response']
-            try:
-                response_redus = replace_all(chat_response, aliases)
-                smt.send_message(response_redus,'RESPONSE')
-            except:
-                smt.send_message(chat_response,'RESPONSE')
-                    
-            
-            
-        obs_con.show_notifc(redem_reward_name,redem_by_user,int_time_show)
+            chat_response = path[redeem_reward_name]['chat_response']
+            response_redus = replace_all(chat_response, aliases)
+            smt.send_message(response_redus,'RESPONSE')
 
     def playtts():
-        
-        
+
         global count_tts
+
+        send_response_value = path[redeem_reward_name]['send_response']
+        characters = path[redeem_reward_name]['characters']
+        characters_int = int(characters)
         
-        command_file_tts = open('src/config/prefix_tts.json', "r", encoding='utf-8') 
-        command_data_tts = json.load(command_file_tts) 
+        user_input_short = textwrap.shorten(user_input, width=characters_int ,placeholder=" ")
         
-        caracters = command_data_tts['caracters']
-        caraters_int = int(caracters)
-        
-        try:
-            user_input = data_rewards['data']['redemption']['user_input']
-        except:
-            user_input = data_rewards['USER_INPUT']
-            
-        time_show = path[redem_reward_name]['TEMPO']
-        send_response_value = path[redem_reward_name]['send_response']
-        int_time_show = int(time_show)
-        
-        user_input_short = textwrap.shorten(user_input, width=caraters_int ,placeholder=" ")
-        
-        language = 'pt-br'
-        
-        tts = gTTS(text=user_input_short, lang=language, slow=False)
-        
+        tts = gTTS(text=user_input_short, lang='pt-br', slow=False)
         tts.save(f'src/files/tts_sound{count_tts%2}.mp3')
-        
-        
         tts_playing = pygame.mixer.music.get_busy()
         
         while tts_playing:
@@ -438,7 +423,7 @@ def receive_redeem(data_rewards,received_type):
         
         if send_response_value:
             
-            chat_response = path[redem_reward_name]['chat_response']
+            chat_response = path[redeem_reward_name]['chat_response']
             print(chat_response)
             
             try:
@@ -448,21 +433,19 @@ def receive_redeem(data_rewards,received_type):
                 smt.send_message(chat_response,'RESPONSE')
 
         count_tts += 1
-        
-        obs_con.show_notifc(redem_reward_name,redem_by_user,int_time_show)
 
     def changescene():
         
-        princial_scene_name = path[redem_reward_name]['CURRENTSCENENAME']
-        scene_name = path[redem_reward_name]['SCENENAME']
-        send_response_value = path[redem_reward_name]['send_response']
-        return_scene = path[redem_reward_name]['return_scene']
+        principal_scene_name = path[redeem_reward_name]['CURRENTSCENENAME']
+        scene_name = path[redeem_reward_name]['SCENENAME']
+        send_response_value = path[redeem_reward_name]['send_response']
+        return_scene = path[redeem_reward_name]['return_scene']
         
-        time_show = path[redem_reward_name]['TIME']
+        time_show = path[redeem_reward_name]['TIME']
         
         if send_response_value == 1:
  
-            chat_response = path[redem_reward_name]['chat_response']
+            chat_response = path[redeem_reward_name]['chat_response']
         
             try:
                 response_redus = replace_all(chat_response, aliases)
@@ -470,11 +453,11 @@ def receive_redeem(data_rewards,received_type):
             except:
                 smt.send_message(chat_response,'RESPONSE')
             
-        obs_con.scene(scene_name,time_show,return_scene,princial_scene_name)
+        obs_con.scene(scene_name,time_show, return_scene, principal_scene_name)
 
     def sendmessage():
 
-        chat_response = path[redem_reward_name]['MESSAGELABEL']
+        chat_response = path[redeem_reward_name]['MESSAGELABEL']
         
         try:
             response_redus = replace_all(chat_response, aliases)
@@ -484,16 +467,16 @@ def receive_redeem(data_rewards,received_type):
 
     def changefilter():
 
-        source_name = path[redem_reward_name]['SOURCE']
-        send_response_value = path[redem_reward_name]['send_response']
-        filter_name = path[redem_reward_name]['FILTER']
-        time_show = path[redem_reward_name]['TIME']
+        source_name = path[redeem_reward_name]['SOURCE']
+        send_response_value = path[redeem_reward_name]['send_response']
+        filter_name = path[redeem_reward_name]['FILTER']
+        time_show = path[redeem_reward_name]['TIME']
 
         time_show_int = int(time_show)
         
         
         if send_response_value:
-            chat_response = path[redem_reward_name]['chat_response']
+            chat_response = path[redeem_reward_name]['chat_response']
             
 
             try:
@@ -507,18 +490,18 @@ def receive_redeem(data_rewards,received_type):
     def keypress():
 
 
-        keyskeyboard = path[redem_reward_name]
-        send_response_value = path[redem_reward_name]['send_response']
-        press_again_value = path[redem_reward_name]['press_again']
-        time_press_value = path[redem_reward_name]['TIME']
-        repeat_ask = path[redem_reward_name]['repeat']
-        repeat_times = path[redem_reward_name]['repeat_times']
+        keyskeyboard = path[redeem_reward_name]
+        send_response_value = path[redeem_reward_name]['send_response']
+        press_again_value = path[redeem_reward_name]['press_again']
+        time_press_value = path[redeem_reward_name]['TIME']
+        repeat_ask = path[redeem_reward_name]['repeat']
+        repeat_times = path[redeem_reward_name]['repeat_times']
         
         def repeated_press(tid):
 
             if send_response_value:
                 
-                chat_response = path[redem_reward_name]['chat_response']
+                chat_response = path[redeem_reward_name]['chat_response']
                 
                 try:
                     response_redus = replace_all(chat_response, aliases)
@@ -548,7 +531,7 @@ def receive_redeem(data_rewards,received_type):
             
             if send_response_value:
                 
-                chat_response = path[redem_reward_name]['chat_response']
+                chat_response = path[redeem_reward_name]['chat_response']
                 
                 try:
                     response_redus = replace_all(chat_response, aliases)
@@ -572,9 +555,9 @@ def receive_redeem(data_rewards,received_type):
             
             if send_response_value:
                 
-                chat_response = path[redem_reward_name]['chat_response']
+                chat_response = path[redeem_reward_name]['chat_response']
                 
-                aliases = {'{user}': redem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
+                aliases = {'{user}': redeem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
                 try:
                     response_redus = replace_all(chat_response, aliases)
                     smt.send_message(response_redus,'RESPONSE')
@@ -589,22 +572,15 @@ def receive_redeem(data_rewards,received_type):
                    
     def source():
 
-        source_name = path[redem_reward_name]['SOURCENAME']
-        send_response_value = path[redem_reward_name]['send_response']
-        time_show = path[redem_reward_name]['TIME']
-
-        time_show_int = int(time_show)
-        
+        source_name = path[redeem_reward_name]['SOURCENAME']
+        send_response_value = path[redeem_reward_name]['send_response']
+        time_show_int = path[redeem_reward_name]['TIME']       
         
         if send_response_value:
             
-            chat_response = path[redem_reward_name]['chat_response']
-
-            try:
-                response_redus = replace_all(chat_response, aliases)
-                smt.send_message(response_redus,'RESPONSE')
-            except:
-                smt.send_message(chat_response,'RESPONSE')
+            chat_response = path[redeem_reward_name]['chat_response']
+            response_redus = replace_all(chat_response, aliases)
+            smt.send_message(response_redus,'RESPONSE')
         
         obs_con.show_source(source_name,time_show_int)
         
@@ -630,7 +606,7 @@ def receive_redeem(data_rewards,received_type):
             response_create = response_clip['data'][0]['id']
 
 
-            message_clip_user = mesages_data['clip_create_clip'].replace('{user}',redem_by_user)
+            message_clip_user = messages_data['clip_create_clip'].replace('{user}',redeem_by_user)
             message_final = message_clip_user.replace('{clip_id}',response_create)
             smt.send_message(message_final,"CLIP")
             
@@ -638,18 +614,18 @@ def receive_redeem(data_rewards,received_type):
             response_error = response_clip['message']
 
             if response_error:
-                message_clip_error = mesages_data['clip_error_clip']
+                message_clip_error = messages_data['clip_error_clip']
                 smt.send_message(message_clip_error,'CLIP')
 
     def add_counter():
         
-        send_response_value = path[redem_reward_name]['send_response']
+        send_response_value = path[redeem_reward_name]['send_response']
         
-        with open("src/counter_counter/counter.txt", "r") as counter_file_r:
+        with open("src/counter/counter.txt", "r") as counter_file_r:
 
                 if len(counter_file_r.read()) == 0:
                     
-                    with open("src/counter_counter/counter.txt", "w") as counter_file_w:
+                    with open("src/counter/counter.txt", "w") as counter_file_w:
                         counter_file_w.write('1')
 
                 else:
@@ -665,12 +641,12 @@ def receive_redeem(data_rewards,received_type):
                     else:
                         countercount = 0
                         
-                    with open("src/counter_counter/counter.txt", "w") as counter_file_w:      
+                    with open("src/counter/counter.txt", "w") as counter_file_w:      
                         counter_file_w.write(str(countercount))
                         
         if send_response_value:
         
-            chat_response = path[redem_reward_name]['chat_response']
+            chat_response = path[redeem_reward_name]['chat_response']
             aliases['{counter}'] = str(countercount)
             
             try:
@@ -679,23 +655,23 @@ def receive_redeem(data_rewards,received_type):
             except:
                 smt.send_message(chat_response,'RESPONSE')
 
-    def add_giveway():
+    def add_giveaway():
 
-        send_response_value = path[redem_reward_name]['send_response']
+        send_response_value = path[redeem_reward_name]['send_response']
 
-        give_config_file = open("src/giveway/config.json", "r",encoding='utf-8')
+        give_config_file = open("src/giveaway/config.json", "r",encoding='utf-8')
         give_config_data = json.load(give_config_file)
 
         enabled_give = give_config_data['enable']
 
         if enabled_give == 1:
         
-            with open("src/giveway/names.txt", "a+") as give_file_r:
-                        give_file_r.write(redem_by_user+"\n")
+            with open("src/giveaway/names.txt", "a+") as give_file_r:
+                        give_file_r.write(redeem_by_user+"\n")
             
             if send_response_value:
             
-                chat_response = path[redem_reward_name]['chat_response']
+                chat_response = path[redeem_reward_name]['chat_response']
                 
                 try:
                     response_redus = replace_all(chat_response, aliases)
@@ -703,27 +679,27 @@ def receive_redeem(data_rewards,received_type):
                 except:
                     smt.send_message(chat_response,'RESPONSE')
         else:
-            giveway_disabled_mesage = mesages_data['response_giveway_disabled']
-            smt.send_message(giveway_disabled_mesage,'RESPONSE')
+            giveaway_disabled_message = messages_data['response_giveaway_disabled']
+            smt.send_message(giveaway_disabled_message,'RESPONSE')
 
     eventos = {
-        'SOUND' : playsound,
-        'SCENE' : changescene,
-        'MESSAGE' : sendmessage,
-        'FILTER' : changefilter,
-        'KEYPRESS' : keypress,
-        'SOURCE' : source,
-        'CLIP': clip,
-        'TTS' : playtts,
-        'COUNTER': add_counter,
-        'GIVEWAY': add_giveway
+        'SOUND' : playsound, 
+        'SCENE' : changescene, 
+        'MESSAGE' : sendmessage, 
+        'FILTER' : changefilter, 
+        'KEYPRESS' : keypress, 
+        'SOURCE' : source, 
+        'CLIP': clip, 
+        'TTS' : playtts, 
+        'COUNTER': add_counter, 
+        'GIVEAWAY': add_giveaway
     }
     
     if TOKEN and TOKENBOT:
-        if redem_reward_name in path.keys():
-            redem_type = path[redem_reward_name]['TYPE']
-            if redem_type in eventos:
-                eventos[redem_type]()
+        if redeem_reward_name in path.keys():
+            redeem_type = path[redeem_reward_name]['TYPE']
+            if redeem_type in eventos:
+                eventos[redeem_type]()
     
 def new_event_top():
     
@@ -741,7 +717,7 @@ def new_event_top():
         def new_sound():
 
             topsound = customtkinter.CTkToplevel(app)
-            topsound.title(f"RewardEvents - { lang_data['event_sond_title'] }")
+            topsound.title(f"RewardEvents - { lang_data['event_sound_title'] }")
             topsound.iconbitmap("src/icon.ico")
             topsound.resizable(False, False)
             topsound.attributes('-topmost', 'true')
@@ -766,14 +742,13 @@ def new_event_top():
             
             def create_new_sound():
                 
-                title = redem_title.get()
+                title = redeem_title.get()
                 command_event = command_entry.get()
-                audio_dir = redem_path.get()
-                time_in_screm = redem_time.get()
+                audio_dir = redeem_path.get()
                 chat_response = chat_response_entry.get()
                 user_level_check = user_level_switch.get()
                 
-                if not [x for x in (title, audio_dir, time_in_screm) if x is None]:
+                if not [x for x in (title, audio_dir) if x is None]:
                     try:
                         if chat_response == "":
 
@@ -788,10 +763,9 @@ def new_event_top():
                         new_data[title] = {
                                             'TYPE': 'SOUND',
                                             'PATH': audio_dir,
-                                            'COMMAND': command_event, 
+                                            'COMMAND': command_event.lower(), 
                                             'send_response': send_response, 
-                                            'chat_response':chat_response, 
-                                            'TEMPO':time_in_screm 
+                                            'chat_response':chat_response
                                         }
                         old_data.close()
 
@@ -808,13 +782,13 @@ def new_event_top():
                             else:
                                 user_level_data = ""
                             
-                            new_data_command[command_event] = {'RECOMPENSA': title,'user_level':user_level_data}
+                            new_data_command[command_event.lower()] = {'RECOMPENSA': title,'user_level':user_level_data}
                             old_data.close()
                             
                             old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
                             json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
                         
-                        error_label.configure(text=lang_data['event_sucess_create'])
+                        error_label.configure(text=lang_data['event_success_create'])
                             
                     except:
                         error_label.configure(text=lang_data['event_error_create'])
@@ -846,14 +820,14 @@ def new_event_top():
         
             messages_combox = update_titles_combox() 
                 
-            tittleredem1 = customtkinter.CTkLabel(topsound, text= lang_data['event_sond_label'], text_font=("default_theme","15"))
-            tittleredem1.grid(row=0, column=0, columnspan=2, pady=20,)
+            tittle_redeem = customtkinter.CTkLabel(topsound, text= lang_data['event_sound_label'], text_font=("default_theme","15"))
+            tittle_redeem.grid(row=0, column=0, columnspan=2, pady=20,)
 
-            redem_title_label = customtkinter.CTkLabel(topsound, text= lang_data['redeem_marqued'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_title_label.grid(row=1,column=0,padx=20,pady=10,sticky='W')
+            redeem_title_label = customtkinter.CTkLabel(topsound, text= lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label.grid(row=1,column=0,padx=20,pady=10,sticky='W')
             
-            redem_title = customtkinter.CTkComboBox(topsound,values=list(messages_combox),width=200)
-            redem_title.grid(row=1,column=1 ,padx=20, pady=10)
+            redeem_title = customtkinter.CTkComboBox(topsound,values=list(messages_combox),width=200)
+            redeem_title.grid(row=1,column=1 ,padx=20, pady=10)
             
             command_label = customtkinter.CTkLabel(topsound, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             command_label.grid(row=2,column=0,padx=20,pady=10,sticky='W')
@@ -867,20 +841,14 @@ def new_event_top():
             user_level_switch = customtkinter.CTkSwitch(topsound, text="", text_font=("default_theme", "13"),)
             user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
 
-            redem_path_label = customtkinter.CTkLabel(topsound, text= lang_data['audio_file'] , text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_path_label.grid(row=4,column=0, padx=20, pady=10,sticky='W')
+            redeem_path_label = customtkinter.CTkLabel(topsound, text= lang_data['audio_file'] , text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_path_label.grid(row=4,column=0, padx=20, pady=10,sticky='W')
 
-            redem_path = customtkinter.CTkEntry(topsound,width=200,textvariable=path_text,state=DISABLED)
-            redem_path.grid(row=4,column=1,padx=20,pady=(0,10))
+            redeem_path = customtkinter.CTkEntry(topsound,width=200,textvariable=path_text,state=DISABLED)
+            redeem_path.grid(row=4,column=1,padx=20,pady=(0,10))
 
-            redem_path_button = customtkinter.CTkButton(topsound,width=200, text= lang_data['select_file_button'], text_font=("default_theme","13"),command=select_file)
-            redem_path_button.grid(row=5,columnspan=2,padx=20, pady=10,sticky='WE')
-
-            redem_time_label = customtkinter.CTkLabel(topsound,text= lang_data['obs_not_time'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_time_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
-
-            redem_time = customtkinter.CTkEntry(topsound,width=200)
-            redem_time.grid(row=6,column=1, padx=20, pady=10)
+            redeem_path_button = customtkinter.CTkButton(topsound,width=200, text= lang_data['select_file_button'], text_font=("default_theme","13"),command=select_file)
+            redeem_path_button.grid(row=5,columnspan=2,padx=20, pady=10,sticky='WE')
             
             chat_response_label = customtkinter.CTkLabel(topsound,text= lang_data['chat_message_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             chat_response_label.grid(row=7,column=0, padx=20,pady=10, sticky='W')
@@ -888,8 +856,8 @@ def new_event_top():
             chat_response_entry = customtkinter.CTkEntry(topsound,width=200)
             chat_response_entry.grid(row=7,column=1, padx=20, pady=10)
 
-            submit_buttom = customtkinter.CTkButton(topsound,text= lang_data['save'],command = create_new_sound)
-            submit_buttom.grid(row=8, column=1,padx=20, pady=(10,20), sticky='e')
+            submit_button = customtkinter.CTkButton(topsound,text= lang_data['save'],command = create_new_sound)
+            submit_button.grid(row=8, column=1,padx=20, pady=(10,20), sticky='e')
 
             error_label = customtkinter.CTkLabel(topsound, text="", text_font=("default_theme","11"))
             error_label.grid(row=9, column=0, columnspan=2, pady=20)
@@ -907,68 +875,57 @@ def new_event_top():
             
             def create_new_tts():
                 
-                title = redem_title.get()
-                time_in_screm = redem_time.get()
+                title = redeem_title.get()
                 command_event = command_entry.get()
                 user_level_check = user_level_Switch.get()
                 chat_response = chat_response_entry.get()
-                caraters = caracter_limit.get()
-                
-                if not [x for x in (title, time_in_screm, command_event) if x is None]:
-                    try:
-                        if chat_response == "":
-                            send_response = 0
-                        else:
-                            send_response = 1
-                            
-                        old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
-                        new_data = json.load(old_data)
+                characters = character_limit.get()
 
-                        new_data[title] = {
-                            'TYPE': 'TTS',
-                            'send_response':send_response, 
-                            'chat_response':chat_response, 
-                            'COMMAND':command_event,
-                            'TEMPO':time_in_screm
-                            }
-
-                        old_data.close()
-
-                        old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
-                        json.dump(new_data, old_data_write, indent = 4,ensure_ascii=False)
-
-                        if command_event != "":
-
-                            if caraters == "":
-
-                                error_label.configure(text=lang_data['event_tts_carater_error'])
-
-                            else:
-
-                                old_data_command = open('src/config/prefix_tts.json' , 'r', encoding='utf-8') 
-                                new_data_command = json.load(old_data_command)
-                                
-                                if user_level_check:
-                                    user_level_data = "mod"
-                                else:
-                                    user_level_data = ""
-
-                                new_data_command['command'] = command_event
-                                new_data_command['redeem'] = title
-                                new_data_command['user_level'] = user_level_data
-                                new_data_command['caracters'] = caraters
-                                
-                                old_data.close()
-                                
-                                old_data_write_command = open('src/config/prefix_tts.json' , 'w', encoding='utf-8') 
-                                json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
-                        
-                                error_label.configure(text=lang_data['event_sucess_create'])
-
-                    except:
-                        error_label.configure(text=lang_data['event_error_create'])
+                if characters == "":
+                    error_label.configure(text=lang_data['event_tts_character_error'])
                 else:
-                    error_label.configure(text=lang_data['event_empty_data'])
+                    if chat_response == "":
+                        send_response = 0
+                    else:
+                        send_response = 1
+                        
+                    old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
+                    new_data = json.load(old_data)
+
+                    new_data[title] = {
+                        'TYPE': 'TTS',
+                        'send_response':send_response, 
+                        'chat_response':chat_response, 
+                        'COMMAND':command_event.lower(),
+                        'characters': characters
+                        }
+
+                    old_data.close()
+
+                    old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
+                    json.dump(new_data, old_data_write, indent = 4,ensure_ascii=False)
+
+                    if command_event != "":
+
+                        old_data_command = open('src/config/prefix_tts.json' , 'r', encoding='utf-8') 
+                        new_data_command = json.load(old_data_command)
+                        
+                        if user_level_check:
+                            user_level_data = "mod"
+                        else:
+                            user_level_data = ""
+
+                        new_data_command['command'] = command_event.lower()
+                        new_data_command['redeem'] = title
+                        new_data_command['user_level'] = user_level_data
+                        
+                        old_data.close()
+                        
+                        old_data_write_command = open('src/config/prefix_tts.json' , 'w', encoding='utf-8') 
+                        json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
+                    
+                    error_label.configure(text=lang_data['event_success_create'])
+
                     
             def update_titles_combox():
                 
@@ -995,14 +952,14 @@ def new_event_top():
             
             messages_combox = update_titles_combox()         
                     
-            tittleredem1 = customtkinter.CTkLabel(toptts, text= lang_data['event_tts_label'], text_font=("default_theme","15"))
-            tittleredem1.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+            tittleredeem1 = customtkinter.CTkLabel(toptts, text= lang_data['event_tts_label'], text_font=("default_theme","15"))
+            tittleredeem1.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-            redem_title_label = customtkinter.CTkLabel(toptts, text= lang_data['redeem_marqued'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_title_label.grid(row=1,column=0,padx=20,pady=10,sticky='W')
+            redeem_title_label = customtkinter.CTkLabel(toptts, text= lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label.grid(row=1,column=0,padx=20,pady=10,sticky='W')
 
-            redem_title = customtkinter.CTkComboBox(toptts,values=list(messages_combox),width=200)
-            redem_title.grid(row=1,column=1 ,padx=20, pady=10)
+            redeem_title = customtkinter.CTkComboBox(toptts,values=list(messages_combox),width=200)
+            redeem_title.grid(row=1,column=1 ,padx=20, pady=10)
             
             command_label = customtkinter.CTkLabel(toptts, text= lang_data['chat_command'] , text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             command_label.grid(row=2,column=0,padx=20,pady=10,sticky='W')
@@ -1016,17 +973,11 @@ def new_event_top():
             user_level_Switch = customtkinter.CTkSwitch(toptts, text="", text_font=("default_theme", "13"),)
             user_level_Switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
             
-            caracter_limit_label = customtkinter.CTkLabel(toptts, text= lang_data['caracter_limit'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            caracter_limit_label = customtkinter.CTkLabel(toptts, text= lang_data['character_limit'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             caracter_limit_label.grid(row=4,column=0,padx=20,pady=10,sticky='W')
             
-            caracter_limit = customtkinter.CTkEntry(toptts,width=200)
-            caracter_limit.grid(row=4, column=1,padx=20, pady=10, sticky='e')
-            
-            redem_time_label = customtkinter.CTkLabel(toptts,text= lang_data['obs_not_time'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_time_label.grid(row=6,column=0, padx=20,pady=10, sticky='W')
-
-            redem_time = customtkinter.CTkEntry(toptts,width=200)
-            redem_time.grid(row=6,column=1, padx=20, pady=10)
+            character_limit = customtkinter.CTkEntry(toptts,width=200)
+            character_limit.grid(row=4, column=1,padx=20, pady=10, sticky='e')
             
             chat_response_label = customtkinter.CTkLabel(toptts,text= lang_data['chat_message_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             chat_response_label.grid(row=7,column=0, padx=20,pady=10, sticky='W')
@@ -1053,7 +1004,7 @@ def new_event_top():
             
             def create_scene():
                 
-                title_redem = redem_title1.get()
+                title_redeem = redeem_title1.get()
                 current_scene_name = scene_entry_current.get()
                 scene_name = scene_entry.get()
                 time_to_change = time_scene_entry.get()
@@ -1062,7 +1013,7 @@ def new_event_top():
                 return_scene_value = return_scene_switch.get()
                 user_level_check = user_level_switch.get()
 
-                if not [x for x in (title_redem, current_scene_name, scene_name) if x is None]:
+                if not [x for x in (title_redeem, current_scene_name, scene_name) if x is None]:
                     
                     try:
                         if chat_response == "":
@@ -1082,11 +1033,11 @@ def new_event_top():
                         old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
                         new_data = json.load(old_data)
 
-                        new_data[title_redem] = {
+                        new_data[title_redeem] = {
                             'TYPE': 'SCENE',
                             'SCENENAME': scene_name,
                             'send_response':send_response,
-                            'COMMAND': command_event,
+                            'COMMAND': command_event.lower(),
                             'chat_response':chat_response,
                             'return_scene':return_scene_value,
                             'TIME':time_to_change,
@@ -1103,14 +1054,14 @@ def new_event_top():
                             old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
                             new_data_command = json.load(old_data_command)
                             
-                            new_data_command[command_event] = {'RECOMPENSA': title_redem,'user_level': user_level_data}
+                            new_data_command[command_event.lower()] = {'RECOMPENSA': title_redeem,'user_level': user_level_data}
                             old_data.close()
                             
                             old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
                             json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
                         
                         
-                        error_label.configure(text= lang_data['event_sucess_create'])
+                        error_label.configure(text= lang_data['event_success_create'])
                     except:
                         error_label.configure(text= lang_data['event_error_create'])
                 else:
@@ -1145,22 +1096,23 @@ def new_event_top():
                 scenes = obs_con.get_scenes()
                 
                 if not scenes:
-                    scene_entry_current.configure(values= [f"{ lang_data['obs_disconected'] }"])
-                    scene_entry.configure(values= [f"{ lang_data['obs_disconected'] }"])
+                    scene_entry_current.configure(values= [f"{ lang_data['obs_disconnected'] }"])
+                    scene_entry.configure(values= [f"{ lang_data['obs_disconnected'] }"])
                 else:
                     scene_entry_current.configure(values=list(scenes))
                     scene_entry.configure(values=list(scenes))
 
-            messages_combox = update_titles_combox()   
+            messages_combox = update_titles_combox()
+            obs_font_variable = customtkinter.StringVar(value= lang_data['obs_select_scene'])   
                         
-            tittleredem1 = customtkinter.CTkLabel(top_scene, text= lang_data['event_obs_screen_label'], text_font=("default_theme","15"))
-            tittleredem1.grid(row=0, column=0, columnspan=2, pady=20)
+            tittleredeem1 = customtkinter.CTkLabel(top_scene, text= lang_data['event_obs_screen_label'], text_font=("default_theme","15"))
+            tittleredeem1.grid(row=0, column=0, columnspan=2, pady=20)
 
-            redem_title_label1 = customtkinter.CTkLabel(top_scene, text= lang_data['redeem_marqued'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_title_label1.grid(row=1,column=0,padx=20,pady=10,sticky='W')
+            redeem_title_label1 = customtkinter.CTkLabel(top_scene, text= lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label1.grid(row=1,column=0,padx=20,pady=10,sticky='W')
 
-            redem_title1 = customtkinter.CTkComboBox(top_scene,values=list(messages_combox),width=200)
-            redem_title1.grid(row=1,column=1 ,padx=20, pady=10)
+            redeem_title1 = customtkinter.CTkComboBox(top_scene,values=list(messages_combox),width=200)
+            redeem_title1.grid(row=1,column=1 ,padx=20, pady=10)
             
             command_label = customtkinter.CTkLabel(top_scene, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             command_label.grid(row=2,column=0,padx=20,pady=10,sticky='W')
@@ -1174,16 +1126,16 @@ def new_event_top():
             user_level_switch = customtkinter.CTkSwitch(top_scene, text="", text_font=("default_theme", "13"),)
             user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
 
-            scene_label_current = customtkinter.CTkLabel(top_scene,text= lang_data['event_obs_screen_atual'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            scene_label_current = customtkinter.CTkLabel(top_scene,text= lang_data['event_obs_screen_atual'],text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             scene_label_current.grid(row=4,column=0, padx=20,pady=10, sticky='W')
 
-            scene_entry_current = customtkinter.CTkOptionMenu(top_scene,values= lang_data['obs_select_scene'], width=200, dynamic_resizing=True)
+            scene_entry_current = customtkinter.CTkOptionMenu(top_scene,values= lang_data['obs_select_scene'], variable=obs_font_variable, width=200, dynamic_resizing=True)
             scene_entry_current.grid(row=4,column=1, padx=20, pady=10)
 
             scene_label = customtkinter.CTkLabel(top_scene,text= lang_data['event_obs_screen_change'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             scene_label.grid(row=5,column=0, padx=20, pady=10, sticky='W')
 
-            scene_entry = customtkinter.CTkOptionMenu(top_scene,values= lang_data['obs_select_scene'], width=200, dynamic_resizing=True)
+            scene_entry = customtkinter.CTkOptionMenu(top_scene,values= lang_data['obs_select_scene'], width=200,variable=obs_font_variable, dynamic_resizing=True)
             scene_entry.grid(row=5,column=1, padx=20, pady=10)
             
             return_scene = customtkinter.CTkLabel(top_scene, text= lang_data['event_obs_screen_return_ask'], text_font=("default_theme","13"))
@@ -1225,7 +1177,7 @@ def new_event_top():
             
             def create_message():
             
-                title = redem_title2.get()
+                title = redeem_title2.get()
                 message = message_entry.get()
                 command_event = command_entry.get()
                 user_level_check = user_level_switch.get()
@@ -1243,7 +1195,7 @@ def new_event_top():
 
                         new_data[title] = {
                             'TYPE': 'MESSAGE', 
-                            'COMMAND': command_event, 
+                            'COMMAND': command_event.lower(), 
                             'MESSAGELABEL': message
                             }
 
@@ -1258,7 +1210,7 @@ def new_event_top():
                             old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
                             new_data_command = json.load(old_data_command)
                             
-                            new_data_command[command_event] = {
+                            new_data_command[command_event.lower()] = {
                                             'RECOMPENSA': title,
                                             'user_level': user_level_data
                                             }
@@ -1268,7 +1220,7 @@ def new_event_top():
                             old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
                             json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
                         
-                        error_label.configure(text=lang_data['event_sucess_create'])
+                        error_label.configure(text=lang_data['event_success_create'])
 
                     except:
 
@@ -1302,14 +1254,14 @@ def new_event_top():
             
             messages_combox = update_titles_combox()  
                     
-            tittleredem2 = customtkinter.CTkLabel(new_message_top, text= lang_data['chat_response_label'], text_font=("default_theme","15"))
-            tittleredem2.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+            tittleredeem2 = customtkinter.CTkLabel(new_message_top, text= lang_data['chat_response_label'], text_font=("default_theme","15"))
+            tittleredeem2.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-            redem_title_label2 = customtkinter.CTkLabel(new_message_top, text= lang_data['redeem_marqued'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_title_label2.grid(row=1,column=0,pady=10,padx=10,sticky='W')
+            redeem_title_label2 = customtkinter.CTkLabel(new_message_top, text= lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label2.grid(row=1,column=0,pady=10,padx=10,sticky='W')
 
-            redem_title2 = customtkinter.CTkComboBox(new_message_top,values=list(messages_combox),width=200)
-            redem_title2.grid(row=1,column=1 ,padx=10, pady=10)
+            redeem_title2 = customtkinter.CTkComboBox(new_message_top,values=list(messages_combox),width=200)
+            redeem_title2.grid(row=1,column=1 ,padx=10, pady=10)
             
             command_label = customtkinter.CTkLabel(new_message_top, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             command_label.grid(row=2,column=0,pady=10,padx=10,sticky='W')
@@ -1348,7 +1300,7 @@ def new_event_top():
                     
             def create_new_filter():
                 
-                title = redem_title3.get()
+                title = redeem_title3.get()
                 filter_name = obs_filter_entry.get()
                 source_name = obs_source_entry.get()
                 time_showing = time_filter_entry.get()
@@ -1372,8 +1324,15 @@ def new_event_top():
                         old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
                         new_data = json.load(old_data)
 
-                        new_data[title] = {'TYPE': 'FILTER','SOURCE': source_name, 'send_response':send_response, 'chat_response':chat_response, 
-                                        'COMMAND': command_event, 'FILTER':filter_name, 'TIME':time_showing}
+                        new_data[title] = {
+                            'TYPE': 'FILTER',
+                            'SOURCE': source_name, 
+                            'send_response':send_response, 
+                            'chat_response':chat_response, 
+                            'COMMAND': command_event.lower(), 
+                            'FILTER':filter_name, 
+                            'TIME':time_showing
+                            }
                         old_data.close()
 
                         old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
@@ -1384,14 +1343,14 @@ def new_event_top():
                             old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
                             new_data_command = json.load(old_data_command)
 
-                            new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
+                            new_data_command[command_event.lower()] = {'RECOMPENSA': title,'user_level': user_level_data}
                             old_data.close()
 
                             old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
                             json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
                         
                         
-                        error_label.configure(text= lang_data['event_sucess_create'])
+                        error_label.configure(text= lang_data['event_success_create'])
                     except:
                         error_label.configure(text= lang_data['event_error_create'])
                 else:
@@ -1411,10 +1370,9 @@ def new_event_top():
                 sources = obs_con.get_sources()
                 
                 if not sources:
-                    obs_source_entry.configure(values= [f"{ lang_data['obs_disconected'] }"])
+                    obs_source_entry.configure(values= [f"{ lang_data['obs_disconnected'] }"])
                 else:
                     obs_source_entry.configure(values=list(sources))
-                    lang_data['obs_select_source']
                     
             def update_titles_combox():
                 
@@ -1442,14 +1400,17 @@ def new_event_top():
             
             messages_combox = update_titles_combox()  
                 
-            tittleredem3 = customtkinter.CTkLabel(new_filter_top, text= lang_data['obs_filter_label'], text_font=("default_theme","15"))
-            tittleredem3.grid(row=0, column=0, columnspan=2, pady=20)
+            obs_font_variable = customtkinter.StringVar(value= lang_data['obs_select_source'])  
+            obs_filter_variable = customtkinter.StringVar(value= lang_data['obs_filter_source']) 
 
-            redem_title_label3 = customtkinter.CTkLabel(new_filter_top, text= lang_data['redeem_marqued'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_title_label3.grid(row=1,column=0, padx=20, pady=10, sticky='W')
+            tittleredeem3 = customtkinter.CTkLabel(new_filter_top, text= lang_data['obs_filter_label'], text_font=("default_theme","15"))
+            tittleredeem3.grid(row=0, column=0, columnspan=2, pady=20)
 
-            redem_title3 = customtkinter.CTkComboBox(new_filter_top,values=list(messages_combox),width=200)
-            redem_title3.grid(row=1,column=1 ,padx=10, pady=10)
+            redeem_title_label3 = customtkinter.CTkLabel(new_filter_top, text= lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label3.grid(row=1,column=0, padx=20, pady=10, sticky='W')
+
+            redeem_title3 = customtkinter.CTkComboBox(new_filter_top,values=list(messages_combox),width=200)
+            redeem_title3.grid(row=1,column=1 ,padx=10, pady=10)
             
             command_label = customtkinter.CTkLabel(new_filter_top, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             command_label.grid(row=2, column=0, padx=20, pady=10, sticky='W')
@@ -1466,13 +1427,13 @@ def new_event_top():
             obs_source_label = customtkinter.CTkLabel(new_filter_top,text= lang_data['obs_source'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             obs_source_label.grid(row=4, column=0, padx=20, pady=10, sticky='W')
 
-            obs_source_entry = customtkinter.CTkOptionMenu(new_filter_top,values= lang_data['obs_select_source'], width=200, dynamic_resizing=True,command=update_filter)
+            obs_source_entry = customtkinter.CTkOptionMenu(new_filter_top,values= lang_data['obs_select_source'],variable=obs_font_variable, width=200, dynamic_resizing=True,command=update_filter)
             obs_source_entry.grid(row=4, column=1, padx=20, pady=10)
 
             obs_filter_label = customtkinter.CTkLabel(new_filter_top,text= lang_data['obs_filter_source'], text_font=("default_theme","13"),anchor="center", justify=CENTER)
             obs_filter_label.grid(row=5, column=0, padx=20, pady=10, sticky='W')
 
-            obs_filter_entry = customtkinter.CTkOptionMenu(new_filter_top, values=[f"{lang_data['obs_select_source']}"], width=200, dynamic_resizing=True)
+            obs_filter_entry = customtkinter.CTkOptionMenu(new_filter_top, values=[f"{lang_data['obs_select_source']}"],variable=obs_filter_variable, width=200, dynamic_resizing=True)
             obs_filter_entry.grid(row=5,column=1, padx=20, pady=10)
 
             time_filter_label = customtkinter.CTkLabel(new_filter_top,text= lang_data['obs_filter_time'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
@@ -1508,9 +1469,9 @@ def new_event_top():
             
             def create_new_key():
                 
-                title = redem_title4.get()
+                title = redeem_title4.get()
                 time_press_again = time_press_entry.get()
-                press_again = time_press_entry.get()
+                press_again = press_again_switch.get()
                 command_event = command_entry.get()
                 repeat_ask = repeat_press_switch.get()
                 repeat_time = repeat_times_press_entry.get()
@@ -1537,13 +1498,13 @@ def new_event_top():
 
                     new_data[title] = {
                         'TYPE': 'KEYPRESS',
-                        'press_again':press_again,
-                        'repeat':repeat_ask,
+                        'press_again': int(press_again),
+                        'repeat': int(repeat_ask),
                         'repeat_times': int(repeat_time),
                         'send_response':send_response, 
                         'chat_response':chat_response,
-                        'COMMAND': command_event, 
-                        'TIME': time_press_again,
+                        'COMMAND': command_event.lower(), 
+                        'TIME': int(time_press_again),
                         'KEY1':key1, 
                         'KEY2':key2, 
                         'KEY3':key3, 
@@ -1561,14 +1522,14 @@ def new_event_top():
                         old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
                         new_data_command = json.load(old_data_command)
 
-                        new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
+                        new_data_command[command_event.lower()] = {'RECOMPENSA': title,'user_level': user_level_data}
                         old_data.close()
 
                         old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
                         json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
                     
                     
-                    error_label.configure(text=lang_data['event_sucess_create'])
+                    error_label.configure(text=lang_data['event_success_create'])
 
                 except:
                     error_label.configure(text=lang_data['event_empty_data'])  
@@ -1600,14 +1561,14 @@ def new_event_top():
             messages_combox = update_titles_combox() 
             
             
-            tittleredem4 = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_label'], text_font=("default_theme","15"))
-            tittleredem4.grid(row=0, column=0, columnspan=4, padx=20, pady=20,)
+            tittleredeem4 = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_label'], text_font=("default_theme","15"))
+            tittleredeem4.grid(row=0, column=0, columnspan=4, padx=20, pady=20,)
 
-            redem_title_label4 = customtkinter.CTkLabel(new_key_top, text= lang_data['redeem_marqued'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_title_label4.grid(row=1,column=0, columnspan=2,pady=10,padx=20,sticky='W')
+            redeem_title_label4 = customtkinter.CTkLabel(new_key_top, text= lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label4.grid(row=1,column=0, columnspan=2,pady=10,padx=20,sticky='W')
 
-            redem_title4 = customtkinter.CTkComboBox(new_key_top,values=list(messages_combox),width=200)
-            redem_title4.grid(row=1,column=2, columnspan=2, padx=10, pady=10)
+            redeem_title4 = customtkinter.CTkComboBox(new_key_top,values=list(messages_combox),width=200)
+            redeem_title4.grid(row=1,column=2, columnspan=2, padx=10, pady=10)
             
             command_label = customtkinter.CTkLabel(new_key_top, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             command_label.grid(row=2,column=0, columnspan=2,pady=10,padx=20,sticky='W')
@@ -1687,15 +1648,16 @@ def new_event_top():
             
             def create_new_source():
                 
-                title = redem_title5.get()
+                title = redeem_title5.get()
                 source_name = obs_source_entry_source.get()
                 time_showing = time_filter_entry_source.get()
                 command_event = command_entry.get()
                 chat_response = chat_response_entry.get()
                 user_level_check = user_level_switch.get()
                 
-                if not [x for x in (title, source_name,time_showing) if x is None]:
-                    try:
+                if time_showing != "":
+
+                    if time_showing.isdigit():
 
                         if chat_response == "":
                             send_response = 0
@@ -1710,8 +1672,15 @@ def new_event_top():
                         old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
                         new_data = json.load(old_data)
 
-                        new_data[title] = {'TYPE': 'SOURCE','send_response':send_response, 'chat_response':chat_response,
-                                        'COMMAND': command_event, 'SOURCENAME': source_name,'TIME':time_showing}
+                        new_data[title] = {
+                            'TYPE': 'SOURCE',
+                            'send_response':send_response, 
+                            'chat_response':chat_response,
+                            'COMMAND': command_event.lower(), 
+                            'SOURCENAME': source_name,
+                            'TIME': int(time_showing)
+                            }
+
                         old_data.close()
 
                         old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
@@ -1723,16 +1692,18 @@ def new_event_top():
                             old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
                             new_data_command = json.load(old_data_command)
 
-                            new_data_command[command_event] = {'RECOMPENSA': title,'user_level': user_level_data}
+                            new_data_command[command_event.lower()] = {
+                                'RECOMPENSA': title,
+                                'user_level': user_level_data
+                                }
                             old_data.close()
 
                             old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
                             json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
                         
-                        error_label.configure(text= lang_data['event_sucess_create'])
-
-                    except:
-                        error_label.configure(text= lang_data['event_error_create'])
+                        error_label.configure(text= lang_data['event_success_create'])
+                    else:
+                        error_label.configure(text= lang_data['event_digit'])
                 else:
                     error_label.configure(text= lang_data['event_empty_data']) 
 
@@ -1741,7 +1712,7 @@ def new_event_top():
                 sources = obs_con.get_sources()
                 
                 if not sources:
-                    obs_source_entry_source.configure(values= [f"{ lang_data['obs_disconected'] }"])
+                    obs_source_entry_source.configure(values= [f"{ lang_data['obs_disconnected'] }"])
                 else:
                     obs_source_entry_source.configure(values=list(sources))
 
@@ -1769,16 +1740,17 @@ def new_event_top():
                 return list_titles
             
             messages_combox = update_titles_combox() 
-            
-            
-            tittleredem5 = customtkinter.CTkLabel(new_source_top, text= lang_data['obs_source_label'], text_font=("default_theme","15"))
-            tittleredem5.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-            redem_title_label5 = customtkinter.CTkLabel(new_source_top, text= lang_data['obs_source'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_title_label5.grid(row=1,column=0,pady=10,padx=20,sticky='W')
+            obs_font_variable = customtkinter.StringVar(value= lang_data['obs_select_source'])  
+            
+            tittleredeem5 = customtkinter.CTkLabel(new_source_top, text= lang_data['obs_source_label'], text_font=("default_theme","15"))
+            tittleredeem5.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-            redem_title5 = customtkinter.CTkComboBox(new_source_top,values=list(messages_combox),width=200)
-            redem_title5.grid(row=1,column=1 ,padx=10, pady=10)
+            redeem_title_label5 = customtkinter.CTkLabel(new_source_top, text= lang_data['obs_source'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label5.grid(row=1,column=0,pady=10,padx=20,sticky='W')
+
+            redeem_title5 = customtkinter.CTkComboBox(new_source_top,values=list(messages_combox),width=200)
+            redeem_title5.grid(row=1,column=1 ,padx=10, pady=10)
             
             command_label = customtkinter.CTkLabel(new_source_top, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             command_label.grid(row=2,column=0,pady=10,padx=20,sticky='W')
@@ -1795,7 +1767,7 @@ def new_event_top():
             obs_source_label_source = customtkinter.CTkLabel(new_source_top,text= lang_data['obs_source'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             obs_source_label_source.grid(row=4,column=0, padx=20,pady=10, sticky='W')
 
-            obs_source_entry_source = customtkinter.CTkOptionMenu(new_source_top,values=lang_data['obs_select_source'], width=200, dynamic_resizing=True)
+            obs_source_entry_source = customtkinter.CTkOptionMenu(new_source_top,values=lang_data['obs_select_source'],variable=obs_font_variable, width=200, dynamic_resizing=True)
             obs_source_entry_source.grid(row=4,column=1, padx=20, pady=10)
 
             time_filter_label = customtkinter.CTkLabel(new_source_top,text=lang_data['obs_source_time'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
@@ -1831,7 +1803,7 @@ def new_event_top():
             
             def create_new_clip():
                 
-                title = redem_title6.get()
+                title = redeem_title6.get()
                 command_event = command_entry.get()
                 user_level_check = user_level_switch.get()
 
@@ -1846,7 +1818,7 @@ def new_event_top():
                     old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
                     new_data = json.load(old_data)
 
-                    new_data[title] = {'TYPE': 'CLIP','COMMAND': command_event,}
+                    new_data[title] = {'TYPE': 'CLIP','COMMAND': command_event.lower(),}
                     old_data.close()
 
                     old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
@@ -1857,7 +1829,7 @@ def new_event_top():
                         old_data_command = open('src/config/commands.json' , 'r', encoding='utf-8') 
                         new_data_command = json.load(old_data_command)
 
-                        new_data_command[command_event] = {
+                        new_data_command[command_event.lower()] = {
 
                             'RECOMPENSA': title,
                             'user_level': user_level_data
@@ -1869,7 +1841,7 @@ def new_event_top():
                         old_data_write_command = open('src/config/commands.json' , 'w') 
                         json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
                     
-                    error_label.configure(text= lang_data['event_sucess_create'])
+                    error_label.configure(text= lang_data['event_success_create'])
                 except:
                     error_label.configure(text= lang_data['event_empty_data'])  
 
@@ -1898,14 +1870,14 @@ def new_event_top():
             
             messages_combox = update_titles_combox()  
 
-            tittleredem6 = customtkinter.CTkLabel(new_clip_top, text= lang_data['clip_event_label'], text_font=("default_theme","15"))
-            tittleredem6.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+            tittleredeem6 = customtkinter.CTkLabel(new_clip_top, text= lang_data['clip_event_label'], text_font=("default_theme","15"))
+            tittleredeem6.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-            redem_title_label6 = customtkinter.CTkLabel(new_clip_top, text= lang_data['redeem_marqued'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_title_label6.grid(row=1,column=0,pady=20,padx=20,sticky='W')
+            redeem_title_label6 = customtkinter.CTkLabel(new_clip_top, text= lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label6.grid(row=1,column=0,pady=20,padx=20,sticky='W')
 
-            redem_title6 = customtkinter.CTkComboBox(new_clip_top,values=list(messages_combox),width=200)
-            redem_title6.grid(row=1,column=1 ,padx=20, pady=20)
+            redeem_title6 = customtkinter.CTkComboBox(new_clip_top,values=list(messages_combox),width=200)
+            redeem_title6.grid(row=1,column=1 ,padx=20, pady=20)
             
             command_label = customtkinter.CTkLabel(new_clip_top, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             command_label.grid(row=2,column=0,pady=20,padx=20,sticky='W')
@@ -1939,7 +1911,7 @@ def new_event_top():
             
             def create_new_counter():
                 
-                title = redem_title6.get()
+                title = redeem_title6.get()
                 chat_response = chat_response_entry.get()
                 command_event = command_entry.get()
                 user_level_check = user_level_switch.get()
@@ -1962,7 +1934,7 @@ def new_event_top():
 
                     new_data[title] = {
                         'TYPE': 'COUNTER',
-                        'COMMAND': command_event,
+                        'COMMAND': command_event.lower(),
                         'send_response':send_response, 
                         'chat_response':chat_response
                         }
@@ -1985,7 +1957,7 @@ def new_event_top():
                         old_data_write_command = open('src/config/commands.json' , 'w') 
                         json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
 
-                    error_label.configure(text= lang_data['event_sucess_create'])
+                    error_label.configure(text= lang_data['event_success_create'])
 
                 except:
 
@@ -2016,14 +1988,14 @@ def new_event_top():
             
             messages_combox = update_titles_combox()  
 
-            tittleredem6 = customtkinter.CTkLabel(new_counter_top, text= lang_data['counter_new_label'], text_font=("default_theme","15"))
-            tittleredem6.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+            tittleredeem6 = customtkinter.CTkLabel(new_counter_top, text= lang_data['counter_new_label'], text_font=("default_theme","15"))
+            tittleredeem6.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-            redem_title_label6 = customtkinter.CTkLabel(new_counter_top, text=lang_data['redeem_marqued'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_title_label6.grid(row=1,column=0,pady=20,padx=20,sticky='W')
+            redeem_title_label6 = customtkinter.CTkLabel(new_counter_top, text=lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label6.grid(row=1,column=0,pady=20,padx=20,sticky='W')
 
-            redem_title6 = customtkinter.CTkComboBox(new_counter_top,values=list(messages_combox),width=200)
-            redem_title6.grid(row=1,column=1 ,padx=20, pady=20)
+            redeem_title6 = customtkinter.CTkComboBox(new_counter_top,values=list(messages_combox),width=200)
+            redeem_title6.grid(row=1,column=1 ,padx=20, pady=20)
             
             command_label = customtkinter.CTkLabel(new_counter_top, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             command_label.grid(row=2,column=0,pady=20,padx=20,sticky='W')
@@ -2052,17 +2024,17 @@ def new_event_top():
             new_counter_top.protocol("WM_DELETE_WINDOW", new_event_top.attributes('-topmost', 'true'))
             new_counter_top.mainloop()
     
-        def new_giveway():
+        def new_giveaway():
 
-            new_giveway_top = customtkinter.CTkToplevel(app)
-            new_giveway_top.title(f"RewardEvents - {lang_data['giveway_new_title']}")
-            new_giveway_top.iconbitmap("src/icon.ico")
-            new_giveway_top.resizable(False, False)
-            new_giveway_top.attributes('-topmost', 'true')
+            new_giveaway_top = customtkinter.CTkToplevel(app)
+            new_giveaway_top.title(f"RewardEvents - {lang_data['giveaway_new_title']}")
+            new_giveaway_top.iconbitmap("src/icon.ico")
+            new_giveaway_top.resizable(False, False)
+            new_giveaway_top.attributes('-topmost', 'true')
             
-            def create_new_giveway():
+            def create_new_giveaway():
                 
-                title = redem_title6.get()
+                title = redeem_title6.get()
                 chat_response = chat_response_entry.get()
                 command_event = command_entry.get()
                 user_level_check = user_level_switch.get()
@@ -2084,8 +2056,8 @@ def new_event_top():
                     new_data = json.load(old_data)
 
                     new_data[title] = {
-                        'TYPE': 'GIVEWAY',
-                        'COMMAND': command_event,
+                        'TYPE': 'giveaway',
+                        'COMMAND': command_event.lower(),
                         'send_response':send_response, 
                         'chat_response':chat_response
                         }
@@ -2108,7 +2080,7 @@ def new_event_top():
                     
 
                     
-                    error_label.configure(text=lang_data['event_sucess_create'])
+                    error_label.configure(text=lang_data['event_success_create'])
 
                 except:
                     error_label.configure(text=lang_data['event_error_create'])
@@ -2139,42 +2111,42 @@ def new_event_top():
             
             messages_combox = update_titles_combox()  
 
-            tittleredem6 = customtkinter.CTkLabel(new_giveway_top, text= lang_data['giveway_new_label'], text_font=("default_theme","15"))
-            tittleredem6.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+            tittleredeem6 = customtkinter.CTkLabel(new_giveaway_top, text= lang_data['giveaway_new_label'], text_font=("default_theme","15"))
+            tittleredeem6.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-            redem_title_label6 = customtkinter.CTkLabel(new_giveway_top, text= lang_data['redeem_marqued'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redem_title_label6.grid(row=1,column=0,pady=20,padx=20,sticky='W')
+            redeem_title_label6 = customtkinter.CTkLabel(new_giveaway_top, text= lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label6.grid(row=1,column=0,pady=20,padx=20,sticky='W')
 
-            redem_title6 = customtkinter.CTkComboBox(new_giveway_top,values=list(messages_combox),width=200)
-            redem_title6.grid(row=1,column=1 ,padx=20, pady=20)
+            redeem_title6 = customtkinter.CTkComboBox(new_giveaway_top,values=list(messages_combox),width=200)
+            redeem_title6.grid(row=1,column=1 ,padx=20, pady=20)
             
-            command_label = customtkinter.CTkLabel(new_giveway_top, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            command_label = customtkinter.CTkLabel(new_giveaway_top, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             command_label.grid(row=2,column=0,pady=20,padx=20,sticky='W')
 
-            command_entry = customtkinter.CTkEntry(new_giveway_top,width=200)
+            command_entry = customtkinter.CTkEntry(new_giveaway_top,width=200)
             command_entry.grid(row=2, column=1, pady=20,padx=20)
             
-            user_level_label = customtkinter.CTkLabel(new_giveway_top, text= lang_data['moderator_ask_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            user_level_label = customtkinter.CTkLabel(new_giveaway_top, text= lang_data['moderator_ask_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             user_level_label.grid(row=3,column=0,padx=20,pady=10,sticky='W')
             
-            user_level_switch = customtkinter.CTkSwitch(new_giveway_top, text="", text_font=("default_theme", "13"),)
+            user_level_switch = customtkinter.CTkSwitch(new_giveaway_top, text="", text_font=("default_theme", "13"),)
             user_level_switch.grid(row=3, column=1,padx=20, pady=10, sticky='e')
             
-            chat_response_label = customtkinter.CTkLabel(new_giveway_top,text= lang_data['chat_message_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            chat_response_label = customtkinter.CTkLabel(new_giveaway_top,text= lang_data['chat_message_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             chat_response_label.grid(row=4,column=0, padx=20,pady=10, sticky='W')
 
-            chat_response_entry = customtkinter.CTkEntry(new_giveway_top,width=200)
+            chat_response_entry = customtkinter.CTkEntry(new_giveaway_top,width=200)
             chat_response_entry.grid(row=4,column=1, padx=20, pady=10)
 
-            submit_buttom7 = customtkinter.CTkButton(new_giveway_top,text=lang_data['save'],command = create_new_giveway)
+            submit_buttom7 = customtkinter.CTkButton(new_giveaway_top,text=lang_data['save'],command = create_new_giveaway)
             submit_buttom7.grid(row=5, column=1,padx=20, pady=20, sticky='e')
 
-            error_label = customtkinter.CTkLabel(new_giveway_top, text="", text_font=("default_theme","11"))
+            error_label = customtkinter.CTkLabel(new_giveaway_top, text="", text_font=("default_theme","11"))
             error_label.grid(row=6, column=0, columnspan=2, pady=20)
 
-            new_giveway_top.protocol("WM_DELETE_WINDOW", new_event_top.attributes('-topmost', 'true'))
+            new_giveaway_top.protocol("WM_DELETE_WINDOW", new_event_top.attributes('-topmost', 'true'))
 
-            new_giveway_top.mainloop()   
+            new_giveaway_top.mainloop()   
     
         def select_event_type():
             value_combox = events_combox.get()
@@ -2188,7 +2160,7 @@ def new_event_top():
             'Exibir/Ocultar Fonte OBS' : new_source,
             'Atalho no teclado' : new_key,
             'Resposta no chat' : new_message,
-            'Sorteio com recompensa': new_giveway,
+            'Sorteio com recompensa': new_giveaway,
             'Contador': new_counter,
             'Criar um Clip': new_clip
             }
@@ -2227,41 +2199,50 @@ def del_event():
         data_event_file = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
         data_event = json.load(data_event_file)
         command_event_del_data = data_event[combox_key]['COMMAND']
+        command_type_data = data_event[combox_key]['TYPE']
         
-        try:
-            
-            data_event_file = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
-            data_event = json.load(data_event_file)
+        data_event_file = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
+        data_event = json.load(data_event_file)
 
-            del data_event[combox_key]
-            data_event_file.close()
+        del data_event[combox_key]
+        data_event_file.close()
 
-            event_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
-            json.dump(data_event, event_data_write, indent = 4, ensure_ascii=False)
-            event_data_write.close()
+        event_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
+        json.dump(data_event, event_data_write, indent = 4, ensure_ascii=False)
+        event_data_write.close()
+        
+        
+        if command_event_del_data != "":
             
-            
-            if command_event_del_data:
+            if command_type_data == 'TTS':
+
+                old_data_command = open('src/config/prefix_tts.json' , 'r', encoding='utf-8') 
+                new_data_command = json.load(old_data_command)
+
+                new_data_command['command'] = ''
+                new_data_command['redeem'] = ''
+                new_data_command['user_level'] = ''
                 
-                try:
-        
-                    data_commands_events_file = open('src/config/commands.json' , 'r', encoding='utf-8') 
-                    data_commands_events = json.load(data_commands_events_file)
+                old_data_command.close()
+                
+                old_data_write_command = open('src/config/prefix_tts.json' , 'w', encoding='utf-8') 
+                json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
 
-                    del data_commands_events[command_event_del_data]
-                    data_commands_events_file.close()
+            else:
+                
+                data_commands_events_file = open('src/config/commands.json' , 'r', encoding='utf-8') 
+                data_commands_events = json.load(data_commands_events_file)
 
-                    data_commands_events_write = open('src/config/commands.json' , 'w', encoding='utf-8') 
-                    json.dump(data_commands_events, data_commands_events_write, indent = 4, ensure_ascii=False)
-                    data_commands_events_write.close()
-                    
-                except:
-                    pass
-            
+                del data_commands_events[command_event_del_data]
+                data_commands_events_file.close()
 
-            error_label.configure(text=lang_data['event_sucess_del'])
-        except:
-            error_label.configure(text=lang_data['event_error_del'])
+                data_commands_events_write = open('src/config/commands.json' , 'w', encoding='utf-8') 
+                json.dump(data_commands_events, data_commands_events_write, indent = 4, ensure_ascii=False)
+                data_commands_events_write.close()
+                
+
+        error_label.configure(text=lang_data['event_success_del'])
+
             
         var_events = customtkinter.StringVar(value=lang_data['select_redeem'])
         
@@ -2274,18 +2255,22 @@ def del_event():
         data_event_file = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
         data_event = json.load(data_event_file)
 
-        try:
+        command_event = data_event[combox_key]['COMMAND']
+        if command_event == "":
+            command_event = lang_data['event_del_no_command']
 
-            command_event = data_event[combox_key]['COMMAND']
-            response_event = data_event[combox_key]['chat_response']
+        response_event = data_event[combox_key]['chat_response']
+        if response_event == "":
+            response_event = lang_data['event_del_no_response']
 
-            title_redeem_content.configure(text= combox_key)
-            command_redeem_content.configure(text= command_event)
-            message_content = customtkinter.StringVar(value= response_event)
-            response_redeem_content.configure(textvariable= message_content)
+        combox_key_title = customtkinter.StringVar(value= combox_key)
+        title_redeem_content.configure(text= combox_key_title)
 
-        except:
-            pass
+        command_redeem_val = customtkinter.StringVar(value= command_event)
+        command_redeem_content.configure(text= command_redeem_val)
+
+        message_content = customtkinter.StringVar(value= response_event)
+        response_redeem_content.configure(textvariable= message_content)
         
 
     events_data_file = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
@@ -2299,32 +2284,32 @@ def del_event():
     select_label = customtkinter.CTkLabel(del_event_top, text= lang_data['select_redeem'], text_font=("default_theme","12"))
     select_label.grid(row=1, column=0, columnspan=2, padx=20, pady=10)
     
-    combobox_events = customtkinter.CTkComboBox(del_event_top,values=list(events_data.keys()),variable=var_events,width=300,command=event_info_update)
+    combobox_events = customtkinter.CTkComboBox(del_event_top,values=list(events_data.keys()),variable=var_events,width=400,command=event_info_update)
     combobox_events.grid(row=2,column=0, columnspan=2,padx=10, pady=20)
-
-    del_button = customtkinter.CTkButton(del_event_top,text= lang_data['del'] ,command = del_event_confirm)
-    del_button.grid(row=3, column=1,padx=20, pady=20)
 
     title_redeem_label = customtkinter.CTkLabel(del_event_top, text= lang_data['redeem'], text_font=("default_theme","12"),anchor="w", justify=LEFT)
     title_redeem_label.grid(row=4, column=0, padx=20, pady=10)
 
-    title_redeem_content = customtkinter.CTkLabel(del_event_top, text="", text_font=("default_theme","12"),anchor="e", justify=RIGHT)
+    title_redeem_content = customtkinter.CTkEntry(del_event_top, text="",width=250, text_font=("default_theme","12"),state=DISABLED)
     title_redeem_content.grid(row=4, column=1, padx=20, pady=10)
 
     command_redeem_label = customtkinter.CTkLabel(del_event_top, text= lang_data['command'], text_font=("default_theme","12"),anchor="w", justify=LEFT)
     command_redeem_label.grid(row=5, column=0, padx=20, pady=10)
 
-    command_redeem_content = customtkinter.CTkLabel(del_event_top, text="", text_font=("default_theme","12"),anchor="e", justify=RIGHT)
+    command_redeem_content = customtkinter.CTkEntry(del_event_top, text="",width=250, text_font=("default_theme","12"),state=DISABLED)
     command_redeem_content.grid(row=5, column=1, padx=20, pady=10)
 
     response_redeem_label = customtkinter.CTkLabel(del_event_top, text=lang_data['chat_message_label'], text_font=("default_theme","12"),anchor="w", justify=LEFT)
     response_redeem_label.grid(row=6, column=0, padx=20, pady=10)
 
-    response_redeem_content = customtkinter.CTkEntry(del_event_top, text="", text_font=("default_theme","12"),state=DISABLED)
+    response_redeem_content = customtkinter.CTkEntry(del_event_top, text="",width=250, text_font=("default_theme","12"),state=DISABLED)
     response_redeem_content.grid(row=6, column=1, padx=20, pady=10)
+    
+    del_button = customtkinter.CTkButton(del_event_top,text= lang_data['del'] ,command = del_event_confirm)
+    del_button.grid(row=7, column=0, columnspan=2, padx=20, pady=20)
 
     error_label = customtkinter.CTkLabel(del_event_top, text="", text_font=("default_theme","11"))
-    error_label.grid(row=7, column=0, columnspan=2, pady=20)
+    error_label.grid(row=8, column=0, columnspan=2, pady=20)
 
     del_event_top.mainloop()
 
@@ -2346,32 +2331,24 @@ def new_simple_command():
             message = message_entry_new_simple.get()
             command_event = command_entry_new_simple.get()
 
-            if not [x for x in (message) if x is None]:
-                try:
-                    
-                    old_data_command = open('src/config/simple_commands.json' , 'r', encoding='utf-8') 
-                    new_data_command = json.load(old_data_command)
-                    
-                    if user_level_check:
-                        user_level_data = "mod"
-                    else:
-                        user_level_data = ""
-                        
-                    new_data_command[command_event] = {'response': message, 'user_level': user_level_data}
-                    
-                    old_data_write_command = open('src/config/simple_commands.json' , 'w', encoding='utf-8') 
-                    json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
-                    
-                    
-                    error_label.configure(text=lang_data['simple_commands_create_sucess'])
-                    
-                except:
-                    error_label.configure(text=lang_data['simple_commands_create_error'])
+            old_data_command = open('src/config/simple_commands.json' , 'r', encoding='utf-8') 
+            new_data_command = json.load(old_data_command)
+            
+            if user_level_check:
+                user_level_data = "mod"
             else:
-                error_label.configure(text=lang_data['simple_commands_create_empty'])
+                user_level_data = ""
+                
+            new_data_command[command_event.lower()] = {'response': message, 'user_level': user_level_data}
+            
+            old_data_write_command = open('src/config/simple_commands.json' , 'w', encoding='utf-8') 
+            json.dump(new_data_command, old_data_write_command , indent = 4, ensure_ascii=False)
+            
+            
+            error_label.configure(text=lang_data['simple_commands_create_success'])
                       
-        tittleredem2_new_simple = customtkinter.CTkLabel(new_simple, text= lang_data['simple_commands_new_label'], text_font=("default_theme","15"))
-        tittleredem2_new_simple.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+        tittleredeem2_new_simple = customtkinter.CTkLabel(new_simple, text= lang_data['simple_commands_new_label'], text_font=("default_theme","15"))
+        tittleredeem2_new_simple.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
         command_label_new_simple = customtkinter.CTkLabel(new_simple, text= lang_data['command'] , text_font=("default_theme","13"),anchor="w", justify=RIGHT)
         command_label_new_simple.grid(row=2,column=0,pady=10,padx=10,sticky='W')
@@ -2379,7 +2356,7 @@ def new_simple_command():
         command_entry_new_simple = customtkinter.CTkEntry(new_simple,width=200)
         command_entry_new_simple.grid(row=2, column=1,padx=10, pady=10)
 
-        message_label_new_simple = customtkinter.CTkLabel(new_simple,text= lang_data['mesage_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        message_label_new_simple = customtkinter.CTkLabel(new_simple,text= lang_data['message_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
         message_label_new_simple.grid(row=3,column=0, padx=10,pady=10, sticky='W')
 
         message_entry_new_simple = customtkinter.CTkEntry(new_simple,width=200)
@@ -2425,7 +2402,7 @@ def del_simple_command():
             json.dump(new_data, old_data_write, indent = 4, ensure_ascii=False)
             old_data_write.close()
             
-            error_label.configure(text=lang_data['simple_commands_del_sucess'])
+            error_label.configure(text=lang_data['simple_commands_del_success'])
       
         except:
             error_label.configure(text=lang_data['simple_commands_del_error'])
@@ -2505,7 +2482,7 @@ def edit_simple_command():
             
             combobox_message.configure(variable=message_edit_val,values=list(commands_list.keys()))
             
-            error_label.configure(text=lang_data['simple_commands_edit_sucess'])
+            error_label.configure(text=lang_data['simple_commands_edit_success'])
         except:
             error_label.configure(text=lang_data['simple_commands_edit_error'])
             
@@ -2578,7 +2555,7 @@ def edit_delay_commands():
                     json.dump(time_delay_data, time_delay_write, indent = 4, ensure_ascii=False)
                     time_delay_write.close()
                     
-                    error_label.configure(text=lang_data['simple_commands_edit_delay_sucess'])
+                    error_label.configure(text=lang_data['simple_commands_edit_delay_success'])
                 except:
                     error_label.configure(text=lang_data['simple_commands_edit_delay_error'])
             else:
@@ -2605,7 +2582,7 @@ def edit_delay_commands():
                     json.dump(time_delay_data, time_delay_write, indent = 4, ensure_ascii=False)
                     time_delay_write.close()
                     
-                    error_label.configure(text=lang_data['simple_commands_edit_delay_sucess'])
+                    error_label.configure(text=lang_data['simple_commands_edit_delay_success'])
                 except:
                     error_label.configure(text=lang_data['simple_commands_edit_delay_error'])
             else:
@@ -2683,7 +2660,7 @@ def config_obs_conn_top():
             out_file_obs_atual = open("src/config/obs.json", "r", encoding='utf-8')
             data_obs_atual = json.load(out_file_obs_atual)
             
-            error_label.configure(text=lang_data['obs_conn_sucess'])
+            error_label.configure(text=lang_data['obs_conn_success'])
         else:
             error_label.configure(text=lang_data['obs_conn_error'])
                 
@@ -2751,52 +2728,54 @@ def config_obs_not_top():
     
     def salvar_conf_not():
     
-        group_name_value = group_name_combox.get()
-        text_name_value = text_name_combox.get()
-        text_user_name_value = text_user_name_combox.get()
+        html_active = html_active_switch.get()
+        html_source = html_source_combox.get()
+        html_time = html_time_entry.get()
         
-        if not [x for x in (group_name_value, text_name_value, text_user_name_value) if x is None]:
+        if not [x for x in (html_time) if x is None]:
                         
             data = {
-                'TEXT_TITLE_REDEEM': text_name_value, 
-                'TEXT_USER_REDEM': text_user_name_value, 
-                'NOTF_GROUP_OBS': group_name_value,}
+                'HTML_ACTIVE' : html_active,
+                'HTML_TITLE': html_source,
+                'HTML_TIME': int(html_time)
+                }
 
             out_file = open("src/config/notfic.json", "w", encoding='utf-8')
             json.dump(data, out_file, indent=6,ensure_ascii=False)
             out_file.close()
 
-            error_label.configure(text=lang_data['obs_not_sucess'])
+            error_label.configure(text=lang_data['obs_not_success'])
         else:
             error_label.configure(text=lang_data['obs_not_error'])
             
-        
-    title_notif = customtkinter.CTkLabel(top_config_obs_notifc, text= lang_data['obs_not_title'], text_font=("default_theme", "13"))
-    title_notif.grid(row=0, column=0, columnspan=2, padx=20, pady=(25,15))
+    obs_font_variable = customtkinter.StringVar(value= lang_data['obs_select_source'])  
 
-    group_name = customtkinter.CTkLabel(top_config_obs_notifc, text= lang_data['obs_not_group'], text_font=("default_theme", "11"), anchor="w")
-    group_name.grid(row=1, column=0, padx=20, pady=(15, 5), sticky='W')
+    obs_not_title = customtkinter.CTkLabel(top_config_obs_notifc, text= lang_data['obs_not_label'], text_font=("default_theme", "11"), anchor="w")
+    obs_not_title.grid(row=0, column=0,columnspan=2, padx=20, pady=20)
 
-    group_name_combox = customtkinter.CTkOptionMenu(top_config_obs_notifc,values=list(obs_con.get_sources()), width=200,dynamic_resizing=True)
-    group_name_combox.grid(row=1, column=1, padx=20, pady=(20, 5))
+    html_active_label =customtkinter.CTkLabel(top_config_obs_notifc, text= lang_data['obs_not_html_active_label'], text_font=("default_theme", "11"), anchor="w")
+    html_active_label.grid(row=4, column=0, padx=20, pady=(10, 15), sticky='W')
 
-    text_name = customtkinter.CTkLabel(top_config_obs_notifc, text= lang_data['obs_not_redeem'], text_font=("default_theme", "11"), anchor="w")
-    text_name.grid(row=2, column=0, padx=20, pady=(5, 5), sticky='W')
+    html_active_switch = customtkinter.CTkSwitch(top_config_obs_notifc,text=" ")
+    html_active_switch.grid(row=4, column=1, padx=20, pady=(10, 15), sticky='e')
 
-    text_name_combox = customtkinter.CTkOptionMenu(top_config_obs_notifc,values=list(obs_con.get_sources()), width=200)
-    text_name_combox.grid(row=2, column=1, padx=20, pady=(20, 5))
+    html_source_label = customtkinter.CTkLabel(top_config_obs_notifc, text= lang_data['obs_not_html'], text_font=("default_theme", "11"), anchor="w")
+    html_source_label.grid(row=5, column=0, padx=20, pady=(5, 15), sticky='W')
 
-    text_user_name = customtkinter.CTkLabel(top_config_obs_notifc, text= lang_data['obs_not_user'], text_font=("default_theme", "11"), anchor="w")
-    text_user_name.grid(row=3, column=0, padx=20, pady=(5, 15), sticky='W')
+    html_source_combox = customtkinter.CTkOptionMenu(top_config_obs_notifc,values=list(obs_con.get_sources()),variable=obs_font_variable, width=200)
+    html_source_combox.grid(row=5, column=1, padx=20, pady=(5, 15))
 
-    text_user_name_combox = customtkinter.CTkOptionMenu(top_config_obs_notifc,values=list(obs_con.get_sources()), width=200)
-    text_user_name_combox.grid(row=3, column=1, padx=20, pady=(20, 5))
+    html_time_label = customtkinter.CTkLabel(top_config_obs_notifc, text= lang_data['obs_not_html_time'], text_font=("default_theme", "11"), anchor="w")
+    html_time_label.grid(row=6, column=0, padx=20, pady=(5, 15), sticky='W')
+
+    html_time_entry = customtkinter.CTkEntry(top_config_obs_notifc, width=200)
+    html_time_entry.grid(row=6, column=1, padx=20, pady=(5, 15))
 
     salvar = customtkinter.CTkButton(top_config_obs_notifc, text=lang_data['save'], command=salvar_conf_not)
-    salvar.grid(row=4, column=1,padx=20, pady=(10,10), sticky='e')
+    salvar.grid(row=7, column=1,padx=20, pady=(10,10), sticky='e')
 
     error_label = customtkinter.CTkLabel(top_config_obs_notifc, text="", text_font=("default_theme","11"))
-    error_label.grid(row=5, column=0, columnspan=2, pady=20)
+    error_label.grid(row=8, column=0, columnspan=2, pady=20)
     
     
     top_config_obs_notifc.mainloop()
@@ -3058,7 +3037,7 @@ def config_counter_counter():
             commands_counter_file = open("src/counter/commands.json", 'w', encoding='utf-8')
             json.dump(commands_counter_data,commands_counter_file,ensure_ascii=False)
             
-            error_label.configure(text=lang_data['counter_sucess'])
+            error_label.configure(text=lang_data['counter_success'])
         else:
             error_label.configure(text=lang_data['counter_error'])
         
@@ -3090,8 +3069,8 @@ def config_counter_counter():
     initial_value_save = customtkinter.CTkButton(top_config_counter,text= lang_data['save'],command = initial_value)
     initial_value_save.grid(row=3,column=1,padx=20, pady=20, sticky='e')
     
-    title_mesages = customtkinter.CTkLabel(top_config_counter, text= lang_data['commands'], text_font=("default_theme","13"))
-    title_mesages.grid(row=4, column=0, columnspan=2, padx=20, pady=20,)
+    title_messages = customtkinter.CTkLabel(top_config_counter, text= lang_data['commands'], text_font=("default_theme","13"))
+    title_messages.grid(row=4, column=0, columnspan=2, padx=20, pady=20,)
     
     command_check_value_label = customtkinter.CTkLabel(top_config_counter, text= lang_data['counter_check_command_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     command_check_value_label.grid(row=5,column=0, pady=(20,5),padx=20, sticky='W')
@@ -3163,222 +3142,222 @@ def config_lang():
 
     top_config_lang.mainloop()
 
-def config_giveway():
+def config_giveaway():
     
-    top_config_giveway = customtkinter.CTkToplevel(app)
-    top_config_giveway.title(f"RewardEvents - {lang_data['giveway_command_config_title']}")
-    top_config_giveway.iconbitmap("src/icon.ico")
-    top_config_giveway.resizable(False, False)
-    top_config_giveway.attributes('-topmost', 'true')
+    top_config_giveaway = customtkinter.CTkToplevel(app)
+    top_config_giveaway.title(f"RewardEvents - {lang_data['giveaway_command_config_title']}")
+    top_config_giveaway.iconbitmap("src/icon.ico")
+    top_config_giveaway.resizable(False, False)
+    top_config_giveaway.attributes('-topmost', 'true')
                
-    def giveway_config_top():
+    def giveaway_config_top():
         
         config_give_top = customtkinter.CTkToplevel(app)
-        config_give_top.title(f"RewardEvents - {lang_data['giveway_command_config_title']}")
+        config_give_top.title(f"RewardEvents - {lang_data['giveaway_command_config_title']}")
         config_give_top.iconbitmap("src/icon.ico")
         config_give_top.resizable(False, False)
 
-        def giveway_reset_status():
+        def giveaway_reset_status():
 
-            giveway_reset_value = giveway_reset_switch.get()
+            giveaway_reset_value = giveaway_reset_switch.get()
 
-            reset_giveway_file = open('src/giveway/config.json','r',encoding='utf-8')
-            reset_giveway_data = json.load(reset_giveway_file)
+            reset_giveaway_file = open('src/giveaway/config.json','r',encoding='utf-8')
+            reset_giveaway_data = json.load(reset_giveaway_file)
 
-            reset_giveway_data['reset'] = giveway_reset_value
+            reset_giveaway_data['reset'] = giveaway_reset_value
 
-            status_giveway_file_w = open('src/giveway/config.json', 'w', encoding='utf-8')
-            json.dump(reset_giveway_data, status_giveway_file_w, ensure_ascii=False)
+            status_giveaway_file_w = open('src/giveaway/config.json', 'w', encoding='utf-8')
+            json.dump(reset_giveaway_data, status_giveaway_file_w, ensure_ascii=False)
         
-        def giveway_status():
+        def giveaway_status():
 
-            giveway_status_value = giveway_status_switch.get()
+            giveaway_status_value = giveaway_status_switch.get()
 
-            status_giveway_file = open('src/giveway/config.json','r',encoding='utf-8')
-            status_giveway_data = json.load(status_giveway_file)
+            status_giveaway_file = open('src/giveaway/config.json','r',encoding='utf-8')
+            status_giveaway_data = json.load(status_giveaway_file)
 
-            status_giveway_data['enable'] = giveway_status_value
-            giveway_name_data = status_giveway_data['name']
+            status_giveaway_data['enable'] = giveaway_status_value
+            giveaway_name_data = status_giveaway_data['name']
 
-            status_giveway_file_w = open('src/giveway/config.json', 'w', encoding='utf-8')
-            json.dump(status_giveway_data, status_giveway_file_w, ensure_ascii=False)
+            status_giveaway_file_w = open('src/giveaway/config.json', 'w', encoding='utf-8')
+            json.dump(status_giveaway_data, status_giveaway_file_w, ensure_ascii=False)
 
-            if giveway_status_value == 1:
-                message = mesages_data['giveway_status_enable'].replace('{giveway_name_data}',giveway_name_data)
+            if giveaway_status_value == 1:
+                message = messages_data['giveaway_status_enable'].replace('{giveaway_name_data}',giveaway_name_data)
                 smt.send_message(message, "RESPONSE")
             else:
-                message = mesages_data['giveway_status_disable'].replace('{giveway_name_data}',giveway_name_data)
+                message = messages_data['giveaway_status_disable'].replace('{giveaway_name_data}',giveaway_name_data)
                 smt.send_message(message, "RESPONSE")
 
         def save_name():
 
-            giveway_name_value = giveway_name_entry.get()
+            giveaway_name_value = giveaway_name_entry.get()
 
-            name_giveway_file = open('src/giveway/config.json','r',encoding='utf-8')
-            name_giveway_data = json.load(name_giveway_file)
+            name_giveaway_file = open('src/giveaway/config.json','r',encoding='utf-8')
+            name_giveaway_data = json.load(name_giveaway_file)
 
-            name_giveway_data['name'] = giveway_name_value
+            name_giveaway_data['name'] = giveaway_name_value
 
-            name_giveway_file_w = open('src/giveway/config.json', 'w', encoding='utf-8')
-            json.dump(name_giveway_data, name_giveway_file_w, ensure_ascii=False)
+            name_giveaway_file_w = open('src/giveaway/config.json', 'w', encoding='utf-8')
+            json.dump(name_giveaway_data, name_giveaway_file_w, ensure_ascii=False)
 
         def add_user():
 
-            user = giveway_add_name_entry.get()
+            user = giveaway_add_name_entry.get()
 
-            with open("src/giveway/names.txt", "a+") as give_file_r:
+            with open("src/giveaway/names.txt", "a+") as give_file_r:
                         give_file_r.write(user+"\n")
             
             
-            chat_response = mesages_data['giveway_response_user_add'] 
+            chat_response = messages_data['giveaway_response_user_add'] 
             response_redus = chat_response.replace('{user}', user)
 
             smt.send_message(response_redus,'RESPONSE')
 
-        def show_giveway():
+        def show_giveaway():
 
-            show_giveway_top = customtkinter.CTkToplevel(app)
-            show_giveway_top.title(f"RewardEvents - {lang_data['giveway_names_title']}")
-            show_giveway_top.iconbitmap("src/icon.ico")
-            show_giveway_top.resizable(False, False) 
+            show_giveaway_top = customtkinter.CTkToplevel(app)
+            show_giveaway_top.title(f"RewardEvents - {lang_data['giveaway_names_title']}")
+            show_giveaway_top.iconbitmap("src/icon.ico")
+            show_giveaway_top.resizable(False, False) 
 
-            title_names_giveway = customtkinter.CTkLabel(show_giveway_top, text=lang_data['giveway_list_names_label'], text_font='20', justify=CENTER,)
-            title_names_giveway.grid(row=1, columnspan=2, pady=(10, 20))
+            title_names_giveaway = customtkinter.CTkLabel(show_giveaway_top, text=lang_data['giveaway_list_names_label'], text_font='20', justify=CENTER,)
+            title_names_giveaway.grid(row=1, columnspan=2, pady=(10, 20))
             
-            textbox_names_giveway = tkinter.Listbox(show_giveway_top,width=60,height=30,bg='black',fg='white')
-            textbox_names_giveway.grid(row=2, column=0, columnspan=2, padx=20, pady=(20, 0))
+            textbox_names_giveaway = tkinter.Listbox(show_giveaway_top,width=60,height=30,bg='black',fg='white')
+            textbox_names_giveaway.grid(row=2, column=0, columnspan=2, padx=20, pady=(20, 0))
             
-            file_giveway = open("src/giveway/names.txt","r")
-            for lines in file_giveway:
-                textbox_names_giveway.insert(END,f'{lines}')
+            file_giveaway = open("src/giveaway/names.txt","r")
+            for lines in file_giveaway:
+                textbox_names_giveaway.insert(END,f'{lines}')
                 
-            file_giveway.close()
+            file_giveaway.close()
 
-            show_giveway_top.mainloop()
+            show_giveaway_top.mainloop()
     
-        def clear_giveway():
+        def clear_giveaway():
 
-            with open("src/giveway/names.txt", "w") as counter_file_w:      
+            with open("src/giveaway/names.txt", "w") as counter_file_w:      
                 counter_file_w.truncate(0)
 
-        def execute_giveway():
+        def execute_giveaway():
 
-            giveway_file = open('src/giveway/config.json','r',encoding='utf-8')
-            giveway_data = json.load(giveway_file)
+            giveaway_file = open('src/giveaway/config.json','r',encoding='utf-8')
+            giveaway_data = json.load(giveaway_file)
 
-            reset_give = giveway_data['reset']
+            reset_give = giveaway_data['reset']
 
-            with open("src/giveway/names.txt", "r") as give_file_check:
+            with open("src/giveaway/names.txt", "r") as give_file_check:
                 if len(give_file_check.read()) > 0:
 
-                    with open("src/giveway/names.txt", "r+") as give_file_r:
+                    with open("src/giveaway/names.txt", "r+") as give_file_r:
                             lines = give_file_r.readlines()
 
                             choice = randint(0,len(lines))
                             name = lines[choice].replace('\n','')
 
-                            mesage_win = mesages_data['giveway_response_win'].replace('{name}',name)
-                            smt.send_message(mesage_win,'RESPONSE')
+                            message_win = messages_data['giveaway_response_win'].replace('{name}',name)
+                            smt.send_message(message_win,'RESPONSE')
 
-                            with open("src/giveway/backup.txt", "r+") as give_file_backup:
+                            with open("src/giveaway/backup.txt", "r+") as give_file_backup:
                                 give_file_backup.writelines(lines)
 
-                            with open("src/giveway/result.txt", "w") as give_file_w:
+                            with open("src/giveaway/result.txt", "w") as give_file_w:
                                 give_file_w.write(name)
                             
                             if reset_give == 1:
                                 give_file_r.truncate(0)
 
-        title_giveway_top = customtkinter.CTkLabel(config_give_top, text= lang_data['giveway_command_config_title'], text_font=("default_theme","15"))
-        title_giveway_top.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+        title_giveaway_top = customtkinter.CTkLabel(config_give_top, text= lang_data['giveaway_command_config_title'], text_font=("default_theme","15"))
+        title_giveaway_top.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-        title_giveway_top1 = customtkinter.CTkLabel(config_give_top, text= lang_data['giveway_config_create_label'], text_font=("default_theme","13"))
-        title_giveway_top1.grid(row=1, column=0, columnspan=2, padx=20, pady=(20,10))
+        title_giveaway_top1 = customtkinter.CTkLabel(config_give_top, text= lang_data['giveaway_config_create_label'], text_font=("default_theme","13"))
+        title_giveaway_top1.grid(row=1, column=0, columnspan=2, padx=20, pady=(20,10))
         
-        giveway_name_label = customtkinter.CTkLabel(config_give_top, text= lang_data['giveway_name_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-        giveway_name_label.grid(row=2,column=0,pady=(10,10),padx=20, sticky='W')
+        giveaway_name_label = customtkinter.CTkLabel(config_give_top, text= lang_data['giveaway_name_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        giveaway_name_label.grid(row=2,column=0,pady=(10,10),padx=20, sticky='W')
 
-        giveway_name_entry = customtkinter.CTkEntry(config_give_top,width=200)
-        giveway_name_entry.grid(row=2, column=1, padx=20, pady=(10,10), sticky='e')
+        giveaway_name_entry = customtkinter.CTkEntry(config_give_top,width=200)
+        giveaway_name_entry.grid(row=2, column=1, padx=20, pady=(10,10), sticky='e')
         
-        giveway_name_save = customtkinter.CTkButton(config_give_top,text= lang_data['save'],command = save_name)
-        giveway_name_save.grid(row=3, column=1, padx=20, pady=(10,20), sticky='e')
+        giveaway_name_save = customtkinter.CTkButton(config_give_top,text= lang_data['save'],command = save_name)
+        giveaway_name_save.grid(row=3, column=1, padx=20, pady=(10,20), sticky='e')
 
-        title_giveway_add = customtkinter.CTkLabel(config_give_top, text= lang_data['giveway_config_add_user_label'], text_font=("default_theme","13"))
-        title_giveway_add.grid(row=4, column=0, columnspan=2, padx=20, pady=(20,10))
+        title_giveaway_add = customtkinter.CTkLabel(config_give_top, text= lang_data['giveaway_config_add_user_label'], text_font=("default_theme","13"))
+        title_giveaway_add.grid(row=4, column=0, columnspan=2, padx=20, pady=(20,10))
 
-        giveway_add_name_label = customtkinter.CTkLabel(config_give_top, text= lang_data['giveway_username_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-        giveway_add_name_label.grid(row=5,column=0,pady=(10,10),padx=20, sticky='W')
+        giveaway_add_name_label = customtkinter.CTkLabel(config_give_top, text= lang_data['giveaway_username_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        giveaway_add_name_label.grid(row=5,column=0,pady=(10,10),padx=20, sticky='W')
 
-        giveway_add_name_entry = customtkinter.CTkEntry(config_give_top,width=200)
-        giveway_add_name_entry.grid(row=5, column=1, padx=20, pady=(10,10), sticky='e')
+        giveaway_add_name_entry = customtkinter.CTkEntry(config_give_top,width=200)
+        giveaway_add_name_entry.grid(row=5, column=1, padx=20, pady=(10,10), sticky='e')
         
-        giveway_name_add = customtkinter.CTkButton(config_give_top,text= lang_data['add'],command = add_user)
-        giveway_name_add.grid(row=6, column=1, padx=20, pady=(10,20), sticky='e')
+        giveaway_name_add = customtkinter.CTkButton(config_give_top,text= lang_data['add'],command = add_user)
+        giveaway_name_add.grid(row=6, column=1, padx=20, pady=(10,20), sticky='e')
 
-        giveway_status_label = customtkinter.CTkLabel(config_give_top, text= lang_data['giveway_config_enable_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-        giveway_status_label.grid(row=7, column=0, padx=20, pady=(20,10), sticky='w')
+        giveaway_status_label = customtkinter.CTkLabel(config_give_top, text= lang_data['giveaway_config_enable_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        giveaway_status_label.grid(row=7, column=0, padx=20, pady=(20,10), sticky='w')
 
-        giveway_status_switch = customtkinter.CTkSwitch(config_give_top, text="", command=giveway_status)
-        giveway_status_switch.grid(row=7, column=1, padx=20, pady=(20,10), sticky='e')
+        giveaway_status_switch = customtkinter.CTkSwitch(config_give_top, text="", command=giveaway_status)
+        giveaway_status_switch.grid(row=7, column=1, padx=20, pady=(20,10), sticky='e')
 
-        giveway_reset_label = customtkinter.CTkLabel(config_give_top, text= lang_data['giveway_config_clear_names_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-        giveway_reset_label.grid(row=8, column=0, padx=20, pady=(10,20), sticky='w')
+        giveaway_reset_label = customtkinter.CTkLabel(config_give_top, text= lang_data['giveaway_config_clear_names_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        giveaway_reset_label.grid(row=8, column=0, padx=20, pady=(10,20), sticky='w')
 
-        giveway_reset_switch = customtkinter.CTkSwitch(config_give_top, text="", command=giveway_reset_status)
-        giveway_reset_switch.grid(row=8, column=1, padx=20, pady=(10,20), sticky='e')
+        giveaway_reset_switch = customtkinter.CTkSwitch(config_give_top, text="", command=giveaway_reset_status)
+        giveaway_reset_switch.grid(row=8, column=1, padx=20, pady=(10,20), sticky='e')
 
-        clear_give = customtkinter.CTkButton(config_give_top,text= lang_data['giveway_config_clear_names_button'], width=200, command = clear_giveway)
+        clear_give = customtkinter.CTkButton(config_give_top,text= lang_data['giveaway_config_clear_names_button'], width=200, command = clear_giveaway)
         clear_give.grid(row=9, column=0, columnspan=2, padx=20, pady=(20,10))
 
-        display_names_give = customtkinter.CTkButton(config_give_top,text= lang_data['giveway_config_list_button'], width=200, command = show_giveway)
+        display_names_give = customtkinter.CTkButton(config_give_top,text= lang_data['giveaway_config_list_button'], width=200, command = show_giveaway)
         display_names_give.grid(row=10, column=0, columnspan=2, padx=20, pady=(10,10))
 
-        execute_give = customtkinter.CTkButton(config_give_top,text= lang_data['giveway_config_execute_button'], width=200, command = execute_giveway)
+        execute_give = customtkinter.CTkButton(config_give_top,text= lang_data['giveaway_config_execute_button'], width=200, command = execute_giveaway)
         execute_give.grid(row=11, column=0, columnspan=2, padx=20, pady=(10,20))
     
 
         config_give_top.mainloop()
 
-    def giveway_commmands_top():
+    def giveaway_commmands_top():
 
         config_give_comm_top = customtkinter.CTkToplevel(app)
-        config_give_comm_top.title(f"RewardEvents - {lang_data['giveway_command_config_title']}")
+        config_give_comm_top.title(f"RewardEvents - {lang_data['giveaway_command_config_title']}")
         config_give_comm_top.iconbitmap("src/icon.ico")
         config_give_comm_top.resizable(False, False)
 
         def save_commands_give():
         
-            check_giveway = command_check_entry.get()
-            selfcheck_giveway = command_selfcheck_entry.get()
-            clear_giveway_value = command_clear_entry.get()
-            execute_giveway_value = command_execute_entry.get()
+            check_giveaway = command_check_entry.get()
+            selfcheck_giveaway = command_selfcheck_entry.get()
+            clear_giveaway_value = command_clear_entry.get()
+            execute_giveaway_value = command_execute_entry.get()
             
-            if not [x for x in (check_giveway, selfcheck_giveway, clear_giveway_value,execute_giveway_value) if x is None]:
+            if not [x for x in (check_giveaway, selfcheck_giveaway, clear_giveaway_value,execute_giveaway_value) if x is None]:
                 
-                giveway_data = {
-                    "execute_giveway" : execute_giveway_value,
-                    "clear_giveway": clear_giveway_value,
-                    "check_name": check_giveway,
-                    "check_self_name" : selfcheck_giveway
+                giveaway_data = {
+                    "execute_giveaway" : execute_giveaway_value.lower(),
+                    "clear_giveaway": clear_giveaway_value.lower(),
+                    "check_name": check_giveaway.lower(),
+                    "check_self_name" : selfcheck_giveaway.lower()
                 }
                 
-                commands_giveway_file = open("src/giveway/commands.json", 'w', encoding='utf-8')
-                json.dump(giveway_data, commands_giveway_file, ensure_ascii=False)
+                commands_giveaway_file = open("src/giveaway/commands.json", 'w', encoding='utf-8')
+                json.dump(giveaway_data, commands_giveaway_file, ensure_ascii=False)
                 
                 error_label.configure(text="Salvo!")
             else:
                 error_label.configure(text="Preencha todos os campos!")
 
-        def start_commands_giveway():
+        def start_commands_giveaway():
 
-            commands_giveway_file = open("src/giveway/commands.json", 'r', encoding='utf-8')
-            commands_giveway_data = json.load(commands_giveway_file)
+            commands_giveaway_file = open("src/giveaway/commands.json", 'r', encoding='utf-8')
+            commands_giveaway_data = json.load(commands_giveaway_file)
 
-            command_execute_val = customtkinter.StringVar(value=commands_giveway_data['execute_giveway'])
-            command_clear_val = customtkinter.StringVar(value=commands_giveway_data['clear_giveway'])
-            command_check_val = customtkinter.StringVar(value=commands_giveway_data['check_name'])
-            command_selfcheck_val = customtkinter.StringVar(value=commands_giveway_data['check_self_name'])
+            command_execute_val = customtkinter.StringVar(value=commands_giveaway_data['execute_giveaway'])
+            command_clear_val = customtkinter.StringVar(value=commands_giveaway_data['clear_giveaway'])
+            command_check_val = customtkinter.StringVar(value=commands_giveaway_data['check_name'])
+            command_selfcheck_val = customtkinter.StringVar(value=commands_giveaway_data['check_self_name'])
 
             command_execute_entry.configure(textvariable=command_execute_val)
             command_clear_entry.configure(textvariable=command_clear_val)
@@ -3386,28 +3365,28 @@ def config_giveway():
             command_selfcheck_entry.configure(textvariable=command_selfcheck_val)
 
 
-        title_mesages = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveway_command_config_label'], text_font=("default_theme","13"))
-        title_mesages.grid(row=6, column=0, columnspan=2, padx=20, pady=20)
+        title_messages = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveaway_command_config_label'], text_font=("default_theme","13"))
+        title_messages.grid(row=6, column=0, columnspan=2, padx=20, pady=20)
         
-        command_execute_label = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveway_command_execute_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_execute_label = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveaway_command_execute_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
         command_execute_label.grid(row=7,column=0, padx=20, pady=(20,5), sticky='W')
 
         command_execute_entry = customtkinter.CTkEntry(config_give_comm_top,width=200)
         command_execute_entry.grid(row=7, column=1, padx=20, pady=(20,5))
         
-        command_clear_label = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveway_command_clear_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_clear_label = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveaway_command_clear_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
         command_clear_label.grid(row=8,column=0, padx=20, pady=(5,5), sticky='W')
 
         command_clear_entry = customtkinter.CTkEntry(config_give_comm_top,width=200)
         command_clear_entry.grid(row=8, column=1, padx=20, pady=(5,5))
         
-        command_check_label = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveway_command_check_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_check_label = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveaway_command_check_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
         command_check_label.grid(row=9,column=0, padx=20, pady=(5,20), sticky='W')
 
         command_check_entry = customtkinter.CTkEntry(config_give_comm_top,width=200)
         command_check_entry.grid(row=9, column=1, padx=20, pady=(5,5))
 
-        command_selfcheck_label = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveway_command_selfcheck_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+        command_selfcheck_label = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveaway_command_self_check_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
         command_selfcheck_label.grid(row=10,column=0, padx=20, pady=(5,5), sticky='W')
 
         command_selfcheck_entry = customtkinter.CTkEntry(config_give_comm_top,width=200)
@@ -3419,18 +3398,18 @@ def config_giveway():
         error_label = customtkinter.CTkLabel(config_give_comm_top, text=f"", text_font=("default_theme","12"),anchor="w", justify=RIGHT)
         error_label.grid(row=14,column=0, columnspan=2, padx=20, pady=20)
     
-        start_commands_giveway()
+        start_commands_giveaway()
 
-    title_giveway_top = customtkinter.CTkLabel(top_config_giveway, text= lang_data['giveway_command_config_title'], text_font=("default_theme","15"))
-    title_giveway_top.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+    title_giveaway_top = customtkinter.CTkLabel(top_config_giveaway, text= lang_data['giveaway_command_config_title'], text_font=("default_theme","15"))
+    title_giveaway_top.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-    clear_give = customtkinter.CTkButton(top_config_giveway ,text= lang_data['config_giveway_button'], width=200 ,command = giveway_config_top)
+    clear_give = customtkinter.CTkButton(top_config_giveaway ,text= lang_data['config_giveaway_button'], width=200 ,command = giveaway_config_top)
     clear_give.grid(row=1,column=0, columnspan=2, padx=20, pady=20)
 
-    display_names_give = customtkinter.CTkButton(top_config_giveway,text= lang_data['giveway_commands_config_button'], width=200,command = giveway_commmands_top)
+    display_names_give = customtkinter.CTkButton(top_config_giveaway,text= lang_data['giveaway_commands_config_button'], width=200,command = giveaway_commmands_top)
     display_names_give.grid(row=2,column=0, columnspan=2, padx=20, pady=20)
 
-    top_config_giveway.mainloop()
+    top_config_giveaway.mainloop()
           
 def clear_data():
 
@@ -3459,14 +3438,14 @@ def self_clip():
         response_error = 'None'
         response_create = response_clip['data'][0]['id']
 
-        message_final = mesages_data['clip_buttom_create_clip'].replace('{clip_id}',response_create)
+        message_final = messages_data['clip_buttom_create_clip'].replace('{clip_id}',response_create)
         smt.send_message(message_final,"CLIP")
         
     except:
         response_error = response_clip['message']
 
         if response_error:
-            message_clip_error = mesages_data['clip_error_clip']
+            message_clip_error = messages_data['clip_error_clip']
             smt.send_message(message_clip_error,'CLIP')
 
 def new_timer():
@@ -3505,7 +3484,7 @@ def new_timer():
     title_timer = customtkinter.CTkLabel(new_timer_top, text= lang_data['timer_tab_title'], text_font=("default_theme","15"))
     title_timer.grid(row=0, column=0, columnspan=2, padx=20, pady=10,)
 
-    message_timer_label = customtkinter.CTkLabel(new_timer_top, text= lang_data['mesage_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    message_timer_label = customtkinter.CTkLabel(new_timer_top, text= lang_data['message_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
     message_timer_label.grid(row=2,column=0, pady=10,padx=20,sticky='w')
 
     message_timer_entry = customtkinter.CTkEntry(new_timer_top,width=300)
@@ -3530,22 +3509,25 @@ def timer_interval():
         
         value_max = timer_max_interval_entry.get()
         value_min = timer_min_interval_entry.get()
+
+        if value_max.isdigit()  and value_min.isdigit():
+
+            timer_data_file = open('src/config/timer.json' , 'r', encoding='utf-8') 
+            timer_data = json.load(timer_data_file)
         
-        timer_data_file = open('src/config/timer.json' , 'r', encoding='utf-8') 
-        timer_data = json.load(timer_data_file)
-        
-        timer_data['TIME'] = int(value_min)
-        timer_data['TIME_MAX'] = int(value_max)
-        
-        timer_data_file.close()
-        
-        try:
+            timer_data['TIME'] = int(value_min)
+            timer_data['TIME_MAX'] = int(value_max)
+            
+            timer_data_file.close()
+
             old_data_write = open('src/config/timer.json' , 'w', encoding='utf-8') 
             json.dump(timer_data, old_data_write, indent = 4, ensure_ascii=False)
             old_data_write.close()
-            error_label.configure(text=lang_data['timer_sucess_label'])
-        except:
-            error_label.configure(text=lang_data['timer_error_label'])
+            error_label.configure(text=lang_data['timer_success_label'])
+
+        else:
+
+            error_label.configure(text=lang_data['timer_digit_error_label'])
         
     timer_interval_label = customtkinter.CTkLabel(interval_timer_top,text=lang_data['timer_interval_label'], text_font=("default_theme","13"))
     timer_interval_label.grid(row=0, column=0,columnspan=2, padx=20,pady=(10,0))
@@ -3609,18 +3591,15 @@ def edit_timer():
         timer_data['MESSAGES'][timer_message_key] = edit_message_value
         timer_data_file.close()
         
-        try:
-            old_data_write = open('src/config/timer.json' , 'w', encoding='utf-8') 
-            json.dump(timer_data, old_data_write, indent = 4,ensure_ascii=False)
-            old_data_write.close()
-            
-            messages_edit_combox = update_del_combox()
-            message_edit_val = customtkinter.StringVar(value=lang_data['select_mesage_label'])
-            combobox_message.configure(variable=message_edit_val,values=list(messages_edit_combox.values()))
-            
-            error_label.configure(text=lang_data['timer_message_sucess_label'])
-        except:
-            error_label.configure(text=lang_data['timer_message_error_label'])
+        old_data_write = open('src/config/timer.json' , 'w', encoding='utf-8') 
+        json.dump(timer_data, old_data_write, indent = 4,ensure_ascii=False)
+        old_data_write.close()
+        
+        messages_edit_combox = update_del_combox()
+        message_edit_val = customtkinter.StringVar(value=lang_data['select_message_label'])
+        combobox_message.configure(variable=message_edit_val,values=list(messages_edit_combox.values()))
+        
+        error_label.configure(text=lang_data['timer_message_success_label'])
             
     def update_del_combox():
         
@@ -3633,7 +3612,7 @@ def edit_timer():
     
     messages_edit_combox = update_del_combox()
     
-    message_edit_val = customtkinter.StringVar(value= lang_data['select_mesage_label'])
+    message_edit_val = customtkinter.StringVar(value= lang_data['select_message_label'])
     
     title_timer_del = customtkinter.CTkLabel(edit_timer_top, text=lang_data['timer_edit_label'], text_font=("default_theme","13"))
     title_timer_del.grid(row=0, column=0 ,padx=20, pady=10)
@@ -3670,30 +3649,24 @@ def del_timer():
         message_del_date = json.load(message_del_file)
 
         message_list = message_del_date['MESSAGES']
-        
         message_del_file.close()
         
         key_list = list(message_list.keys())
         val_list = list(message_list.values())
     
         position = val_list.index(message_to_del)
-        
         key_value = key_list[position]
         
-        try:
-            del message_del_date['MESSAGES'][key_value]
-            
-            message_del_file_write = open('src/config/timer.json' , 'w', encoding='utf-8') 
-            json.dump(message_del_date, message_del_file_write, indent = 4,ensure_ascii=False)
-            message_del_file_write.close()
-            
-            update_del_combox()
-            combobox_message.update()
-            
-            error_label.configure(text=lang_data['timer_del_sucess_label'])
-        except:
-            error_label.configure(text=lang_data['timer_del_error_label'])
-
+        del message_del_date['MESSAGES'][key_value]
+        
+        message_del_file_write = open('src/config/timer.json' , 'w', encoding='utf-8') 
+        json.dump(message_del_date, message_del_file_write, indent = 4,ensure_ascii=False)
+        message_del_file_write.close()
+        
+        update_del_combox()
+        combobox_message.update()
+        
+        error_label.configure(text=lang_data['timer_del_success_label'])
             
     def update_del_combox():
         
@@ -3706,7 +3679,7 @@ def del_timer():
     
     messages_combox = update_del_combox()
     
-    message_val = customtkinter.StringVar(value= lang_data['select_mesage_label'])        
+    message_val = customtkinter.StringVar(value= lang_data['select_message_label'])        
             
     title_timer_del = customtkinter.CTkLabel(del_timer_top, text= lang_data['timer_del_label'], text_font=("default_theme","13"))
     title_timer_del.grid(row=9, column=0 ,padx=20,columnspan=2, pady=10)
@@ -3757,7 +3730,7 @@ def top_auth():
             
             token = data_check['TOKEN']
             if token:
-                error_label.configure(text=lang_data['auth_user_sucess'])
+                error_label.configure(text=lang_data['auth_user_success'])
                 auth_top.attributes('-topmost', 'true')
                 out_file_check.close()
             else:
@@ -3799,7 +3772,7 @@ def top_auth():
 
             auth_top.attributes('-topmost', 'false')
             
-            if messagebox.showinfo(lang_data['auth_sucess_alert_title'], lang_data['auth_bot_sucess'],parent=auth_top):
+            if messagebox.showinfo(lang_data['auth_success_alert_title'], lang_data['auth_bot_success'],parent=auth_top):
                 os._exit(0)
             
         else:
@@ -3826,7 +3799,7 @@ def top_auth():
                 
                 token_bot = data_check['TOKENBOT']
                 if token_bot:
-                    if messagebox.showinfo(lang_data['auth_sucess_alert_title'],lang_data['auth_botisuser_sucess']):
+                    if messagebox.showinfo(lang_data['auth_success_alert_title'],lang_data['auth_bot_is_user_success']):
                         os._exit(0)
                 else:
                     error_label.configure(text=lang_data['auth_bot_error'])
@@ -3860,7 +3833,7 @@ def top_auth():
     bot_user_name_auth_buttom = customtkinter.CTkButton(auth_top,text= lang_data['auth_login_bot_button'],command = start_auth_bot,width=200)
     bot_user_name_auth_buttom.grid(row=4, column=0, columnspan=2, padx=20, pady=(10,20), sticky='e')
     
-    bot_user_op_label = customtkinter.CTkLabel(auth_top, text= lang_data['auth_botisuser_ask'],text_font='12', anchor="w",justify=LEFT)
+    bot_user_op_label = customtkinter.CTkLabel(auth_top, text= lang_data['auth_bot_is_user_ask'],text_font='12', anchor="w",justify=LEFT)
     bot_user_op_label.grid(row=5, column=0, padx=20, pady=(10,30), sticky='W')
     
     bot_user_op = customtkinter.CTkSwitch(auth_top,text=" ", onvalue="1", offvalue="0",command=status_bot)
@@ -3891,7 +3864,7 @@ def con_pubsub():
         data_obs = json.load(out_file_obs)
         
         if data_obs['OBS_AUTO_CON'] == 1:
-            obs_con.conect_obs()
+            obs_con.connect_obs()
 
         tab3.update()
     
@@ -3954,18 +3927,19 @@ def receive_commands(tid):
         command_file_counter = open('src/counter/commands.json', "r", encoding='utf-8') 
         command_data_counter = json.load(command_file_counter) 
 
-        command_file_giveway = open('src/giveway/commands.json', "r", encoding='utf-8') 
-        command_data_giveway = json.load(command_file_giveway) 
+        command_file_giveaway = open('src/giveaway/commands.json', "r", encoding='utf-8') 
+        command_data_giveaway = json.load(command_file_giveaway) 
         
-        mesages_file = open('src/mesages/mesages_file.json', "r", encoding='utf-8') 
-        mesages_data = json.load(mesages_file) 
+        messages_file = open('src/messages/messages_file.json', "r", encoding='utf-8') 
+        messages_data = json.load(messages_file) 
         
         
         command_string = message['message']
-        command = command_string.split()[0]
+        command_lower = command_string.lower()
+        command = command_lower.split()[0]
         prefix = command[0]
 
-        result_giveway_check = {key:val for key, val in command_data_giveway.items() 
+        result_giveaway_check = {key:val for key, val in command_data_giveaway.items() 
                                     if val.startswith(command)}
         
         result_counter_check = {key:val for key, val in command_data_counter.items() 
@@ -3986,11 +3960,7 @@ def receive_commands(tid):
 
         command_tts = command_data_tts['command']
         user_type_tts = command_data_tts['user_level']
-        
-        if command_tts != "":
-            check_tts = command.startswith(command_tts)
-        else:
-            check_tts = command.startswith('!tts')
+
 
         def receive_tts():
 
@@ -4002,29 +3972,35 @@ def receive_commands(tid):
                     if user_type == user_type_tts or user_id_command == USERID:
                         
                         redeem = command_data_tts['redeem']
-                        user_input = command_string.split(command_tts,1)[1]
-                        
-                        data_rewards = {}
-                        data_rewards['USERNAME'] = user
-                        data_rewards['REDEEM'] = redeem
-                        data_rewards['USER_INPUT'] = user_input
-                        data_rewards['USER_LEVEL'] = user_type
-                        data_rewards['USER_ID'] = user_id_command
-                        data_rewards['COMMAND'] = command
-                        data_rewards['PREFIX'] = prefix
-                        
-                        received_type = 'command'
-                        
-                        receive_redeem(data_rewards,received_type)
+
+                        if len(command_lower.split(command_tts,1)) > 1:
+                            user_input = command_lower.split(command_tts,1)[1]
+                            
+                            data_rewards = {}
+                            data_rewards['USERNAME'] = user
+                            data_rewards['REDEEM'] = redeem
+                            data_rewards['USER_INPUT'] = user_input
+                            data_rewards['USER_LEVEL'] = user_type
+                            data_rewards['USER_ID'] = user_id_command
+                            data_rewards['COMMAND'] = command
+                            data_rewards['PREFIX'] = prefix
+                            
+                            received_type = 'command'
+                            
+                            receive_redeem(data_rewards,received_type)
+                        else:
+                            smt.send_message(messages_data['error_tts_no_text'],"RESPONSE")
                 else:
                     smt.send_message( message_delay , 'ERROR_TIME' )
             else:
-                smt.send_message(mesages_data['error_tts_disabled'],"RESPONSE")
-                  
-        if check_tts:
-            receive_tts()
+                smt.send_message(messages_data['error_tts_disabled'],"RESPONSE")
+
+        if command_tts != "":
+            check_tts = command.startswith(command_tts)          
+            if check_tts:
+                receive_tts()
                            
-        elif status_commands == 1:
+        if status_commands == 1:
                 
             if command in result_command_check.keys():
                 
@@ -4042,7 +4018,7 @@ def receive_commands(tid):
 
                 received_type = 'command'
                 
-                if user_type == user_level_simple or user_id_command == USERID:
+                if user_type == user_level_simple or user_type == 'mod' or user_id_command == USERID:
                     
                     message_delay_global,check_time_global = check_delay_file.check_global_delay()
                     
@@ -4054,7 +4030,7 @@ def receive_commands(tid):
                         smt.send_message(message_delay_global,'ERROR_TIME')
                 else:
 
-                    message_error_level = mesages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                    message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
                     message_error_level_command = message_error_level.replace('{command}', command)
                     smt.send_message(message_error_level_command,'ERROR_USER')
                 
@@ -4069,7 +4045,7 @@ def receive_commands(tid):
                 response = command_data_simple[command]['response']
                 user_level_simple = command_data_simple[command]['user_level']
                     
-                if user_type == user_level_simple or user_id_command == USERID:
+                if user_type == user_level_simple or user_type == 'mod' or user_id_command == USERID:
                     
                     aliases = {
                         '{user}': user,
@@ -4089,7 +4065,7 @@ def receive_commands(tid):
                     else:
                         smt.send_message(message_delay_global,'ERROR_TIME')
                 else:    
-                    message_error_level = mesages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                    message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
                     message_error_level_command = message_error_level.replace('{command}', command)
                     smt.send_message(message_error_level_command,'ERROR_USER')
                     
@@ -4106,14 +4082,14 @@ def receive_commands(tid):
                             with open("src/counter/counter.txt", "w") as counter_file_w:      
                                 counter_file_w.write('0')
                             
-                            response_reset = mesages_data['response_reset_counter']
+                            response_reset = messages_data['response_reset_counter']
                             smt.send_message(response_reset,'RESPONSE')
                             
                         else:
                             
                             smt.send_message(message_delay_global,'ERROR_TIME')
                     else:
-                        message_error_level = mesages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
                         message_error_level_command = message_error_level.replace('{command}', command)
                         smt.send_message(message_error_level_command,'ERROR_USER')
                         
@@ -4125,20 +4101,28 @@ def receive_commands(tid):
                         
                         if check_time_global:    
                             
-                            user_input = command_string.split()[1]
+                            
 
-                            if user_input.isdigit():
-                                with open("src/counter/counter.txt", "w") as counter_file_w:      
-                                    counter_file_w.write(str(user_input))
-                                    
-                                response_set = mesages_data['response_set_counter']
-                                response_set_repl = response_set.replace('{value}', user_input)
+                            if len(command_string.split()) > 1:
+
+                                user_input = command_string.split()[1]
                                 
-                                smt.send_message(response_set_repl,'RESPONSE')
+                                if user_input.isdigit():
+                                    with open("src/counter/counter.txt", "w") as counter_file_w:      
+                                        counter_file_w.write(str(user_input))
+                                        
+                                    response_set = messages_data['response_set_counter']
+                                    response_set_repl = response_set.replace('{value}', user_input)
+                                    
+                                    smt.send_message(response_set_repl,'RESPONSE')
+                                else:
+                                    smt.send_message(messages_data['response_not_digit_counter'],'RESPONSE')
+                            else:
+                                smt.send_message(messages_data['response_null_set_counter'],'RESPONSE')
                         else:
                             smt.send_message(message_delay_global,'ERROR_TIME')
                     else:
-                        message_error_level = mesages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
                         message_error_level_command = message_error_level.replace('{command}', command)
                         smt.send_message(message_error_level_command,'ERROR_USER')
                         
@@ -4154,16 +4138,16 @@ def receive_commands(tid):
                                 if digit.isdigit():    
                                     counter = digit
                                 
-                            response_set = mesages_data['response_counter']
+                            response_set = messages_data['response_counter']
                             response_set_repl = response_set.replace('{value}', counter)
                             
                             smt.send_message(response_set_repl,'RESPONSE')
                     else:
                         smt.send_message(message_delay_global,'ERROR_TIME')
 
-            elif command in result_giveway_check.values():
+            elif command in result_giveaway_check.values():
 
-                if 'execute_giveway' in result_giveway_check.keys() :
+                if 'execute_giveaway' in result_giveaway_check.keys() :
 
                     if user_type == "mod" or user_id_command == USERID:
                         
@@ -4171,27 +4155,27 @@ def receive_commands(tid):
                         
                         if check_time_global:
 
-                            giveway_file = open('src/giveway/config.json','r',encoding='utf-8')
-                            giveway_data = json.load(giveway_file)
+                            giveaway_file = open('src/giveaway/config.json','r',encoding='utf-8')
+                            giveaway_data = json.load(giveaway_file)
 
-                            reset_give = giveway_data['reset']
+                            reset_give = giveaway_data['reset']
 
-                            with open("src/giveway/names.txt", "r") as give_file_check:
+                            with open("src/giveaway/names.txt", "r") as give_file_check:
                                 if len(give_file_check.read()) > 0:
 
-                                    with open("src/giveway/names.txt", "r+") as give_file_r:
+                                    with open("src/giveaway/names.txt", "r+") as give_file_r:
                                             lines = give_file_r.readlines()
 
                                             choice = randint(0,len(lines))
                                             name = lines[choice].replace('\n','')
 
-                                            mesage_win = mesages_data['giveway_response_win'].replace('{name}',name)
-                                            smt.send_message(mesage_win,'RESPONSE')
+                                            message_win = messages_data['giveaway_response_win'].replace('{name}',name)
+                                            smt.send_message(message_win,'RESPONSE')
 
-                                            with open("src/giveway/backup.txt", "r+") as give_file_backup:
+                                            with open("src/giveaway/backup.txt", "r+") as give_file_backup:
                                                 give_file_backup.writelines(lines)
 
-                                            with open("src/giveway/result.txt", "w") as give_file_w:
+                                            with open("src/giveaway/result.txt", "w") as give_file_w:
                                                 give_file_w.write(name)
                                             
                                             if reset_give == 1:
@@ -4200,11 +4184,11 @@ def receive_commands(tid):
                         else:
                             smt.send_message(message_delay_global,'ERROR_TIME')
                     else:
-                        message_error_level = mesages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
                         message_error_level_command = message_error_level.replace('{command}', command)
                         smt.send_message(message_error_level_command,'ERROR_USER')
 
-                elif 'clear_giveway' in result_giveway_check.keys() :
+                elif 'clear_giveaway' in result_giveaway_check.keys() :
 
                     if user_type == "mod" or user_id_command == USERID:
                         
@@ -4212,19 +4196,19 @@ def receive_commands(tid):
                         
                         if check_time_global:        
                             
-                            with open("src/giveway/names.txt", "w") as counter_file_w:      
+                            with open("src/giveaway/names.txt", "w") as counter_file_w:      
                                 counter_file_w.truncate(0)  
                         else:
                             
                             smt.send_message(message_delay_global,'ERROR_TIME')
                     else:
-                        message_error_level = mesages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
                         message_error_level_command = message_error_level.replace('{command}', command)
                         smt.send_message(message_error_level_command,'ERROR_USER')
 
                     pass
 
-                elif 'check_name' in result_giveway_check.keys() :
+                elif 'check_name' in result_giveaway_check.keys() :
 
                     if user_type == "mod" or user_id_command == USERID:
                         
@@ -4233,29 +4217,29 @@ def receive_commands(tid):
                         if check_time_global:
                             user_input = command_string.split()[1]
 
-                            with open("src/giveway/names.txt", "r+") as give_file_r:
-                                lines_giveway = give_file_r.readlines()
+                            with open("src/giveaway/names.txt", "r+") as give_file_r:
+                                lines_giveaway = give_file_r.readlines()
 
                                 name_user = user_input + '\n'
                                 
-                                if name_user in lines_giveway:
+                                if name_user in lines_giveaway:
                                     
-                                    message = mesages_data['response_user_giveway'].replace('{user}',user_input)
+                                    message = messages_data['response_user_giveaway'].replace('{user}',user_input)
                                     smt.send_message(message, 'RESPONSE')
                                 else:
 
-                                    message = mesages_data['response_nouser_giveway'].replace('{user}', user_input)
+                                    message = messages_data['response_nouser_giveaway'].replace('{user}', user_input)
                                     smt.send_message(message, 'RESPONSE')
                         else:
                             
                             smt.send_message(message_delay_global,'ERROR_TIME')
                     
                     else:
-                        message_error_level = mesages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
                         message_error_level_command = message_error_level.replace('{command}', command)
                         smt.send_message(message_error_level_command,'ERROR_USER')
 
-                elif 'add_user' in result_giveway_check.keys() :
+                elif 'add_user' in result_giveaway_check.keys() :
 
                     if user_type == "mod" or user_id_command == USERID:
                         
@@ -4264,14 +4248,14 @@ def receive_commands(tid):
                         if check_time_global:
                             user_input = command_string.split()[1]
 
-                            with open("src/giveway/names.txt", "r+") as give_file_r:
-                                lines_giveway = give_file_r.readlines()
+                            with open("src/giveaway/names.txt", "r+") as give_file_r:
+                                lines_giveaway = give_file_r.readlines()
 
-                                with open("src/giveway/names.txt", "a+") as give_file_r:
+                                with open("src/giveaway/names.txt", "a+") as give_file_r:
                                     give_file_r.write(user_input+"\n")
                                 
 
-                                message = mesages_data['giveway_response_user_add']
+                                message = messages_data['giveaway_response_user_add']
                                 message_repl = message.replace('{user}',user_input)
                                 smt.send_message(message_repl, 'RESPONSE')
                         else:
@@ -4279,29 +4263,29 @@ def receive_commands(tid):
                             smt.send_message(message_delay_global,'ERROR_TIME')
                     
                     else:
-                        message_error_level = mesages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
                         message_error_level_command = message_error_level.replace('{command}', command)
                         smt.send_message(message_error_level_command,'ERROR_USER')
 
-                elif 'check_self_name' in result_giveway_check.keys() :
+                elif 'check_self_name' in result_giveaway_check.keys() :
 
                         message_delay_global,check_time_global = check_delay_file.check_global_delay()
                         
                         if check_time_global:
                                
-                            with open("src/giveway/names.txt", "r+") as give_file_r:
-                                lines_giveway = give_file_r.readlines()
+                            with open("src/giveaway/names.txt", "r+") as give_file_r:
+                                lines_giveaway = give_file_r.readlines()
 
                                 name_user = user + '\n'
                                 
-                                if name_user in lines_giveway:
+                                if name_user in lines_giveaway:
 
-                                    message_user_giveway = mesages_data['response_user_giveway'].replace('{user}', user)
-                                    smt.send_message(message_user_giveway, 'RESPONSE')
+                                    message_user_giveaway = messages_data['response_user_giveaway'].replace('{user}', user)
+                                    smt.send_message(message_user_giveaway, 'RESPONSE')
 
                                 else:
-                                    message_user_giveway = mesages_data['response_nouser_giveway'].replace('{user}', user)
-                                    smt.send_message(message_user_giveway, 'RESPONSE')
+                                    message_user_giveaway = messages_data['response_nouser_giveaway'].replace('{user}', user)
+                                    smt.send_message(message_user_giveaway, 'RESPONSE')
                             
                         else:
                             
@@ -4309,12 +4293,12 @@ def receive_commands(tid):
 
         else:
             
-            message = mesages_data['commands_disabled']
+            message = messages_data['commands_disabled']
             smt.send_message(message,"RESPONSE")
     
     command_connected = 0
     
-    status_receive_label.configure(text= lang_data['conecting'])
+    status_receive_label.configure(text= lang_data['connecting'])
     
     while command_connected == 0:
         
@@ -4323,16 +4307,16 @@ def receive_commands(tid):
                 if smt.value == True:
                     time.sleep(10)
                     
-                    module_status_message = mesages_data['command_module_status']
+                    module_status_message = messages_data['command_module_status']
                     smt.send_message(module_status_message,'STATUS_BOT')
 
-                    status_receive_label.configure(text= lang_data['conected'])     
+                    status_receive_label.configure(text= lang_data['connected'])     
                     smt.connection.listen(USERNAME,on_message=command_fallback)
                 else:
                     time.sleep(1)
             except:
                 command_connected = 0
-                status_receive_label.configure(text=lang_data['disconected']) 
+                status_receive_label.configure(text=lang_data['disconnected']) 
                 time.sleep(5)
                 
         else:
@@ -4353,7 +4337,7 @@ def update_check():
     response_json = json.loads(response.text)
     version = response_json['tag_name']
 
-    if version != 'v2.5.0':
+    if version != 'v2.6.2':
         update_info = messagebox.askquestion('Update',lang_data['update_new_found'])
         if update_info == 'yes':
             response = req.get("https://api.github.com/repos/GGTEC/RewardEvents/releases/latest")
@@ -4488,7 +4472,7 @@ config_counter_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_
 config_counter_top_buttom.grid(row=4, column=0, columnspan=2, padx=20, pady=10)
 
 
-config_give_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['config_giveway_button'], command=config_giveway)
+config_give_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['config_giveaway_button'], command=config_giveaway)
 config_give_top_buttom.grid(row=5, column=0, columnspan=2, pady=10)
 
 
@@ -4509,7 +4493,7 @@ profile_name_label_title.grid(row=2, column=0, pady=2, padx=20, sticky='w')
 profile_name_label = customtkinter.CTkLabel(tab6, width=100, text=f"", text_font=("default_theme", "12"),anchor="e", justify=RIGHT)
 profile_name_label.grid(row=2, column=1, pady=2, padx=20, sticky='e')
 
-exibition_name_label_title = customtkinter.CTkLabel(tab6, text= lang_data['about_exibiton_name_label'], text_font=("default_theme", "11"),anchor="w", justify=LEFT)
+exibition_name_label_title = customtkinter.CTkLabel(tab6, text= lang_data['about_exhibition_name_label'], text_font=("default_theme", "11"),anchor="w", justify=LEFT)
 exibition_name_label_title.grid(row=3, column=0, pady=2, padx=20, sticky='w')
 
 exibition_name_label = customtkinter.CTkLabel(tab6, width=100, text=f"", text_font=("default_theme", "11"),anchor="e", justify=RIGHT)
@@ -4542,13 +4526,13 @@ status_receive_label.grid(row=7, column=1, pady=2, padx=20, sticky='e')
 status_obs_label = customtkinter.CTkLabel(tab6, text= lang_data['about_status_obs_conn'], text_font=("default_theme", "11"),anchor="w", justify=LEFT)
 status_obs_label.grid(row=8, column=0, pady=2, padx=20, sticky='w')
 
-status_obs = customtkinter.CTkLabel(tab6,width=100, text=lang_data['disconected'], text_font=("default_theme", "11"),anchor="e", justify=RIGHT)
+status_obs = customtkinter.CTkLabel(tab6,width=100, text=lang_data['disconnected'], text_font=("default_theme", "11"),anchor="e", justify=RIGHT)
 status_obs.grid(row=8, column=1, pady=2, padx=20, sticky='e')
 
 deslogar = customtkinter.CTkButton(tab6, text= lang_data['about_clear_data_button'], command=clear_data)
 deslogar.grid(row=9, column=0, padx=20, pady=30)
 
-conn_obs_buttom = customtkinter.CTkButton(tab6, width=250, text= lang_data['about_con_obs_button'], command=obs_con.conect_obs)
+conn_obs_buttom = customtkinter.CTkButton(tab6, width=250, text= lang_data['about_con_obs_button'], command=obs_con.connect_obs)
 conn_obs_buttom.grid(row=9, column=1, padx=20, pady=30)
 
 
@@ -4558,7 +4542,7 @@ logo_image_src= ImageTk.PhotoImage(PIL.Image.open("src/about.png").resize((170, 
 logo_image = customtkinter.CTkLabel(tab7, image=logo_image_src)
 logo_image.grid(row=1, column=0,  pady=20)
 
-about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.5.0", text_font=("default_theme", "12"))
+about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.6.2", text_font=("default_theme", "12"))
 about_name.grid(row=2, column=0, pady=10, padx=20)
 
 dev_name = customtkinter.CTkLabel(tab7, text=f"Dev By GG_TEC", text_font=("default_theme", "12"))
@@ -4574,6 +4558,7 @@ con_pubsub()
 _thread.start_new_thread(receive_commands, (3,))
 _thread.start_new_thread(get_spec, (4,))
 _thread.start_new_thread(timer_module.timer, (2,))
+pyi_splash.close()
 
 app.protocol("WM_DELETE_WINDOW", close)
 app.mainloop()
