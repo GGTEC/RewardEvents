@@ -2,7 +2,7 @@
 
 ### Esse aplicativo permite utilizar as recompensas da twitch para executar eventos personalizados.
 
-Para detalhes e guia de configuração visite = <a href="https://ggtec.github.io/GGTECApps/apps/rewardevents.html">Site RewardEvents</a>
+Para detalhes, download e guia de configuração visite = <a href="https://ggtec.github.io/GGTECApps/apps/rewardevents.html">Site RewardEvents</a>
 
 <div align="left">
     <h2>Entre em contato via discord</h2>
