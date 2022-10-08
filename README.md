@@ -1,4 +1,4 @@
-# RewardEvents
+# RewardEvents  <img src="https://img.shields.io/github/downloads/GGTEC/RewardEvents/total.svg" width=100;>
 
 ### Esse aplicativo permite utilizar as recompensas da twitch para executar eventos personalizados.
 
