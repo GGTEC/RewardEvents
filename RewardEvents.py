@@ -2,12 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from load_files import check_files
-import pyi_splash
 if check_files() == True:
     import json
-    from sqlite3 import Time
     import time
-    import tkinter
     import customtkinter
     import os
     import auth
@@ -26,10 +23,10 @@ if check_files() == True:
     import smt
     import timer_module
     import html_edit
+    import tkinter
     from random import randint
     from load_files import clear_files
     from tooltiptkinter import CreateToolTip
-    from math import trunc
     from gtts import gTTS
     from PIL import ImageTk
     from requests.structures import CaseInsensitiveDict
@@ -45,7 +42,6 @@ if check_files() == True:
     from twitchAPI.twitch import Twitch, AuthScope
 else:
     import os
-    pyi_splash.close()
     os._exit(1)
 
 
@@ -86,7 +82,6 @@ app.title(f'RewardEvents by GG-TEC')
 app.geometry('490x620')
 app.resizable(False, False)
 app.iconbitmap("src/icon.ico")
-app.attributes('-topmost', 'true')
 
 style = ThemedStyle(app)
 style.set_theme("black")
@@ -105,11 +100,7 @@ tab5 = customtkinter.CTkFrame(frame)
 tab6 = customtkinter.CTkFrame(frame)
 tab7 = customtkinter.CTkFrame(frame)
 
-
-
 frame.add(tab1, text = lang_data['waiting'])
-
-
 
 USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
 
@@ -140,20 +131,28 @@ class Obsconect:
         out_file_obs_atual = open("src/config/obs.json")
         data_obs_atual = json.load(out_file_obs_atual)
 
-        obs_host_data_atual = data_obs_atual['OBS_HOST']
-        obs_port_data_atual = data_obs_atual['OBS_PORT']
-        obs_port_int = int(obs_port_data_atual)
-        obs_password_data_atual = data_obs_atual['OBS_PASSWORD']
+        if any(value == '' for value in data_obs_atual.values()) == True:
 
-        try:
-            self.ws = obsws(obs_host_data_atual, obs_port_int, obs_password_data_atual)
-            self.ws.connect()
-            status_obs.configure(text=lang_data['connected'])
-            self.conn_status = '1'
+            return False
 
-        except:
-            self.conn_status = '0'
-            status_obs.configure(text=lang_data['disconnected'])   
+        else:
+            
+            obs_host_data_atual = data_obs_atual['OBS_HOST']
+            obs_port_data_atual = data_obs_atual['OBS_PORT']
+            obs_port_int = int(obs_port_data_atual)
+            obs_password_data_atual = data_obs_atual['OBS_PASSWORD']
+
+            try:
+                self.ws = obsws(obs_host_data_atual, obs_port_int, obs_password_data_atual)
+                self.ws.connect()
+                
+                self.conn_status = '1'
+                return True
+                
+            except:
+
+                self.conn_status = '0'
+                return False 
             
     def show_filter(self,source_name,filter_name,time_show_int):
         
@@ -357,7 +356,6 @@ def receive_redeem(data_rewards,received_type):
         command_receive = data_rewards['COMMAND']
         prefix = data_rewards['PREFIX']
         
-
     aliases = {
             '{user}': redeem_by_user,
             '{command}': command_receive, 
@@ -489,14 +487,45 @@ def receive_redeem(data_rewards,received_type):
         
     def keypress():
 
-
         keyskeyboard = path[redeem_reward_name]
+
         send_response_value = path[redeem_reward_name]['send_response']
+
         press_again_value = path[redeem_reward_name]['press_again']
-        time_press_value = path[redeem_reward_name]['TIME']
-        repeat_ask = path[redeem_reward_name]['repeat']
+        time_press_value = path[redeem_reward_name]['time_press']
+
+        keep_press_value = path[redeem_reward_name]['keep']
+        keep_press_time = path[redeem_reward_name]['keep_time']
+
+        repeat_value = path[redeem_reward_name]['repeat']
         repeat_times = path[redeem_reward_name]['repeat_times']
+        repeat_interval = path[redeem_reward_name]['repeat_interval']
+
+        aliases = {'{user}': redeem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
         
+        def press_again(tid):
+
+            if send_response_value:
+                
+                chat_response = path[redeem_reward_name]['chat_response']
+                
+                try:
+                    response_redus = replace_all(chat_response, aliases)
+                    smt.send_message(response_redus,'RESPONSE')
+                except:
+                    smt.send_message(chat_response,'RESPONSE')
+                
+            received = [*keyskeyboard.keys()][11:]
+
+            keys_to_pressed = [keyskeyboard[key] for key in received if keyskeyboard[key]!='NONE']
+
+
+            keyboard.press_and_release('+'.join(keys_to_pressed))
+            
+            time.sleep(time_press_value)
+            
+            keyboard.press_and_release('+'.join(keys_to_pressed))
+
         def repeated_press(tid):
 
             if send_response_value:
@@ -510,66 +539,48 @@ def receive_redeem(data_rewards,received_type):
                     smt.send_message(chat_response,'RESPONSE')
                 
             value_repeated = 0
-            time_press = int(time_press_value)
             
             while value_repeated < repeat_times:
+
                 value_repeated = value_repeated + 1
 
-                received = [*keyskeyboard.keys()][8:]
-
+                received = [*keyskeyboard.keys()][11:]
                 keys_to_pressed = [keyskeyboard[key] for key in received if keyskeyboard[key]!='NONE']
-
                 keyboard.press_and_release('+'.join(keys_to_pressed))
+                time.sleep(repeat_interval)
 
-                time.sleep(time_press)
+        def keep_press(tid):
 
+            if send_response_value:
+                
+                chat_response = path[redeem_reward_name]['chat_response']
+                
+                try:
+                    response_redus = replace_all(chat_response, aliases)
+                    smt.send_message(response_redus,'RESPONSE')
+                except:
+                    smt.send_message(chat_response,'RESPONSE')
+                
+            received = [*keyskeyboard.keys()][11:]
 
-        if repeat_ask == 1:
+            keys_to_pressed = [keyskeyboard[key] for key in received if keyskeyboard[key]!='NONE']
+
+            keyboard.press('+'.join(keys_to_pressed))
+            keyboard.block_key('+'.join(keys_to_pressed))
+
+            time.sleep(keep_press_time)
+
+            keyboard.release('+'.join(keys_to_pressed))
+
+        if repeat_value == 1:
             _thread.start_new_thread(repeated_press, (10,))
             
         elif press_again_value == 1:
-            
-            if send_response_value:
-                
-                chat_response = path[redeem_reward_name]['chat_response']
-                
-                try:
-                    response_redus = replace_all(chat_response, aliases)
-                    smt.send_message(response_redus,'RESPONSE')
-                except:
-                    smt.send_message(chat_response,'RESPONSE')
-                
-            time_press = int(time_press_value)
-            received = [*keyskeyboard.keys()][8:]
+            _thread.start_new_thread(press_again, (10,))
 
-            keys_to_pressed = [keyskeyboard[key] for key in received if keyskeyboard[key]!='NONE']
-
-
-            keyboard.press_and_release('+'.join(keys_to_pressed))
-            
-            time.sleep(time_press)
-            
-            keyboard.press_and_release('+'.join(keys_to_pressed))
-            
-        else:       
-            
-            if send_response_value:
-                
-                chat_response = path[redeem_reward_name]['chat_response']
-                
-                aliases = {'{user}': redeem_by_user,'{command}': command_receive, '{prefix}': prefix, '{user_level}': user_level, '{user_id}': user_id_command}
-                try:
-                    response_redus = replace_all(chat_response, aliases)
-                    smt.send_message(response_redus,'RESPONSE')
-                except:
-                    smt.send_message(chat_response,'RESPONSE')
-                
-            received = [*keyskeyboard.keys()][8:]
-            
-            keys_to_pressed = [keyskeyboard[key] for key in received if keyskeyboard[key]!='NONE']
-        
-            keyboard.press_and_release('+'.join(keys_to_pressed))           
-                   
+        elif keep_press_value == 1:
+            _thread.start_new_thread(keep_press, (10,))
+                      
     def source():
 
         source_name = path[redeem_reward_name]['SOURCENAME']
@@ -710,7 +721,6 @@ def new_event_top():
         new_event_top = customtkinter.CTkToplevel(app)
         new_event_top.title(f"RewardEvents - {lang_data['events_add_title_page']} ")
         new_event_top.iconbitmap("src/icon.ico")
-        new_event_top.resizable(False, False)
         new_event_top.attributes('-topmost', 'true')
         new_event_top.anchor("center")
         
@@ -719,7 +729,6 @@ def new_event_top():
             topsound = customtkinter.CTkToplevel(app)
             topsound.title(f"RewardEvents - { lang_data['event_sound_title'] }")
             topsound.iconbitmap("src/icon.ico")
-            topsound.resizable(False, False)
             topsound.attributes('-topmost', 'true')
                 
         
@@ -753,7 +762,7 @@ def new_event_top():
                         if chat_response == "":
 
                             send_response = 0
-
+ 
                         else:
                             send_response = 1
                             
@@ -870,7 +879,6 @@ def new_event_top():
             toptts = customtkinter.CTkToplevel(app)
             toptts.title(f"RewardEvents -  {lang_data['event_tts_title']}")
             toptts.iconbitmap("src/icon.ico") 
-            toptts.resizable(False, False)
             toptts.attributes('-topmost', 'true')
             
             def create_new_tts():
@@ -999,7 +1007,6 @@ def new_event_top():
             top_scene = customtkinter.CTkToplevel(app)
             top_scene.title(f"RewardEvents - {lang_data['event_obs_screen_title']}")
             top_scene.iconbitmap("src/icon.ico")
-            top_scene.resizable(False, False)
             top_scene.attributes('-topmost', 'true')
             
             def create_scene():
@@ -1172,7 +1179,6 @@ def new_event_top():
             new_message_top = customtkinter.CTkToplevel(app)
             new_message_top.title(f"RewardEvents - {lang_data['chat_response_title']}")
             new_message_top.iconbitmap("src/icon.ico")
-            new_message_top.resizable(False, False)
             new_message_top.attributes('-topmost', 'true')
             
             def create_message():
@@ -1295,7 +1301,6 @@ def new_event_top():
             new_filter_top = customtkinter.CTkToplevel(app)
             new_filter_top.title(f"RewardEvents - {lang_data['obs_filter_title']}")
             new_filter_top.iconbitmap("src/icon.ico")
-            new_filter_top.resizable(False, False)
             new_filter_top.attributes('-topmost', 'true')
                     
             def create_new_filter():
@@ -1464,25 +1469,34 @@ def new_event_top():
             new_key_top = customtkinter.CTkToplevel(app)
             new_key_top.title(f"RewardEvents - {lang_data['shortcut_title']}")
             new_key_top.iconbitmap("src/icon.ico")
-            new_key_top.resizable(False, False)
             new_key_top.attributes('-topmost', 'true')
             
             def create_new_key():
                 
                 title = redeem_title4.get()
-                time_press_again = time_press_entry.get()
-                press_again = press_again_switch.get()
                 command_event = command_entry.get()
+                chat_response = chat_response_entry.get()
+                user_level_check = user_level_switch.get()
+
+                press_again = press_again_switch.get()
+                time_press = time_press_entry.get()
+                
                 repeat_ask = repeat_press_switch.get()
-                repeat_time = repeat_times_press_entry.get()
+                repeat_times = repeat_times_press_entry.get()
+                repeat_interval = repeat_interval_press_entry.get()
+
+                keep_ask = keep_press_switch.get()
+                keep_time = keep_press_time_entry.get()
+
                 key1 = combobox1.get()
                 key2 = combobox2.get()
                 key3 = combobox3.get()
                 key4 = combobox4.get()
-                chat_response = chat_response_entry.get()
-                user_level_check = user_level_switch.get()
 
-                try:
+                list_check_times = [time_press, repeat_times, repeat_interval, keep_time]
+
+                if all(str(value).isdigit() or value == '' for value in list_check_times):
+
                     if chat_response == "":
                         send_response = 0
                     else:
@@ -1492,29 +1506,53 @@ def new_event_top():
                         user_level_data = "mod"
                     else:
                         user_level_data = ""
-                        
-                    old_data = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
-                    new_data = json.load(old_data)
 
-                    new_data[title] = {
+                    if time_press != '':
+                        time_press_int = int(time_press)
+                    else:
+                        time_press_int = time_press
+                    
+                    if repeat_times != '':
+                        repeat_times_int = int(repeat_times)
+                    else:
+                        repeat_times_int = repeat_times
+
+                    if repeat_interval != '':
+                        repeat_interval_int = int(repeat_interval)
+                    else:
+                        repeat_interval_int = repeat_interval
+                    
+                    if keep_time != '':
+                        keep_time_int = int(keep_time)
+                    else:
+                        keep_time_int = keep_time
+
+                        
+                    key_data_file = open('src/config/pathfiles.json' , 'r', encoding='utf-8') 
+                    key_data = json.load(key_data_file)
+
+                    key_data[title] = {
                         'TYPE': 'KEYPRESS',
-                        'press_again': int(press_again),
-                        'repeat': int(repeat_ask),
-                        'repeat_times': int(repeat_time),
-                        'send_response':send_response, 
-                        'chat_response':chat_response,
+                        'press_again': press_again,
+                        'repeat': repeat_ask,
+                        'keep': keep_ask,
+                        'time_press' : time_press_int,
+                        'repeat_times': repeat_times_int,
+                        'repeat_interval': repeat_interval_int,
+                        'keep_time' : keep_time_int,
+                        'send_response': send_response, 
+                        'chat_response': chat_response,
                         'COMMAND': command_event.lower(), 
-                        'TIME': int(time_press_again),
-                        'KEY1':key1, 
-                        'KEY2':key2, 
-                        'KEY3':key3, 
-                        'KEY4':key4
+                        'KEY1': key1, 
+                        'KEY2': key2, 
+                        'KEY3': key3, 
+                        'KEY4': key4
                         }
 
-                    old_data.close()
+                    key_data_file.close()
 
-                    old_data_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
-                    json.dump(new_data, old_data_write, indent = 4, ensure_ascii=False)
+                    key_data_file_write = open('src/config/pathfiles.json' , 'w', encoding='utf-8') 
+                    json.dump(key_data, key_data_file_write, indent = 4, ensure_ascii=False)
 
 
                     if command_event != "":
@@ -1523,7 +1561,7 @@ def new_event_top():
                         new_data_command = json.load(old_data_command)
 
                         new_data_command[command_event.lower()] = {'RECOMPENSA': title,'user_level': user_level_data}
-                        old_data.close()
+                        old_data_command.close()
 
                         old_data_write_command = open('src/config/commands.json' , 'w', encoding='utf-8') 
                         json.dump(new_data_command, old_data_write_command , indent = 4,ensure_ascii=False)
@@ -1531,8 +1569,21 @@ def new_event_top():
                     
                     error_label.configure(text=lang_data['event_success_create'])
 
-                except:
-                    error_label.configure(text=lang_data['event_empty_data'])  
+                else:
+
+                    error_label.configure(text=lang_data['shortcut_value_not_digit'])  
+
+            def switch_choice_press():
+                repeat_press_switch.deselect()
+                keep_press_switch.deselect()
+
+            def switch_choice_repeat():
+                press_again_switch.deselect()
+                keep_press_switch.deselect()
+
+            def switch_choice_keep():
+                repeat_press_switch.deselect()
+                press_again_switch.deselect()
 
             def update_titles_combox():
                 
@@ -1561,78 +1612,107 @@ def new_event_top():
             messages_combox = update_titles_combox() 
             
             
-            tittleredeem4 = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_label'], text_font=("default_theme","15"))
-            tittleredeem4.grid(row=0, column=0, columnspan=4, padx=20, pady=20,)
+            shortcuts_title = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_label'], text_font=("default_theme","15"))
+            shortcuts_title.grid(row=0, column=0, columnspan=4, padx=20, pady=20)
 
-            redeem_title_label4 = customtkinter.CTkLabel(new_key_top, text= lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            redeem_title_label4.grid(row=1,column=0, columnspan=2,pady=10,padx=20,sticky='W')
+
+            redeem_title_label4 = customtkinter.CTkLabel(new_key_top, text= lang_data['redeem_marked'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            redeem_title_label4.grid(row=1, column=0, columnspan=2, pady=5, padx=20, sticky='W')
 
             redeem_title4 = customtkinter.CTkComboBox(new_key_top,values=list(messages_combox),width=200)
-            redeem_title4.grid(row=1,column=2, columnspan=2, padx=10, pady=10)
+            redeem_title4.grid(row=1, column=2, columnspan=2, padx=20, pady=5)
+
             
-            command_label = customtkinter.CTkLabel(new_key_top, text= lang_data['chat_command'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            command_label.grid(row=2,column=0, columnspan=2,pady=10,padx=20,sticky='W')
+            command_label = customtkinter.CTkLabel(new_key_top, text= lang_data['chat_command'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            command_label.grid(row=2,column=0, columnspan=2, padx=20, pady=5, sticky='W')
 
             command_entry = customtkinter.CTkEntry(new_key_top,width=200)
-            command_entry.grid(row=2, column=2, columnspan=2, padx=10, pady=20)
-            
-            user_level_label = customtkinter.CTkLabel(new_key_top, text= lang_data['moderator_ask_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            user_level_label.grid(row=3,column=0, columnspan=2,padx=20,pady=10,sticky='W')
-            
-            user_level_switch = customtkinter.CTkSwitch(new_key_top, text="", text_font=("default_theme", "13"),)
-            user_level_switch.grid(row=3, column=2, columnspan=2,padx=20, pady=10, sticky='e')
-            
-            press_again_switch_label = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_press_again_ask'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            press_again_switch_label.grid(row=4, column=0, columnspan=2, padx=20, pady=10, sticky='W')
-            
-            press_again_switch = customtkinter.CTkSwitch(new_key_top, text="", text_font=("default_theme", "13"),)
-            press_again_switch.grid(row=4, column=2, columnspan=2,padx=20, pady=10, sticky='e')
-            
-            time_press = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_press_again_time'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            time_press.grid(row=5,column=0, columnspan=2,pady=10,padx=20,sticky='W')
+            command_entry.grid(row=2, column=2, columnspan=2, padx=20, pady=5)
 
-            time_press_entry = customtkinter.CTkEntry(new_key_top,width=200)
-            time_press_entry.grid(row=5, column=2, columnspan=2,padx=10, pady=20)
-
-            repeat_press_switch_label = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_repeat_press_ask'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            repeat_press_switch_label.grid(row=6, column=0, columnspan=2, padx=20, pady=10, sticky='W')
-            
-            repeat_press_switch = customtkinter.CTkSwitch(new_key_top, text="", text_font=("default_theme", "13"),)
-            repeat_press_switch.grid(row=6, column=2, columnspan=2,padx=20, pady=10, sticky='e')
-
-            repeat_times_press = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_repeat_times'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            repeat_times_press.grid(row=7,column=0, columnspan=2,pady=10,padx=20,sticky='W')
-
-            repeat_times_press_entry = customtkinter.CTkEntry(new_key_top,width=200)
-            repeat_times_press_entry.grid(row=7, column=2, columnspan=2,padx=10, pady=20)
-
-            selectkeys = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_select_keys'], text_font=("default_theme","15"))
-            selectkeys.grid(row=8, column=0, columnspan=4, padx=20, pady=20,)
-
-            combobox1 = customtkinter.CTkComboBox(new_key_top,values=["ctrl","NONE"],width=90)
-            combobox1.grid(row=9,column=0,padx=1, pady=10)
-
-            combobox2 = customtkinter.CTkComboBox(new_key_top,values=["shift","alt","space","NONE"],width=90)
-            combobox2.grid(row=9,column=1,padx=1, pady=10)
-
-            combobox3 = customtkinter.CTkComboBox(new_key_top,values=["1","2","3","4","5","6","7","8","9","NONE"],width=90)
-            combobox3.grid(row=9,column=2,padx=1, pady=10)
-
-            combobox4 = customtkinter.CTkComboBox(new_key_top,width=90,
-                                                values=["q","w","e","r","t","y","u","i","o","p","a","s","d","f","g","h","j","k","l","ç","z","x","c","v","b","n","m","NONE"])
-            combobox4.grid(row=9,column=3,padx=1, pady=10)
-            
-            chat_response_label = customtkinter.CTkLabel(new_key_top,text= lang_data['chat_message_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-            chat_response_label.grid(row=10,column=0, columnspan=2, padx=20,pady=10, sticky='W')
+            chat_response_label = customtkinter.CTkLabel(new_key_top,text= lang_data['chat_message_label'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            chat_response_label.grid(row=3,column=0, columnspan=2, padx=20, pady=5, sticky='W')
 
             chat_response_entry = customtkinter.CTkEntry(new_key_top,width=200)
-            chat_response_entry.grid(row=10,column=2, columnspan=2, padx=20, pady=10)
+            chat_response_entry.grid(row=3,column=2, columnspan=2, padx=5, pady=10)
+
+            user_level_label = customtkinter.CTkLabel(new_key_top, text= lang_data['moderator_ask_label'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            user_level_label.grid(row=4, column=0, columnspan=2, padx=20, pady=(5,20), sticky='W')
+            
+            user_level_switch = customtkinter.CTkSwitch(new_key_top, text="")
+            user_level_switch.grid(row=4, column=2, columnspan=2, padx=20, pady=(5,20), sticky='e')
+
+            
+            press_again_switch_label = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_press_again_ask'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            press_again_switch_label.grid(row=5, column=0, columnspan=2, padx=20, pady=(20,5), sticky='W')
+            
+            press_again_switch = customtkinter.CTkSwitch(new_key_top, text="",command=switch_choice_press)
+            press_again_switch.grid(row=5, column=2, columnspan=2,padx=20, pady=(20,5), sticky='e')
+
+            time_press = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_press_again_time'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            time_press.grid(row=6,column=0, columnspan=2, padx=20, pady=(5,20), sticky='W')
+
+            time_press_entry = customtkinter.CTkEntry(new_key_top,width=200)
+            time_press_entry.grid(row=6, column=2, columnspan=2, padx=20, pady=(5,20))
+
+
+
+            repeat_press_switch_label = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_repeat_press_ask'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            repeat_press_switch_label.grid(row=7, column=0, columnspan=2, padx=20, pady=(20,5), sticky='W')
+            
+            repeat_press_switch = customtkinter.CTkSwitch(new_key_top, text="",command=switch_choice_repeat)
+            repeat_press_switch.grid(row=7, column=2, columnspan=2,padx=20, pady=(20,5), sticky='e')
+
+            repeat_times_press = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_repeat_times'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            repeat_times_press.grid(row=8, column=0, columnspan=2, padx=20, pady=5, sticky='W')
+
+            repeat_times_press_entry = customtkinter.CTkEntry(new_key_top, width=200)
+            repeat_times_press_entry.grid(row=8, column=2, columnspan=2,padx=5, pady=10)
+
+            repeat_interval_press = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_repeat_interval'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            repeat_interval_press.grid(row=9, column=0, columnspan=2, padx=20, pady=(5,20), sticky='W')
+
+            repeat_interval_press_entry = customtkinter.CTkEntry(new_key_top, width=200)
+            repeat_interval_press_entry.grid(row=9, column=2, columnspan=2, padx=20, pady=(5,20))
+
+
+
+            keep_press_switch_label = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_keep_press_ask'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            keep_press_switch_label.grid(row=10, column=0, columnspan=2, padx=20, pady=(20,5), sticky='W')
+
+            keep_press_switch = customtkinter.CTkSwitch(new_key_top, text="",command=switch_choice_keep)
+            keep_press_switch.grid(row=10, column=2, columnspan=2,padx=20, pady=(20,5), sticky='e')
+
+            keep_press_time = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_keep_press_time'], text_font=("default_theme","12"),anchor="w", justify=RIGHT)
+            keep_press_time.grid(row=11,column=0, columnspan=2, padx=20, pady=(5,10), sticky='W')
+
+            keep_press_time_entry = customtkinter.CTkEntry(new_key_top,width=200)
+            keep_press_time_entry.grid(row=11, column=2, columnspan=2,padx=10, pady=(5,10))
+
+
+
+            selectkeys = customtkinter.CTkLabel(new_key_top, text= lang_data['shortcut_select_keys'], text_font=("default_theme","13"))
+            selectkeys.grid(row=12, column=0, columnspan=4, padx=20, pady=20)
+
+
+            combobox1 = customtkinter.CTkComboBox(new_key_top,values=["ctrl","NONE"],width=100)
+            combobox1.grid(row=13,column=0, columnspan=4, padx=20, pady=10, sticky='w')
+
+            combobox2 = customtkinter.CTkComboBox(new_key_top,values=["shift","alt","space","NONE"],width=100)
+            combobox2.grid(row=13,column=0, columnspan=4, padx=(30,200), pady=10)
+
+            combobox3 = customtkinter.CTkComboBox(new_key_top,values=["1","2","3","4","5","6","7","8","9","NONE"],width=100)
+            combobox3.grid(row=13,column=0, columnspan=4, padx=(200,30), pady=10)
+
+            combobox4 = customtkinter.CTkComboBox(new_key_top,width=100,
+                                                values=["q","w","e","r","t","y","u","i","o","p","a","s","d","f","g","h","j","k","l","ç","z","x","c","v","b","n","m","NONE"])
+            combobox4.grid(row=13,column=0, columnspan=4, padx=20, pady=10, sticky='e')
+
+            
+            error_label = customtkinter.CTkLabel(new_key_top, text="", text_font=("default_theme","11"))
+            error_label.grid(row=14, column=0, columnspan=2, pady=20)
 
             submit_buttom6 = customtkinter.CTkButton(new_key_top,text=lang_data['save'],command = create_new_key)
-            submit_buttom6.grid(row=11, column=1, columnspan=2,padx=20, pady=(10,30))
-
-            error_label = customtkinter.CTkLabel(new_key_top, text="", text_font=("default_theme","11"))
-            error_label.grid(row=12, column=0, columnspan=4, pady=20)
+            submit_buttom6.grid(row=14, column=2,columnspan=2, padx=20, pady=20, sticky='e')
             
             new_key_top.protocol("WM_DELETE_WINDOW", new_event_top.attributes('-topmost', 'true'))
             new_key_top.mainloop()
@@ -1642,7 +1722,6 @@ def new_event_top():
             new_source_top = customtkinter.CTkToplevel(app)
             new_source_top.title(f"RewardEvents - {lang_data['obs_source_title']}")
             new_source_top.iconbitmap("src/icon.ico")
-            new_source_top.resizable(False, False)
             new_source_top.attributes('-topmost', 'true')
             
             
@@ -1798,7 +1877,6 @@ def new_event_top():
             new_clip_top = customtkinter.CTkToplevel(app)
             new_clip_top.title(f"RewardEvents - {lang_data['clip_event_title']}")
             new_clip_top.iconbitmap("src/icon.ico")
-            new_clip_top.resizable(False, False)
             new_clip_top.attributes('-topmost', 'true')
             
             def create_new_clip():
@@ -1906,7 +1984,6 @@ def new_event_top():
             new_counter_top = customtkinter.CTkToplevel(app)
             new_counter_top.title(f"RewardEvents - {lang_data['counter_new_title']}")
             new_counter_top.iconbitmap("src/icon.ico")
-            new_counter_top.resizable(False, False)
             new_counter_top.attributes('-topmost', 'true')
             
             def create_new_counter():
@@ -2029,7 +2106,6 @@ def new_event_top():
             new_giveaway_top = customtkinter.CTkToplevel(app)
             new_giveaway_top.title(f"RewardEvents - {lang_data['giveaway_new_title']}")
             new_giveaway_top.iconbitmap("src/icon.ico")
-            new_giveaway_top.resizable(False, False)
             new_giveaway_top.attributes('-topmost', 'true')
             
             def create_new_giveaway():
@@ -2190,7 +2266,6 @@ def del_event():
     del_event_top = customtkinter.CTkToplevel(app)
     del_event_top.title(f"RewardEvents - {lang_data['event_del_title']}")
     del_event_top.iconbitmap("src/icon.ico")
-    del_event_top.resizable(False, False)
     
     def del_event_confirm():
         
@@ -2322,7 +2397,6 @@ def new_simple_command():
         new_simple = customtkinter.CTkToplevel(app)
         new_simple.title(f"RewardEvents - {lang_data['simple_commands_new_title']}")
         new_simple.iconbitmap("src/icon.ico")
-        new_simple.resizable(False, False)
         new_simple.attributes('-topmost', 'true')
         
         def create_message():
@@ -2384,7 +2458,6 @@ def del_simple_command():
     del_simple = customtkinter.CTkToplevel(app)
     del_simple.title(f"RewardEvents - {lang_data['simple_commands_del_title']}")
     del_simple.iconbitmap("src/icon.ico")
-    del_simple.resizable(False, False)
     del_simple.attributes('-topmost', 'true')
     
     def del_command_select():
@@ -2437,7 +2510,6 @@ def edit_simple_command():
     edit_simple_command = customtkinter.CTkToplevel(app)
     edit_simple_command.title(f"RewardEvents - {lang_data['simple_commands_edit_title']}")
     edit_simple_command.iconbitmap("src/icon.ico")
-    edit_simple_command.resizable(False, False)
     edit_simple_command.attributes('-topmost', 'true')
     
     def select_command_edit(message_edit):
@@ -2534,7 +2606,6 @@ def edit_delay_commands():
     edit_delay_command = customtkinter.CTkToplevel(app)
     edit_delay_command.title(f"RewardEvents - {lang_data['simple_commands_edit_delay_title']}")
     edit_delay_command.iconbitmap("src/icon.ico")
-    edit_delay_command.resizable(False, False)
     edit_delay_command.attributes('-topmost', 'true')
         
     def edit_delay_confirm():
@@ -2634,7 +2705,6 @@ def config_obs_conn_top():
     top_config_obs_conn = customtkinter.CTkToplevel(app)
     top_config_obs_conn.title(f"RewardEvents - {lang_data['obs_conn_title']}")  
     top_config_obs_conn.iconbitmap("src/icon.ico")
-    top_config_obs_conn.resizable(False, False)  
     top_config_obs_conn.attributes('-topmost', 'true')
 
     def salvar_obs_conn():
@@ -2723,7 +2793,6 @@ def config_obs_not_top():
     top_config_obs_notifc = customtkinter.CTkToplevel(app)
     top_config_obs_notifc.title(f"RewardEvents - {lang_data['obs_not_title']}")
     top_config_obs_notifc.iconbitmap("src/icon.ico")
-    top_config_obs_notifc.resizable(False, False)
     top_config_obs_notifc.attributes('-topmost', 'true')
     
     def salvar_conf_not():
@@ -2777,7 +2846,6 @@ def config_obs_not_top():
     error_label = customtkinter.CTkLabel(top_config_obs_notifc, text="", text_font=("default_theme","11"))
     error_label.grid(row=8, column=0, columnspan=2, pady=20)
     
-    
     top_config_obs_notifc.mainloop()
   
 def config_messages_top():
@@ -2785,7 +2853,6 @@ def config_messages_top():
     top_config_messages = customtkinter.CTkToplevel(app)
     top_config_messages.title(f"RewardEvents - {lang_data['message_config_title']}")
     top_config_messages.iconbitmap("src/icon.ico")
-    top_config_messages.resizable(False, False)
     top_config_messages.attributes('-topmost', 'true')
     
     def timer_status():
@@ -2959,7 +3026,7 @@ def config_messages_top():
     response_option = customtkinter.CTkSwitch(top_config_messages,text=" ",command=response_status)
     response_option.grid(row=4, column=1, padx=20, pady=5,sticky='e')
 
-    time_option_label = customtkinter.CTkLabel(top_config_messages, text=lang_data['message_config_label'], text_font=("default_theme","13"))
+    time_option_label = customtkinter.CTkLabel(top_config_messages, text=lang_data['message_config_delay'], text_font=("default_theme","13"))
     time_option_label.grid(row=5, column=0, padx=20, pady=5, sticky='w')
 
     time_option = customtkinter.CTkSwitch(top_config_messages,text=" ",command=time_error_status)
@@ -2998,7 +3065,6 @@ def config_counter_counter():
     top_config_counter = customtkinter.CTkToplevel(app)
     top_config_counter.title(f"RewardEvents - {lang_data['counter_title']}")
     top_config_counter.iconbitmap("src/icon.ico")
-    top_config_counter.resizable(False, False)
     top_config_counter.attributes('-topmost', 'true')
     
     with open("src/counter/counter.txt", "r") as counter_file_r:
@@ -3108,7 +3174,6 @@ def config_lang():
     top_config_lang = customtkinter.CTkToplevel(app)
     top_config_lang.title(f"RewardEvents - {lang_data['lang_title']}")
     top_config_lang.iconbitmap("src/icon.ico")
-    top_config_lang.resizable(False, False)
     top_config_lang.attributes('-topmost', 'true')
 
     def save_lang():
@@ -3147,15 +3212,12 @@ def config_giveaway():
     top_config_giveaway = customtkinter.CTkToplevel(app)
     top_config_giveaway.title(f"RewardEvents - {lang_data['giveaway_command_config_title']}")
     top_config_giveaway.iconbitmap("src/icon.ico")
-    top_config_giveaway.resizable(False, False)
-    top_config_giveaway.attributes('-topmost', 'true')
                
     def giveaway_config_top():
         
         config_give_top = customtkinter.CTkToplevel(app)
         config_give_top.title(f"RewardEvents - {lang_data['giveaway_command_config_title']}")
         config_give_top.iconbitmap("src/icon.ico")
-        config_give_top.resizable(False, False)
 
         def giveaway_reset_status():
 
@@ -3219,7 +3281,6 @@ def config_giveaway():
             show_giveaway_top = customtkinter.CTkToplevel(app)
             show_giveaway_top.title(f"RewardEvents - {lang_data['giveaway_names_title']}")
             show_giveaway_top.iconbitmap("src/icon.ico")
-            show_giveaway_top.resizable(False, False) 
 
             title_names_giveaway = customtkinter.CTkLabel(show_giveaway_top, text=lang_data['giveaway_list_names_label'], text_font='20', justify=CENTER,)
             title_names_giveaway.grid(row=1, columnspan=2, pady=(10, 20))
@@ -3324,7 +3385,6 @@ def config_giveaway():
         config_give_comm_top = customtkinter.CTkToplevel(app)
         config_give_comm_top.title(f"RewardEvents - {lang_data['giveaway_command_config_title']}")
         config_give_comm_top.iconbitmap("src/icon.ico")
-        config_give_comm_top.resizable(False, False)
 
         def save_commands_give():
         
@@ -3415,30 +3475,30 @@ def clear_data():
 
     ask = messagebox.askyesno( lang_data['warning'], lang_data['clear_data_warning'])
     if ask == 'yes':
-        
         clear_files()
-        
         close()
         
 def self_clip():
 
     USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
     
-    url = "https://api.twitch.tv/helix/clips?broadcaster_id=" + USERID
+    url_clip = "https://api.twitch.tv/helix/clips?broadcaster_id=" + USERID
 
-    headers = CaseInsensitiveDict()
-    headers["Authorization"] = 'Bearer ' + TOKEN
-    headers["Client-Id"] = apitoken.CLIENTID
-    headers["Content-Length"] = "0"
+    headers1 = CaseInsensitiveDict()
+    headers1["Authorization"] = 'Bearer ' + TOKEN
+    headers1["Client-Id"] = apitoken.CLIENTID
+    headers1["Content-Length"] = "0"
 
-    resp = req.post(url, headers=headers)
-    response_clip = resp.json()
+
+    resp1 = req.post(url_clip, headers=headers1)
+
+    response_clip = json.loads(resp1.text)
     
     try:
         response_error = 'None'
         response_create = response_clip['data'][0]['id']
 
-        message_final = messages_data['clip_buttom_create_clip'].replace('{clip_id}',response_create)
+        message_final = messages_data['clip_create_clip'].replace('{clip_id}',response_create)
         smt.send_message(message_final,"CLIP")
         
     except:
@@ -3453,7 +3513,6 @@ def new_timer():
     new_timer_top = customtkinter.CTkToplevel(app)
     new_timer_top.title(f"RewardEvents - {lang_data['timer_tab_title']}")
     new_timer_top.iconbitmap("src/icon.ico")
-    new_timer_top.resizable(False, False)
     
     def create_new_timer():
         
@@ -3503,7 +3562,6 @@ def timer_interval():
     interval_timer_top = customtkinter.CTkToplevel(app)
     interval_timer_top.title(f"RewardEvents - {lang_data['timer_interval_title']}")
     interval_timer_top.iconbitmap("src/icon.ico")
-    interval_timer_top.resizable(False, False)
     
     def timer_time_change():
         
@@ -3557,7 +3615,6 @@ def edit_timer():
     edit_timer_top = customtkinter.CTkToplevel(app)
     edit_timer_top.title(f"RewardEvents - {lang_data['timer_edit_title']}")
     edit_timer_top.iconbitmap("src/icon.ico")
-    edit_timer_top.resizable(False, False)
     
     def select_timer_edit(message_edit):
         
@@ -3639,7 +3696,6 @@ def del_timer():
     del_timer_top = customtkinter.CTkToplevel(app)
     del_timer_top.title(f"RewardEvents - {lang_data['timer_del_title']}")
     del_timer_top.iconbitmap("src/icon.ico")
-    del_timer_top.resizable(False, False)
     del_timer_top.attributes('-topmost', 'true')
     
     def del_timer_confirm():
@@ -3701,10 +3757,10 @@ def top_auth():
     auth_top.title(f"RewardEvents - {lang_data['auth_title']}")
     auth_top.attributes('-topmost', 'true')
     auth_top.iconbitmap("src/icon.ico")
-    auth_top.resizable(False, False)
-    
+        
     def start_auth_user():
         
+        print('iniciou')
         username_entry = user_name_entry.get()
 
         if username_entry == '':
@@ -3722,15 +3778,31 @@ def top_auth():
             json.dump(data, out_file, indent=6,ensure_ascii=False)
             out_file.close()
 
+            print('iniciou auth')
+
             auth_top.attributes('-topmost', 'false')
             auth_user.Webview_Auth()
 
             out_file_check = open("src/auth/auth.json", encoding='utf-8')
             data_check = json.load(out_file_check)
             
-            token = data_check['TOKEN']
-            if token:
+            username_check = data_check['USERNAME']
+            token_check = data_check['TOKEN']
+            user_id_check = data_check['USERID']
+
+            url_validate = "https://id.twitch.tv/oauth2/validate"
+            headers_check_token = CaseInsensitiveDict()
+            headers_check_token["Authorization"] = f"OAuth {token_check}"
+            resp_check_token = req.get(url_validate, headers=headers_check_token)
+            resp_token_json = json.loads(resp_check_token.text)
+            resp_login = resp_token_json['login']
+            resp_user_id = resp_token_json['user_id']
+
+            if resp_login == username_check and resp_user_id == user_id_check:
                 error_label.configure(text=lang_data['auth_user_success'])
+                bot_user_name_auth_buttom.configure(state='normal')
+                bot_user_name_entry.configure(state='normal')
+                bot_user_op.configure(state='normal')
                 auth_top.attributes('-topmost', 'true')
                 out_file_check.close()
             else:
@@ -3741,7 +3813,6 @@ def top_auth():
     def start_auth_bot():
     
         bot_username_entry = bot_user_name_entry.get()
-        bot_user_op_value = bot_user_op.get()
         
         out_file1 = open("src/auth/auth.json")
         data1 = json.load(out_file1)
@@ -3749,68 +3820,69 @@ def top_auth():
         token = data1['TOKEN']
         userid_auth = data1['USERID']
 
-        if bot_user_op_value == "1":
+        if bot_username_entry == '':
+            error_label.configure(text=lang_data['auth_user_name_error'])
+        else:
             
-            out_file1 = open("src/auth/auth.json",'r', encoding='utf-8')
-            data1 = json.load(out_file1)
-
-            username = data1['USERNAME']
-            token = data1['TOKEN']
-            userid = data1['USERID']
-
             data = {
                 'USERNAME': username, 
-                'USERID': userid, 
+                'USERID': userid_auth, 
                 'TOKEN': token, 
-                'TOKENBOT': token,
-                'BOTUSERNAME': username
-                }
+                'TOKENBOT': '',
+                'BOTUSERNAME': bot_username_entry.lower()}
 
-            out_file = open("src/auth/auth.json", "w", encoding='utf-8')
-            json.dump(data, out_file, indent=6, ensure_ascii=False)
+            out_file = open("src/auth/auth.json", "w")
+            json.dump(data, out_file, indent=6,ensure_ascii=False)
             out_file.close()
-
+            
             auth_top.attributes('-topmost', 'false')
+            auth_bot.Webview_Auth()
             
-            if messagebox.showinfo(lang_data['auth_success_alert_title'], lang_data['auth_bot_success'],parent=auth_top):
-                os._exit(0)
+            file_check_bot = open("src/auth/auth.json")
+            data_check_bot = json.load(file_check_bot)
             
-        else:
-            if bot_username_entry == '':
-                error_label.configure(text=lang_data['auth_user_name_error'])
+            token_bot = data_check_bot['TOKENBOT']
+            username_check_bot = data_check_bot['BOTUSERNAME']
+
+            url_validate = "https://id.twitch.tv/oauth2/validate"
+            headers_check_token = CaseInsensitiveDict()
+            headers_check_token["Authorization"] = f"OAuth {token_bot}"
+            resp_check_token = req.get(url_validate, headers=headers_check_token)
+            resp_token_json = json.loads(resp_check_token.text)
+            resp_login = resp_token_json['login']
+
+            if resp_login == username_check_bot:
+                if messagebox.showinfo(lang_data['auth_success_alert_title'],lang_data['auth_bot_is_user_success']):
+                    os._exit(0)
             else:
-                
-                data = {
-                    'USERNAME': username, 
-                    'USERID': userid_auth, 
-                    'TOKEN': token, 
-                    'TOKENBOT': '',
-                    'BOTUSERNAME': bot_username_entry.lower()}
+                error_label.configure(text=lang_data['auth_bot_error'])
+                auth_top.attributes('-topmost', 'true')
 
-                out_file = open("src/auth/auth.json", "w")
-                json.dump(data, out_file, indent=6,ensure_ascii=False)
-                out_file.close()
-                
-                auth_top.attributes('-topmost', 'false')
-                auth_bot.Webview_Auth()
-                
-                out_file_check = open("src/auth/auth.json")
-                data_check = json.load(out_file_check)
-                
-                token_bot = data_check['TOKENBOT']
-                if token_bot:
-                    if messagebox.showinfo(lang_data['auth_success_alert_title'],lang_data['auth_bot_is_user_success']):
-                        os._exit(0)
-                else:
-                    error_label.configure(text=lang_data['auth_bot_error'])
-                    auth_top.attributes('-topmost', 'true')
+    def auth_bot_is_user():
 
-    def status_bot():
-        value = bot_user_op.get()
-        if value == '1':
-            bot_user_name_entry.configure(state='disabled')
-        else:      
-            bot_user_name_entry.configure(state='normal')
+        out_file1 = open("src/auth/auth.json",'r', encoding='utf-8')
+        data1 = json.load(out_file1)
+
+        username = data1['USERNAME']
+        token = data1['TOKEN']
+        userid = data1['USERID']
+
+        data = {
+            'USERNAME': username, 
+            'USERID': userid, 
+            'TOKEN': token, 
+            'TOKENBOT': token,
+            'BOTUSERNAME': username
+            }
+
+        out_file = open("src/auth/auth.json", "w", encoding='utf-8')
+        json.dump(data, out_file, indent=6, ensure_ascii=False)
+        out_file.close()
+
+        auth_top.attributes('-topmost', 'false')
+        
+        if messagebox.showinfo(lang_data['auth_success_alert_title'], lang_data['auth_bot_success'],parent=auth_top):
+            os._exit(0)
 
     top_title = customtkinter.CTkLabel(auth_top, text= lang_data['auth_label'], text_font='20', justify=CENTER)
     top_title.grid(row=0, column=0, columnspan=2, padx=20, pady=(20, 20))
@@ -3827,21 +3899,29 @@ def top_auth():
     bot_user_name_label = customtkinter.CTkLabel(auth_top, text= lang_data['auth_bot_username_label'],text_font='20', anchor="w",justify=LEFT)
     bot_user_name_label.grid(row=3, column=0, padx=20, pady=(20, 5), sticky='W')
     
-    bot_user_name_entry = customtkinter.CTkEntry(auth_top,width=200)
+    bot_user_name_entry = customtkinter.CTkEntry(auth_top,width=200,state="disabled")
     bot_user_name_entry.grid(row=3, column=1, padx=20 ,pady=(20,5))
     
-    bot_user_name_auth_buttom = customtkinter.CTkButton(auth_top,text= lang_data['auth_login_bot_button'],command = start_auth_bot,width=200)
+    bot_user_name_auth_buttom = customtkinter.CTkButton(auth_top,text= lang_data['auth_login_bot_button'],state="disabled",command = start_auth_bot,width=200)
     bot_user_name_auth_buttom.grid(row=4, column=0, columnspan=2, padx=20, pady=(10,20), sticky='e')
     
-    bot_user_op_label = customtkinter.CTkLabel(auth_top, text= lang_data['auth_bot_is_user_ask'],text_font='12', anchor="w",justify=LEFT)
-    bot_user_op_label.grid(row=5, column=0, padx=20, pady=(10,30), sticky='W')
-    
-    bot_user_op = customtkinter.CTkSwitch(auth_top,text=" ", onvalue="1", offvalue="0",command=status_bot)
-    bot_user_op.grid(row=5, column=1, padx=20, pady=(10,30), sticky='e')
+    bot_user_op = customtkinter.CTkButton(auth_top,text=lang_data['auth_bot_is_user_ask'],state="disabled",command= auth_bot_is_user)
+    bot_user_op.grid(row=5, column=0, columnspan=2, padx=20, pady=(10,30))
 
     error_label = customtkinter.CTkLabel(auth_top, text="", text_font=("default_theme","12"))
     error_label.grid(row=6, column=0, columnspan=2, padx=10, pady=20)
-    
+
+    auth_top.mainloop()
+
+def conn_obs_button():
+
+    if obs_con.connect_obs() == True:
+        status_obs.configure(text=lang_data['connected'])
+        conn_obs_buttom.grid_forget()
+    else:
+        status_obs.grid_forget()
+        conn_obs_buttom.grid(row=8, column=1, pady=2, padx=20,sticky='e')
+
 def con_pubsub():
     
     USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
@@ -3862,11 +3942,20 @@ def con_pubsub():
         
         out_file_obs = open("src/config/obs.json")
         data_obs = json.load(out_file_obs)
-        
-        if data_obs['OBS_AUTO_CON'] == 1:
-            obs_con.connect_obs()
 
-        tab3.update()
+        value_conn = data_obs['OBS_AUTO_CON'] 
+        
+        if value_conn == 1:
+
+            if obs_con.connect_obs() == True:
+                status_obs.configure(text=lang_data['connected'])
+                conn_obs_buttom.grid_forget()
+            else:
+                conn_obs_buttom.grid(row=8, column=1, pady=2, padx=20,sticky='e')
+
+        else:
+            conn_obs_buttom.grid(row=8, column=1, pady=2, padx=20,sticky='e' )
+
     
         url = "https://api.twitch.tv/helix/users?login=" + USERNAME
 
@@ -3900,11 +3989,10 @@ def con_pubsub():
             email_label.configure(text=f'{resp_email}')
 
         except:
-
             top_auth()
         
     else:
-            top_auth()
+        top_auth()
              
 def receive_commands(tid):
     
@@ -4305,7 +4393,7 @@ def receive_commands(tid):
         if TOKEN and TOKENBOT:
             try:
                 if smt.value == True:
-                    time.sleep(10)
+                    time.sleep(3)
                     
                     module_status_message = messages_data['command_module_status']
                     smt.send_message(module_status_message,'STATUS_BOT')
@@ -4317,10 +4405,10 @@ def receive_commands(tid):
             except:
                 command_connected = 0
                 status_receive_label.configure(text=lang_data['disconnected']) 
-                time.sleep(5)
+                time.sleep(2)
                 
         else:
-            time.sleep(10)
+            time.sleep(3)
     
 def close():
     if messagebox.askokcancel("Exit", lang_data['exit']):
@@ -4337,17 +4425,11 @@ def update_check():
     response_json = json.loads(response.text)
     version = response_json['tag_name']
 
-    if version != 'v2.6.2':
+    if version != 'v2.8.0':
         update_info = messagebox.askquestion('Update',lang_data['update_new_found'])
         if update_info == 'yes':
-            response = req.get("https://api.github.com/repos/GGTEC/RewardEvents/releases/latest")
-            response_json = json.loads(response.text)
             download_link = response_json['assets'][0]['browser_download_url']
             response = wget.download(download_link, "RewardEvents.zip")
-        else:
-            app.attributes('-topmost', 'false')
-    else:
-        app.attributes('-topmost', 'false')
               
                    
 tab1.columnconfigure(0, weight=1) 
@@ -4530,10 +4612,9 @@ status_obs = customtkinter.CTkLabel(tab6,width=100, text=lang_data['disconnected
 status_obs.grid(row=8, column=1, pady=2, padx=20, sticky='e')
 
 deslogar = customtkinter.CTkButton(tab6, text= lang_data['about_clear_data_button'], command=clear_data)
-deslogar.grid(row=9, column=0, padx=20, pady=30)
+deslogar.grid(row=9, column=0,columnspan=2, padx=20, pady=30)
 
-conn_obs_buttom = customtkinter.CTkButton(tab6, width=250, text= lang_data['about_con_obs_button'], command=obs_con.connect_obs)
-conn_obs_buttom.grid(row=9, column=1, padx=20, pady=30)
+conn_obs_buttom = customtkinter.CTkButton(tab6, text= lang_data['about_con_obs_button'], command=conn_obs_button)
 
 
 tab7.columnconfigure(0, weight=1)
@@ -4542,7 +4623,7 @@ logo_image_src= ImageTk.PhotoImage(PIL.Image.open("src/about.png").resize((170, 
 logo_image = customtkinter.CTkLabel(tab7, image=logo_image_src)
 logo_image.grid(row=1, column=0,  pady=20)
 
-about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.6.2", text_font=("default_theme", "12"))
+about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.8.0", text_font=("default_theme", "12"))
 about_name.grid(row=2, column=0, pady=10, padx=20)
 
 dev_name = customtkinter.CTkLabel(tab7, text=f"Dev By GG_TEC", text_font=("default_theme", "12"))
@@ -4554,11 +4635,9 @@ update_check_buttom.grid(row=6, column=0, pady=(30,20))
 update_check()
 con_pubsub()
 
-
 _thread.start_new_thread(receive_commands, (3,))
 _thread.start_new_thread(get_spec, (4,))
 _thread.start_new_thread(timer_module.timer, (2,))
-pyi_splash.close()
 
 app.protocol("WM_DELETE_WINDOW", close)
 app.mainloop()

@@ -28,7 +28,6 @@ def timer(tid):
                 timer_status = json.load(timer_status_file)
                 
                 status = timer_status['STATUS_TIMER']
-
                 
                 if status == 1:
                     

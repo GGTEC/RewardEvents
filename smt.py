@@ -6,16 +6,8 @@ import time
 
 USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
 
-def conect_chat():
-    global connection,value
-    if TOKEN and TOKENBOT:
-        try:
-            connection = twitch_chat_irc.TwitchChatIRC(BOTNAME, TOKENBOT)
-            value = True
-        except:
-            value = False
-    else:
-        value = False
+messages_file = open('src/messages/messages_file.json', "r", encoding='utf-8') 
+messages_data = json.load(messages_file)   
 
 def send_message(message,type_message):
     
@@ -71,6 +63,19 @@ def send_message(message,type_message):
     except:
         time.sleep(10)
         send_message(message,type_message)
+
+
+def conect_chat():
+    global connection,value
+    if TOKEN and TOKENBOT:
+        try:
+            connection = twitch_chat_irc.TwitchChatIRC(BOTNAME, TOKENBOT)
+            send_message(messages_data['messages_chat_module_status'],'STATUS_BOT')
+            value = True
+        except:
+            value = False
+    else:
+        value = False
         
 
 
