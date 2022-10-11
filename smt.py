@@ -70,7 +70,6 @@ def conect_chat():
     if TOKEN and TOKENBOT:
         try:
             connection = twitch_chat_irc.TwitchChatIRC(BOTNAME, TOKENBOT)
-            send_message(messages_data['messages_chat_module_status'],'STATUS_BOT')
             value = True
         except:
             value = False

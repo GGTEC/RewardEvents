@@ -4393,6 +4393,7 @@ def receive_commands(tid):
         if TOKEN and TOKENBOT:
             try:
                 if smt.value == True:
+                    smt.send_message(messages_data['messages_chat_module_status'],'STATUS_BOT')
                     time.sleep(3)
                     
                     module_status_message = messages_data['command_module_status']
@@ -4425,11 +4426,11 @@ def update_check():
     response_json = json.loads(response.text)
     version = response_json['tag_name']
 
-    if version != 'v2.8.0':
+    if version != 'v2.8.1':
         update_info = messagebox.askquestion('Update',lang_data['update_new_found'])
         if update_info == 'yes':
             download_link = response_json['assets'][0]['browser_download_url']
-            response = wget.download(download_link, "RewardEvents.zip")
+            response = wget.download(download_link, "RewardEvents v2.8.1.exe")
               
                    
 tab1.columnconfigure(0, weight=1) 
@@ -4623,7 +4624,7 @@ logo_image_src= ImageTk.PhotoImage(PIL.Image.open("src/about.png").resize((170, 
 logo_image = customtkinter.CTkLabel(tab7, image=logo_image_src)
 logo_image.grid(row=1, column=0,  pady=20)
 
-about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.8.0", text_font=("default_theme", "12"))
+about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.8.1", text_font=("default_theme", "12"))
 about_name.grid(row=2, column=0, pady=10, padx=20)
 
 dev_name = customtkinter.CTkLabel(tab7, text=f"Dev By GG_TEC", text_font=("default_theme", "12"))
