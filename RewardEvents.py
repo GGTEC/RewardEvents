@@ -1110,7 +1110,8 @@ def new_event_top():
                     scene_entry.configure(values=list(scenes))
 
             messages_combox = update_titles_combox()
-            obs_font_variable = customtkinter.StringVar(value= lang_data['obs_select_scene'])   
+            obs_font_variable = customtkinter.StringVar(value= lang_data['obs_select_scene']) 
+            obs_font_variable_scene = customtkinter.StringVar(value= lang_data['obs_select_scene'])  
                         
             tittleredeem1 = customtkinter.CTkLabel(top_scene, text= lang_data['event_obs_screen_label'], text_font=("default_theme","15"))
             tittleredeem1.grid(row=0, column=0, columnspan=2, pady=20)
@@ -1136,13 +1137,13 @@ def new_event_top():
             scene_label_current = customtkinter.CTkLabel(top_scene,text= lang_data['event_obs_screen_atual'],text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             scene_label_current.grid(row=4,column=0, padx=20,pady=10, sticky='W')
 
-            scene_entry_current = customtkinter.CTkOptionMenu(top_scene,values= lang_data['obs_select_scene'], variable=obs_font_variable, width=200, dynamic_resizing=True)
+            scene_entry_current = customtkinter.CTkOptionMenu(top_scene,values= lang_data['obs_select_scene'], variable=obs_font_variable, width=200)
             scene_entry_current.grid(row=4,column=1, padx=20, pady=10)
 
             scene_label = customtkinter.CTkLabel(top_scene,text= lang_data['event_obs_screen_change'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             scene_label.grid(row=5,column=0, padx=20, pady=10, sticky='W')
 
-            scene_entry = customtkinter.CTkOptionMenu(top_scene,values= lang_data['obs_select_scene'], width=200,variable=obs_font_variable, dynamic_resizing=True)
+            scene_entry = customtkinter.CTkOptionMenu(top_scene,values= lang_data['obs_select_scene'], width=200,variable=obs_font_variable_scene)
             scene_entry.grid(row=5,column=1, padx=20, pady=10)
             
             return_scene = customtkinter.CTkLabel(top_scene, text= lang_data['event_obs_screen_return_ask'], text_font=("default_theme","13"))
@@ -4426,11 +4427,11 @@ def update_check():
     response_json = json.loads(response.text)
     version = response_json['tag_name']
 
-    if version != 'v2.8.1':
+    if version != 'v2.8.2':
         update_info = messagebox.askquestion('Update',lang_data['update_new_found'])
         if update_info == 'yes':
             download_link = response_json['assets'][0]['browser_download_url']
-            response = wget.download(download_link, "RewardEvents v2.8.1.exe")
+            response = wget.download(download_link, "RewardEvents v2.8.2.exe")
               
                    
 tab1.columnconfigure(0, weight=1) 
@@ -4624,7 +4625,7 @@ logo_image_src= ImageTk.PhotoImage(PIL.Image.open("src/about.png").resize((170, 
 logo_image = customtkinter.CTkLabel(tab7, image=logo_image_src)
 logo_image.grid(row=1, column=0,  pady=20)
 
-about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.8.1", text_font=("default_theme", "12"))
+about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.8.2", text_font=("default_theme", "12"))
 about_name.grid(row=2, column=0, pady=10, padx=20)
 
 dev_name = customtkinter.CTkLabel(tab7, text=f"Dev By GG_TEC", text_font=("default_theme", "12"))
