@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from load_files import check_files
+
 if check_files() == True:
     import json
     import time
@@ -455,7 +456,7 @@ def receive_redeem(data_rewards,received_type):
 
     def sendmessage():
 
-        chat_response = path[redeem_reward_name]['MESSAGELABEL']
+        chat_response = path[redeem_reward_name]['chat_response']
         
         try:
             response_redus = replace_all(chat_response, aliases)
@@ -1203,7 +1204,7 @@ def new_event_top():
                         new_data[title] = {
                             'TYPE': 'MESSAGE', 
                             'COMMAND': command_event.lower(), 
-                            'MESSAGELABEL': message
+                            'chat_response': message
                             }
 
                         old_data.close()
@@ -1826,7 +1827,7 @@ def new_event_top():
             tittleredeem5 = customtkinter.CTkLabel(new_source_top, text= lang_data['obs_source_label'], text_font=("default_theme","15"))
             tittleredeem5.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
-            redeem_title_label5 = customtkinter.CTkLabel(new_source_top, text= lang_data['obs_source'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+            redeem_title_label5 = customtkinter.CTkLabel(new_source_top, text= lang_data['redeem_marked'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
             redeem_title_label5.grid(row=1,column=0,pady=10,padx=20,sticky='W')
 
             redeem_title5 = customtkinter.CTkComboBox(new_source_top,values=list(messages_combox),width=200)
@@ -3060,7 +3061,119 @@ def config_messages_top():
     get_all_status_value()
     
     top_config_messages.mainloop()
- 
+
+def config_responses_top():
+
+    top_responses = customtkinter.CTkToplevel(app)
+    top_responses.title(f"RewardEvents - {lang_data['config_responses_title']}")
+    top_responses.iconbitmap("src/icon.ico")
+    top_responses.attributes('-topmost', 'true')
+
+    def response_select(value_combobox):
+
+        global reponse_key_glob
+
+        responses_file = open("src/messages/messages_file.json", "r", encoding="utf-8")
+        response_data = json.load(responses_file)
+
+        response_list = {
+
+            lang_data['response_response_reset_counter'] :response_data['response_reset_counter'],
+            lang_data['response_response_set_counter'] : response_data['response_set_counter'],
+            lang_data['response_response_counter'] : response_data['response_counter'],
+            lang_data['response_response_delay_error'] : response_data['response_delay_error'],
+            lang_data['response_clip_create_clip'] : response_data['clip_create_clip'],
+            lang_data['response_clip_button_create_clip'] : response_data['clip_button_create_clip'],
+            lang_data['response_clip_error_clip'] : response_data['clip_error_clip'],
+            lang_data['response_error_tts_disabled'] : response_data['error_tts_disabled'],
+            lang_data['response_error_tts_no_text'] : response_data['error_tts_no_text'],
+            lang_data['response_error_user_level'] : response_data['error_user_level'],
+            lang_data['response_response_user_giveaway'] : response_data['response_user_giveaway'],
+            lang_data['response_response_no_user_giveaway'] : response_data['response_no_user_giveaway'],
+            lang_data['response_giveaway_response_win'] : response_data['giveaway_response_win'],
+            lang_data['response_response_giveaway_disabled'] : response_data['response_giveaway_disabled'],
+            lang_data['response_giveaway_response_user_add'] : response_data['giveaway_response_user_add'],
+            lang_data['response_giveaway_status_enable'] : response_data['giveaway_status_enable'],
+            lang_data['response_giveaway_status_disable'] : response_data['giveaway_status_disable'],
+            lang_data['response_command_module_status'] : response_data['command_module_status'],
+            lang_data['response_message_module_status'] : response_data['messages_chat_module_status'],
+            lang_data['response_commands_disabled'] : response_data['commands_disabled'],
+        }
+
+        if value_combobox in response_list:
+            reponse_val = customtkinter.StringVar(value=response_list[value_combobox])
+            reponse_key_glob = [k for k, v in response_data.items() if v == response_list[value_combobox]][0]
+            response_custom_entry.configure(textvariable=reponse_val)
+            
+    def save_response():
+
+        global reponse_key_glob
+
+        response_custom = response_custom_entry.get()
+
+        if reponse_key_glob and response_custom != "":
+
+            responses_file = open("src/messages/messages_file.json", "r", encoding="utf-8")
+            response_data = json.load(responses_file)
+
+            response_data[reponse_key_glob] = response_custom
+
+            responses_file_write = open("src/messages/messages_file.json", "w", encoding="utf-8")
+            json.dump(response_data, responses_file_write, indent=6, ensure_ascii=False)
+
+            error_label.configure(text=lang_data['config_response_confirm'])
+            reponse_val = customtkinter.StringVar(value='')
+            response_custom_entry.configure(textvariable=reponse_val)
+            reponse_key_glob = ""
+        
+        else:
+            error_label.configure(text=lang_data['config_response_novalue'])
+
+
+    response_combobox = {
+
+        lang_data['response_response_reset_counter'],
+        lang_data['response_response_set_counter'],
+        lang_data['response_response_counter'],
+        lang_data['response_response_delay_error'],
+        lang_data['response_clip_create_clip'],
+        lang_data['response_clip_button_create_clip'],
+        lang_data['response_clip_error_clip'],
+        lang_data['response_error_tts_disabled'],
+        lang_data['response_error_tts_no_text'],
+        lang_data['response_error_user_level'],
+        lang_data['response_response_user_giveaway'],
+        lang_data['response_response_no_user_giveaway'],
+        lang_data['response_giveaway_response_win'],
+        lang_data['response_response_giveaway_disabled'],
+        lang_data['response_giveaway_response_user_add'],
+        lang_data['response_giveaway_status_enable'],
+        lang_data['response_giveaway_status_disable'],
+        lang_data['response_command_module_status'],
+        lang_data['response_message_module_status'],
+        lang_data['response_commands_disabled']
+    }
+
+    tittle_responses = customtkinter.CTkLabel(top_responses, text=lang_data['select_response'], text_font=("default_theme","15"))
+    tittle_responses.grid(row=1,column=0, columnspan=2,padx=20, pady=20,)
+
+    response_label = customtkinter.CTkLabel(top_responses, text=lang_data['response_label'], text_font=("default_theme","13"))
+    response_label.grid(row=2,column=0,padx=20, pady=10)
+    
+    response_combobox = customtkinter.CTkComboBox(top_responses,values=list(response_combobox),width=200,command=response_select)
+    response_combobox.grid(row=2,column=1 ,padx=20, pady=20)
+
+    response_custom_entry = customtkinter.CTkEntry(top_responses, width=450)
+    response_custom_entry.grid(row=3,column=0 , columnspan=2, padx=20, pady=20)
+
+    save = customtkinter.CTkButton(top_responses,text=lang_data['save'],command=save_response)
+    save.grid(row=4, column=1,padx=20, pady=20,sticky='e')
+
+    error_label = customtkinter.CTkLabel(top_responses, text="", text_font=("default_theme","12"))
+    error_label.grid(row=5, column=0, columnspan=2, padx=20, pady=20)
+
+    top_responses.mainloop()
+
 def config_counter_counter():
     
     top_config_counter = customtkinter.CTkToplevel(app)
@@ -3499,7 +3612,7 @@ def self_clip():
         response_error = 'None'
         response_create = response_clip['data'][0]['id']
 
-        message_final = messages_data['clip_create_clip'].replace('{clip_id}',response_create)
+        message_final = messages_data['clip_button_create_clip'].replace('{clip_id}',response_create)
         smt.send_message(message_final,"CLIP")
         
     except:
@@ -4427,11 +4540,11 @@ def update_check():
     response_json = json.loads(response.text)
     version = response_json['tag_name']
 
-    if version != 'v2.8.2':
+    if version != 'v2.8.3':
         update_info = messagebox.askquestion('Update',lang_data['update_new_found'])
         if update_info == 'yes':
             download_link = response_json['assets'][0]['browser_download_url']
-            response = wget.download(download_link, "RewardEvents v2.8.2.exe")
+            response = wget.download(download_link, "RewardEvents v2.8.3.exe")
               
                    
 tab1.columnconfigure(0, weight=1) 
@@ -4551,17 +4664,20 @@ config_notif_obs_button.grid(row=2, column=0, columnspan=2, padx=20, pady=10)
 config_messages_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['config_chat_messages_button'], command=config_messages_top)
 config_messages_top_buttom.grid(row=3, column=0, columnspan=2, padx=20, pady=10)
 
+config_responses_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['config_chat_responses_button'], command=config_responses_top)
+config_responses_top_buttom.grid(row=4, column=0, columnspan=2, padx=20, pady=10)
+
 
 config_counter_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['config_counter_button'], command=config_counter_counter)
-config_counter_top_buttom.grid(row=4, column=0, columnspan=2, padx=20, pady=10)
+config_counter_top_buttom.grid(row=5, column=0, columnspan=2, padx=20, pady=10)
 
 
 config_give_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['config_giveaway_button'], command=config_giveaway)
-config_give_top_buttom.grid(row=5, column=0, columnspan=2, pady=10)
+config_give_top_buttom.grid(row=6, column=0, columnspan=2, pady=10)
 
 
 config_lang_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['config_lang_button'], command=config_lang)
-config_lang_top_buttom.grid(row=6, column=0, columnspan=2, pady=10) 
+config_lang_top_buttom.grid(row=7, column=0, columnspan=2, pady=10) 
 
 
 
@@ -4625,7 +4741,7 @@ logo_image_src= ImageTk.PhotoImage(PIL.Image.open("src/about.png").resize((170, 
 logo_image = customtkinter.CTkLabel(tab7, image=logo_image_src)
 logo_image.grid(row=1, column=0,  pady=20)
 
-about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.8.2", text_font=("default_theme", "12"))
+about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.8.3", text_font=("default_theme", "12"))
 about_name.grid(row=2, column=0, pady=10, padx=20)
 
 dev_name = customtkinter.CTkLabel(tab7, text=f"Dev By GG_TEC", text_font=("default_theme", "12"))

@@ -12,6 +12,53 @@ time_now = now.strftime("%d/%m/%Y %H:%M:%S")
 t2 = str(time_now)
 
 
+def update_language_file():
+
+    lang_config_file = open('src/config/lang.json', 'r', encoding='utf-8')
+    lang_config_data = json.load(lang_config_file)
+
+    lang_selected = lang_config_data['lang']
+
+    lang_file = open(f'src/lang/{lang_selected}.json', 'r', encoding='utf-8')
+    lang_data = json.load(lang_file)
+
+
+    if 'config_responses_title' not in lang_data.keys():
+
+        lang_data["response_response_reset_counter"] = "Contador reiniciado"
+        lang_data["response_response_set_counter"] = "Aplicar valor no contador"
+        lang_data["response_response_counter"] = "Valor do contador"
+        lang_data["response_response_delay_error"] = "Resposta delay"
+        lang_data["response_clip_create_clip"] = "Resposta clip recompensa"
+        lang_data["response_clip_button_create_clip"] = "Resposta clip comando"
+        lang_data["response_clip_error_clip"] = "Resposta erro ao criar clip"
+        lang_data["response_error_tts_disabled"] = "Comando texto para fala desabilitado"
+        lang_data["response_error_tts_no_text"] = "Resposta !tts sem texto"
+        lang_data["response_error_user_level"] = "Erro de permissão"
+        lang_data["response_response_user_giveaway"] = "Usuário na lista de sorteio"
+        lang_data["response_response_no_user_giveaway"] = "Sem usuário no sorteio"
+        lang_data["response_giveaway_response_win"] = "Ganhador do sorteio"
+        lang_data["response_response_giveaway_disabled"] = "Resposta Sorteio desativado"
+        lang_data["response_giveaway_response_user_add"] = "Usuário adicionado no sorteio"
+        lang_data["response_giveaway_status_enable"] = "Sorteio ativado"
+        lang_data["response_giveaway_status_disable"] = "Sorteio desativado"
+        lang_data["response_command_module_status"] = "Comandos conectados"
+        lang_data["response_message_module_status"] = "Mensagens conectadas"
+        lang_data["response_commands_disabled"] = "Comandos desativado"
+        lang_data["config_responses_title"] = "Editar respostas"
+        lang_data["select_response"] = "Selecione a resposta para editar"
+        lang_data["response_label"] = "Resposta :"
+        lang_data["config_chat_responses_button"] = "Editar respostas"
+        lang_data["config_response_novalue"] = "Você deve selecionar uma resposta"
+        lang_data["config_response_confirm"] = "Resposta salva"
+
+        lang_file.close()
+
+        lang_file_w = open(f'src/lang/{lang_selected}.json', 'w', encoding='utf-8')
+        json.dump(lang_data,lang_file_w,indent=6, ensure_ascii=False)
+
+
+
 def check_files():
 
     if src_dir == False:
@@ -28,21 +75,10 @@ def check_files():
             zip_ref.extractall('src')
         
         os.remove('src.zip')
-        counter_commands_data_load = open('src/counter/commands.json' , 'r', encoding='utf-8')
-        counter_commands_data_loads = json.load(counter_commands_data_load)
-        counter_commands_list = {"reset_counter", "set_counter","check_counter"}
-        
-        if not all(key in counter_commands_data_loads for key in counter_commands_list): 
-            
-            counter_commands_data = {
-                    "reset_counter": "!r_deaths",
-                    "set_counter": "!a_deaths", 
-                    "check_counter": "!deaths"
-                }
-        
-            counter_commands_data_write = open('src/counter/commands.json' , 'w', encoding='utf-8') 
-            json.dump(counter_commands_data, counter_commands_data_write, indent = 4, ensure_ascii=False)
 
+
+    update_language_file()
+    
     return True
 
 def clear_files():
