@@ -8,7 +8,7 @@ import apitoken
 
 REDIRECT_URI ="http://localhost:5555"
 TWITCH_PREFIX = "https://api.twitch.tv/kraken/"
-SCOPE = "clips:edit+user:read:email+chat:edit+chat:read+channel:read:redemptions+channel:manage:redemptions"
+SCOPE = "clips:edit+user:read:email+chat:edit+chat:read+channel:read:redemptions+moderation:read"
 OAUTH_URI = TWITCH_PREFIX + "oauth2/authorize?response_type=token&force_verify=true&client_id="+apitoken.CLIENTID+"&redirect_uri="+REDIRECT_URI+"&scope="+ SCOPE
 
 

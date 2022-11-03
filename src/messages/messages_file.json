@@ -18,5 +18,8 @@
       "giveaway_status_disable": "/me O sorteio ('{giveaway_name_data}') foi pausado/desativado.",
       "command_module_status": "/me Módulo para comandos conectado...",
       "messages_chat_module_status": "/me Módulo para mensagens conectado...",
-      "commands_disabled": "/me Os comandos estão desativados"
+      "commands_disabled": "/me Os comandos estão desativados",
+      "create_clip_discord": "Um novo clip foi criado , confira! https://clips.twitch.tv/{clip_id}",
+      "create_clip_discord_edit": "Link para editar o clip  a: {clip_url}",
+      "clip_created_by": "Clip criado por :{user}"
 }

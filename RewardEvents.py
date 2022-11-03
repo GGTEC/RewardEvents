@@ -4,6 +4,7 @@
 from load_files import check_files
 
 if check_files() == True:
+    import twitch
     import json
     import time
     import customtkinter
@@ -41,28 +42,14 @@ if check_files() == True:
     from ttkthemes import ThemedStyle
     from obswebsocket import obsws, requests
     from twitchAPI.twitch import Twitch, AuthScope
+    from discord_webhook import DiscordWebhook, DiscordEmbed
 else:
     import os
     os._exit(1)
 
 
-def keep_conn_chat(tid):
-    global conn_status
-    while True:
+USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
 
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-
-        if TOKEN and TOKENBOT:
-
-            smt.conect_chat()
-            conn_status = True
-            time.sleep(120)
-
-        else:
-            conn_status = False
-            time.sleep(5)
-        
-_thread.start_new_thread(keep_conn_chat, (5,))   
 
 lang_config_file = open('src/config/lang.json', 'r', encoding='utf-8')
 lang_config_data = json.load(lang_config_file)
@@ -103,8 +90,6 @@ tab7 = customtkinter.CTkFrame(frame)
 
 frame.add(tab1, text = lang_data['waiting'])
 
-USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-
 if TOKEN and TOKENBOT:
 
     frame.add(tab2, text = lang_data['events'])
@@ -112,6 +97,10 @@ if TOKEN and TOKENBOT:
     frame.add(tab4, text = lang_data['timers'])
     frame.add(tab5, text = lang_data['config'])
     frame.add(tab6, text = lang_data['profile'])
+
+    mod_info_file_load = open('src/config/mods.json', 'r',encoding='utf-8')
+    mod_info_data = json.load(mod_info_file_load)
+    mod_info_file_load.close()
     
 frame.add(tab7, text = lang_data['about'])
 path_text = customtkinter.StringVar()
@@ -253,13 +242,35 @@ class Obsconect:
         return filter_source_list
     
 obs_con = Obsconect()
-                
+
 def run_cmd(command):
     subprocess.call(command, creationflags=0x08000000)
     
 def callback_whisper(uuid: UUID, data: dict) -> None:
     received_type = 'redeem'
-    receive_redeem(data,received_type)
+    _thread.start_new_thread(receive_redeem, (3,data,received_type))
+
+def update_titles_combox():
+    
+    twitchAPI = Twitch(apitoken.CLIENTID,
+                    apitoken.CLIENTSECRET,
+                    target_app_auth_scope=[AuthScope.USER_EDIT])
+
+    scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
+
+    twitchAPI.set_user_authentication(TOKEN, scope, 'refresh_token')
+    
+    
+    list_titles = []
+    path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
+    path = json.load(path_file)
+    list_rewards = twitchAPI.get_custom_reward(broadcaster_id = USERID)
+    for indx in list_rewards['data'][0:] :
+        
+        if indx['title'] not in path:   
+            list_titles.append(indx['title'])
+
+    return list_titles
     
 def replace_all(text, dic):
     
@@ -271,8 +282,6 @@ def replace_all(text, dic):
 def get_spec(tid):
     
     while True:
-    
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
         
         if TOKEN and TOKENBOT:
             
@@ -305,11 +314,9 @@ def get_spec(tid):
             status_send_label.configure(text= lang_data['disconnected'])  
         
             
-        time.sleep(120)
+        time.sleep(60)
                  
-def receive_redeem(data_rewards,received_type):
-    
-    USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+def receive_redeem(tid,data_rewards,received_type):
     
     with open("src/counter/counter.txt", "r") as counter_file_r:
             counter_file_r.seek(0)
@@ -598,36 +605,48 @@ def receive_redeem(data_rewards,received_type):
         
     def clip():
         
-        USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-        
-    
-        url1 = "https://api.twitch.tv/helix/clips?broadcaster_id=" + USERID
+        twitchAPI = Twitch(apitoken.CLIENTID,
+                    apitoken.CLIENTSECRET,
+                    target_app_auth_scope=[AuthScope.USER_EDIT])
 
-        headers1 = CaseInsensitiveDict()
-        headers1["Authorization"] = 'Bearer ' + TOKEN
-        headers1["Client-Id"] = apitoken.CLIENTID
-        headers1["Content-Length"] = "0"
+        scope = [AuthScope.CLIPS_EDIT]
 
+        twitchAPI.set_user_authentication(TOKEN, scope, 'refresh_token')
 
-        resp1 = req.post(url1, headers=headers1)
+        info_clip = twitchAPI.create_clip(broadcaster_id = USERID)
 
-        response_clip = json.loads(resp1.text)
-        
-        try:
-            response_error = 'None'
-            response_create = response_clip['data'][0]['id']
+        if 'error' in info_clip.keys():
 
+            message_clip_error = messages_data['clip_error_clip']
+            smt.send_message(message_clip_error,'CLIP')
+
+        else:
+
+            clip_id = info_clip['data'][0]['id']
 
             message_clip_user = messages_data['clip_create_clip'].replace('{user}',redeem_by_user)
-            message_final = message_clip_user.replace('{clip_id}',response_create)
-            smt.send_message(message_final,"CLIP")
-            
-        except:
-            response_error = response_clip['message']
+            message_final = message_clip_user.replace('{clip_id}',clip_id)
 
-            if response_error:
-                message_clip_error = messages_data['clip_error_clip']
-                smt.send_message(message_clip_error,'CLIP')
+            smt.send_message(message_final,"CLIP")
+
+            discord_config_file = open('src/config/discord.json', 'r', encoding='utf-8')
+            discord_config_data = json.load(discord_config_file)
+
+            webhook_status = discord_config_data['status']
+            webhook_color = discord_config_data['color']
+            webhook_url = discord_config_data['url']
+
+            if webhook_status  == 1:
+
+                message_discord = messages_data['create_clip_discord'].replace('{clip_id}',id)
+
+                webhook = DiscordWebhook(url=webhook_url)
+
+                embed = DiscordEmbed(title=message_discord, description=messages_data['clip_created_by'].replace('{user}',redeem_by_user), color=webhook_color)
+
+                webhook.add_embed(embed)
+
+                webhook.execute() 
 
     def add_counter():
         
@@ -682,8 +701,14 @@ def receive_redeem(data_rewards,received_type):
                         give_file_r.write(redeem_by_user+"\n")
             
             if send_response_value:
-            
-                chat_response = path[redeem_reward_name]['chat_response']
+                
+                custom_response = path[redeem_reward_name]['chat_response']
+                default_response = messages_data['giveaway_response_user_add']
+
+                if custom_response == '':
+                    chat_response = default_response
+                else:
+                    chat_response = custom_response
                 
                 try:
                     response_redus = replace_all(chat_response, aliases)
@@ -691,10 +716,12 @@ def receive_redeem(data_rewards,received_type):
                 except:
                     smt.send_message(chat_response,'RESPONSE')
         else:
+
             giveaway_disabled_message = messages_data['response_giveaway_disabled']
             smt.send_message(giveaway_disabled_message,'RESPONSE')
 
     eventos = {
+
         'SOUND' : playsound, 
         'SCENE' : changescene, 
         'MESSAGE' : sendmessage, 
@@ -715,7 +742,6 @@ def receive_redeem(data_rewards,received_type):
     
 def new_event_top():
     
-    USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
 
     if TOKEN and TOKENBOT:
 
@@ -804,29 +830,6 @@ def new_event_top():
                         error_label.configure(text=lang_data['event_error_create'])
                 else:
                     error_label.configure(text=lang_data['event_empty_data'])
-        
-            def update_titles_combox():
-                
-                USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-                twitch = Twitch(apitoken.CLIENTID,
-                                apitoken.CLIENTSECRET,
-                                target_app_auth_scope=[AuthScope.USER_EDIT])
-
-                scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-                scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-                twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-                
-                list_titles = []
-                path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-                path = json.load(path_file)
-                list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-                for indx in list_rewards['data'][0:] :
-                    
-                    if indx['title'] not in path:   
-                        list_titles.append(indx['title'])
-
-                return list_titles
         
             messages_combox = update_titles_combox() 
                 
@@ -935,29 +938,6 @@ def new_event_top():
                     
                     error_label.configure(text=lang_data['event_success_create'])
 
-                    
-            def update_titles_combox():
-                
-                USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-                twitch = Twitch(apitoken.CLIENTID,
-                                apitoken.CLIENTSECRET,
-                                target_app_auth_scope=[AuthScope.USER_EDIT])
-
-                scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-                scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-                twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-                
-                list_titles = []
-                path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-                path = json.load(path_file)
-                list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-                for indx in list_rewards['data'][0:] :
-                    
-                    if indx['title'] not in path:   
-                        list_titles.append(indx['title'])
-
-                return list_titles
             
             messages_combox = update_titles_combox()         
                     
@@ -1075,29 +1055,6 @@ def new_event_top():
                 else:
                     error_label.configure(text= lang_data['event_empty_data'])
 
-            def update_titles_combox():
-                
-                USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-                twitch = Twitch(apitoken.CLIENTID,
-                                apitoken.CLIENTSECRET,
-                                target_app_auth_scope=[AuthScope.USER_EDIT])
-
-                scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-                scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-                twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-                
-                        
-                list_titles = []
-                path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-                path = json.load(path_file)
-                list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-                for indx in list_rewards['data'][0:] :
-                    
-                    if indx['title'] not in path:   
-                        list_titles.append(indx['title'])
-
-                return list_titles
             
             def update_scene():
 
@@ -1111,6 +1068,7 @@ def new_event_top():
                     scene_entry.configure(values=list(scenes))
 
             messages_combox = update_titles_combox()
+
             obs_font_variable = customtkinter.StringVar(value= lang_data['obs_select_scene']) 
             obs_font_variable_scene = customtkinter.StringVar(value= lang_data['obs_select_scene'])  
                         
@@ -1236,30 +1194,6 @@ def new_event_top():
                 else:
                     error_label.configure(text=lang_data['event_empty_data'])
             
-            def update_titles_combox():
-                
-                USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-                twitch = Twitch(apitoken.CLIENTID,
-                                apitoken.CLIENTSECRET,
-                                target_app_auth_scope=[AuthScope.USER_EDIT])
-
-                scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-                scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-                twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')  
-                
-                    
-                list_titles = []
-                path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-                path = json.load(path_file)
-                list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-                for indx in list_rewards['data'][0:] :
-                    
-                    if indx['title'] not in path:   
-                        list_titles.append(indx['title'])
-
-                return list_titles
-            
             messages_combox = update_titles_combox()  
                     
             tittleredeem2 = customtkinter.CTkLabel(new_message_top, text= lang_data['chat_response_label'], text_font=("default_theme","15"))
@@ -1380,30 +1314,6 @@ def new_event_top():
                     obs_source_entry.configure(values= [f"{ lang_data['obs_disconnected'] }"])
                 else:
                     obs_source_entry.configure(values=list(sources))
-                    
-            def update_titles_combox():
-                
-                
-                USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-                twitch = Twitch(apitoken.CLIENTID,
-                                apitoken.CLIENTSECRET,
-                                target_app_auth_scope=[AuthScope.USER_EDIT])
-
-                scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-                scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-                twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')  
-                    
-                list_titles = []
-                path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-                path = json.load(path_file)
-                list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-                for indx in list_rewards['data'][0:] :
-                    
-                    if indx['title'] not in path:   
-                        list_titles.append(indx['title'])
-
-                return list_titles
             
             messages_combox = update_titles_combox()  
                 
@@ -1587,29 +1497,6 @@ def new_event_top():
                 repeat_press_switch.deselect()
                 press_again_switch.deselect()
 
-            def update_titles_combox():
-                
-                USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-                twitch = Twitch(apitoken.CLIENTID,
-                                apitoken.CLIENTSECRET,
-                                target_app_auth_scope=[AuthScope.USER_EDIT])
-
-                scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-                scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-                twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-                
-                
-                list_titles = []
-                path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-                path = json.load(path_file)
-                list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-                for indx in list_rewards['data'][0:] :
-                    
-                    if indx['title'] not in path:   
-                        list_titles.append(indx['title'])
-
-                return list_titles
             
             messages_combox = update_titles_combox() 
             
@@ -1797,28 +1684,6 @@ def new_event_top():
                 else:
                     obs_source_entry_source.configure(values=list(sources))
 
-            def update_titles_combox():
-                
-                USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-                twitch = Twitch(apitoken.CLIENTID,
-                                apitoken.CLIENTSECRET,
-                                target_app_auth_scope=[AuthScope.USER_EDIT])
-
-                scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-                scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-                twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-                
-                list_titles = []
-                path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-                path = json.load(path_file)
-                list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-                for indx in list_rewards['data'][0:] :
-                    
-                    if indx['title'] not in path:   
-                        list_titles.append(indx['title'])
-
-                return list_titles
             
             messages_combox = update_titles_combox() 
 
@@ -1925,28 +1790,6 @@ def new_event_top():
                 except:
                     error_label.configure(text= lang_data['event_empty_data'])  
 
-            def update_titles_combox():
-                
-                USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-                twitch = Twitch(apitoken.CLIENTID,
-                                apitoken.CLIENTSECRET,
-                                target_app_auth_scope=[AuthScope.USER_EDIT])
-
-                scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-                scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-                twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-                
-                list_titles = []
-                path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-                path = json.load(path_file)
-                list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-                for indx in list_rewards['data'][0:] :
-                    
-                    if indx['title'] not in path:   
-                        list_titles.append(indx['title'])
-
-                return list_titles
             
             messages_combox = update_titles_combox()  
 
@@ -2042,28 +1885,6 @@ def new_event_top():
 
                     error_label.configure(text=lang_data['event_empty_data']) 
 
-            def update_titles_combox():
-                
-                USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-                twitch = Twitch(apitoken.CLIENTID,
-                                apitoken.CLIENTSECRET,
-                                target_app_auth_scope=[AuthScope.USER_EDIT])
-
-                scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-                scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-                twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-                
-                list_titles = []
-                path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-                path = json.load(path_file)
-                list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-                for indx in list_rewards['data'][0:] :
-                    
-                    if indx['title'] not in path:   
-                        list_titles.append(indx['title'])
-
-                return list_titles
             
             messages_combox = update_titles_combox()  
 
@@ -2134,7 +1955,7 @@ def new_event_top():
                     new_data = json.load(old_data)
 
                     new_data[title] = {
-                        'TYPE': 'giveaway',
+                        'TYPE': 'GIVEAWAY',
                         'COMMAND': command_event.lower(),
                         'send_response':send_response, 
                         'chat_response':chat_response
@@ -2163,29 +1984,6 @@ def new_event_top():
                 except:
                     error_label.configure(text=lang_data['event_error_create'])
 
-            def update_titles_combox():
-                
-                USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
-
-                twitch = Twitch(apitoken.CLIENTID,
-                                apitoken.CLIENTSECRET,
-                                target_app_auth_scope=[AuthScope.USER_EDIT])
-
-                scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-                scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
-
-                twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-                
-                list_titles = []
-                path_file = open('src/config/pathfiles.json', 'r', encoding='utf-8') 
-                path = json.load(path_file)
-                list_rewards = twitch.get_custom_reward(broadcaster_id = USERID)
-                for indx in list_rewards['data'][0:] :
-                    
-                    if indx['title'] not in path:   
-                        list_titles.append(indx['title'])
-
-                return list_titles
             
             messages_combox = update_titles_combox()  
 
@@ -2392,7 +2190,6 @@ def del_event():
 
 def new_simple_command():
     
-    USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
 
     if TOKEN and TOKENBOT:
 
@@ -3443,6 +3240,26 @@ def config_giveaway():
                             if reset_give == 1:
                                 give_file_r.truncate(0)
 
+        def load_configs():
+
+            config_giveaway_file = open('src/giveaway/config.json','r',encoding='utf-8')
+            config_giveaway_data = json.load(config_giveaway_file)
+
+            giveaway_name = config_giveaway_data['name']
+            giveway_status = config_giveaway_data['enable']
+            giveway_reset = config_giveaway_data['reset']
+
+
+            if giveway_status == 1:
+                giveaway_status_switch.select()
+
+            if giveway_reset == 1:
+                giveaway_reset_switch.select()
+
+            name_variable = customtkinter.StringVar(value=giveaway_name)
+            giveaway_name_entry.configure(textvariable=name_variable)
+
+
         title_giveaway_top = customtkinter.CTkLabel(config_give_top, text= lang_data['giveaway_command_config_title'], text_font=("default_theme","15"))
         title_giveaway_top.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
 
@@ -3491,6 +3308,8 @@ def config_giveaway():
         execute_give = customtkinter.CTkButton(config_give_top,text= lang_data['giveaway_config_execute_button'], width=200, command = execute_giveaway)
         execute_give.grid(row=11, column=0, columnspan=2, padx=20, pady=(10,20))
     
+
+        load_configs()
 
         config_give_top.mainloop()
 
@@ -3555,7 +3374,7 @@ def config_giveaway():
         command_clear_entry.grid(row=8, column=1, padx=20, pady=(5,5))
         
         command_check_label = customtkinter.CTkLabel(config_give_comm_top, text= lang_data['giveaway_command_check_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
-        command_check_label.grid(row=9,column=0, padx=20, pady=(5,20), sticky='W')
+        command_check_label.grid(row=9,column=0, padx=20, pady=(5,5), sticky='W')
 
         command_check_entry = customtkinter.CTkEntry(config_give_comm_top,width=200)
         command_check_entry.grid(row=9, column=1, padx=20, pady=(5,5))
@@ -3564,10 +3383,10 @@ def config_giveaway():
         command_selfcheck_label.grid(row=10,column=0, padx=20, pady=(5,5), sticky='W')
 
         command_selfcheck_entry = customtkinter.CTkEntry(config_give_comm_top,width=200)
-        command_selfcheck_entry.grid(row=10, column=1, padx=20, pady=(5,20))
+        command_selfcheck_entry.grid(row=10, column=1, padx=20, pady=(5,5))
         
         commands_counter_save = customtkinter.CTkButton(config_give_comm_top,text= lang_data['save'],command = save_commands_give)
-        commands_counter_save.grid(row=11,column=1, padx=20, pady=(10,20), sticky='e')
+        commands_counter_save.grid(row=11,column=1, padx=20, pady=(15,20), sticky='e')
 
         error_label = customtkinter.CTkLabel(config_give_comm_top, text=f"", text_font=("default_theme","12"),anchor="w", justify=RIGHT)
         error_label.grid(row=14,column=0, columnspan=2, padx=20, pady=20)
@@ -3584,7 +3403,239 @@ def config_giveaway():
     display_names_give.grid(row=2,column=0, columnspan=2, padx=20, pady=20)
 
     top_config_giveaway.mainloop()
-          
+
+def config_webhook():
+
+    top_config_webhook = customtkinter.CTkToplevel(app)
+    top_config_webhook.title(f"RewardEvents - {lang_data['webhook_config_title']}")
+    top_config_webhook.iconbitmap("src/icon.ico")
+
+    messages_file_webhook_saved = open("src/messages/messages_file.json", "r", encoding="utf-8")
+    messages_data_webhook_saved = json.load(messages_file_webhook_saved)
+
+    def save_webhook_config():
+
+        webhook_url_value = webhook_url_entry.get()
+        webhook_edit_url_value = webhook_edit_url_entry.get()
+        webhook_color_entry_value = webhook_color_entry.get()
+        webhook_message_entry_value = webhook_message_entry.get()
+        webhook_message_edit_entry_value = webhook_message_edit_entry.get()
+        webhook_desc_entry_value = webhook_desc_entry.get()
+        webhook_enable_switch_value = webhook_enable_switch.get()
+        webhook_enable_edit_switch_value = webhook_enable_edit_switch.get()
+
+        config_webhook_file = open('src/config/discord.json','r',encoding='utf-8')
+        config_webhook_data = json.load(config_webhook_file)
+
+        webhook_url_saved = config_webhook_data['url']
+        webhook_edit_url_saved = config_webhook_data['url_edit']
+        webhook_color_saved = config_webhook_data['color']
+        webhook_status_saved = config_webhook_data['status']
+        webhook_status_edit_saved = config_webhook_data['status_edit']
+
+        try:
+
+            if webhook_url_value != webhook_url_saved:
+
+                config_webhook_file = open('src/config/discord.json','r',encoding='utf-8')
+                config_webhook_data = json.load(config_webhook_file)
+
+                config_webhook_data['url'] = webhook_url_value
+                config_webhook_file.close()
+
+                config_webhook_file_save = open('src/config/discord.json','w',encoding='utf-8')
+                json.dump(config_webhook_data, config_webhook_file_save, indent=6, ensure_ascii=False)
+                config_webhook_file_save.close()
+
+            if webhook_edit_url_value != webhook_edit_url_saved:
+
+                config_webhook_file = open('src/config/discord.json','r',encoding='utf-8')
+                config_webhook_data = json.load(config_webhook_file)
+
+                config_webhook_data['url_edit'] = webhook_edit_url_value
+                config_webhook_file.close()
+
+                config_webhook_file_save = open('src/config/discord.json','w',encoding='utf-8')
+                json.dump(config_webhook_data, config_webhook_file_save, indent=6, ensure_ascii=False)
+                config_webhook_file_save.close()
+
+            if webhook_color_entry_value != webhook_color_saved:
+
+                config_webhook_file = open('src/config/discord.json','r',encoding='utf-8')
+                config_webhook_data = json.load(config_webhook_file)
+
+                config_webhook_data['color'] = webhook_color_entry_value
+                config_webhook_file.close()
+
+                config_webhook_file_save = open('src/config/discord.json','w',encoding='utf-8')
+                json.dump(config_webhook_data, config_webhook_file_save, indent=6, ensure_ascii=False)
+                config_webhook_file_save.close()
+
+            if webhook_enable_switch_value != webhook_status_saved:
+
+                config_webhook_file = open('src/config/discord.json','r',encoding='utf-8')
+                config_webhook_data = json.load(config_webhook_file)
+
+                config_webhook_data['status'] = webhook_enable_switch_value
+                config_webhook_file.close()
+
+                config_webhook_file_save = open('src/config/discord.json','w',encoding='utf-8')
+                json.dump(config_webhook_data, config_webhook_file_save, indent=6, ensure_ascii=False)
+                config_webhook_file_save.close()
+
+            if webhook_enable_edit_switch_value != webhook_status_edit_saved:
+
+                config_webhook_file = open('src/config/discord.json','r',encoding='utf-8')
+                config_webhook_data = json.load(config_webhook_file)
+
+                config_webhook_data['status_edit'] = webhook_enable_edit_switch_value
+                config_webhook_file.close()
+
+                config_webhook_file_save = open('src/config/discord.json','w',encoding='utf-8')
+                json.dump(config_webhook_data, config_webhook_file_save, indent=6, ensure_ascii=False)
+                config_webhook_file_save.close()
+
+            if webhook_message_entry_value != messages_data_webhook_saved['create_clip_discord']:
+
+                messages_file_webhook = open("src/messages/messages_file.json", "r", encoding="utf-8")
+                messages_data_webhook = json.load(messages_file_webhook)
+
+                messages_data_webhook['create_clip_discord'] = webhook_message_entry_value
+                messages_file_webhook.close()
+
+                messages_webhook_file_write = open("src/messages/messages_file.json", "w", encoding="utf-8")
+                json.dump(messages_data_webhook, messages_webhook_file_write, indent=6, ensure_ascii=False)
+
+            if webhook_message_edit_entry_value != messages_data_webhook_saved['create_clip_discord_edit']:
+
+                messages_file_webhook = open("src/messages/messages_file.json", "r", encoding="utf-8")
+                messages_data_webhook = json.load(messages_file_webhook)
+
+                messages_data_webhook['create_clip_discord_edit'] = webhook_message_edit_entry_value
+                messages_file_webhook.close()
+
+                messages_webhook_file_write = open("src/messages/messages_file.json", "w", encoding="utf-8")
+                json.dump(messages_data_webhook, messages_webhook_file_write, indent=6, ensure_ascii=False)
+
+            if webhook_desc_entry_value != messages_data_webhook_saved['clip_created_by']:
+
+                messages_file_webhook = open("src/messages/messages_file.json", "r", encoding="utf-8")
+                messages_data_webhook = json.load(messages_file_webhook)
+
+                messages_data_webhook['clip_created_by'] = webhook_message_entry_value
+                messages_file_webhook.close()
+
+                messages_webhook_file_write = open("src/messages/messages_file.json", "w", encoding="utf-8")
+                json.dump(messages_data_webhook, messages_webhook_file_write, indent=6, ensure_ascii=False)
+
+            webhook_error_label.configure(text=lang_data['config_webhook_saved'])
+
+        except:
+
+            webhook_error_label.configure(text=lang_data['config_webhook_save_error'])
+
+    def load_configs():
+
+        config_webhook_file = open('src/config/discord.json','r',encoding='utf-8')
+        config_webhook_data = json.load(config_webhook_file)
+
+        webhook_url = config_webhook_data['url']
+        webhook_edit_url = config_webhook_data['url_edit']
+        webhook_color = config_webhook_data['color']
+        webhook_status = config_webhook_data['status']
+        webhook_status_edit = config_webhook_data['status_edit']
+
+        if webhook_status == 1:
+            webhook_enable_switch.select()
+
+        if webhook_status_edit == 1:
+            webhook_enable_edit_switch.select()
+
+        webhook_url_variable = customtkinter.StringVar(value=webhook_url)
+        webhook_url_entry.configure(textvariable=webhook_url_variable)
+
+        webhook_url_edit_variable = customtkinter.StringVar(value=webhook_edit_url)
+        webhook_edit_url_entry.configure(textvariable=webhook_url_edit_variable)
+
+        webhook_color_variable = customtkinter.StringVar(value=webhook_color)
+        webhook_color_entry.configure(textvariable=webhook_color_variable)
+
+        webhook_desc_variable = customtkinter.StringVar(value= messages_data_webhook_saved['clip_created_by'])
+        webhook_desc_entry.configure(textvariable=webhook_desc_variable)
+
+        webhook_message_variable = customtkinter.StringVar(value= messages_data_webhook_saved['create_clip_discord'])
+        webhook_message_entry.configure(textvariable=webhook_message_variable)
+
+        webhook_message_edit_variable = customtkinter.StringVar(value= messages_data_webhook_saved['create_clip_discord_edit'])
+        webhook_message_edit_entry.configure(textvariable=webhook_message_edit_variable)
+
+
+    title_webhook_top = customtkinter.CTkLabel(top_config_webhook, text= lang_data['webhook_config_title'], text_font=("default_theme","15"))
+    title_webhook_top.grid(row=0, column=0, columnspan=2, padx=20, pady=20,)
+    
+    webhook_url_label = customtkinter.CTkLabel(top_config_webhook, text= lang_data['webhook_url_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    webhook_url_label.grid(row=1,column=0,pady=(10,10),padx=20, sticky='W')
+
+    webhook_url_entry = customtkinter.CTkEntry(top_config_webhook,width=200)
+    webhook_url_entry.grid(row=1, column=1, padx=20, pady=(10,10), sticky='e')
+
+
+    webhook_edit_url_label = customtkinter.CTkLabel(top_config_webhook, text= lang_data['webhook_edit_url_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    webhook_edit_url_label.grid(row=2,column=0,pady=(10,10),padx=20, sticky='W')
+
+    webhook_edit_url_entry = customtkinter.CTkEntry(top_config_webhook,width=200)
+    webhook_edit_url_entry.grid(row=2,column=1,pady=(10,10),padx=20, sticky='W')
+
+
+    webhook_color_label = customtkinter.CTkLabel(top_config_webhook, text= lang_data['webhook_color_label'], text_font=("default_theme","13"))
+    webhook_color_label.grid(row=3,column=0,pady=(10,10),padx=20, sticky='W')
+
+    webhook_color_entry = customtkinter.CTkEntry(top_config_webhook,width=200)
+    webhook_color_entry.grid(row=3, column=1, padx=20, pady=(10,10), sticky='e')
+
+
+    webhook_message_label = customtkinter.CTkLabel(top_config_webhook, text= lang_data['webhook_message_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    webhook_message_label.grid(row=4, column=0, padx=20, pady=(10,10), sticky='w')
+
+    webhook_message_entry = customtkinter.CTkEntry(top_config_webhook,width=200)
+    webhook_message_entry.grid(row=4, column=1, padx=20, pady=(10,10), sticky='e')
+
+    webhook_message_edit_label = customtkinter.CTkLabel(top_config_webhook, text= lang_data['webhook_message_edit_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    webhook_message_edit_label.grid(row=5, column=0, padx=20, pady=(10,10), sticky='w')
+
+    webhook_message_edit_entry = customtkinter.CTkEntry(top_config_webhook,width=200)
+    webhook_message_edit_entry.grid(row=5, column=1, padx=20, pady=(10,10), sticky='e')
+
+    webhook_desc_label = customtkinter.CTkLabel(top_config_webhook, text= lang_data['webhook_desc_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    webhook_desc_label.grid(row=6, column=0, padx=20, pady=(10,10), sticky='w')
+
+    webhook_desc_entry = customtkinter.CTkEntry(top_config_webhook,width=200)
+    webhook_desc_entry.grid(row=6, column=1, padx=20, pady=(10,10), sticky='e')
+
+
+    webhook_enable_label = customtkinter.CTkLabel(top_config_webhook, text= lang_data['webhook_enable_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    webhook_enable_label.grid(row=7, column=0, padx=20, pady=(10,10), sticky='w')
+
+    webhook_enable_switch = customtkinter.CTkSwitch(top_config_webhook, text="")
+    webhook_enable_switch.grid(row=7, column=1, padx=20, pady=(10,10), sticky='e')
+
+    webhook_enable_edit_label = customtkinter.CTkLabel(top_config_webhook, text= lang_data['webhook_enable_edit_label'], text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    webhook_enable_edit_label.grid(row=8, column=0, padx=20, pady=(10,10), sticky='w')
+
+    webhook_enable_edit_switch = customtkinter.CTkSwitch(top_config_webhook, text="")
+    webhook_enable_edit_switch.grid(row=8, column=1, padx=20, pady=(10,10), sticky='e')
+
+    
+    webhook_save = customtkinter.CTkButton(top_config_webhook,text= lang_data['save'],command = save_webhook_config)
+    webhook_save.grid(row=9, column=1, padx=20, pady=(10,20), sticky='e')
+
+    webhook_error_label = customtkinter.CTkLabel(top_config_webhook, text="", text_font=("default_theme","13"),anchor="w", justify=RIGHT)
+    webhook_error_label.grid(row=10, column=0, padx=20, pady=(10,20), sticky='w')
+
+    load_configs()
+
+    top_config_webhook.mainloop()
+
 def clear_data():
 
     ask = messagebox.askyesno( lang_data['warning'], lang_data['clear_data_warning'])
@@ -3594,33 +3645,66 @@ def clear_data():
         
 def self_clip():
 
-    USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
     
-    url_clip = "https://api.twitch.tv/helix/clips?broadcaster_id=" + USERID
+    twitchAPI = Twitch(apitoken.CLIENTID,
+                apitoken.CLIENTSECRET,
+                target_app_auth_scope=[AuthScope.USER_EDIT])
 
-    headers1 = CaseInsensitiveDict()
-    headers1["Authorization"] = 'Bearer ' + TOKEN
-    headers1["Client-Id"] = apitoken.CLIENTID
-    headers1["Content-Length"] = "0"
+    scope = [AuthScope.CLIPS_EDIT]
+
+    twitchAPI.set_user_authentication(TOKEN, scope, 'refresh_token')
 
 
-    resp1 = req.post(url_clip, headers=headers1)
+    info_clip = twitchAPI.create_clip(broadcaster_id = USERID)
 
-    response_clip = json.loads(resp1.text)
-    
-    try:
-        response_error = 'None'
-        response_create = response_clip['data'][0]['id']
+    if 'error' in info_clip.keys():
 
-        message_final = messages_data['clip_button_create_clip'].replace('{clip_id}',response_create)
-        smt.send_message(message_final,"CLIP")
+        print(info_clip)
+
+        message_clip_error = messages_data['clip_error_clip']
+        smt.send_message(message_clip_error,'CLIP')
+
+    else:
         
-    except:
-        response_error = response_clip['message']
+        edit_url = info_clip['data'][0]['edit_url']
+        id = info_clip['data'][0]['id']
+        
 
-        if response_error:
-            message_clip_error = messages_data['clip_error_clip']
-            smt.send_message(message_clip_error,'CLIP')
+        message_final = messages_data['clip_button_create_clip'].replace('{clip_id}',id)
+        smt.send_message(message_final,"CLIP")   
+
+        message_discord = messages_data['create_clip_discord'].replace('{clip_id}',id)
+        message_discord_edit = messages_data['create_clip_discord_edit'].replace('{clip_url}',edit_url)
+
+        discord_config_file = open('src/config/discord.json', 'r', encoding='utf-8')
+        discord_config_data = json.load(discord_config_file)
+
+
+        webhook_status = discord_config_data['status']
+        webhook_status_edit = discord_config_data['status_edit']
+        webhook_color = discord_config_data['color']
+        webhook_url = discord_config_data['url']
+        webhook_url_edit = discord_config_data['url_edit']
+
+        if webhook_status == 1:
+
+            webhook = DiscordWebhook(url=webhook_url)
+
+            embed = DiscordEmbed(title=message_discord, description=messages_data['clip_created_by'].replace('{user}',USERNAME), color=webhook_color)
+
+            webhook.add_embed(embed)
+
+            webhook.execute()   
+
+        if webhook_status_edit == 1:
+
+            webhook_edit = DiscordWebhook(url=webhook_url_edit)
+
+            embed_edit = DiscordEmbed(title=message_discord_edit, description=messages_data['clip_created_by'].replace('{user}',USERNAME), color=webhook_color)
+
+            webhook_edit.add_embed(embed_edit)
+
+            webhook_edit.execute() 
 
 def new_timer():
     
@@ -3925,7 +4009,8 @@ def top_auth():
                 out_file_check.close()
                     
     def start_auth_bot():
-    
+        
+        error_label.configure(text='')
         bot_username_entry = bot_user_name_entry.get()
         
         out_file1 = open("src/auth/auth.json")
@@ -4025,6 +4110,8 @@ def top_auth():
     error_label = customtkinter.CTkLabel(auth_top, text="", text_font=("default_theme","12"))
     error_label.grid(row=6, column=0, columnspan=2, padx=10, pady=20)
 
+    auth_top.protocol("WM_DELETE_WINDOW", close)
+
     auth_top.mainloop()
 
 def conn_obs_button():
@@ -4038,19 +4125,25 @@ def conn_obs_button():
 
 def con_pubsub():
     
-    USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
     
     if TOKEN and TOKENBOT:
 
-        twitch = Twitch(apitoken.CLIENTID,
+        twitchAPI = Twitch(apitoken.CLIENTID,
                         apitoken.CLIENTSECRET,
                         target_app_auth_scope=[AuthScope.USER_EDIT])
 
         scope = [AuthScope.CHANNEL_READ_REDEMPTIONS]
-        scope1 = [AuthScope.CHANNEL_MANAGE_REDEMPTIONS]
+        scope1 = [AuthScope.MODERATION_READ]
 
-        twitch.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
-        pubsub = PubSub(twitch)
+        twitchAPI.set_user_authentication(TOKEN, scope + scope1, 'refresh_token')
+        mod_list = twitchAPI.get_moderators(USERID)
+
+        mod_info_file = open('src/config/mods.json', 'w',encoding='utf-8')
+        json.dump(mod_list,mod_info_file,indent=6,ensure_ascii=False)
+        mod_info_file.close()
+
+        pubsub = PubSub(twitchAPI)
+
         pubsub.start()
         pubsub.listen_channel_points(USERID, callback_whisper)
         
@@ -4107,429 +4200,439 @@ def con_pubsub():
         
     else:
         top_auth()
-             
-def receive_commands(tid):
+
+def command_fallback(message: twitch.chat.Message) -> None: 
+
+    try:
+        search_mod = next(item for item in mod_info_data['data'] if item["user_login"] == message.sender)
+    except:
+        search_mod = ''
+
+    url = "https://api.twitch.tv/helix/users?login=" + message.sender
+
+    headers = CaseInsensitiveDict()
+    headers["Authorization"] = "Bearer " + TOKEN
+    headers["Client-Id"] = apitoken.CLIENTID
+
+
+    resp = req.get(url, headers=headers)
+    userid_loads = json.loads(resp.text)
+
+    userid = userid_loads['data'][0]['id']
+    display_name = userid_loads['data'][0]['display_name']
+
+    if search_mod != '':
+        mod = 'mod'
+    else:
+        mod = ''
+
+    message_data= {
+        'user' : message.sender,
+        'display-name' : display_name,
+        'message' : message.text,
+        'user-id' : userid,
+        'user-type' : mod
+    }
+        
+    print(message_data)
+    command_file = open('src/config/commands.json', "r", encoding='utf-8') 
+    command_data = json.load(command_file) 
     
-    USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN = auth.auth_data()
+    command_file_prefix = open('src/config/commands_config.json', "r", encoding='utf-8') 
+    command_data_prefix = json.load(command_file_prefix)
     
-    def command_fallback(message):    
+    command_file_simple = open('src/config/simple_commands.json', "r", encoding='utf-8') 
+    command_data_simple = json.load(command_file_simple)
+    
+    command_file_tts = open('src/config/prefix_tts.json', "r", encoding='utf-8') 
+    command_data_tts = json.load(command_file_tts) 
+    
+    command_file_counter = open('src/counter/commands.json', "r", encoding='utf-8') 
+    command_data_counter = json.load(command_file_counter) 
+
+    command_file_giveaway = open('src/giveaway/commands.json', "r", encoding='utf-8') 
+    command_data_giveaway = json.load(command_file_giveaway) 
+    
+    messages_file = open('src/messages/messages_file.json', "r", encoding='utf-8') 
+    messages_data = json.load(messages_file) 
+    
+    
+    command_string = message_data['message']
+    command_lower = command_string.lower()
+    command = command_lower.split()[0]
+    prefix = command[0]
+
+    result_giveaway_check = {key:val for key, val in command_data_giveaway.items() 
+                                if val.startswith(command)}
+    
+    result_counter_check = {key:val for key, val in command_data_counter.items() 
+                                if val.startswith(command)}
+    
+    result_command_check = {key:val for key, val in command_data.items() 
+                                if key.startswith(command)}
+    
+    result_command_simple = {key:val for key, val in command_data_simple.items() 
+                                if key.startswith(command)}
+    
+    user = message_data['display-name'] 
+    user_type = message_data['user-type'] 
+    user_id_command = message_data['user-id']
+
+    status_commands = command_data_prefix['STATUS_COMMANDS']  
+    status_tts = command_data_prefix['STATUS_TTS']
+
+    command_tts = command_data_tts['command']
+    user_type_tts = command_data_tts['user_level']
+
+
+    def receive_tts():
+
+        if status_tts == 1:
+            message_delay,check_time = check_delay_file.check_delay() 
+                
+            if check_time:
             
-        command_file = open('src/config/commands.json', "r", encoding='utf-8') 
-        command_data = json.load(command_file) 
-        
-        command_file_prefix = open('src/config/commands_config.json', "r", encoding='utf-8') 
-        command_data_prefix = json.load(command_file_prefix)
-        
-        command_file_simple = open('src/config/simple_commands.json', "r", encoding='utf-8') 
-        command_data_simple = json.load(command_file_simple)
-        
-        command_file_tts = open('src/config/prefix_tts.json', "r", encoding='utf-8') 
-        command_data_tts = json.load(command_file_tts) 
-        
-        command_file_counter = open('src/counter/commands.json', "r", encoding='utf-8') 
-        command_data_counter = json.load(command_file_counter) 
-
-        command_file_giveaway = open('src/giveaway/commands.json', "r", encoding='utf-8') 
-        command_data_giveaway = json.load(command_file_giveaway) 
-        
-        messages_file = open('src/messages/messages_file.json', "r", encoding='utf-8') 
-        messages_data = json.load(messages_file) 
-        
-        
-        command_string = message['message']
-        command_lower = command_string.lower()
-        command = command_lower.split()[0]
-        prefix = command[0]
-
-        result_giveaway_check = {key:val for key, val in command_data_giveaway.items() 
-                                    if val.startswith(command)}
-        
-        result_counter_check = {key:val for key, val in command_data_counter.items() 
-                                    if val.startswith(command)}
-        
-        result_command_check = {key:val for key, val in command_data.items() 
-                                    if key.startswith(command)}
-        
-        result_command_simple = {key:val for key, val in command_data_simple.items() 
-                                    if key.startswith(command)}
-        
-        user = message['display-name'] 
-        user_type = message['user-type'] 
-        user_id_command = message['user-id']
-
-        status_commands = command_data_prefix['STATUS_COMMANDS']  
-        status_tts = command_data_prefix['STATUS_TTS']
-
-        command_tts = command_data_tts['command']
-        user_type_tts = command_data_tts['user_level']
-
-
-        def receive_tts():
-
-            if status_tts == 1:
-                message_delay,check_time = check_delay_file.check_delay() 
+                if user_type == user_type_tts or user_id_command == USERID:
                     
-                if check_time:
-                
-                    if user_type == user_type_tts or user_id_command == USERID:
+                    redeem = command_data_tts['redeem']
+
+                    if len(command_lower.split(command_tts,1)) > 1:
+                        user_input = command_lower.split(command_tts,1)[1]
                         
-                        redeem = command_data_tts['redeem']
-
-                        if len(command_lower.split(command_tts,1)) > 1:
-                            user_input = command_lower.split(command_tts,1)[1]
-                            
-                            data_rewards = {}
-                            data_rewards['USERNAME'] = user
-                            data_rewards['REDEEM'] = redeem
-                            data_rewards['USER_INPUT'] = user_input
-                            data_rewards['USER_LEVEL'] = user_type
-                            data_rewards['USER_ID'] = user_id_command
-                            data_rewards['COMMAND'] = command
-                            data_rewards['PREFIX'] = prefix
-                            
-                            received_type = 'command'
-                            
-                            receive_redeem(data_rewards,received_type)
-                        else:
-                            smt.send_message(messages_data['error_tts_no_text'],"RESPONSE")
-                else:
-                    smt.send_message( message_delay , 'ERROR_TIME' )
-            else:
-                smt.send_message(messages_data['error_tts_disabled'],"RESPONSE")
-
-        if command_tts != "":
-            check_tts = command.startswith(command_tts)          
-            if check_tts:
-                receive_tts()
-                           
-        if status_commands == 1:
-                
-            if command in result_command_check.keys():
-                
-                redeem = command_data[command]['RECOMPENSA']
-                user_level_simple = command_data[command]['user_level']
-                
-                data_rewards = {}
-                data_rewards['USERNAME'] = user
-                data_rewards['REDEEM'] = redeem
-                data_rewards['USER_INPUT'] = command
-                data_rewards['USER_LEVEL'] = user_type
-                data_rewards['USER_ID'] = user_id_command
-                data_rewards['COMMAND'] = command
-                data_rewards['PREFIX'] = prefix
-
-                received_type = 'command'
-                
-                if user_type == user_level_simple or user_type == 'mod' or user_id_command == USERID:
-                    
-                    message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                    
-                    if check_time_global:    
+                        data_rewards = {}
+                        data_rewards['USERNAME'] = user
+                        data_rewards['REDEEM'] = redeem
+                        data_rewards['USER_INPUT'] = user_input
+                        data_rewards['USER_LEVEL'] = user_type
+                        data_rewards['USER_ID'] = user_id_command
+                        data_rewards['COMMAND'] = command
+                        data_rewards['PREFIX'] = prefix
                         
-                        receive_redeem(data_rewards,received_type)
+                        received_type = 'command'
+
+                        _thread.start_new_thread(receive_redeem, (3,data_rewards,received_type))
 
                     else:
-                        smt.send_message(message_delay_global,'ERROR_TIME')
-                else:
+                        smt.send_message(messages_data['error_tts_no_text'],"RESPONSE")
+            else:
+                smt.send_message( message_delay , 'ERROR_TIME' )
+        else:
+            smt.send_message(messages_data['error_tts_disabled'],"RESPONSE")
 
-                    message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
-                    message_error_level_command = message_error_level.replace('{command}', command)
-                    smt.send_message(message_error_level_command,'ERROR_USER')
-                
-            elif command in result_command_simple.keys():
-                
-                with open("src/counter/counter.txt", "r") as counter_file_r:
-                    counter_file_r.seek(0)
-                    digit = counter_file_r.read()    
-                    if digit.isdigit():    
-                        counter = digit
+    if command_tts != "":
+        check_tts = command.startswith(command_tts)          
+        if check_tts:
+            receive_tts()
+                        
+    if status_commands == 1:
             
-                response = command_data_simple[command]['response']
-                user_level_simple = command_data_simple[command]['user_level']
-                    
-                if user_type == user_level_simple or user_type == 'mod' or user_id_command == USERID:
-                    
-                    aliases = {
-                        '{user}': user,
-                        '{command}': command, 
-                        '{prefix}': prefix, 
-                        '{user_level}': user_type, 
-                        '{user_id}': user_id_command,
-                        '{counter}' : counter
-                        }
-                    
-                    response_redus = replace_all(response, aliases)
+        if command in result_command_check.keys():
+            
+            redeem = command_data[command]['RECOMPENSA']
+            user_level_simple = command_data[command]['user_level']
+            
+            data_rewards = {}
+            data_rewards['USERNAME'] = user
+            data_rewards['REDEEM'] = redeem
+            data_rewards['USER_INPUT'] = command
+            data_rewards['USER_LEVEL'] = user_type
+            data_rewards['USER_ID'] = user_id_command
+            data_rewards['COMMAND'] = command
+            data_rewards['PREFIX'] = prefix
+
+            received_type = 'command'
+            
+            if user_type == user_level_simple or user_type == 'mod' or user_id_command == USERID:
+                
+                message_delay_global,check_time_global = check_delay_file.check_global_delay()
+                
+                if check_time_global:    
+
+                    _thread.start_new_thread(receive_redeem, (3,data_rewards,received_type))
+
+                else:
+                    smt.send_message(message_delay_global,'ERROR_TIME')
+            else:
+
+                message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                message_error_level_command = message_error_level.replace('{command}', command)
+                smt.send_message(message_error_level_command,'ERROR_USER')
+            
+        elif command in result_command_simple.keys():
+            
+            with open("src/counter/counter.txt", "r") as counter_file_r:
+                counter_file_r.seek(0)
+                digit = counter_file_r.read()    
+                if digit.isdigit():    
+                    counter = digit
+        
+            response = command_data_simple[command]['response']
+            user_level_simple = command_data_simple[command]['user_level']
+                
+            if user_type == user_level_simple or user_type == 'mod' or user_id_command == USERID:
+                
+                aliases = {
+                    '{user}': user,
+                    '{command}': command, 
+                    '{prefix}': prefix, 
+                    '{user_level}': user_type, 
+                    '{user_id}': user_id_command,
+                    '{counter}' : counter
+                    }
+                
+                response_redus = replace_all(response, aliases)
+                
+                message_delay_global,check_time_global = check_delay_file.check_global_delay()
+                
+                if check_time_global:        
+                    smt.send_message(response_redus,'RESPONSE')
+                else:
+                    smt.send_message(message_delay_global,'ERROR_TIME')
+            else:    
+                message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                message_error_level_command = message_error_level.replace('{command}', command)
+                smt.send_message(message_error_level_command,'ERROR_USER')
+                
+        elif command in result_counter_check.values():
+            
+            if 'reset_counter' in result_counter_check.keys() :
+                
+                if user_type == "mod" or user_id_command == USERID:
                     
                     message_delay_global,check_time_global = check_delay_file.check_global_delay()
                     
                     if check_time_global:        
-                        smt.send_message(response_redus,'RESPONSE')
+                        
+                        with open("src/counter/counter.txt", "w") as counter_file_w:      
+                            counter_file_w.write('0')
+                        
+                        response_reset = messages_data['response_reset_counter']
+                        smt.send_message(response_reset,'RESPONSE')
+                        
                     else:
+                        
                         smt.send_message(message_delay_global,'ERROR_TIME')
-                else:    
+                else:
                     message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
                     message_error_level_command = message_error_level.replace('{command}', command)
                     smt.send_message(message_error_level_command,'ERROR_USER')
                     
-            elif command in result_counter_check.values():
+            elif 'set_counter' in result_counter_check.keys() :
                 
-                if 'reset_counter' in result_counter_check.keys() :
-                    
-                    if user_type == "mod" or user_id_command == USERID:
-                        
-                        message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                        
-                        if check_time_global:        
-                            
-                            with open("src/counter/counter.txt", "w") as counter_file_w:      
-                                counter_file_w.write('0')
-                            
-                            response_reset = messages_data['response_reset_counter']
-                            smt.send_message(response_reset,'RESPONSE')
-                            
-                        else:
-                            
-                            smt.send_message(message_delay_global,'ERROR_TIME')
-                    else:
-                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
-                        message_error_level_command = message_error_level.replace('{command}', command)
-                        smt.send_message(message_error_level_command,'ERROR_USER')
-                        
-                elif 'set_counter' in result_counter_check.keys() :
-                    
-                    if user_type == "mod" or user_id_command == USERID:
-                        
-                        message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                        
-                        if check_time_global:    
-                            
-                            
-
-                            if len(command_string.split()) > 1:
-
-                                user_input = command_string.split()[1]
-                                
-                                if user_input.isdigit():
-                                    with open("src/counter/counter.txt", "w") as counter_file_w:      
-                                        counter_file_w.write(str(user_input))
-                                        
-                                    response_set = messages_data['response_set_counter']
-                                    response_set_repl = response_set.replace('{value}', user_input)
-                                    
-                                    smt.send_message(response_set_repl,'RESPONSE')
-                                else:
-                                    smt.send_message(messages_data['response_not_digit_counter'],'RESPONSE')
-                            else:
-                                smt.send_message(messages_data['response_null_set_counter'],'RESPONSE')
-                        else:
-                            smt.send_message(message_delay_global,'ERROR_TIME')
-                    else:
-                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
-                        message_error_level_command = message_error_level.replace('{command}', command)
-                        smt.send_message(message_error_level_command,'ERROR_USER')
-                        
-                elif 'check_counter' in result_counter_check.keys() :
+                if user_type == "mod" or user_id_command == USERID:
                     
                     message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                        
+                    
                     if check_time_global:    
+                        
+                        
 
-                            with open("src/counter/counter.txt", "r") as counter_file_r:
-                                counter_file_r.seek(0)
-                                digit = counter_file_r.read()    
-                                if digit.isdigit():    
-                                    counter = digit
-                                
-                            response_set = messages_data['response_counter']
-                            response_set_repl = response_set.replace('{value}', counter)
+                        if len(command_string.split()) > 1:
+
+                            user_input = command_string.split()[1]
                             
-                            smt.send_message(response_set_repl,'RESPONSE')
+                            if user_input.isdigit():
+                                with open("src/counter/counter.txt", "w") as counter_file_w:      
+                                    counter_file_w.write(str(user_input))
+                                    
+                                response_set = messages_data['response_set_counter']
+                                response_set_repl = response_set.replace('{value}', user_input)
+                                
+                                smt.send_message(response_set_repl,'RESPONSE')
+                            else:
+                                smt.send_message(messages_data['response_not_digit_counter'],'RESPONSE')
+                        else:
+                            smt.send_message(messages_data['response_null_set_counter'],'RESPONSE')
                     else:
                         smt.send_message(message_delay_global,'ERROR_TIME')
-
-            elif command in result_giveaway_check.values():
-
-                if 'execute_giveaway' in result_giveaway_check.keys() :
-
-                    if user_type == "mod" or user_id_command == USERID:
-                        
-                        message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                        
-                        if check_time_global:
-
-                            giveaway_file = open('src/giveaway/config.json','r',encoding='utf-8')
-                            giveaway_data = json.load(giveaway_file)
-
-                            reset_give = giveaway_data['reset']
-
-                            with open("src/giveaway/names.txt", "r") as give_file_check:
-                                if len(give_file_check.read()) > 0:
-
-                                    with open("src/giveaway/names.txt", "r+") as give_file_r:
-                                            lines = give_file_r.readlines()
-
-                                            choice = randint(0,len(lines))
-                                            name = lines[choice].replace('\n','')
-
-                                            message_win = messages_data['giveaway_response_win'].replace('{name}',name)
-                                            smt.send_message(message_win,'RESPONSE')
-
-                                            with open("src/giveaway/backup.txt", "r+") as give_file_backup:
-                                                give_file_backup.writelines(lines)
-
-                                            with open("src/giveaway/result.txt", "w") as give_file_w:
-                                                give_file_w.write(name)
-                                            
-                                            if reset_give == 1:
-                                                give_file_r.truncate(0)
-                            
-                        else:
-                            smt.send_message(message_delay_global,'ERROR_TIME')
-                    else:
-                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
-                        message_error_level_command = message_error_level.replace('{command}', command)
-                        smt.send_message(message_error_level_command,'ERROR_USER')
-
-                elif 'clear_giveaway' in result_giveaway_check.keys() :
-
-                    if user_type == "mod" or user_id_command == USERID:
-                        
-                        message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                        
-                        if check_time_global:        
-                            
-                            with open("src/giveaway/names.txt", "w") as counter_file_w:      
-                                counter_file_w.truncate(0)  
-                        else:
-                            
-                            smt.send_message(message_delay_global,'ERROR_TIME')
-                    else:
-                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
-                        message_error_level_command = message_error_level.replace('{command}', command)
-                        smt.send_message(message_error_level_command,'ERROR_USER')
-
-                    pass
-
-                elif 'check_name' in result_giveaway_check.keys() :
-
-                    if user_type == "mod" or user_id_command == USERID:
-                        
-                        message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                        
-                        if check_time_global:
-                            user_input = command_string.split()[1]
-
-                            with open("src/giveaway/names.txt", "r+") as give_file_r:
-                                lines_giveaway = give_file_r.readlines()
-
-                                name_user = user_input + '\n'
-                                
-                                if name_user in lines_giveaway:
-                                    
-                                    message = messages_data['response_user_giveaway'].replace('{user}',user_input)
-                                    smt.send_message(message, 'RESPONSE')
-                                else:
-
-                                    message = messages_data['response_nouser_giveaway'].replace('{user}', user_input)
-                                    smt.send_message(message, 'RESPONSE')
-                        else:
-                            
-                            smt.send_message(message_delay_global,'ERROR_TIME')
-                    
-                    else:
-                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
-                        message_error_level_command = message_error_level.replace('{command}', command)
-                        smt.send_message(message_error_level_command,'ERROR_USER')
-
-                elif 'add_user' in result_giveaway_check.keys() :
-
-                    if user_type == "mod" or user_id_command == USERID:
-                        
-                        message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                        
-                        if check_time_global:
-                            user_input = command_string.split()[1]
-
-                            with open("src/giveaway/names.txt", "r+") as give_file_r:
-                                lines_giveaway = give_file_r.readlines()
-
-                                with open("src/giveaway/names.txt", "a+") as give_file_r:
-                                    give_file_r.write(user_input+"\n")
-                                
-
-                                message = messages_data['giveaway_response_user_add']
-                                message_repl = message.replace('{user}',user_input)
-                                smt.send_message(message_repl, 'RESPONSE')
-                        else:
-                            
-                            smt.send_message(message_delay_global,'ERROR_TIME')
-                    
-                    else:
-                        message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
-                        message_error_level_command = message_error_level.replace('{command}', command)
-                        smt.send_message(message_error_level_command,'ERROR_USER')
-
-                elif 'check_self_name' in result_giveaway_check.keys() :
-
-                        message_delay_global,check_time_global = check_delay_file.check_global_delay()
-                        
-                        if check_time_global:
-                               
-                            with open("src/giveaway/names.txt", "r+") as give_file_r:
-                                lines_giveaway = give_file_r.readlines()
-
-                                name_user = user + '\n'
-                                
-                                if name_user in lines_giveaway:
-
-                                    message_user_giveaway = messages_data['response_user_giveaway'].replace('{user}', user)
-                                    smt.send_message(message_user_giveaway, 'RESPONSE')
-
-                                else:
-                                    message_user_giveaway = messages_data['response_nouser_giveaway'].replace('{user}', user)
-                                    smt.send_message(message_user_giveaway, 'RESPONSE')
-                            
-                        else:
-                            
-                            smt.send_message(message_delay_global,'ERROR_TIME')
-
-        else:
-            
-            message = messages_data['commands_disabled']
-            smt.send_message(message,"RESPONSE")
-    
-    command_connected = 0
-    
-    status_receive_label.configure(text= lang_data['connecting'])
-    
-    while command_connected == 0:
-        
-        if TOKEN and TOKENBOT:
-            try:
-                if smt.value == True:
-                    smt.send_message(messages_data['messages_chat_module_status'],'STATUS_BOT')
-                    time.sleep(3)
-                    
-                    module_status_message = messages_data['command_module_status']
-                    smt.send_message(module_status_message,'STATUS_BOT')
-
-                    status_receive_label.configure(text= lang_data['connected'])     
-                    smt.connection.listen(USERNAME,on_message=command_fallback)
                 else:
-                    time.sleep(1)
-            except:
-                command_connected = 0
-                status_receive_label.configure(text=lang_data['disconnected']) 
-                time.sleep(2)
+                    message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                    message_error_level_command = message_error_level.replace('{command}', command)
+                    smt.send_message(message_error_level_command,'ERROR_USER')
+                    
+            elif 'check_counter' in result_counter_check.keys() :
                 
-        else:
-            time.sleep(3)
-    
+                message_delay_global,check_time_global = check_delay_file.check_global_delay()
+                    
+                if check_time_global:    
+
+                        with open("src/counter/counter.txt", "r") as counter_file_r:
+                            counter_file_r.seek(0)
+                            digit = counter_file_r.read()    
+                            if digit.isdigit():    
+                                counter = digit
+                            
+                        response_set = messages_data['response_counter']
+                        response_set_repl = response_set.replace('{value}', counter)
+                        
+                        smt.send_message(response_set_repl,'RESPONSE')
+                else:
+                    smt.send_message(message_delay_global,'ERROR_TIME')
+
+        elif command in result_giveaway_check.values():
+
+            if 'execute_giveaway' in result_giveaway_check.keys() :
+
+                if user_type == "mod" or user_id_command == USERID:
+                    
+                    message_delay_global,check_time_global = check_delay_file.check_global_delay()
+                    
+                    if check_time_global:
+
+                        giveaway_file = open('src/giveaway/config.json','r',encoding='utf-8')
+                        giveaway_data = json.load(giveaway_file)
+
+                        reset_give = giveaway_data['reset']
+
+                        with open("src/giveaway/names.txt", "r") as give_file_check:
+                            if len(give_file_check.read()) > 0:
+
+                                with open("src/giveaway/names.txt", "r+") as give_file_r:
+                                        lines = give_file_r.readlines()
+
+                                        choice = randint(0,len(lines))
+                                        name = lines[choice].replace('\n','')
+
+                                        message_win = messages_data['giveaway_response_win'].replace('{name}',name)
+                                        smt.send_message(message_win,'RESPONSE')
+
+                                        with open("src/giveaway/backup.txt", "r+") as give_file_backup:
+                                            give_file_backup.writelines(lines)
+
+                                        with open("src/giveaway/result.txt", "w") as give_file_w:
+                                            give_file_w.write(name)
+                                        
+                                        if reset_give == 1:
+                                            give_file_r.truncate(0)
+                        
+                    else:
+                        smt.send_message(message_delay_global,'ERROR_TIME')
+                else:
+                    message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                    message_error_level_command = message_error_level.replace('{command}', command)
+                    smt.send_message(message_error_level_command,'ERROR_USER')
+
+            elif 'clear_giveaway' in result_giveaway_check.keys() :
+
+                if user_type == "mod" or user_id_command == USERID:
+                    
+                    message_delay_global,check_time_global = check_delay_file.check_global_delay()
+                    
+                    if check_time_global:        
+                        
+                        with open("src/giveaway/names.txt", "w") as counter_file_w:      
+                            counter_file_w.truncate(0)  
+                    else:
+                        
+                        smt.send_message(message_delay_global,'ERROR_TIME')
+                else:
+                    message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                    message_error_level_command = message_error_level.replace('{command}', command)
+                    smt.send_message(message_error_level_command,'ERROR_USER')
+
+                pass
+
+            elif 'check_name' in result_giveaway_check.keys() :
+
+                if user_type == "mod" or user_id_command == USERID:
+                    
+                    message_delay_global,check_time_global = check_delay_file.check_global_delay()
+                    
+                    if check_time_global:
+                        user_input = command_string.split()[1]
+
+                        with open("src/giveaway/names.txt", "r+") as give_file_r:
+                            lines_giveaway = give_file_r.readlines()
+
+                            name_user = user_input + '\n'
+                            
+                            if name_user in lines_giveaway:
+                                
+                                message = messages_data['response_user_giveaway'].replace('{user}',user_input)
+                                smt.send_message(message, 'RESPONSE')
+                            else:
+
+                                message = messages_data['response_nouser_giveaway'].replace('{user}', user_input)
+                                smt.send_message(message, 'RESPONSE')
+                    else:
+                        
+                        smt.send_message(message_delay_global,'ERROR_TIME')
+                
+                else:
+                    message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                    message_error_level_command = message_error_level.replace('{command}', command)
+                    smt.send_message(message_error_level_command,'ERROR_USER')
+
+            elif 'add_user' in result_giveaway_check.keys() :
+
+                if user_type == "mod" or user_id_command == USERID:
+                    
+                    message_delay_global,check_time_global = check_delay_file.check_global_delay()
+                    
+                    if check_time_global:
+                        user_input = command_string.split()[1]
+
+                        with open("src/giveaway/names.txt", "r+") as give_file_r:
+                            lines_giveaway = give_file_r.readlines()
+
+                            with open("src/giveaway/names.txt", "a+") as give_file_r:
+                                give_file_r.write(user_input+"\n")
+                            
+
+                            message = messages_data['giveaway_response_user_add']
+                            message_repl = message.replace('{user}',user_input)
+                            smt.send_message(message_repl, 'RESPONSE')
+                    else:
+                        
+                        smt.send_message(message_delay_global,'ERROR_TIME')
+                
+                else:
+                    message_error_level = messages_data['error_user_level'].replace('{user_level_simple}', user_level_simple)
+                    message_error_level_command = message_error_level.replace('{command}', command)
+                    smt.send_message(message_error_level_command,'ERROR_USER')
+
+            elif 'check_self_name' in result_giveaway_check.keys() :
+
+                    message_delay_global,check_time_global = check_delay_file.check_global_delay()
+                    
+                    if check_time_global:
+                            
+                        with open("src/giveaway/names.txt", "r+") as give_file_r:
+                            lines_giveaway = give_file_r.readlines()
+
+                            name_user = user + '\n'
+                            
+                            if name_user in lines_giveaway:
+
+                                message_user_giveaway = messages_data['response_user_giveaway'].replace('{user}', user)
+                                smt.send_message(message_user_giveaway, 'RESPONSE')
+
+                            else:
+                                message_user_giveaway = messages_data['response_nouser_giveaway'].replace('{user}', user)
+                                smt.send_message(message_user_giveaway, 'RESPONSE')
+                        
+                    else:
+                        
+                        smt.send_message(message_delay_global,'ERROR_TIME')
+
+    else:
+        
+        message = messages_data['commands_disabled']
+        smt.send_message(message,"RESPONSE")
+
+def bot(tid):
+
+    if TOKEN and TOKENBOT:
+
+        smt.conect_chat()
+
+        chat = twitch.Chat(channel=USERNAME, nickname=BOTNAME, oauth='oauth:' + TOKENBOT)
+        chat.subscribe(command_fallback)
+        status_receive_label.configure(text=lang_data['connected'])
+        
 def close():
+
     if messagebox.askokcancel("Exit", lang_data['exit']):
-        if conn_status == True:
-            if smt.value == True:
-                smt.connection.close_connection()
         app.destroy() 
         time.sleep(2)
         run_cmd(os._exit(0))
@@ -4540,11 +4643,11 @@ def update_check():
     response_json = json.loads(response.text)
     version = response_json['tag_name']
 
-    if version != 'v2.8.3':
+    if version != 'v2.9.3':
         update_info = messagebox.askquestion('Update',lang_data['update_new_found'])
         if update_info == 'yes':
             download_link = response_json['assets'][0]['browser_download_url']
-            response = wget.download(download_link, "RewardEvents v2.8.3.exe")
+            response = wget.download(download_link, "RewardEvents v2.9.3.exe")
               
                    
 tab1.columnconfigure(0, weight=1) 
@@ -4671,13 +4774,15 @@ config_responses_top_buttom.grid(row=4, column=0, columnspan=2, padx=20, pady=10
 config_counter_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['config_counter_button'], command=config_counter_counter)
 config_counter_top_buttom.grid(row=5, column=0, columnspan=2, padx=20, pady=10)
 
+config_webhook_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['webhook_config_button'], command=config_webhook)
+config_webhook_top_buttom.grid(row=6, column=0, columnspan=2, pady=10)
 
 config_give_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['config_giveaway_button'], command=config_giveaway)
-config_give_top_buttom.grid(row=6, column=0, columnspan=2, pady=10)
+config_give_top_buttom.grid(row=7, column=0, columnspan=2, pady=10)
 
 
 config_lang_top_buttom = customtkinter.CTkButton(tab5, width=250, text= lang_data['config_lang_button'], command=config_lang)
-config_lang_top_buttom.grid(row=7, column=0, columnspan=2, pady=10) 
+config_lang_top_buttom.grid(row=8, column=0, columnspan=2, pady=10) 
 
 
 
@@ -4741,7 +4846,7 @@ logo_image_src= ImageTk.PhotoImage(PIL.Image.open("src/about.png").resize((170, 
 logo_image = customtkinter.CTkLabel(tab7, image=logo_image_src)
 logo_image.grid(row=1, column=0,  pady=20)
 
-about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.8.3", text_font=("default_theme", "12"))
+about_name = customtkinter.CTkLabel(tab7, text=f"RewardEvents v2.9.3", text_font=("default_theme", "12"))
 about_name.grid(row=2, column=0, pady=10, padx=20)
 
 dev_name = customtkinter.CTkLabel(tab7, text=f"Dev By GG_TEC", text_font=("default_theme", "12"))
@@ -4753,9 +4858,13 @@ update_check_buttom.grid(row=6, column=0, pady=(30,20))
 update_check()
 con_pubsub()
 
-_thread.start_new_thread(receive_commands, (3,))
+
+
+
+_thread.start_new_thread(bot, (3,))
 _thread.start_new_thread(get_spec, (4,))
 _thread.start_new_thread(timer_module.timer, (2,))
+
 
 app.protocol("WM_DELETE_WINDOW", close)
 app.mainloop()

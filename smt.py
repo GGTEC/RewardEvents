@@ -1,4 +1,4 @@
-from twitch_chat_irc import twitch_chat_irc
+import twitch
 import auth
 import json
 import time
@@ -29,37 +29,37 @@ def send_message(message,type_message):
             if type_message == 'ERROR_TIME':
                 
                 if status_error_time == 1:
-                    connection.send(USERNAME, message)
+                    connection.send(message)
                         
             elif type_message == 'RESPONSE':
                 
                 if status_response == 1:
-                    connection.send(USERNAME, message)
+                    connection.send(message)
                     
             elif type_message == 'ERROR_USER':
                 
                 if status_error_user == 1:
-                    connection.send(USERNAME, message)
+                    connection.send(message)
                         
             elif type_message == 'CLIP':
                 
                 if status_clip == 1:
-                    connection.send(USERNAME, message)
+                    connection.send(message)
                         
             elif type_message == 'ERROR_TTS':
                 
                 if status_tts == 1:
-                    connection.send(USERNAME, message)
+                    connection.send(message)
                     
             elif type_message == 'TIMER':
                 
                 if status_timer == 1:
-                    connection.send(USERNAME, message) 
+                    connection.send(message) 
                     
             elif type_message == 'STATUS_BOT':
                 
                 if status_bot == 1:
-                    connection.send(USERNAME, message)
+                    connection.send(message)
     except:
         time.sleep(10)
         send_message(message,type_message)
@@ -68,11 +68,8 @@ def send_message(message,type_message):
 def conect_chat():
     global connection,value
     if TOKEN and TOKENBOT:
-        try:
-            connection = twitch_chat_irc.TwitchChatIRC(BOTNAME, TOKENBOT)
-            value = True
-        except:
-            value = False
+        connection = twitch.Chat(channel=USERNAME, nickname=BOTNAME, oauth='oauth:' + TOKENBOT)
+        value = True
     else:
         value = False
         

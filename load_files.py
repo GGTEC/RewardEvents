@@ -23,39 +23,52 @@ def update_language_file():
     lang_data = json.load(lang_file)
 
 
-    if 'config_responses_title' not in lang_data.keys():
+    if 'webhook_config_title' not in lang_data.keys():
 
-        lang_data["response_response_reset_counter"] = "Contador reiniciado"
-        lang_data["response_response_set_counter"] = "Aplicar valor no contador"
-        lang_data["response_response_counter"] = "Valor do contador"
-        lang_data["response_response_delay_error"] = "Resposta delay"
-        lang_data["response_clip_create_clip"] = "Resposta clip recompensa"
-        lang_data["response_clip_button_create_clip"] = "Resposta clip comando"
-        lang_data["response_clip_error_clip"] = "Resposta erro ao criar clip"
-        lang_data["response_error_tts_disabled"] = "Comando texto para fala desabilitado"
-        lang_data["response_error_tts_no_text"] = "Resposta !tts sem texto"
-        lang_data["response_error_user_level"] = "Erro de permissão"
-        lang_data["response_response_user_giveaway"] = "Usuário na lista de sorteio"
-        lang_data["response_response_no_user_giveaway"] = "Sem usuário no sorteio"
-        lang_data["response_giveaway_response_win"] = "Ganhador do sorteio"
-        lang_data["response_response_giveaway_disabled"] = "Resposta Sorteio desativado"
-        lang_data["response_giveaway_response_user_add"] = "Usuário adicionado no sorteio"
-        lang_data["response_giveaway_status_enable"] = "Sorteio ativado"
-        lang_data["response_giveaway_status_disable"] = "Sorteio desativado"
-        lang_data["response_command_module_status"] = "Comandos conectados"
-        lang_data["response_message_module_status"] = "Mensagens conectadas"
-        lang_data["response_commands_disabled"] = "Comandos desativado"
-        lang_data["config_responses_title"] = "Editar respostas"
-        lang_data["select_response"] = "Selecione a resposta para editar"
-        lang_data["response_label"] = "Resposta :"
-        lang_data["config_chat_responses_button"] = "Editar respostas"
-        lang_data["config_response_novalue"] = "Você deve selecionar uma resposta"
-        lang_data["config_response_confirm"] = "Resposta salva"
+        lang_data["webhook_config_button"] = "Configurar Discord"
+        lang_data["webhook_config_title"] = "Configuração Discord"
+        lang_data["webhook_url_label"] = "Webhook Url :"
+        lang_data["webhook_edit_url_label"] = "Webhook Url Edit:"
+        lang_data["webhook_color_label"] = "Cor do bloco (HEX sem '#')"
+        lang_data["webhook_message_label"] = "Titulo do Bloco"
+        lang_data["webhook_message_edit_label"] = "Titulo do Bloco para edição"
+        lang_data["webhook_enable_edit_label"] = "Ativar Webhook para edição do Clip?"
+        lang_data["webhook_enable_label"] = "Ativar Webhook ?"
+        lang_data["webhook_desc_label"] = "Descrição do bloco"
+        lang_data["config_webhook_saved"] = "Configuração Salva"
+        lang_data["config_webhook_save_error"] = "Erro ao salvar o Webhook"
 
         lang_file.close()
 
         lang_file_w = open(f'src/lang/{lang_selected}.json', 'w', encoding='utf-8')
-        json.dump(lang_data,lang_file_w,indent=6, ensure_ascii=False)
+        json.dump(lang_data,lang_file_w,indent=4, ensure_ascii=False)
+    
+
+        messages_file_webhook = open("src/messages/messages_file.json", "r", encoding="utf-8")
+        messages_data_webhook = json.load(messages_file_webhook)
+
+        messages_data_webhook['create_clip_discord'] = "Um novo clip foi criado , confira! https://clips.twitch.tv/{clip_id}"
+        messages_data_webhook['create_clip_discord_edit'] = "Link para editar o clip : {clip_url}"
+        messages_data_webhook['clip_created_by'] = "Clip criado por :{user}"
+        messages_file_webhook.close()
+
+        messages_webhook_file_write = open("src/messages/messages_file.json", "w", encoding="utf-8")
+        json.dump(messages_data_webhook, messages_webhook_file_write, indent=6, ensure_ascii=False)
+
+        config_webhook_data = {}
+        config_webhook_data['url'] = "NONE"
+        config_webhook_data['url_edit'] = "NONE"
+        config_webhook_data['color'] = "03b2f8"
+        config_webhook_data['status'] = 0
+        config_webhook_data['status_edit'] = 0
+
+        config_webhook_file_save = open('src/config/discord.json','w',encoding='utf-8')
+        json.dump(config_webhook_data, config_webhook_file_save, indent=6, ensure_ascii=False)
+
+
+        mods = {}
+        config_mod_file_save = open('src/config/mods.json','w',encoding='utf-8')
+        json.dump(mods, config_mod_file_save, indent=6, ensure_ascii=False)
 
 
 
