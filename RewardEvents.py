@@ -4283,7 +4283,15 @@ def receive_redeem(tid,data_rewards,received_type):
         elif redeem_reward_name == giveaway_redeem:
             add_giveaway()
         elif redeem_reward_name == player_reward:
-            _thread.start_new_thread(process_redem_music, (1,user_input,redeem_by_user))
+            
+            status_music = music_status_save('null','get')
+            
+            if status_music == 1:
+                _thread.start_new_thread(process_redem_music, (1,user_input,redeem_by_user))
+            else:
+                aliases_commands = {'{user}' : str(redeem_by_user)}
+                message_replace_response = replace_all(messages_file_load('music_disabled'),aliases_commands)
+                smt.send_message(message_replace_response,'RESPONSE')
             
 def pubsub_start():
 

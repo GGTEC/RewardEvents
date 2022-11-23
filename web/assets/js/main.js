@@ -15,7 +15,8 @@ $(document).ready(function () {
     width: '100%',
     style: 'btn-dark',
     noneResultsText: "Nenhum resultado para {0}",
-    liveSearchPlaceholder: "Pesquise o item"
+    liveSearchPlaceholder: "Pesquise o item",
+    noneSelectedText : 'Selecione um item'
   });
 
 });
