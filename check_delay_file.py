@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import json
 
-messages_file = open('src/messages/messages_file.json', "r", encoding='utf-8') 
+messages_file = open('web/src/messages/messages_file.json', "r", encoding='utf-8') 
 messages_data = json.load(messages_file) 
 
 message_error = messages_data['response_delay_error']
@@ -11,7 +11,7 @@ def check_delay():
     now = datetime.now()
     time = now.strftime("%d/%m/%Y %H:%M:%S")
 
-    time_delay_file = open('src/config/prefix_tts.json')
+    time_delay_file = open('web/src/config/prefix_tts.json')
     time_delay_data = json.load(time_delay_file)
 
     delay = time_delay_data['delay_date']
@@ -34,7 +34,7 @@ def check_delay():
 
         datetime_object = datetime.strptime(time, "%d/%m/%Y %H:%M:%S")
 
-        time_delay_file = open('src/config/prefix_tts.json')
+        time_delay_file = open('web/src/config/prefix_tts.json')
         time_delay_data = json.load(time_delay_file)
         delay_compare = time_delay_data['delay_config']
 
@@ -43,7 +43,7 @@ def check_delay():
 
         time_delay_data['delay_date'] = delay_save
 
-        time_delay_write = open('src/config/prefix_tts.json' , 'w', encoding='utf-8') 
+        time_delay_write = open('web/src/config/prefix_tts.json' , 'w', encoding='utf-8') 
         json.dump(time_delay_data, time_delay_write, indent = 4, ensure_ascii=False)
         
         message = 'OK'
@@ -57,7 +57,7 @@ def check_global_delay():
     now = datetime.now()
     time = now.strftime("%d/%m/%Y %H:%M:%S")
 
-    time_delay_file = open('src/config/commands_config.json')
+    time_delay_file = open('web/src/config/commands_config.json')
     time_delay_data = json.load(time_delay_file)
 
     delay = time_delay_data['delay_date']
@@ -81,7 +81,7 @@ def check_global_delay():
 
         datetime_object = datetime.strptime(time, "%d/%m/%Y %H:%M:%S")
 
-        time_delay_file = open('src/config/commands_config.json')
+        time_delay_file = open('web/src/config/commands_config.json')
         time_delay_data = json.load(time_delay_file)
         delay_compare = time_delay_data['delay_config']
 
@@ -90,7 +90,7 @@ def check_global_delay():
 
         time_delay_data['delay_date'] = delay_save
 
-        time_delay_write = open('src/config/commands_config.json' , 'w', encoding='utf-8') 
+        time_delay_write = open('web/src/config/commands_config.json' , 'w', encoding='utf-8') 
         json.dump(time_delay_data, time_delay_write, indent = 4, ensure_ascii=False)
         
         message = 'OK'

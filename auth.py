@@ -2,13 +2,16 @@ import json
 
 def auth_data():
     
-    c = open('src/auth/auth.json')
+    c = open('web/src/auth/auth.json')
     data = json.load(c)
 
     USERNAME = data['USERNAME']
-    USERID = data['USERID']
+    BROADCASTER_ID = data['BROADCASTER_ID']
+    TOKEN = data['TOKEN']
+    CODE = data['CODE']
+    REFRESH_TOKEN = data['REFRESH_TOKEN']
     BOTNAME = data['BOTUSERNAME']
     TOKENBOT = data['TOKENBOT']
-    TOKEN = data['TOKEN']
+
     
-    return USERNAME,USERID,BOTNAME,TOKENBOT,TOKEN
+    return USERNAME,BROADCASTER_ID,BOTNAME,CODE,TOKENBOT,TOKEN,REFRESH_TOKEN

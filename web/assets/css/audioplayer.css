@@ -1,0 +1,311 @@
+/* RemixDesign | woaichidapi@163.com | Redesigned by JimmyCheung */
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css");
+
+.audioplayer {
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.71) 0%, rgba(255,255,255,0) 90%);
+    width: 100%;
+    align-items: center;
+    padding: 5%;
+    border: 2px solid #754b99;
+}
+
+.controls {
+    padding: 5%;
+    max-width: 100%;
+    width: 100%;
+    margin-top: 16px;
+    display: inline-flex;
+    flex-wrap: wrap;
+    
+}
+
+.song-img {
+    background-image: url('/src/player/images/album.png') ; 
+    background-clip: padding-box;
+    background-repeat: no-repeat;
+    background-size: 750px;
+    background-position: center ;
+    
+}
+
+.audioplayer-playpause {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1%;
+    max-width: 48px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all .2s ease-in-out;
+    background: rgba(91, 130, 255, 0);
+    border: 2px solid #754b99;
+}
+
+
+.audioplayer-playpause:hover {
+    background: #927aac;
+}
+
+.audioplayer-playing .audioplayer-playpause {
+    background: #000000;
+    border: 2px solid #927aac;
+}
+
+
+.audioplayer-playing  .audioplayer-playpause:hover {
+    background: #927aac;
+}
+
+
+.audioplayer:not(.audioplayer-playing) .audioplayer-playpause:before {
+    font-family: "FontAwesome";
+    content: '\f04b';
+    color: white;
+
+}
+
+.audioplayer-playing .audioplayer-playpause:before {
+    font-family: "FontAwesome";
+    content: '\f04c';
+    color: white;
+}
+
+
+.audioplayer-stop {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all .2s ease-in-out;
+    border: #754b99 2px solid;
+    margin: 1%;
+    width: 48px;
+    height: 48px;
+}
+
+.audioplayer-stop::before {
+    font-family: "FontAwesome";
+    content: '\f04d';
+    color: white;
+}
+
+.audioplayer-stop:hover{
+    background: #927aac;
+}
+
+.audioplayer-playlist {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all .2s ease-in-out;
+    border: #754b99 2px solid;
+    margin: 1%;
+    width: 48px;
+    height: 48px;
+}
+
+.audioplayer-playlist::before {
+    font-family: 'bootstrap-icons';
+    content: '\F49F';
+    color: white;
+}
+
+.audioplayer-playlist:hover{
+    background: #927aac;
+}
+
+.audioplayer-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all .2s ease-in-out;
+    border: #754b99 2px solid;
+    margin: 1%;
+    width: 48px;
+    height: 48px;
+}
+
+.audioplayer-list::before {
+    font-family: "FontAwesome";
+    content: '\f03a';
+    color: white;
+}
+
+.audioplayer-list:hover{
+    background: #927aac;
+}
+
+.audioplayer-time {
+    display: flex;
+    width: 40px;
+    justify-content:center;
+    font-size: 12px;
+    color: #fff
+}
+
+.time-bar {
+    display: flex;
+}
+
+.audioplayer-time-current {
+    width: 50% ;
+    justify-content: start;
+}
+
+.audioplayer-time-duration {
+    width: 50% ;
+    justify-content: end;
+}
+
+.audioplayer-bar {
+    position: relative;
+    display: flex;
+    height: 12px;
+    margin: 12px;
+    flex-basis: 0;
+    flex-grow: 1;
+    cursor: pointer;
+}
+
+.audioplayer-bar::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    height: 2px;
+    background-color: #927aac;
+}
+
+.audioplayer-bar > div {
+    position: absolute;
+    width: 100%;
+}
+.audioplayer-bar-loaded {
+    z-index: 1;
+    height: 3px;
+    background: #ffffff;
+}
+
+.audioplayer-bar-played {
+    flex-direction: row-reverse;
+    z-index: 2;
+    height: 3px;
+    background: -webkit-linear-gradient(left,#927aac,#754b99);
+}
+
+.audioplayer-bar-played::after {
+    display: flex;
+    position: absolute;
+    content: '';
+    box-sizing: border-box;
+    top: -5px;
+    right: -1px;
+    margin-right: -5px;
+    width: 12px;
+    height: 12px;
+    background-color: #927aac;
+    border-radius: 6px;
+}
+
+.audioplayer:not(.audioplayer-playing) .audioplayer-bar-played::after {
+    border: 1px solid #927aac;
+}
+
+.audioplayer-playing .audioplayer-bar-played::after {
+    border: 1px solid #927aac;
+
+}
+
+.audioplayer-volume {
+    margin-left: 80%;
+    margin-top: -40px;
+    display: flex;
+    align-items: center;
+}
+
+.audioplayer-volume-button {
+    display: flex;
+    align-items: center;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.audioplayer-volume-button a {
+    display: flex;
+    width: 6px;
+    height: 8px;
+    background-color: #fff;
+    position: relative;
+}
+
+.audioplayer-volume-button a:before, .audioplayer-volume-button a:after {
+    content: '';
+    position: absolute;
+}
+
+.audioplayer-volume-button a:before {
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-right: 9px solid #fff;
+    border-bottom: 8px solid transparent;
+    border-left: none;
+    top: -4px;
+}
+
+.audioplayer:not(.audioplayer-mute) .audioplayer-volume-button a:after {
+    left: 10px;
+    top: -2px;
+    width: 6px;
+    height: 6px;
+    border: 6px double #fff;
+    border-width: 6px 6px 0 0;
+    border-radius: 0 12px 0 0;
+    transform: rotate(45deg);
+}
+
+.audioplayer-mute .audioplayer-volume-button a {
+    background-color: #927aac;
+}
+
+.audioplayer-mute .audioplayer-volume-button a:before {
+    border-right: 9px solid #927aac;
+}
+
+.audioplayer-volume-adjust {
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
+}
+
+.audioplayer-volume-adjust > div {
+    position: relative;
+    display: flex;
+    width: 60px;
+    height: 3px;
+    cursor: pointer;
+    background-color: #ffffff;
+}
+
+.audioplayer-volume-adjust div div {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+    height: 3px;
+    background-color: #927aac;
+}
+/* responsive | you can change the max-width value to match your theme */
+
+@media screen and (max-width: 679px) {
+    .audioplayer-volume-adjust {
+        display: none;
+    }
+}

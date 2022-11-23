@@ -1,6 +1,5 @@
 
-RewardEvents.spec
-file_version_info.txt
-apitoken_back.txt
-apitoken.py
-src/src.zip
+.env
+ffmpeg/ffprobe.exe
+ffmpeg/ffmpeg.exe
+ffmpeg/ffplay.exe
