@@ -37,11 +37,6 @@
         </h1>
 
         <ul class="navbar-nav ms-auto d-flex flex-row">
-          <li class="nav-item bg-dark text-white win-icon">
-            <button class="nav-item bg-dark text-white" onclick="window.location.reload();">
-              <i class="fa-sharp fa-solid fa-rotate-right fa-lg"></i>
-            </button>
-          </li>
 
           <li class="nav-item bg-dark text-white">
             <button class="btn bg-dark text-white win-icon" id="minimize" onclick="eel.minimize()" role="button"
@@ -154,7 +149,7 @@
 
         <form id="submit-auth-user" class="m-5" onsubmit="send_auth_info(event,'submit-auth-user')">
           <div class="form-group text-white mt-3">
-            <label for="streamer-name">Nome de usuário da conta streamer</label>
+            <label for="streamer-name">Nome de usuário da conta streamer (O mesmo username do seu canal twitch.tv/(seu_username))</label>
             <input type="text" class="form-control bg-dark text-white mt-3" id="streamer-name"
               placeholder="Digite o seu nickname da twitch" required />
           </div>

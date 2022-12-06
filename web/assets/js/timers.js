@@ -56,8 +56,9 @@ async function get_timer_info() {
         for (var key in data) {
             
             var value = data[key];
+            var valuesl = value.slice(0, 80)
 
-            $("#timer-select-edit").append('<option style="background: #000; color: #fff;" value="'+ key +'">'+ value +'</option>');
+            $("#timer-select-edit").append('<option class="timer-wrap" style="background: #000; color: #fff;" value="'+ key +'">'+ valuesl +'</option>');
             $("#timer-select-edit").selectpicker("refresh");
 
         }
@@ -65,8 +66,10 @@ async function get_timer_info() {
         for (var key in data) {
 
             var value = data[key];
+            var valuesl = value.slice(0, 80)
 
-            $("#timer-select-del").append('<option style="background: #000; color: #fff;" value="'+ key +'">'+ value +'</option>');
+
+            $("#timer-select-del").append('<option class="timer-wrap style="background: #000; color: #fff;" value="'+ key +'">'+ valuesl +'</option>');
             $("#timer-select-del").selectpicker("refresh");
         }
 
@@ -79,6 +82,7 @@ async function get_timer_edit() {
     var timer_select_edit_value = document.getElementById("timer-select-edit").value;
     var timer_edit_inp = document.getElementById("timer-edit-message");
 
+    console.log(timer_select_edit_value)
     var message_edit_to = await eel.get_message_timer(timer_select_edit_value)();
 
     timer_edit_inp.value = message_edit_to;

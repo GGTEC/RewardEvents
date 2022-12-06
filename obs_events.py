@@ -1,6 +1,8 @@
 import obsws_python as obs
 import time
 import json
+import utils
+
 
 config_file = open('web/src/config/obs.json','r',encoding='utf-8')
 config_data = json.load(config_file)
@@ -9,7 +11,6 @@ host_data = config_data['OBS_HOST']
 port_data = config_data['OBS_PORT']
 pass_data = config_data['OBS_PASSWORD']
 test_data = config_data['OBS_TEST_CON']
-
 
 def test_obs_conn():
 
@@ -174,8 +175,7 @@ def show_filter(source_name, filter_name, time_show,keep):
     except:
         pass
 
-
-def notification(tid):
+def notification():
 
     try:
         notifc_config_file = open('web/src/config/notfic.json','r',encoding='utf-8')
@@ -192,17 +192,29 @@ def notification(tid):
             scene_resp = cl.get_current_program_scene()
             scene_atual = scene_resp.current_program_scene_name
 
-            item_id_resp = cl.get_scene_item_id(scene_atual,source_name)
-            item_id = item_id_resp.scene_item_id
+            resp_OBS = cl.get_scene_item_list(scene_atual)
+            itens_resp = resp_OBS.scene_items
+            source_list = {"source":[]}
+            
+            for item in itens_resp:
 
-            cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
-            time.sleep(time_show)
-            cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
+                sources = item['sourceName']
+                source_list['source'].append(sources)
+
+            
+            if source_name in source_list['source']:
+                
+                item_id_resp = cl.get_scene_item_id(scene_atual,source_name)
+                item_id = item_id_resp.scene_item_id
+
+                cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
+                time.sleep(time_show)
+                cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
     
-    except:
-        pass
+    except Exception as e:
+        utils.error_log(e)
 
-def notification_player(tid):
+def notification_player():
 
     try:
         notifc_config_file = open('web/src/config/notfic.json','r',encoding='utf-8')
@@ -219,12 +231,24 @@ def notification_player(tid):
             scene_resp = cl.get_current_program_scene()
             scene_atual = scene_resp.current_program_scene_name
 
-            item_id_resp = cl.get_scene_item_id(scene_atual,source_name)
-            item_id = item_id_resp.scene_item_id
+            resp_OBS = cl.get_scene_item_list(scene_atual)
+            itens_resp = resp_OBS.scene_items
+            source_list = {"source":[]}
+            
+            for item in itens_resp:
 
-            cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
-            time.sleep(time_show)
-            cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
+                sources = item['sourceName']
+                source_list['source'].append(sources)
+
+            
+            if source_name in source_list['source']:
+                
+                item_id_resp = cl.get_scene_item_id(scene_atual,source_name)
+                item_id = item_id_resp.scene_item_id
+
+                cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
+                time.sleep(time_show)
+                cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
     
-    except:
-        pass
+    except Exception as e:
+        error_logger.error_log(e)

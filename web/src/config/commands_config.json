@@ -1,15 +1,15 @@
 {
-      "STATUS_TTS": 1,
-      "STATUS_COMMANDS": 1,
-      "STATUS_RESPONSE": 1,
-      "STATUS_ERROR_TIME": 1,
-      "STATUS_CLIP": 1,
-      "STATUS_ERROR_USER": 1,
-      "STATUS_TIMER": 1,
-      "STATUS_BOT": 1,
-      "STATUS_MUSIC": 1,
-      "STATUS_MUSIC_CONFIRM": 1,
-      "STATUS_MUSIC_ERROR": 1,
-      "delay_date": "21/11/2022 12:46:45",
-      "delay_config": 6
+    "STATUS_TTS": 1,
+    "STATUS_COMMANDS": 1,
+    "STATUS_RESPONSE": 1,
+    "STATUS_ERROR_TIME": 1,
+    "STATUS_CLIP": 1,
+    "STATUS_ERROR_USER": 1,
+    "STATUS_TIMER": 1,
+    "STATUS_BOT": 1,
+    "STATUS_MUSIC": 1,
+    "STATUS_MUSIC_CONFIRM": 1,
+    "STATUS_MUSIC_ERROR": 1,
+    "delay_date": "04/12/2022 12:08:17",
+    "delay_config": 6
 }

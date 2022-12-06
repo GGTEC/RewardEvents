@@ -1,11 +1,13 @@
 
 
-$(function() {
-  $('audio').audioPlayer();
-});
-
 $(document).ready(function () {
 
+  eel.loaded()();
+  $('audio').audioPlayer();
+  $('.toast').toast({
+    autohide: true,
+    delay: 5000
+  });
   $("input, select, textarea").attr("autocomplete", "off");
   $("input, select, textarea").attr("spellcheck", "false");
   $('select').selectpicker({
@@ -26,6 +28,15 @@ function sleep(ms) {
 }
 
 
+function toast_notifc(text){
+  
+  var text_message = document.getElementById('notific-message');
+
+  text_message.innerHTML = text;
+
+  $('#notific').toast('show')
+
+}
 function logout() {
   $("#confirm-logout").modal("show");
 }
@@ -85,16 +96,23 @@ async function save_message_disclosure(event){
 async function copy_message_disclosure() {
 
   var copyText = document.getElementById("message-disclosure-send");
+  var button_copy = document.getElementById("copy-dis");
+  var button_save = document.getElementById("submit-message-disclosure");
 
   var saved_message = copyText.value
-  copyText.select(); 
 
+  copyText.select(); 
   navigator.clipboard.writeText(copyText.value);
 
+  button_copy.disabled = true;
+  button_save.disabled = true;
   document.getElementById('message-disclosure-send').value = 'Copiado para a Clipboard!';
+
 
   await sleep(3000)
 
+  button_copy.disabled = false;
+  button_save.disabled = false;
   document.getElementById('message-disclosure-send').value = saved_message;
 
 }
@@ -330,3 +348,23 @@ async function update_modal(type_id){
   }
 }
 
+
+eel.expose(users_chat);
+function users_chat(user_list){
+
+  var users_block = document.getElementById('users-chat-list');
+
+  console.log(user_list)
+
+  users_block.innerHTML = '';
+
+  user_list.forEach(function (item, index) {
+
+    text_item = document.createElement("p");
+
+    text_item.innerHTML = "<spam class='name-user-list'>"+item+"</spam>"
+    text_item.setAttribute('onclick','eel.open_link("'+item+'")')
+    users_block.appendChild(text_item);
+
+  });
+}

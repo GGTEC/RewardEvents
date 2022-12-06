@@ -175,7 +175,6 @@ i:hover{
 }
 
 .clip-button {
-  background-color: #000000;
   position: fixed;
   bottom: 15px;
   border: #000 solid 2px;
@@ -312,13 +311,47 @@ input::-webkit-inner-spin-button {
 .purple-border-block {
   border:  solid #4f016c 2px;
 }
+
+.redeem-block {
+  padding: 4%;
+  height: 100%;
+}
+
+.chat-col .nav-link {
+  color: #fff;
+  padding: 2px !important;  
+  border: solid #4f016c 2px !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+.chat-col .nav-link.active {
+  color: #fff;
+  background-color: #524267 !important;
+}
+
+.chat-col .nav-tabs{
+  border-bottom: none !important;
+}
+
 #chat-block {
   overflow-y: scroll !important;
-  max-height: 480px;
-  height: 480px;
+  max-height: 70vh;
+  height: 70vh;
   padding: 1% !important;
 }
 
+.users-chat-list{
+  overflow-y: scroll !important;
+  max-height: 30.5rem;
+  height: 30.5rem;
+  padding: 2% !important;
+}
+
+.name-user-list:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
 #chat-message-block {
 
   padding: 1%;
@@ -404,4 +437,24 @@ table tbody{
   
   overflow: scroll;
   color: #fff;
+}
+
+#last_timer_text-1 {
+  width: 400px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast {
+  background-color: #000!important;
+  position: absolute;
+  bottom: 0;
+  right:0 ;
+  z-index: 3;
+  border: #5f0181 solid 2px;
+}
+
+.toast-header {
+  background-color: #5f0181!important;
 }

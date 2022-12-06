@@ -18,12 +18,9 @@
         rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/js/bootstrap-select.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
-
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/audioplayer.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" />
-
-
     <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet" />
     <script type="text/javascript" src="/eel.js"></script>
     <script>
@@ -45,6 +42,12 @@
                         <button class="btn bg-dark win-icon" id="minimize" onclick="eel.minimize()" role="button"
                             data-toggle="tooltip" data-bs-placement="bottom" title="Minimizar">
                             <i class="fa-solid fa-window-minimize fa-lg"></i>
+                        </button>
+                    </li>
+                    <li class="nav-item bg-dark">
+                        <button class="btn bg-dark win-icon" id="maximize" onclick="eel.maximize()" role="button"
+                            data-toggle="tooltip" data-bs-placement="bottom" title="Minimizar">
+                            <i class="fa-solid fa-window-maximize"></i>
                         </button>
                     </li>
                     <li class="nav-item bg-dark">
@@ -98,7 +101,9 @@
                         <i class="fa-solid fa-stopwatch-20 m-2"></i>
                         <span><b>Contador</b></span>
                     </button>
-                    <button class="nav-link item" id="v-pills-player-tab" onclick="save_music_status('get')"  data-bs-toggle="pill" data-bs-target="#v-pills-player" type="button" role="tab" aria-controls="v-pills-player" aria-selected="true">
+                    <button class="nav-link item" id="v-pills-player-tab" onclick="save_music_status('get')"
+                        data-bs-toggle="pill" data-bs-target="#v-pills-player" type="button" role="tab"
+                        aria-controls="v-pills-player" aria-selected="true">
                         <i class="fa-solid fa-music m-2"></i>
                         <span><b>Player</b></span>
                     </button>
@@ -124,7 +129,8 @@
                         <i class="fa-solid fa-right-from-bracket m-2"></i>
                         <span><b>Logout</b></span>
                     </button>
-                    <button class="clip-button" id="create-clip" type="button" style="margin-left: 3%">
+                    <button class="clip-button bg-dark" id="create-clip" type="button" onclick="eel.clip()"
+                        style="margin-left: 3%">
                         <div class="m-3">
                             <i class="fa-sharp fa-solid fa-clapperboard fa-2xl m-1"></i>
                             <span><b>Clipar</b></span>
@@ -134,54 +140,82 @@
             </div>
             <div class="col w-100">
                 <div class="tab-content h-100" id="v-pills-tabContent">
-                    <div class="tab-pane fade h-100 show active" id="v-pills-resgates" role="tabpanel"
+                    <div class="tab-pane fade show active" id="v-pills-resgates" role="tabpanel"
                         aria-labelledby="v-pills-resgates-tab">
-                        <div class="row mt-2" style="height: 80%">
+                        <div class="row mt-2" style="height: 100%">
                             <div class="col">
-                                <div class="bg-dark redeem-block p-3 purple-border-block">
-                                    <div class="row">
-                                        <div class="col-3">
-                                            <img id="image_redeem" src="./src/Request.png" width="100px" />
+                                <div class="d-flex flex-column">
+                                    <div class="bg-dark redeem-block purple-border-block">
+                                        <div class="row">
+                                            <div class="col-3">
+                                                <img id="image_redeem" src="./src/Request.png" width="100px" />
+                                            </div>
+                                            <div class="col">
+                                                <p>Ultimo resgate</p>
+                                                <h5 style="margin: 0px !important"><span
+                                                        id="name_redeem">Recompensa</span>
+                                                </h5>
+                                                <h6 style="margin: 0px !important"><span
+                                                        id="user_redeem">Usuário.</span>
+                                                </h6>
+                                            </div>
                                         </div>
-                                        <div class="col">
-                                            <p>Ultimo resgate</p>
-                                            <h5 style="margin: 0px !important"><span id="name_redeem">Recompensa</span>
-                                            </h5>
-                                            <h6 style="margin: 0px !important"><span id="user_redeem">Usuário.</span>
-                                            </h6>
+                                    </div>
+                                    <div class="bg-dark redeem-block mt-3 purple-border-block">
+                                        <p>Ultimo Follow </p>
+                                        <h5 style="margin: 0px !important"><span id="follow_name_text">Nome</span></h5>
+                                        <p class="text-muted m-0 mt-3">*Atualiza a cada 10 minutos</p>
+                                    </div>
+                                    <div class="bg-dark redeem-block mt-3 purple-border-block" id="playing-start">
+                                        <p>Ultimo Comando utilizado</p>
+                                        <h5 style="margin: 0px !important"><span id="last_command_text">Comando</span>
+                                        </h5>
+                                    </div>
+                                    <div class="bg-dark redeem-block mt-3 purple-border-block">
+                                        <p>Ultimo Timer enviado</p>
+                                        <h5 id="last_timer_text-1" style="margin: 0px !important"><span
+                                                id="last_timer_text">Mensagem</span></h5>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col chat-col">
+                                <div>
+                                    <div class="bg-dark nav nav-tabs flex-column flex-sm-row" id="nav-tab"
+                                        role="tablist">
+                                        <button class="nav-link flex-sm-fill text-sm-center active" id="nav-chat-tab"
+                                            data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab"
+                                            aria-controls="nav-chat" aria-selected="true">Chat</button>
+                                        <button class="nav-link flex-sm-fill text-sm-center" id="nav-users-tab"
+                                            data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab"
+                                            aria-controls="nav-users" aria-selected="false">Usuários no chat</button>
+                                    </div>
+                                    <div class="tab-content" id="nav-tabContent">
+                                        <div class="tab-pane fade show active purple-border-block" id="nav-chat"
+                                            role="tabpanel" aria-labelledby="nav-chat-tab">
+                                            <div id="chat-block">
+                                            </div>
+                                            <form id="input-chat-form" onsubmit="send_message_chat_js(event)">
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control bg-dark"
+                                                        id="message-chat-send" aria-describedby="submit-message-chat" />
+                                                    <button class="btn bt-submit" type="submit"
+                                                        id="submit-message-chat"><i
+                                                            class="fa-solid fa-paper-plane"></i></button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="tab-pane fade purple-border-block" id="nav-users" role="tabpanel"
+                                            aria-labelledby="nav-users-tab">
+                                            <div class="users-chat-list" id="users-chat-list">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="bg-dark redeem-block p-3 mt-3 purple-border-block">
-                                    <p>Ultimo Follow </p>
-                                    <h5 style="margin: 0px !important"><span id="follow_name_text">Nome</span></h5>
-                                    <p class="text-muted m-0 mt-3">*Atualiza a cada 1 minuto</p>
-                                </div>
-                                <div class="bg-dark redeem-block p-3 mt-3 purple-border-block" id="playing-start">
-                                    <p>Ultimo Comando utilizado</p>
-                                    <h5 style="margin: 0px !important"><span id="last_command_text">Comando</span></h5>
-                                </div>
-                                <div class="bg-dark redeem-block p-3 mt-3 purple-border-block">
-                                    <p>Ultimo Timer enviado</p>
-                                    <h5 style="margin: 0px !important"><span id="last_timer_text">Mensagem</span></h5>
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div class="bg-dark purple-border-block">
-                                    <div id="chat-block"> </div>
-                                    <form id="input-chat-form" onsubmit="send_message_chat_js(event)">
-                                        <div class="input-group">
-                                            <input type="text" class="form-control bg-dark" id="message-chat-send"
-                                                aria-describedby="submit-message-chat" />
-                                            <button class="btn bt-submit" type="submit" id="submit-message-chat"><i
-                                                    class="fa-solid fa-paper-plane"></i></button>
-                                        </div>
-                                    </form>
-                                </div>
+
                             </div>
                         </div>
-                        <div class="bg-dark p-3 row purple-border-block"
-                            style="margin: 0.1%; margin-top: 3% !important">
+                        <div class="bg-dark p-1 row purple-border-block"
+                            style="margin: 0.1%; margin-top: 1% !important">
                             <div class="col-2">
                                 <span title="Tempo em live" style="margin-right: 15px"><i class="fa-solid fa-circle"
                                         id="live-dot"></i> :
@@ -206,9 +240,9 @@
                                         <button class="btn btn-sm bt-submit" style="font-size: 12px" type="submit"
                                             id="submit-message-disclosure" title="Salvar mensagem"><i
                                                 class="fa-solid fa-floppy-disk"></i></button>
-                                        <button class="btn btn-sm bt-submit" style="font-size: 12px" type="button"><i
-                                                class="fa-solid fa-copy" title="Copiar mensagem"
-                                                onclick="copy_message_disclosure()"></i></button>
+                                        <button class="btn btn-sm bt-submit" style="font-size: 12px" id="copy-dis"
+                                            type="button" onclick="copy_message_disclosure()"><i
+                                                class="fa-solid fa-copy" title="Copiar mensagem"></i></button>
                                     </div>
                                 </form>
                             </div>
@@ -266,7 +300,7 @@
                                 <div class="col">
                                     <div class="d-flex input-group group-acoes mb-3 justify-content-center">
                                         <button class="w-75 m-2 btn bg-dark bt-update" type="button"
-                                            onclick="show_div_del('del-div','action-del-select','submit-del')">
+                                            onclick="show_div_del('del-div','action-del-select')">
                                             Excluir Ações
                                         </button>
                                     </div>
@@ -292,7 +326,7 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="audio-create" onsubmit="create_audio_js(event)">
+                                    <form id="audio-create" onsubmit="create_action(event,'audio')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-audio">Selecione uma recompensa</label>
                                             <select class="form-control bg-dark mt-3" id="redeem-select-audio">
@@ -336,35 +370,6 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-audio-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_create('audio-div','redeem-select-audio','audio-create','submit-audio')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-audio-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="tts-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -377,7 +382,7 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="tts-create" onsubmit="create_tts_js(event)">
+                                    <form id="tts-create" onsubmit="create_action(event,'tts')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-tts">Selecione uma recompensa</label>
                                             <select class="bg-dark mt-1" id="redeem-select-tts">
@@ -420,35 +425,6 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-tts-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_create('tts-div','redeem-select-tts','tts-create','submit-tts')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-tts-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="scene-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -461,7 +437,7 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="scene-create" onsubmit="create_scene_js(event)">
+                                    <form id="scene-create" onsubmit="create_action(event,'scene')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-scene">Selecione uma recompensa</label>
                                             <select class="bg-dark mt-3" id="redeem-select-scene">
@@ -541,36 +517,6 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-scene-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal"
-                                        style="border: 3px white solid !important">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_create('scene-div','redeem-select-scene','scene-create','submit-scene')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-scene-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="response-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -583,7 +529,7 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="response-create" onsubmit="create_response_js(event)">
+                                    <form id="response-create" onsubmit="create_action(event,'response')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-response">Selecione uma recompensa</label>
                                             <select class="bg-dark mt-3" id="redeem-select-response">
@@ -621,35 +567,6 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-response-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_create('response-div','redeem-select-response','response-create','submit-response')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-response-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="filter-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -662,7 +579,7 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="filter-create" onsubmit="create_filter_js(event)">
+                                    <form id="filter-create" onsubmit="create_action(event,'filter')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-filter">Selecione uma recompensa</label>
                                             <select class="bg-dark mt-3" id="redeem-select-filter">
@@ -760,35 +677,6 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-filter-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_create('filter-div','redeem-select-filter','filter-create','submit-filter')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-filter-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="source-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -801,7 +689,7 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="source-create" onsubmit="create_source_js(event)">
+                                    <form id="source-create" onsubmit="create_action(event,'source')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-source">Selecione uma recompensa</label>
                                             <select class="bg-dark mt-1" id="redeem-select-source">
@@ -877,35 +765,6 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-source-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_create('source-div','redeem-select-source','source-create','submit-source')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-source-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="keypress-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -918,7 +777,7 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="keypress-create" onsubmit="create_keypress_js(event)">
+                                    <form id="keypress-create" onsubmit="create_action(event,'keypress')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-keypress">Selecione uma recompensa</label>
                                             <select class="bg-dark mt-3" id="redeem-select-keypress">
@@ -1115,35 +974,6 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-keypress-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_create('keypress-div','redeem-select-keypress','keypress-create','submit-keypress')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-keypress-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="clip-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -1156,7 +986,7 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="clip-create" onsubmit="create_clip_js(event)">
+                                    <form id="clip-create" onsubmit="create_action(event,'clip')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-clip">Selecione uma recompensa</label>
                                             <select class="bg-dark mt-3" id="redeem-select-clip">
@@ -1189,35 +1019,6 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-clip-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_create('clip-div','redeem-select-clip','clip-create','submit-clip')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-clip-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="del-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -1230,50 +1031,17 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="action-del" onsubmit="del_action(event)">
+                                    <form id="action-del" onsubmit="create_action(event,'delete')">
                                         <div class="form-group mb-3 mt-3">
                                             <label for="action-del-select">Selecione uma ação para excluir</label>
                                             <select class="bg-dark mt-1" id="action-del-select">
 
                                             </select>
                                         </div>
-                                        <button type="submit" id="submit-del" class="btn bt-submit mt-4" disabled>
+                                        <button type="submit" id="submit-del" class="btn bt-submit mt-4">
                                             Excluir
                                         </button>
                                     </form>
-                                </div>
-                            </div>
-                            <div class="modal" id="modal_del_sucess" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Ação excluída.</h2>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="modal_del_error" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro ao excluir o evento, verifique se o
-                                                evento ainda existe saindo e retornando para esta
-                                                pagina.
-                                            </p>
-                                            <p>
-                                                Se o evento ainda existe entre em contado com o
-                                                suporte para receber auxilio.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2015,9 +1783,36 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="modal" id="sucess-create" data-backdrop="static" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content bg-dark custom-border-modal">
+                                    <div class="modal-body text-center m-2">
+                                        <h4>Sucesso!</h4>
+                                        <button type="button" class="btn bt-modal mt-4"
+                                            data-bs-dismiss="modal">Voltar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal" id="error-create" data-backdrop="static" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content bg-dark custom-border-modal">
+                                    <div class="modal-body text-center m-5">
+                                        <h4>Erro!</h4>
+                                        <p>
+                                            Ocorreu um erro ao executar a função, verifique se os dados
+                                            estão corretos ou entre em contato com o suporte.
+                                        </p>
+                                        <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
+                                            Voltar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-comandos" role="tabpanel"
-                        aria-labelledby="v-pills-comandos-tab">
+                    <div class="tab-pane fade h-100" id="v-pills-comandos" role="tabpanel" aria-labelledby="v-pills-comandos-tab">
                         <div id="commands-div">
                             <div class="row">
                                 <h2>Comandos</h2>
@@ -2057,7 +1852,7 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="command-create-form" onsubmit="create_command_js(event)">
+                                    <form id="command-create-form" onsubmit="commands_fun(event,'create')">
                                         <div class="form-group mt-3">
                                             <label for="new-command">Comando para o chat</label>
                                             <input type="text" class="form-control bg-dark mt-3" id="new-command"
@@ -2090,35 +1885,6 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-command-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_commands_div('create-commands-div','sucess-command-create')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-command-create" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="edit-commands-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -2130,12 +1896,20 @@
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="command-edit-form" onsubmit="edit_command_js(event)">
-                                        <div class="form-group mb-3 mt-2">
-                                            <label for="command-select-del">Selecione um comando</label>
-                                            <select class="form-control bg-dark mt-3" id="command-select-edit" onchange="get_command_edit()">
-
-                                            </select>
+                                    <form id="command-edit-form" onsubmit="commands_fun(event,'edit')">
+                                        <div class="form-group mt-3">
+                                            <label for="command-select-edit">Selecione um comando para editar</label>
+                                            <div class="row mt-3">
+                                                <div class="col-10">
+                                                    <select class="bg-dark" id="command-select-edit">
+                                                    </select>
+                                                </div>
+                                                <div class="col">
+                                                    <button class="btn bt-form" type="button" onclick="commands_fun('event','get_info')">
+                                                        Editar
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="edit-command">Novo Comando</label>
@@ -2170,35 +1944,6 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-command-edit" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_commands_div('edit-commands-div','sucess-command-edit')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-command-edit" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="del-commands-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -2208,10 +1953,9 @@
                                     <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                                 </button>
                             </div>
-
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="command-del-form" onsubmit="del_command_js(event)">
+                                    <form id="command-del-form" onsubmit="commands_fun(event,'delete')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="command-select-del">Selecione um comando</label>
                                             <select class="form-control bg-dark mt-3" id="command-select-del">
@@ -2225,36 +1969,6 @@
                                     </form>
                                 </div>
                             </div>
-
-                            <div class="modal" id="sucess-command-del" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Comando excluído.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_commands_div('del-commands-div','sucess-command-del')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-command-del" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="delay-commands-div" hidden>
                             <div class="d-flex justify-content-between">
@@ -2264,10 +1978,9 @@
                                     <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                                 </button>
                             </div>
-
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <form id="command-delay-form" onsubmit="delay_command_js(event)">
+                                    <form id="command-delay-form" onsubmit="commands_fun(event,'edit_delay')">
                                         <div class="form-group mt-3">
                                             <label for="command-delay">Delay para todos os comandos (exceto tts)</label>
                                             <input type="text" class="form-control bg-dark mt-3" id="command-delay"
@@ -2285,32 +1998,31 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-command-delay" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4"
-                                                onclick="hide_commands_div('delay-commands-div','sucess-command-delay')">
-                                                Voltar
-                                            </button>
-                                        </div>
+                        </div>
+                        <div class="modal" id="sucess-command" data-backdrop="static" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content bg-dark custom-border-modal">
+                                    <div class="modal-body text-center m-2">
+                                        <h4>Sucesso!</h4>
+                                        <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
+                                            Voltar
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                            <div class="modal" id="error-command-delay" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Voltar
-                                            </button>
-                                        </div>
+                        </div>
+                        <div class="modal" id="error-command" data-backdrop="static" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content bg-dark custom-border-modal">
+                                    <div class="modal-body text-center m-5">
+                                        <h4>Erro!</h4>
+                                        <p>
+                                            Ocorreu um erro ao executar a função, verifique se os dados
+                                            estão corretos ou entre em contato com o suporte.
+                                        </p>
+                                        <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
+                                            Voltar
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -2331,7 +2043,8 @@
                                         </div>
                                         <div class="col-2">
                                             <div class="material-switch bg-white d-flex justify-content-end">
-                                                <input id="timer-enable" type="checkbox" onclick="save_timer_status()" />
+                                                <input id="timer-enable" type="checkbox"
+                                                    onclick="save_timer_status()" />
                                                 <label for="timer-enable" class="form-check-label"></label>
                                             </div>
                                         </div>
@@ -2357,17 +2070,23 @@
                                 <div class="w-75 bg-dark p-5 mt-5" id="edit-timer-internal" style="margin-left: 10%">
                                     <h4>Editar mensagem automática</h4>
                                     <form id="timer-edit-form" onsubmit="edit_timer_js(event)">
-                                        <div class="form-group mb-3 mt-4">
+                                        <div class="form-group mt-3">
                                             <label for="timer-select-edit">Selecione uma mensagem</label>
-                                            <select class="form-control bg-dark mt-3" id="timer-select-edit"
-                                                onchange="get_timer_edit()">
-
-                                            </select>
+                                            <div class="row mt-3">
+                                                <div class="col-10">
+                                                    <select class="bg-dark" id="timer-select-edit">
+                                                    </select>
+                                                </div>
+                                                <div class="col">
+                                                    <button class="btn bt-form" type="button" onclick="get_timer_edit()">
+                                                        Editar
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="timer-edit-message">Nova mensagem</label>
-                                            <input type="text" class="form-control bg-dark mt-3"
-                                                id="timer-edit-message" />
+                                            <input type="text" class="form-control bg-dark mt-3" id="timer-edit-message" />
                                         </div>
                                         <button type="submit" id="submit-timer-edit" class="btn bt-submit mt-4">
                                             Salvar
@@ -2780,7 +2499,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-player" role="tabpanel" aria-labelledby="v-pills-player-tab">
+                    <div class="tab-pane fade h-100" id="v-pills-player" role="tabpanel"
+                        aria-labelledby="v-pills-player-tab">
                         <div id="ger-player-div">
                             <div class="w-75 bg-dark p-5 mt-5" id="player-div" style="margin-left: 13%">
                                 <div class="row text-left">
@@ -2789,7 +2509,8 @@
                                     </div>
                                     <div class="col-2">
                                         <div class="material-switch bg-white d-flex justify-content-end">
-                                            <input id="music-enable" type="checkbox" onclick="save_music_status('save')" />
+                                            <input id="music-enable" type="checkbox"
+                                                onclick="save_music_status('save')" />
                                             <label for="music-enable" class="form-check-label"></label>
                                         </div>
                                     </div>
@@ -2801,38 +2522,44 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="modal" id="playlist-mod" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                        <div class="modal" id="playlist-mod" data-bs-backdrop="static" data-bs-keyboard="false"
+                            tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content bg-dark custom-border-modal">
                                     <div class="modal-body m-1">
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
                                         <div class="row mt-3">
                                             <div class="col">
                                                 <p class="form-check-label">Reproduzir playlist ?</p>
                                             </div>
                                             <div class="col-2">
                                                 <div class="material-switch bg-white d-flex justify-content-end">
-                                                    <input id="playlist-switch" type="checkbox" onclick="playlist_execute()"/>
-                                                    <label for="playlist-switch" class="form-check-label" ></label>
+                                                    <input id="playlist-switch" type="checkbox"
+                                                        onclick="playlist_execute()" />
+                                                    <label for="playlist-switch" class="form-check-label"></label>
                                                 </div>
                                             </div>
                                         </div>
                                         <form id="playlist-add-form" class="mt-2" onsubmit="playlist_add(event)">
                                             <div class="form-group mt-3">
                                                 <label for="playlist-url">Url da playlist</label>
-                                                <input type="url" class="form-control bg-dark mt-3" id="playlist-url" placeholder="playlist url" required/>
+                                                <input type="url" class="form-control bg-dark mt-3" id="playlist-url"
+                                                    placeholder="playlist url" required />
                                             </div>
                                             <button type="submit" id="submit-playlist" class="btn bt-submit mt-4">
                                                 Adicionar
                                             </button>
                                         </form>
                                         <p class="m-2 text-center" id="playlist-music-added"></p>
-                                        <button class="btn bt-submit mt-4" onclick="playlist_clear()">Limpar playlist</button>
+                                        <button class="btn bt-submit mt-4" onclick="playlist_clear()">Limpar
+                                            playlist</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="modal" id="list-mod" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                        <div class="modal" id="list-mod" data-bs-keyboard="false" tabindex="-1"
+                            aria-labelledby="staticBackdropLabel" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
                                 <div class="modal-content bg-dark custom-border-modal h-50">
                                     <div class="modal-body m-1">
@@ -2840,8 +2567,8 @@
                                         <table class="table" id="list_musics">
                                             <thead class="text-white">
                                                 <tr>
-                                                  <th class="w-75" scope="col">Musica</th>
-                                                  <th scope="col">Usuário</th>
+                                                    <th class="w-75" scope="col">Musica</th>
+                                                    <th scope="col">Usuário</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="list-body">
@@ -2976,7 +2703,8 @@
                                     <form id="obs-not-form" onsubmit="save_obs_not(event)">
                                         <div class="row mt-3">
                                             <div class="col">
-                                                <p class="form-check-label"> Ativar Notificações para resgate de recompensas no OBS Studio.</p>
+                                                <p class="form-check-label"> Ativar Notificações para resgate de
+                                                    recompensas no OBS Studio.</p>
                                             </div>
                                             <div class="col-2">
                                                 <div class="material-switch bg-white d-flex justify-content-end">
@@ -2987,7 +2715,8 @@
                                         </div>
                                         <div class="row mt-3">
                                             <div class="col">
-                                                <p class="form-check-label"> Ativar Notificações para pedidos de musica no OBS Studio.</p>
+                                                <p class="form-check-label"> Ativar Notificações para pedidos de musica
+                                                    no OBS Studio.</p>
                                             </div>
                                             <div class="col-2">
                                                 <div class="material-switch bg-white d-flex justify-content-end">
@@ -2997,7 +2726,8 @@
                                             </div>
                                         </div>
                                         <div class="form-group mt-4">
-                                            <label for="not-source-name">Selecione a fonte que está configurada o arquivo HTML de notificações.</label>
+                                            <label for="not-source-name">Selecione a fonte que está configurada o
+                                                arquivo HTML de notificações.</label>
                                             <div class="row mt-3">
                                                 <div class="col-9">
                                                     <select class="bg-dark" id="not-source-name">
@@ -3007,7 +2737,9 @@
                                                     </select>
                                                 </div>
                                                 <div class="col">
-                                                    <button class="btn bt-form" type="button" onclick="get_sources('not-source-name')">Carregar fontes</button>
+                                                    <button class="btn bt-form" type="button"
+                                                        onclick="get_sources('not-source-name')">Carregar
+                                                        fontes</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -3175,7 +2907,8 @@
                                             <div class="col-2">
                                                 <div class="material-switch bg-white d-flex justify-content-end">
                                                     <input id="enable-message-error-music" type="checkbox" />
-                                                    <label for="enable-message-error-music" class="form-check-label"></label>
+                                                    <label for="enable-message-error-music"
+                                                        class="form-check-label"></label>
                                                 </div>
                                             </div>
                                         </div>
@@ -3461,58 +3194,75 @@
                                                         value="clip_created_by">
                                                         Descrição mensagem clip criado discord
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="music_added_to_queue">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="music_added_to_queue">
                                                         Musica adicionada á fila
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="music_add_error">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="music_add_error">
                                                         Erro ao adicionar musica na fila
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="music_process_error">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="music_process_error">
                                                         Erro ao processar Musica
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="music_process_cache_error">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="music_process_cache_error">
                                                         Erro ao processar Musica (Cache)
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="music_leght_error">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="music_leght_error">
                                                         Erro de duração da musica
                                                     </option>
                                                     <option style="background: #000; color: #fff" value="music_playing">
                                                         Musica reproduzindo
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="music_link_error">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="music_link_error">
                                                         Erro no link da musica
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="music_error_name">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="music_error_name">
                                                         Erro no nome da musica
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="music_stream_error">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="music_stream_error">
                                                         Erro ao reproduzir a musica
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="music_link_youtube">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="music_link_youtube">
                                                         Erro no link da musica (Links devem ser do youtube)
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="command_sr_error_link">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="command_sr_error_link">
                                                         Comando (!sr) Sem musica
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="command_volume_confirm">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="command_volume_confirm">
                                                         Confirmação de volume
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="command_volume_error">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="command_volume_error">
                                                         Erro no valor fornecido para volume
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="command_skip_confirm">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="command_skip_confirm">
                                                         Confirmação de musica pulada
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="command_current_confirm">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="command_current_confirm">
                                                         Mensagem para musica atual
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="command_next_no_music">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="command_next_no_music">
                                                         Sem musica na fila
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="command_next_confirm">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="command_next_confirm">
                                                         Proxima musica na fila
                                                     </option>
-                                                    <option style="background: #000; color: #fff" value="music_disabled">
+                                                    <option style="background: #000; color: #fff"
+                                                        value="music_disabled">
                                                         Modulo para pedidos de musica desativado
                                                     </option>
                                                 </select>
@@ -3520,7 +3270,8 @@
                                         </div>
                                         <div class="form-group mt-4">
                                             <label for="response-message-new">Nova mensagem</label>
-                                            <input type="text" class="form-control bg-dark mt-3" id="response-message-new" />
+                                            <input type="text" class="form-control bg-dark mt-3"
+                                                id="response-message-new" />
                                         </div>
                                         <button type="submit" id="submit-responses-config" class="btn bt-submit mt-4"
                                             disabled>
@@ -3557,8 +3308,8 @@
                         <div id="config-music-div" hidden>
                             <div class="d-flex justify-content-between">
                                 <h3> Configurar modulo de pedidos de musica </h3>
-                                <button class="btn" onclick="hide_config_div('config-music-div')"
-                                    data-toggle="tooltip" data-bs-placement="left" title="Voltar">
+                                <button class="btn" onclick="hide_config_div('config-music-div')" data-toggle="tooltip"
+                                    data-bs-placement="left" title="Voltar">
                                     <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                                 </button>
                             </div>
@@ -3567,7 +3318,8 @@
                                     <form id="music-config-form" onsubmit="save_music_config(event)">
                                         <div class="row mt-5">
                                             <div class="col">
-                                                <p class="form-check-label"> Ativar Notificações para pedidos de musica.</p>
+                                                <p class="form-check-label"> Ativar Notificações para pedidos de musica.
+                                                </p>
                                             </div>
                                             <div class="col-2">
                                                 <div class="material-switch bg-white d-flex justify-content-end">
@@ -3583,7 +3335,8 @@
                                             </select>
                                         </div>
                                         <div class="form-group mt-4">
-                                            <label for="comand-request">Comando para pedidos de musica (moderador)</label>
+                                            <label for="comand-request">Comando para pedidos de musica
+                                                (moderador)</label>
                                             <input type="text" class="form-control bg-dark mt-3" id="comand-request" />
                                         </div>
                                         <div class="form-group mt-4">
@@ -3690,7 +3443,8 @@
                                     <div class="modal-body text-center m-5">
                                         <h2>Atualização disponível !!</h2>
                                         <p>Ir para pagina de download ?</p>
-                                        <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal" onclick="update_modal('open')">
+                                        <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal"
+                                            onclick="update_modal('open')">
                                             Abrir
                                         </button>
                                     </div>
@@ -3721,10 +3475,26 @@
                     </div>
                 </div>
             </div>
+            <div class="toast position-absolute m-5 bg-dark p-0" id="notific" role="alert" data-bs-animation="true"
+                aria-live="assertive" aria-atomic="true">
+                <div class="toast-header d-flex justify-content-between">
+                    <div>
+                        <i class="fa-solid fa-triangle-exclamation text-black"></i>
+                        <strong class="ms-2 text-white">Notificação</strong>
+                    </div>
+                    <div>
+                        <button type="button" class="btn-close-white btn-close" data-bs-dismiss="toast">
+                        </button>
+                    </div>
+                </div>
+                <div class="toast-body" id="notific-message">
+                    Notificação
+                </div>
+            </div>
         </div>
     </div>
 
-    
+
     <script src="assets/js/actions.js"></script>
     <script src="assets/js/edit_actions.js"></script>
     <script src="assets/js/giveaway.js"></script>
@@ -3735,6 +3505,7 @@
     <script src="assets/js/config.js"></script>
     <script src="assets/js/viewcounter.js"></script>
     <script src="assets/js/audioplayer.js"></script>
+    <script src="assets/js/parse_message.js"></script>
     <script src="assets/js/main.js"></script>
 </body>
 

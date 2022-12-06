@@ -77,46 +77,52 @@ function pass_message(message_to){
 eel.expose(append_message);
 function append_message(message_data){
 
-    var message_data_parse = JSON.parse(message_data);
-
-    var message_rec = pass_message(message_data_parse.message)
-
-    var user_rec = message_data_parse.display_name
-    var mod_rec = message_data_parse.mod
-    var sub_rec = message_data_parse.sub
-    var color_rec = message_data_parse.chat_color
-
-    if (color_rec == ""){
-        var color_rec = "#000000".replace(/0/g,function(){return (~~(Math.random()*16)).toString(16);});
-    }
-
-    if (mod_rec == 'True'){
-        sword = '<i class="fa-solid fa-user-shield" id="usershield"></i>'
-    } else {
-        sword = ''
-    }
-    if (sub_rec == 'True'){
-        star = '<i class="fa-solid fa-star" id="userstar"></i>'
-    } else {
-        star = ''
-    }
-
     var div_chat = document.getElementById('chat-block');
-    var message_div = star + sword + '<span id="user-chat" >'+ user_rec +' </span><span id="message-chat"> : '+ message_rec +'</span>';
+    var message_data_parse = JSON.parse(message_data);
+    var type_message = message_data_parse.type
 
-    var div = document.createElement("div");
+    if (type_message == 'PRIVMSG'){
+    
+        var message_rec = pass_message(message_data_parse.message)
+        var user_rec = message_data_parse.display_name
+        var mod_rec = message_data_parse.mod
+        var sub_rec = message_data_parse.subscriber
+        var color_rec = message_data_parse.color
 
-    div.innerHTML = message_div;
-    div.id = 'chat-message-block'
+        console.log(sub_rec)
+        if (color_rec == ""){
+            var color_rec = "#000000".replace(/0/g,function(){return (~~(Math.random()*16)).toString(16);});
+        }
 
+        if (mod_rec == 1){
+            sword = '<i class="fa-solid fa-user-shield" id="usershield"></i>'
+        } else {
+            sword = ''
+        }
+        if (sub_rec == 1){
+            star = '<i class="fa-solid fa-star" id="userstar"></i>'
+        } else {
+            star = ''
+        }
 
+        
+        var message_div = star + sword + '<span id="user-chat" style=color:'+ color_rec +';>'+ user_rec +' </span><span id="message-chat"> : '+ message_rec +'</span>';
+        var div = document.createElement("div");
+        div.innerHTML = message_div;
+        div.id = 'chat-message-block'
 
-    div_chat.appendChild(div);
+        div_chat.appendChild(div);
+        div_chat.scrollTop = div_chat.scrollHeight;
 
+    } else if (type_message == 'CONN'){
 
- 
-    div_chat.scrollTop = div_chat.scrollHeight;
+        toast_notifc('Bot desconectado, conectando ao chat...')
 
+    } else if (type_message == 'CONNSUCESS'){
+
+        toast_notifc('Bot conectado!')
+
+    }
 
 }
 
