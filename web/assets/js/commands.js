@@ -1,10 +1,5 @@
 //COMANDOS
 
-eel.expose(command_modal);
-function command_modal(modal_id) {
-    $("#" + modal_id).modal("show");
-}
-
 function show_commands_div(div_id) {
 
     if (div_id == "del-commands-div") {
@@ -94,6 +89,8 @@ async function commands_fun(event,type_id){
 
     } else if (type_id == 'edit_delay'){
 
+        event.preventDefault();
+        
         var form = document.querySelector("#command-delay-form");
 
         data = {

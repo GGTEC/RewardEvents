@@ -4,10 +4,7 @@ $(document).ready(function () {
 
   eel.loaded()();
   $('audio').audioPlayer();
-  $('.toast').toast({
-    autohide: true,
-    delay: 5000
-  });
+  $('[data-toggle="tooltip"]').tooltip();
   $("input, select, textarea").attr("autocomplete", "off");
   $("input, select, textarea").attr("spellcheck", "false");
   $('select').selectpicker({
@@ -20,6 +17,7 @@ $(document).ready(function () {
     liveSearchPlaceholder: "Pesquise o item",
     noneSelectedText : 'Selecione um item'
   });
+  
 
 });
 
@@ -27,14 +25,37 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-
+eel.expose(toast_notifc);
 function toast_notifc(text){
-  
-  var text_message = document.getElementById('notific-message');
 
-  text_message.innerHTML = text;
+  if (text == 'error'){
+    text = 'Ocorreu um erro no salvamento, verifique se os dados estão corretos ou entre em contato com o suporte.'
+  } else if (text == 'success') {
+    text = 'Sucesso ao salvar'
+  }
 
-  $('#notific').toast('show')
+  Bs5Utils.defaults.toasts.position = 'bottom-right';
+  Bs5Utils.defaults.toasts.container = 'toast-container';
+  Bs5Utils.defaults.toasts.stacking = true;
+
+  const bs5Utils = new Bs5Utils();
+
+  Bs5Utils.registerStyle('dark-purple', {
+    btnClose: ['btn-close-white'],
+    main: ['bg-dark', 'text-white'],
+    border: ['custom-border-modal']
+  });
+
+  bs5Utils.Toast.show({
+    type: 'dark-purple',
+    icon: `<i class="far fa-check-circle fa-lg me-2"></i>`,
+    title: 'Notificação',
+    subtitle: '',
+    buttons : [],
+    content: text,
+    delay: 5000,
+    dismissible: true
+});
 
 }
 function logout() {
@@ -60,20 +81,6 @@ function try_obs(){
   document.getElementById('obs_conn_status').innerHTML = 'Conectando...'
   document.getElementById('obs_retry_button').style.display = 'None'
   eel.obs_try_conn();
-}
-
-function send_message_chat_js(event){
-
-  event.preventDefault()
-
-  var form_message = document.querySelector('#input-chat-form');
-  var message = form_message.querySelector('#message-chat-send').value;
-
-  console.log(message)
-  eel.send_message_chat(message);
-
-  document.getElementById('message-chat-send').value = "";
-
 }
 
 async function save_message_disclosure(event){
@@ -349,22 +356,3 @@ async function update_modal(type_id){
 }
 
 
-eel.expose(users_chat);
-function users_chat(user_list){
-
-  var users_block = document.getElementById('users-chat-list');
-
-  console.log(user_list)
-
-  users_block.innerHTML = '';
-
-  user_list.forEach(function (item, index) {
-
-    text_item = document.createElement("p");
-
-    text_item.innerHTML = "<spam class='name-user-list'>"+item+"</spam>"
-    text_item.setAttribute('onclick','eel.open_link("'+item+'")')
-    users_block.appendChild(text_item);
-
-  });
-}

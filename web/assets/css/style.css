@@ -1,4 +1,5 @@
 body {
+  max-height: 100vh;
   font-family: 'Kanit';
   color: white;
   background-repeat: no-repeat;
@@ -14,6 +15,37 @@ body {
   rgba(36, 8, 47, 0.8) 50%, 
   rgba(48, 2, 59, 0.8) 100%) #260137;
   overflow: hidden;
+  
+}
+
+.main {
+  max-height: 100vh;
+}
+
+.content {
+  height: 100vh !important;
+}
+
+.main .resizer { 
+  width: 10px; 
+  height: 10px; 
+  background: #594270; 
+  position:absolute; 
+  right: 0; bottom: 0; 
+  cursor: se-resize; 
+}
+
+.input-group .btn {
+  position: relative;
+  z-index: 0;
+}
+
+.fa-chevron-left {
+  color: white;
+}
+
+.fa-solid {
+  color: #Fff;
 }
 
 .text_resize {
@@ -23,15 +55,6 @@ body {
 
 span {
   color: white;
-}
-
-i {
-  color: white;
-  transition: all .15s linear;
-}
-
-i:hover{
-  color: #4f016c;
 }
 
 ::-webkit-scrollbar {
@@ -51,7 +74,6 @@ i:hover{
 ::-webkit-scrollbar-corner { background: #594270; }
 ::-webkit-scrollbar-track {
   background: #000000;
-  border: 0px none #ffffff;
 }
 
 .navbar-brand {
@@ -70,9 +92,28 @@ i:hover{
   height: 100%;
 }
 
-.nav-buttons {
-  border-right: 3px solid #927aac;
+.sidebar-nav {
+  height: 100vh;
+  margin-right: 0% !important;
 }
+
+.center-content{
+  position: relative;
+  width: 100%;
+  max-height: 100vh !important;
+  margin-left: 0% !important;
+}
+
+.bottom-info {
+  position: relative;
+  width: 98%;
+  margin-top: 2%;
+  margin-left: 1%;
+  background-color: #000; 
+  padding: 1%;
+  border: #4f016c 2px solid;
+}
+
 
 .nav-pills button{
   color: rgb(177, 175, 175);
@@ -102,6 +143,7 @@ i:hover{
 .nav-link:hover .fa{
   transform:rotate(360deg);
 }
+
 
 .group-acoes button{
   transition: 0.15s  !important;
@@ -175,10 +217,9 @@ i:hover{
 }
 
 .clip-button {
-  position: fixed;
   bottom: 15px;
   border: #000 solid 2px;
-  border-radius: 55px !important;
+  border-radius: 0px !important;
 }
 
 .clip-button:hover {
@@ -258,6 +299,14 @@ input::-webkit-inner-spin-button {
   border: solid #927aac 2px !important;
 }
 
+.toast-body {
+  background-color: #000;
+}
+
+.toast-header {
+  border: rgb(82, 82, 82) 1px solid !important;
+}
+
 .material-switch {
   margin-top: 14px; 
 }
@@ -286,6 +335,7 @@ input::-webkit-inner-spin-button {
   transition: all 0.4s ease-in-out;
   width: 40px;
 }
+
 .material-switch > label::after {
   background: rgb(255, 255, 255);
   border-radius: 16px;
@@ -299,10 +349,12 @@ input::-webkit-inner-spin-button {
   transition: all 0.3s ease-in-out;
   width: 14px;
 }
+
 .material-switch > input[type="checkbox"]:checked + label::before {
   background: #7902a4;
   opacity: 1;
 }
+
 .material-switch > input[type="checkbox"]:checked + label::after {
   background: #7902a4;
   left: 26px;
@@ -310,11 +362,23 @@ input::-webkit-inner-spin-button {
 
 .purple-border-block {
   border:  solid #4f016c 2px;
+  background-color: #000000;
+}
+.out-redeem{
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .redeem-block {
+  margin-top: 1vh;
   padding: 4%;
-  height: 100%;
+  border:  solid #4f016c 2px;
+}
+
+.chat-col {
+  margin-top: 1vh;
+  height: 75.7vh;
 }
 
 .chat-col .nav-link {
@@ -325,6 +389,7 @@ input::-webkit-inner-spin-button {
   border-top-right-radius: 0 !important;
 }
 
+
 .chat-col .nav-link.active {
   color: #fff;
   background-color: #524267 !important;
@@ -334,12 +399,30 @@ input::-webkit-inner-spin-button {
   border-bottom: none !important;
 }
 
-#chat-block {
-  overflow-y: scroll !important;
-  max-height: 70vh;
-  height: 70vh;
-  padding: 1% !important;
+.main-chat-container {
+  position: relative;
+  height: 95%;
 }
+
+.tab-chat{
+  position: relative;
+  height: 71.7vh;
+}
+
+
+.chat-block {
+  position: relative;
+  overflow-y: scroll !important;
+  height: 100%;
+}
+
+.form-chat {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
+
 
 .users-chat-list{
   overflow-y: scroll !important;
@@ -352,8 +435,9 @@ input::-webkit-inner-spin-button {
   cursor: pointer;
   text-decoration: underline;
 }
-#chat-message-block {
 
+#chat-message-block {
+  font-size: 18px;
   padding: 1%;
   margin: 1%;
   color: white;
@@ -368,14 +452,12 @@ input::-webkit-inner-spin-button {
 #user-chat {
   margin-left: 2px;
   display: inline-block;
-  font-size: 18px;
   font-weight: 500;
   user-select: text;
 }
 
 #message-chat {
   margin-left: 3px;
-  font-size: 18px;
   user-select: text;
 }
 
@@ -446,15 +528,7 @@ table tbody{
   white-space: nowrap;
 }
 
-.toast {
-  background-color: #000!important;
-  position: absolute;
-  bottom: 0;
-  right:0 ;
-  z-index: 3;
-  border: #5f0181 solid 2px;
-}
-
-.toast-header {
-  background-color: #5f0181!important;
+.config-tab-chat{
+  padding: 3%;
+  height: 100%;
 }

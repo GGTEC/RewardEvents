@@ -1,0 +1,257 @@
+body {
+    max-height: 100vh;
+    font-family: 'Kanit';
+    color: white;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background: linear-gradient(170deg, 
+    rgba(107, 74, 140, 0.8) 20%, 
+    rgba(63, 20, 102, 0.5) 20%, 
+    rgba(4, 4, 5, 0.5) 35%, 
+    rgba(49, 57, 73, 0.5) 75%), 
+    linear-gradient(45deg, 
+    rgba(4, 4, 5, 0.8) 0%, 
+    rgba(55, 1, 67, 0.8) 50%, 
+    rgba(36, 8, 47, 0.8) 50%, 
+    rgba(48, 2, 59, 0.8) 100%) #260137;
+    overflow: hidden;
+    
+  }
+
+::-webkit-scrollbar {
+width: 6px;
+height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+background: #594270;
+border: 0px none transparent;
+border-radius: 50px;
+transition: all .25s linear;
+}
+
+::-webkit-scrollbar-thumb:hover { background: #524267;}
+::-webkit-scrollbar-thumb:active { background: #754b99;}
+::-webkit-scrollbar-corner { background: #594270; }
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+
+.chat-col-new {
+    height: 100vh;
+}
+
+.chat-col-new .nav-link {
+    color: #fff;
+    padding: 2px !important;  
+    border: solid #4f016c 2px !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+}
+
+.chat-col-new .nav-link.active {
+    color: #fff;
+    background-color: #524267 !important;
+}
+
+.chat-col-new .nav-tabs{
+    border-bottom: none !important;
+}
+
+.top-tab {
+    height: 5vh;
+}
+.tab-chat{
+    position: relative;
+    height: 95vh;
+}
+
+.chat-block-new {
+    position: relative;
+    overflow-y: scroll !important;
+    height: 100%;
+}
+
+.form-chat {
+    position: relative;
+    width: 100%;
+    height: auto;
+}
+
+.users-chat-list {
+    height: 100%;
+    overflow-y: scroll !important;
+    padding: 2% !important;
+}
+
+.config-tab-chat{
+    padding: 3%;
+    height: 100%;
+}
+
+.name-user-list:hover {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+#chat-message-block {
+    background: #000000;
+    font-size: 18px;
+    padding: 1%;
+    margin: 1%;
+    color: white;
+    padding-right: 15px;
+    height: auto;
+    border:  solid #4f016c 3px;
+    overflow-wrap: anywhere;
+    user-select: text;
+
+}
+
+.material-switch {
+    margin-top: 14px; 
+  }
+  
+  .material-switch > input[type="checkbox"] {
+    display: none;   
+  }
+  
+  .material-switch > label {
+    cursor: pointer;
+    height: 0px;
+    position: relative; 
+    width: 40px;  
+  }
+  
+  .material-switch > label::before {
+    background: rgb(0, 0, 0);
+    box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    border: #7902a4 1px solid;
+    content: '';
+    height: 16px;
+    margin-top: -8px;
+    position:absolute;
+    opacity: 1;
+    transition: all 0.4s ease-in-out;
+    width: 40px;
+  }
+  
+  .material-switch > label::after {
+    background: rgb(255, 255, 255);
+    border-radius: 16px;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+    content: '';
+    height: 14px;
+    left: 0;
+    margin-top: -3px;
+    position: absolute;
+    top: -4px;
+    transition: all 0.3s ease-in-out;
+    width: 14px;
+  }
+  
+  .material-switch > input[type="checkbox"]:checked + label::before {
+    background: #7902a4;
+    opacity: 1;
+  }
+  
+  .material-switch > input[type="checkbox"]:checked + label::after {
+    background: #7902a4;
+    left: 26px;
+  }
+
+.purple-border-block {
+    background-color: #000000;
+    border:  solid #4f016c 2px;
+  }
+  
+#user-chat {
+    margin-left: 2px;
+    display: inline-block;
+    font-weight: 500;
+    user-select: text;
+}
+
+#message-chat {
+    margin-left: 3px;
+    user-select: text;
+}
+
+#userstar {
+    margin: 2px;
+    color: #6f0196;
+}
+
+#usershield {
+    margin: 2px;
+    color: rgb(96, 190, 2);
+}
+
+
+.bt-submit {
+    border: solid #927aac 2px !important;
+    color: white !important;
+    background-color: black !important;
+  }
+  
+.bt-submit:hover {
+    outline: #6f0196;
+    background-color: #927aac !important;
+}
+
+.form-control, .form-control:focus {
+    color: white;
+}
+
+
+select ,input {
+    color: white;
+    border-color: #710299 !important;
+  }
+
+select:active,select:focus,input:active ,input:focus {
+    border-color: #5f0181 !important;
+    outline: none !important;
+    box-shadow: inset 0 2px 2px rgba(148, 0, 194, 0.729),0 0 8px rgba(118, 0, 154, 0.781) !important;
+  }
+  
+select {
+    height: 40px !important;
+  }
+
+  .dropdown-menu ,
+.bs-searchbox {
+  background-color: #000 !important;
+}
+
+.bs-searchbox .form-control {
+  background-color: #000 !important;
+}
+
+.dropdown-toggle {
+  border-color: #5f0181 !important;
+}
+
+.dropdown-toggle:after {
+  border-color: #5f0181 !important;
+}
+
+.bootstrap-select .dropdown-toggle:focus {
+  outline: 0 !important;
+}
+
+.dropdown-item:hover {
+  background-color: #4f016c !important;
+}
+
+.bs-searchbox .form-control {
+  color: white !important;
+}
+
+.dropdown-menu .no-results {
+  background-color: #000 !important;
+  color: white !important;
+}
+

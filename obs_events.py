@@ -251,4 +251,4 @@ def notification_player():
                 cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
     
     except Exception as e:
-        error_logger.error_log(e)
+        utils.error_log(e)

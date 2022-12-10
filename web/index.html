@@ -12,42 +12,32 @@
     <link href="assets/img/favicon.png" rel="icon" />
 
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/css/bootstrap-select.min.css"
         rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/js/bootstrap-select.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
+    <script src="assets/js/Bs5Utils.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css" />
     <link href="assets/css/style.css" rel="stylesheet" />
     <link href="assets/css/audioplayer.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet" />
     <script type="text/javascript" src="/eel.js"></script>
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip();
-        });
-    </script>
 </head>
 
-<body>
-    <div class="d-flex flex-grow-1 flex-column vh-100">
-        <nav id="main-navbar" class="navbar navbar-expand-lg navbar-light bg-dark top pywebview-drag-region">
-            <div class="container-fluid">
+<body class="main">
+    <div class="d-flex flex-grow-1 flex-column content main-sub">
+        <nav id="main-navbar" class="navbar bg-dark pywebview-drag-region">
+            <div class="container-fluid mt">
                 <img src="/src/about.png" class="m-2" width="30" height="30" alt="" />
-                <h1 class="navbar-brand mt-1 mb-0 text-white">RewardEvents 3.0</h1>
+                <h1 class="navbar-brand mt-1 mb-0 text-white">RewardEvents 3.2</h1>
 
                 <ul class="navbar-nav ms-auto d-flex flex-row">
                     <li class="nav-item bg-dark">
                         <button class="btn bg-dark win-icon" id="minimize" onclick="eel.minimize()" role="button"
                             data-toggle="tooltip" data-bs-placement="bottom" title="Minimizar">
                             <i class="fa-solid fa-window-minimize fa-lg"></i>
-                        </button>
-                    </li>
-                    <li class="nav-item bg-dark">
-                        <button class="btn bg-dark win-icon" id="maximize" onclick="eel.maximize()" role="button"
-                            data-toggle="tooltip" data-bs-placement="bottom" title="Minimizar">
-                            <i class="fa-solid fa-window-maximize"></i>
                         </button>
                     </li>
                     <li class="nav-item bg-dark">
@@ -60,9 +50,9 @@
             </div>
         </nav>
 
-        <div class="row Row-Container h-100" style="margin-right: 0px !important">
+        <div class="row">
             <div class="col-2 p-0">
-                <div id="sidebarMenu" class="bg-dark nav h-100 flex-column nav-pills pywebview-drag-region">
+                <div id="sidebarMenu" class="bg-dark nav flex-column nav-pills sidebar-nav pywebview-drag-region">
                     <button class="nav-link item active" id="v-pills-resgates-tab" data-bs-toggle="pill"
                         data-bs-target="#v-pills-resgates" type="button" role="tab" aria-controls="v-pills-resgates"
                         aria-selected="true">
@@ -84,7 +74,7 @@
                     <button class="nav-link item" id="v-pills-timers-tab" onclick="get_timer_info()"
                         data-bs-toggle="pill" data-bs-target="#v-pills-timers" type="button" role="tab"
                         aria-controls="v-pills-timers" aria-selected="true">
-                        <i class="fa-regular fa-clock m-2"></i>
+                        <i class="fa-solid fa-clock m-2"></i>
                         <span><b>Timers</b></span>
                     </button>
                     <button class="nav-link item" id="v-pills-giveaway-tab"
@@ -129,127 +119,256 @@
                         <i class="fa-solid fa-right-from-bracket m-2"></i>
                         <span><b>Logout</b></span>
                     </button>
-                    <button class="clip-button bg-dark" id="create-clip" type="button" onclick="eel.clip()"
-                        style="margin-left: 3%">
-                        <div class="m-3">
-                            <i class="fa-sharp fa-solid fa-clapperboard fa-2xl m-1"></i>
-                            <span><b>Clipar</b></span>
-                        </div>
+                    <button class="nav-link item bg-dark " id="create-clip" type="button" onclick="eel.clip()">
+                        <div class="mt-3 text-center">
+                            
+                            <span><h4><i class="fa-solid fa-clapperboard fa-xl m-1"></i> Clipar!</h4></span>
+
                     </button>
                 </div>
             </div>
-            <div class="col w-100">
-                <div class="tab-content h-100" id="v-pills-tabContent">
-                    <div class="tab-pane fade show active" id="v-pills-resgates" role="tabpanel"
+            <div class="col container-fluid pe-3 ps-2">
+                <div class="tab-content center-content" id="v-pills-tabContent">
+                    <div class="tab-pane show active" id="v-pills-resgates" role="tabpanel"
                         aria-labelledby="v-pills-resgates-tab">
-                        <div class="row mt-2" style="height: 100%">
+                        <div class="row center-content">
                             <div class="col">
-                                <div class="d-flex flex-column">
-                                    <div class="bg-dark redeem-block purple-border-block">
+                                <div class="out-redeem">
+                                    <div class="bg-dark redeem-block">
                                         <div class="row">
                                             <div class="col-3">
                                                 <img id="image_redeem" src="./src/Request.png" width="100px" />
                                             </div>
                                             <div class="col">
                                                 <p>Ultimo resgate</p>
-                                                <h5 style="margin: 0px !important"><span
-                                                        id="name_redeem">Recompensa</span>
+                                                <h5 style="margin: 0px !important">
+                                                    <span id="name_redeem">Recompensa</span>
                                                 </h5>
-                                                <h6 style="margin: 0px !important"><span
-                                                        id="user_redeem">Usuário.</span>
+                                                <h6 style="margin: 0px !important">
+                                                    <span id="user_redeem">Usuário.</span>
                                                 </h6>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="bg-dark redeem-block mt-3 purple-border-block">
-                                        <p>Ultimo Follow </p>
-                                        <h5 style="margin: 0px !important"><span id="follow_name_text">Nome</span></h5>
-                                        <p class="text-muted m-0 mt-3">*Atualiza a cada 10 minutos</p>
+                                    <div class="bg-dark redeem-block">
+                                        <p>Ultimo Follow</p>
+                                        <h5 style="margin: 0px !important">
+                                            <span id="follow_name_text">Nome</span>
+                                        </h5>
+                                        <p class="text-muted m-0 mt-3">
+                                            *Atualiza a cada 10 minutos
+                                        </p>
                                     </div>
-                                    <div class="bg-dark redeem-block mt-3 purple-border-block" id="playing-start">
+                                    <div class="bg-dark redeem-block" id="playing-start">
                                         <p>Ultimo Comando utilizado</p>
-                                        <h5 style="margin: 0px !important"><span id="last_command_text">Comando</span>
+                                        <h5 style="margin: 0px !important">
+                                            <span id="last_command_text">Comando</span>
                                         </h5>
                                     </div>
-                                    <div class="bg-dark redeem-block mt-3 purple-border-block">
+                                    <div class="bg-dark redeem-block">
                                         <p>Ultimo Timer enviado</p>
-                                        <h5 id="last_timer_text-1" style="margin: 0px !important"><span
-                                                id="last_timer_text">Mensagem</span></h5>
+                                        <h5 id="last_timer_text-1" style="margin: 0px !important">
+                                            <span id="last_timer_text">Mensagem</span>
+                                        </h5>
                                     </div>
                                 </div>
                             </div>
                             <div class="col chat-col">
-                                <div>
-                                    <div class="bg-dark nav nav-tabs flex-column flex-sm-row" id="nav-tab"
-                                        role="tablist">
-                                        <button class="nav-link flex-sm-fill text-sm-center active" id="nav-chat-tab"
-                                            data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab"
-                                            aria-controls="nav-chat" aria-selected="true">Chat</button>
-                                        <button class="nav-link flex-sm-fill text-sm-center" id="nav-users-tab"
-                                            data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab"
-                                            aria-controls="nav-users" aria-selected="false">Usuários no chat</button>
-                                    </div>
-                                    <div class="tab-content" id="nav-tabContent">
-                                        <div class="tab-pane fade show active purple-border-block" id="nav-chat"
-                                            role="tabpanel" aria-labelledby="nav-chat-tab">
-                                            <div id="chat-block">
-                                            </div>
-                                            <form id="input-chat-form" onsubmit="send_message_chat_js(event)">
+                                <div class="bg-dark nav nav-tabs flex-column flex-sm-row top-tab" id="nav-tab"
+                                    role="tablist">
+                                    <button class="nav-link flex-sm-fill text-sm-center active" id="nav-chat-tab"
+                                        data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab"
+                                        aria-controls="nav-chat" aria-selected="true">
+                                        Chat
+                                    </button>
+                                    <button class="nav-link flex-sm-fill text-sm-center" id="nav-users-tab"
+                                        data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab"
+                                        aria-controls="nav-users" aria-selected="false">
+                                        Usuários no chat
+                                    </button>
+                                    <button class="nav-link text-sm-center" style="width: 32px" id="nav-config-chat-tab"
+                                        data-bs-toggle="tab" data-bs-target="#nav-config-chat" type="button" role="tab"
+                                        aria-controls="nav-config-chat" aria-selected="false">
+                                        <i class="fa-solid fa-gear"></i>
+                                    </button>
+                                </div>
+                                <div class="tab-content purple-border-block main-chat-container" id="nav-tabContent">
+                                    <div class="tab-pane show active" id="nav-chat" role="tabpanel"
+                                        aria-labelledby="nav-chat-tab">
+                                        <div class="tab-chat d-flex flex-column align-items-stretch">
+                                            <div class="chat-block" id="chat-block"></div>
+                                            <form id="input-chat-form" class="form-chat"
+                                                onsubmit="send_message_chat_js(event)">
                                                 <div class="input-group">
-                                                    <input type="text" class="form-control bg-dark"
+                                                    <input type="text" class="form-control bg-dark" style="width: 80%"
                                                         id="message-chat-send" aria-describedby="submit-message-chat" />
                                                     <button class="btn bt-submit" type="submit"
-                                                        id="submit-message-chat"><i
-                                                            class="fa-solid fa-paper-plane"></i></button>
+                                                        id="submit-message-chat">
+                                                        <i class="fa-solid fa-paper-plane"></i>
+                                                    </button>
+
+                                                    <button class="btn bt-submit" type="button" id="open-chat"
+                                                        onclick="eel.new_chat()" title="Abrir chat em uma nova janela">
+                                                        <i class="fa-solid fa-circle-plus"></i>
+                                                    </button>
                                                 </div>
                                             </form>
                                         </div>
-                                        <div class="tab-pane fade purple-border-block" id="nav-users" role="tabpanel"
-                                            aria-labelledby="nav-users-tab">
-                                            <div class="users-chat-list" id="users-chat-list">
+                                    </div>
+                                    <div class="tab-pane" id="nav-users" role="tabpanel"
+                                        aria-labelledby="nav-users-tab">
+                                        <div class="users-chat-list" id="users-chat-list"></div>
+                                    </div>
+                                    <div class="tab-pane" id="nav-config-chat" role="tabpanel"
+                                        aria-labelledby="nav-config-chat-tab">
+                                        <div class="config-tab-chat">
+                                            <div class="form-group">
+                                                <label for="slider-font">Tamanho da letra no chat</label>
+                                                <input class="form-range w-100" type="range" min="0" max="100" value="0"
+                                                    id="slider-font" step="1" />
+                                            </div>
+                                            <div class="row mt-3">
+                                                <div class="col">
+                                                    <p class="form-check-label">
+                                                        Aplicar cor aos nomes no chat.
+                                                    </p>
+                                                </div>
+                                                <div class="col-2">
+                                                    <div class="material-switch bg-white d-flex justify-content-end">
+                                                        <input id="chat-colors" type="checkbox" checked />
+                                                        <label for="chat-colors" class="form-check-label"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3">
+                                                <div class="col">
+                                                    <p class="form-check-label">
+                                                        Aplicar cor fixa aos nomes no chat que não
+                                                        definiram uma cor.
+                                                    </p>
+                                                </div>
+                                                <div class="col-2">
+                                                    <div class="material-switch bg-white d-flex justify-content-end">
+                                                        <input id="chat-colors-fixed" type="checkbox" />
+                                                        <label for="chat-colors-fixed" class="form-check-label"></label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group mb-3 mt-2">
+                                                    <label for="select-color">Selecione uma cor</label>
+                                                    <select class="form-control bg-dark mt-3" id="select-color">
+                                                        <option value="Blue" style="color: white">
+                                                            Azul
+                                                        </option>
+                                                        <option value="Coral" style="color: white">
+                                                            Coral
+                                                        </option>
+                                                        <option value="DodgerBlue" style="color: white">
+                                                            Azul furtivo
+                                                        </option>
+                                                        <option value="SpringGreen" style="color: white">
+                                                            Verde primavera
+                                                        </option>
+                                                        <option value="YellowGreen" style="color: white">
+                                                            Verde amarelado
+                                                        </option>
+                                                        <option value="Green" style="color: white">
+                                                            Verde
+                                                        </option>
+                                                        <option value="OrangeRed" style="color: white">
+                                                            Vermelão
+                                                        </option>
+                                                        <option value="Red" style="color: white">
+                                                            Vermelho
+                                                        </option>
+                                                        <option value="GoldenRod" style="color: white">
+                                                            Dourado
+                                                        </option>
+                                                        <option value="HotPink" style="color: white">
+                                                            Rosa forte
+                                                        </option>
+                                                        <option value="CadetBlue" style="color: white">
+                                                            Azul cadete
+                                                        </option>
+                                                        <option value="SeaGreen" style="color: white">
+                                                            Verde mar
+                                                        </option>
+                                                        <option value="Chocolate" style="color: white">
+                                                            Chocolate
+                                                        </option>
+                                                        <option value="BlueViolet" style="color: white">
+                                                            Azul violeta
+                                                        </option>
+                                                        <option value="Firebrick" style="color: white">
+                                                            Tijolo
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3">
+                                                <div class="col">
+                                                    <p class="form-check-label">Exibir distintivos</p>
+                                                </div>
+                                                <div class="col-2">
+                                                    <div class="material-switch bg-white d-flex justify-content-end">
+                                                        <input id="chat-bageds-show" type="checkbox" checked />
+                                                        <label for="chat-bageds-show" class="form-check-label"></label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3">
+                                                <div class="col">
+                                                    <p class="form-check-label">
+                                                        Exibir as mensagens em uma linha separada do nome
+                                                    </p>
+                                                </div>
+                                                <div class="col-2">
+                                                    <div class="material-switch bg-white d-flex justify-content-end">
+                                                        <input id="chat-newline" type="checkbox" checked />
+                                                        <label for="chat-newline" class="form-check-label"></label>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
-                        </div>
-                        <div class="bg-dark p-1 row purple-border-block"
-                            style="margin: 0.1%; margin-top: 1% !important">
-                            <div class="col-2">
-                                <span title="Tempo em live" style="margin-right: 15px"><i class="fa-solid fa-circle"
-                                        id="live-dot"></i> :
-                                    <span id="time-in-live"></span></span>
-                            </div>
-                            <div class="col-2">
-                                <span title="Espectadores"><i class="fa-solid fa-users"> : </i><span id="text-counter">
-                                    </span></span>
-                            </div>
-                            <div class="col-3">
-                                <span>OBS Studio :
-                                    <span id="obs_conn_status">Desconhecido</span></span>
-                                <span><i class="fa-solid fa-arrows-rotate" title="Tentar novamente"
-                                        id="obs_retry_button" onclick="try_obs()"></i></span>
-                            </div>
-                            <div class="col-5">
-                                <form id="form-disclosure" class="m-0" onsubmit="save_message_disclosure(event)">
-                                    <div class="input-group m-0">
-                                        <input type="text" class="form-control-sm bg-dark" id="message-disclosure-send"
-                                            style="width: 82%" aria-describedby="submit-message-disclosure"
-                                            placeholder="Insira o texto para divulgação" />
-                                        <button class="btn btn-sm bt-submit" style="font-size: 12px" type="submit"
-                                            id="submit-message-disclosure" title="Salvar mensagem"><i
-                                                class="fa-solid fa-floppy-disk"></i></button>
-                                        <button class="btn btn-sm bt-submit" style="font-size: 12px" id="copy-dis"
-                                            type="button" onclick="copy_message_disclosure()"><i
-                                                class="fa-solid fa-copy" title="Copiar mensagem"></i></button>
-                                    </div>
-                                </form>
+                            <div class="row bottom-info">
+                                <div class="col-2">
+                                    <span title="Tempo em live"><i class="fa-solid fa-circle" id="live-dot"></i> :
+                                        <span id="time-in-live"></span></span>
+                                </div>
+                                <div class="col-2">
+                                    <span title="Espectadores"><i class="fa-solid fa-users"> : </i><span
+                                            id="text-counter"> </span></span>
+                                </div>
+                                <div class="col-3">
+                                    <span>OBS Studio :
+                                        <span id="obs_conn_status">Desconhecido</span></span>
+                                    <span><i class="fa-solid fa-arrows-rotate" title="Tentar novamente"
+                                            id="obs_retry_button" onclick="try_obs()"></i></span>
+                                </div>
+                                <div class="col-5">
+                                    <form id="form-disclosure" onsubmit="save_message_disclosure(event)">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control-sm bg-dark"
+                                                id="message-disclosure-send" style="width: 80%"
+                                                aria-describedby="submit-message-disclosure"
+                                                placeholder="Insira o texto para divulgação" />
+                                            <button class="btn btn-sm bt-submit" style="font-size: 12px" type="submit"
+                                                id="submit-message-disclosure" title="Salvar mensagem">
+                                                <i class="fa-solid fa-floppy-disk"></i>
+                                            </button>
+                                            <button class="btn btn-sm bt-submit" style="font-size: 12px" id="copy-dis"
+                                                type="button" onclick="copy_message_disclosure()">
+                                                <i class="fa-solid fa-copy" title="Copiar mensagem"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-acoes" role="tabpanel"
-                        aria-labelledby="v-pills-acoes-tab">
+                    <div class="tab-pane" id="v-pills-acoes" role="tabpanel" aria-labelledby="v-pills-acoes-tab">
                         <div id="create-redeem">
                             <div class="row">
                                 <h2>Ações</h2>
@@ -300,7 +419,7 @@
                                 <div class="col">
                                     <div class="d-flex input-group group-acoes mb-3 justify-content-center">
                                         <button class="w-75 m-2 btn bg-dark bt-update" type="button"
-                                            onclick="show_div_del('del-div','action-del-select')">
+                                            onclick="show_div('del-div','action-del-select','submit-del')">
                                             Excluir Ações
                                         </button>
                                     </div>
@@ -308,7 +427,7 @@
                                 <div class="col">
                                     <div class="d-flex input-group group-acoes mb-3 justify-content-center">
                                         <button class="w-75 m-2 btn bg-dark bt-update" type="button"
-                                            onclick="show_div_edit('edit-div','action-edit-select','submit-edit')">
+                                            onclick="show_div('edit-div','action-edit-select','submit-edit')">
                                             Editar Ações
                                         </button>
                                     </div>
@@ -329,9 +448,7 @@
                                     <form id="audio-create" onsubmit="create_action(event,'audio')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-audio">Selecione uma recompensa</label>
-                                            <select class="form-control bg-dark mt-3" id="redeem-select-audio">
-
-                                            </select>
+                                            <select class="form-control bg-dark mt-3" id="redeem-select-audio"></select>
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="command-text">Comando para o chat</label>
@@ -385,9 +502,7 @@
                                     <form id="tts-create" onsubmit="create_action(event,'tts')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-tts">Selecione uma recompensa</label>
-                                            <select class="bg-dark mt-1" id="redeem-select-tts">
-
-                                            </select>
+                                            <select class="bg-dark mt-1" id="redeem-select-tts"></select>
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="command-text">Comando para o chat (Opcional)</label>
@@ -440,9 +555,7 @@
                                     <form id="scene-create" onsubmit="create_action(event,'scene')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-scene">Selecione uma recompensa</label>
-                                            <select class="bg-dark mt-3" id="redeem-select-scene">
-
-                                            </select>
+                                            <select class="bg-dark mt-3" id="redeem-select-scene"></select>
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="command-text">Comando para o chat (Opcional)</label>
@@ -532,9 +645,7 @@
                                     <form id="response-create" onsubmit="create_action(event,'response')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-response">Selecione uma recompensa</label>
-                                            <select class="bg-dark mt-3" id="redeem-select-response">
-
-                                            </select>
+                                            <select class="bg-dark mt-3" id="redeem-select-response"></select>
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="command-text">Comando para o chat (Opcional)</label>
@@ -582,9 +693,7 @@
                                     <form id="filter-create" onsubmit="create_action(event,'filter')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-filter">Selecione uma recompensa</label>
-                                            <select class="bg-dark mt-3" id="redeem-select-filter">
-
-                                            </select>
+                                            <select class="bg-dark mt-3" id="redeem-select-filter"></select>
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="command-text">Comando para o chat (Opcional)</label>
@@ -692,9 +801,7 @@
                                     <form id="source-create" onsubmit="create_action(event,'source')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-source">Selecione uma recompensa</label>
-                                            <select class="bg-dark mt-1" id="redeem-select-source">
-
-                                            </select>
+                                            <select class="bg-dark mt-1" id="redeem-select-source"></select>
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="command-text">Comando para o chat (Opcional)</label>
@@ -780,9 +887,7 @@
                                     <form id="keypress-create" onsubmit="create_action(event,'keypress')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-keypress">Selecione uma recompensa</label>
-                                            <select class="bg-dark mt-3" id="redeem-select-keypress">
-
-                                            </select>
+                                            <select class="bg-dark mt-3" id="redeem-select-keypress"></select>
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="command-text">Comando para o chat (Opcional)</label>
@@ -814,14 +919,17 @@
                                                 tecla</label>
                                             <select class="bg-dark mt-3" id="key-mode-select" onchange="get_key_mode()">
                                                 <option style="background: #000; color: #fff" value="none" selected>
-                                                    Selecione</option>
-                                                <option style="background: #000; color: #fff" value="mult">Pressionar
-                                                    várias vezes</option>
+                                                    Selecione
+                                                </option>
+                                                <option style="background: #000; color: #fff" value="mult">
+                                                    Pressionar várias vezes
+                                                </option>
                                                 <option style="background: #000; color: #fff" value="re">
                                                     Pressionar uma vez depois do tempo
                                                 </option>
-                                                <option style="background: #000; color: #fff" value="keep">Manter
-                                                    pressionado</option>
+                                                <option style="background: #000; color: #fff" value="keep">
+                                                    Manter pressionado
+                                                </option>
                                             </select>
                                         </div>
                                         <div id="keep-press-div" hidden>
@@ -852,13 +960,16 @@
                                             </div>
                                         </div>
                                         <div class="row mt-2">
-                                            <p> Selecione a(s) tecla(s) para pressionar </p>
+                                            <p>Selecione a(s) tecla(s) para pressionar</p>
                                             <div class="col">
                                                 <div class="form-group mb-3 mt-2">
                                                     <select class="bg-dark mt-1" id="key-1" aria-label="key-1">
                                                         <option style="background: #000; color: #fff" value="none"
-                                                            selected>Selecione</option>
-                                                        <option style="background: #000; color: #fff" value="ctrl">CTRL
+                                                            selected>
+                                                            Selecione
+                                                        </option>
+                                                        <option style="background: #000; color: #fff" value="ctrl">
+                                                            CTRL
                                                         </option>
                                                     </select>
                                                 </div>
@@ -867,13 +978,18 @@
                                                 <div class="form-group mb-3 mt-2">
                                                     <select class="bg-dark mt-1" id="key-2" aria-label="key-2">
                                                         <option style="background: #000; color: #fff" value="none"
-                                                            selected>Selecione</option>
+                                                            selected>
+                                                            Selecione
+                                                        </option>
                                                         <option style="background: #000; color: #fff" value="shift">
-                                                            SHIFT</option>
-                                                        <option style="background: #000; color: #fff" value="alt">ALT
+                                                            SHIFT
+                                                        </option>
+                                                        <option style="background: #000; color: #fff" value="alt">
+                                                            ALT
                                                         </option>
                                                         <option style="background: #000; color: #fff" value="space">
-                                                            SPACE</option>
+                                                            SPACE
+                                                        </option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -881,26 +997,38 @@
                                                 <div class="form-group mb-3 mt-2">
                                                     <select class="bg-dark mt-1" id="key-3" aria-label="key-3">
                                                         <option style="background: #000; color: #fff" value="none"
-                                                            selected>Selecione</option>
-                                                        <option style="background: #000; color: #fff" value="0">0
+                                                            selected>
+                                                            Selecione
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="1">1
+                                                        <option style="background: #000; color: #fff" value="0">
+                                                            0
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="2">2
+                                                        <option style="background: #000; color: #fff" value="1">
+                                                            1
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="3">3
+                                                        <option style="background: #000; color: #fff" value="2">
+                                                            2
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="4">4
+                                                        <option style="background: #000; color: #fff" value="3">
+                                                            3
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="5">5
+                                                        <option style="background: #000; color: #fff" value="4">
+                                                            4
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="6">6
+                                                        <option style="background: #000; color: #fff" value="5">
+                                                            5
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="7">7
+                                                        <option style="background: #000; color: #fff" value="6">
+                                                            6
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="8">8
+                                                        <option style="background: #000; color: #fff" value="7">
+                                                            7
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="9">9
+                                                        <option style="background: #000; color: #fff" value="8">
+                                                            8
+                                                        </option>
+                                                        <option style="background: #000; color: #fff" value="9">
+                                                            9
                                                         </option>
                                                     </select>
                                                 </div>
@@ -909,58 +1037,86 @@
                                                 <div class="form-group mb-3 mt-2">
                                                     <select class="bg-dark mt-1" id="key-4" aria-label="key-4">
                                                         <option style="background: #000; color: #fff" value="none"
-                                                            selected>Selecione</option>
-                                                        <option style="background: #000; color: #fff" value="a">a
+                                                            selected>
+                                                            Selecione
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="b">b
+                                                        <option style="background: #000; color: #fff" value="a">
+                                                            a
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="c">c
+                                                        <option style="background: #000; color: #fff" value="b">
+                                                            b
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="d">d
+                                                        <option style="background: #000; color: #fff" value="c">
+                                                            c
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="e">e
+                                                        <option style="background: #000; color: #fff" value="d">
+                                                            d
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="f">f
+                                                        <option style="background: #000; color: #fff" value="e">
+                                                            e
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="g">g
+                                                        <option style="background: #000; color: #fff" value="f">
+                                                            f
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="h">h
+                                                        <option style="background: #000; color: #fff" value="g">
+                                                            g
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="i">i
+                                                        <option style="background: #000; color: #fff" value="h">
+                                                            h
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="j">j
+                                                        <option style="background: #000; color: #fff" value="i">
+                                                            i
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="k">k
+                                                        <option style="background: #000; color: #fff" value="j">
+                                                            j
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="l">l
+                                                        <option style="background: #000; color: #fff" value="k">
+                                                            k
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="m">m
+                                                        <option style="background: #000; color: #fff" value="l">
+                                                            l
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="n">n
+                                                        <option style="background: #000; color: #fff" value="m">
+                                                            m
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="o">o
+                                                        <option style="background: #000; color: #fff" value="n">
+                                                            n
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="p">p
+                                                        <option style="background: #000; color: #fff" value="o">
+                                                            o
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="q">q
+                                                        <option style="background: #000; color: #fff" value="p">
+                                                            p
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="r">r
+                                                        <option style="background: #000; color: #fff" value="q">
+                                                            q
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="s">s
+                                                        <option style="background: #000; color: #fff" value="r">
+                                                            r
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="t">t
+                                                        <option style="background: #000; color: #fff" value="s">
+                                                            s
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="u">u
+                                                        <option style="background: #000; color: #fff" value="t">
+                                                            t
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="v">v
+                                                        <option style="background: #000; color: #fff" value="u">
+                                                            u
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="w">w
+                                                        <option style="background: #000; color: #fff" value="v">
+                                                            v
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="x">x
+                                                        <option style="background: #000; color: #fff" value="w">
+                                                            w
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="y">y
+                                                        <option style="background: #000; color: #fff" value="x">
+                                                            x
                                                         </option>
-                                                        <option style="background: #000; color: #fff" value="z">z
+                                                        <option style="background: #000; color: #fff" value="y">
+                                                            y
+                                                        </option>
+                                                        <option style="background: #000; color: #fff" value="z">
+                                                            z
                                                         </option>
                                                     </select>
                                                 </div>
@@ -969,8 +1125,9 @@
                                             <small class="form-text text-muted">*O atalho será pressionado na ordem
                                                 selecionada</small>
                                         </div>
-                                        <button type="submit" id="submit-keypress" class="btn bt-submit mt-4"
-                                            disabled>Salvar</button>
+                                        <button type="submit" id="submit-keypress" class="btn bt-submit mt-4" disabled>
+                                            Salvar
+                                        </button>
                                     </form>
                                 </div>
                             </div>
@@ -989,9 +1146,7 @@
                                     <form id="clip-create" onsubmit="create_action(event,'clip')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-clip">Selecione uma recompensa</label>
-                                            <select class="bg-dark mt-3" id="redeem-select-clip">
-
-                                            </select>
+                                            <select class="bg-dark mt-3" id="redeem-select-clip"></select>
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="command-text">Comando para o chat</label>
@@ -1034,9 +1189,7 @@
                                     <form id="action-del" onsubmit="create_action(event,'delete')">
                                         <div class="form-group mb-3 mt-3">
                                             <label for="action-del-select">Selecione uma ação para excluir</label>
-                                            <select class="bg-dark mt-1" id="action-del-select">
-
-                                            </select>
+                                            <select class="bg-dark mt-1" id="action-del-select"></select>
                                         </div>
                                         <button type="submit" id="submit-del" class="btn bt-submit mt-4">
                                             Excluir
@@ -1060,7 +1213,8 @@
                                         <div class="row mt-3">
                                             <div class="col-10">
                                                 <select class="bg-dark" id="action-edit-select">
-                                                    <option style="background: #000; color: #fff" selected>Selecione
+                                                    <option style="background: #000; color: #fff" selected>
+                                                        Selecione
                                                     </option>
                                                 </select>
                                             </div>
@@ -1079,7 +1233,8 @@
                                             <div class="form-group mb-3 e mt-5">
                                                 <label for="redeem-select-audio-edit">Nova Recompensa</label>
                                                 <select class="form-control bg-dark mt-3" id="redeem-select-audio-edit">
-                                                    <option style="background: #000; color: #fff" selected>Selecione
+                                                    <option style="background: #000; color: #fff" selected>
+                                                        Selecione
                                                     </option>
                                                 </select>
                                             </div>
@@ -1132,7 +1287,8 @@
                                             <div class="form-group mb-3 mt-2">
                                                 <label for="redeem-select-tts-edit">Selecione uma recompensa</label>
                                                 <select class="bg-dark mt-1" id="redeem-select-tts-edit">
-                                                    <option style="background: #000; color: #fff" selected>Selecione
+                                                    <option style="background: #000; color: #fff" selected>
+                                                        Selecione
                                                     </option>
                                                 </select>
                                             </div>
@@ -1183,7 +1339,8 @@
                                             <div class="form-group mb-3 mt-2">
                                                 <label for="redeem-select-scene-edit">Selecione uma recompensa</label>
                                                 <select class="bg-dark mt-3" id="redeem-select-scene-edit">
-                                                    <option style="background: #000; color: #fff" selected>Selecione
+                                                    <option style="background: #000; color: #fff" selected>
+                                                        Selecione
                                                     </option>
                                                 </select>
                                             </div>
@@ -1229,7 +1386,9 @@
                                                     </div>
                                                     <div class="col-2">
                                                         <button class="btn bt-form" type="button"
-                                                            onclick="get_scenes('scene-name-edit')">Carregar</button>
+                                                            onclick="get_scenes('scene-name-edit')">
+                                                            Carregar
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1271,7 +1430,8 @@
                                                 <label for="redeem-select-response-edit">Selecione uma
                                                     recompensa</label>
                                                 <select class="bg-dark mt-3" id="redeem-select-response-edit">
-                                                    <option style="background: #000; color: #fff" selected>Selecione
+                                                    <option style="background: #000; color: #fff" selected>
+                                                        Selecione
                                                     </option>
                                                 </select>
                                             </div>
@@ -1317,7 +1477,8 @@
                                             <div class="form-group mb-3 mt-5">
                                                 <label for="redeem-select-filter-edit">Selecione uma recompensa</label>
                                                 <select class="bg-dark mt-3" id="redeem-select-filter-edit">
-                                                    <option style="background: #000; color: #fff" selected>Selecione
+                                                    <option style="background: #000; color: #fff" selected>
+                                                        Selecione
                                                     </option>
                                                 </select>
                                             </div>
@@ -1341,7 +1502,8 @@
                                             <div class="row mt-3">
                                                 <div class="col">
                                                     <p class="form-check-label">
-                                                        Somente moderador pode utilizar o comando.</p>
+                                                        Somente moderador pode utilizar o comando.
+                                                    </p>
                                                 </div>
                                                 <div class="col-2">
                                                     <div class="material-switch bg-white d-flex justify-content-end">
@@ -1379,21 +1541,24 @@
                                                     <div class="col-9">
                                                         <select class="bg-dark" id="filter-name-edit">
                                                             <option style="background: #000; color: #fff" selected>
-                                                                Pressione o botão carregar os filtros</option>
+                                                                Pressione o botão carregar os filtros
+                                                            </option>
                                                         </select>
                                                     </div>
                                                     <div class="col">
                                                         <button class="btn bt-form" type="button"
                                                             onclick="get_filters('filter-name-edit','source-name-filter-edit')">
-                                                            Carregar filtros</button>
+                                                            Carregar filtros
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="row mt-3">
                                                 <div class="col">
-                                                    <p class="form-check-label">Manter filtro ativo. (Se desativado
-                                                        retornará
-                                                        para a cena anterior)</p>
+                                                    <p class="form-check-label">
+                                                        Manter filtro ativo. (Se desativado retornará para
+                                                        a cena anterior)
+                                                    </p>
                                                 </div>
                                                 <div class="col-2">
                                                     <div class="material-switch bg-white d-flex justify-content-end">
@@ -1410,8 +1575,9 @@
                                                 <input type="number" class="form-control bg-dark mt-3"
                                                     id="time-filter-edit" placeholder="Somente números" required />
                                             </div>
-                                            <button type="submit" id="submit-filter-edit"
-                                                class="btn bt-submit mt-4">Salvar</button>
+                                            <button type="submit" id="submit-filter-edit" class="btn bt-submit mt-4">
+                                                Salvar
+                                            </button>
                                         </form>
                                     </div>
                                 </div>
@@ -1422,7 +1588,8 @@
                                             <div class="form-group mb-3 mt-2">
                                                 <label for="redeem-select-source-edit">Selecione uma recompensa</label>
                                                 <select class="bg-dark mt-1" id="redeem-select-source-edit">
-                                                    <option style="background: #000; color: #fff" selected>Selecione
+                                                    <option style="background: #000; color: #fff" selected>
+                                                        Selecione
                                                     </option>
                                                 </select>
                                             </div>
@@ -1445,7 +1612,8 @@
                                             <div class="row mt-3">
                                                 <div class="col">
                                                     <p class="form-check-label">
-                                                        Somente moderador pode utilizar o comando.</p>
+                                                        Somente moderador pode utilizar o comando.
+                                                    </p>
                                                 </div>
                                                 <div class="col-2">
                                                     <div class="material-switch bg-white d-flex justify-content-end">
@@ -1463,7 +1631,8 @@
                                                     <div class="col-9">
                                                         <select class="bg-dark" id="source-name-source-edit">
                                                             <option style="background: #000; color: #fff" selected>
-                                                                Pressione o botão carregar as fontes</option>
+                                                                Pressione o botão carregar as fontes
+                                                            </option>
                                                         </select>
                                                     </div>
                                                     <div class="col-3">
@@ -1506,7 +1675,8 @@
                                                 <label for="redeem-select-keypress-edit">Selecione uma
                                                     recompensa</label>
                                                 <select class="bg-dark mt-3" id="redeem-select-keypress-edit">
-                                                    <option style="background: #000; color: #fff" selected>Selecione
+                                                    <option style="background: #000; color: #fff" selected>
+                                                        Selecione
                                                     </option>
                                                 </select>
                                             </div>
@@ -1548,13 +1718,17 @@
                                                 <select class="bg-dark mt-3" id="key-mode-select-edit"
                                                     onchange="get_key_mode_edit()">
                                                     <option style="background: #000; color: #fff" value="none" selected>
-                                                        Selecione</option>
+                                                        Selecione
+                                                    </option>
                                                     <option style="background: #000; color: #fff" value="mult">
-                                                        Pressionar várias vezes</option>
+                                                        Pressionar várias vezes
+                                                    </option>
                                                     <option style="background: #000; color: #fff" value="re">
-                                                        Pressionar uma vez depois do tempo</option>
-                                                    <option style="background: #000; color: #fff" value="keep">Manter
-                                                        pressionado</option>
+                                                        Pressionar uma vez depois do tempo
+                                                    </option>
+                                                    <option style="background: #000; color: #fff" value="keep">
+                                                        Manter pressionado
+                                                    </option>
                                                 </select>
                                             </div>
                                             <div id="keep-press-div-edit" hidden>
@@ -1594,9 +1768,12 @@
                                                         <select class="bg-dark mt-1" id="key-1-edit"
                                                             aria-label="key-1-edit">
                                                             <option style="background: #000; color: #fff" value="none"
-                                                                selected>Selecione</option>
+                                                                selected>
+                                                                Selecione
+                                                            </option>
                                                             <option style="background: #000; color: #fff" value="ctrl">
-                                                                CTRL</option>
+                                                                CTRL
+                                                            </option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -1605,13 +1782,18 @@
                                                         <select class="bg-dark mt-1" id="key-2-edit"
                                                             aria-label="key-2-edit">
                                                             <option style="background: #000; color: #fff" value="none"
-                                                                selected>Selecione</option>
+                                                                selected>
+                                                                Selecione
+                                                            </option>
                                                             <option style="background: #000; color: #fff" value="shift">
-                                                                SHIFT</option>
+                                                                SHIFT
+                                                            </option>
                                                             <option style="background: #000; color: #fff" value="alt">
-                                                                ALT</option>
+                                                                ALT
+                                                            </option>
                                                             <option style="background: #000; color: #fff" value="space">
-                                                                SPACE</option>
+                                                                SPACE
+                                                            </option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -1620,26 +1802,38 @@
                                                         <select class="bg-dark mt-1" id="key-3-edit"
                                                             aria-label="key-3-edit">
                                                             <option style="background: #000; color: #fff" value="none"
-                                                                selected>Selecione</option>
-                                                            <option style="background: #000; color: #fff" value="0">0
+                                                                selected>
+                                                                Selecione
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="1">1
+                                                            <option style="background: #000; color: #fff" value="0">
+                                                                0
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="2">2
+                                                            <option style="background: #000; color: #fff" value="1">
+                                                                1
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="3">3
+                                                            <option style="background: #000; color: #fff" value="2">
+                                                                2
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="4">4
+                                                            <option style="background: #000; color: #fff" value="3">
+                                                                3
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="5">5
+                                                            <option style="background: #000; color: #fff" value="4">
+                                                                4
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="6">6
+                                                            <option style="background: #000; color: #fff" value="5">
+                                                                5
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="7">7
+                                                            <option style="background: #000; color: #fff" value="6">
+                                                                6
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="8">8
+                                                            <option style="background: #000; color: #fff" value="7">
+                                                                7
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="9">9
+                                                            <option style="background: #000; color: #fff" value="8">
+                                                                8
+                                                            </option>
+                                                            <option style="background: #000; color: #fff" value="9">
+                                                                9
                                                             </option>
                                                         </select>
                                                     </div>
@@ -1649,58 +1843,86 @@
                                                         <select class="bg-dark mt-1" id="key-4-edit"
                                                             aria-label="key-4-edit">
                                                             <option style="background: #000; color: #fff" value="none"
-                                                                selected>Selecione</option>
-                                                            <option style="background: #000; color: #fff" value="a">a
+                                                                selected>
+                                                                Selecione
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="b">b
+                                                            <option style="background: #000; color: #fff" value="a">
+                                                                a
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="c">c
+                                                            <option style="background: #000; color: #fff" value="b">
+                                                                b
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="d">d
+                                                            <option style="background: #000; color: #fff" value="c">
+                                                                c
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="e">e
+                                                            <option style="background: #000; color: #fff" value="d">
+                                                                d
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="f">f
+                                                            <option style="background: #000; color: #fff" value="e">
+                                                                e
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="g">g
+                                                            <option style="background: #000; color: #fff" value="f">
+                                                                f
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="h">h
+                                                            <option style="background: #000; color: #fff" value="g">
+                                                                g
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="i">i
+                                                            <option style="background: #000; color: #fff" value="h">
+                                                                h
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="j">j
+                                                            <option style="background: #000; color: #fff" value="i">
+                                                                i
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="k">k
+                                                            <option style="background: #000; color: #fff" value="j">
+                                                                j
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="l">l
+                                                            <option style="background: #000; color: #fff" value="k">
+                                                                k
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="m">m
+                                                            <option style="background: #000; color: #fff" value="l">
+                                                                l
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="n">n
+                                                            <option style="background: #000; color: #fff" value="m">
+                                                                m
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="o">o
+                                                            <option style="background: #000; color: #fff" value="n">
+                                                                n
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="p">p
+                                                            <option style="background: #000; color: #fff" value="o">
+                                                                o
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="q">q
+                                                            <option style="background: #000; color: #fff" value="p">
+                                                                p
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="r">r
+                                                            <option style="background: #000; color: #fff" value="q">
+                                                                q
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="s">s
+                                                            <option style="background: #000; color: #fff" value="r">
+                                                                r
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="t">t
+                                                            <option style="background: #000; color: #fff" value="s">
+                                                                s
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="u">u
+                                                            <option style="background: #000; color: #fff" value="t">
+                                                                t
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="v">v
+                                                            <option style="background: #000; color: #fff" value="u">
+                                                                u
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="w">w
+                                                            <option style="background: #000; color: #fff" value="v">
+                                                                v
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="x">x
+                                                            <option style="background: #000; color: #fff" value="w">
+                                                                w
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="y">y
+                                                            <option style="background: #000; color: #fff" value="x">
+                                                                x
                                                             </option>
-                                                            <option style="background: #000; color: #fff" value="z">z
+                                                            <option style="background: #000; color: #fff" value="y">
+                                                                y
+                                                            </option>
+                                                            <option style="background: #000; color: #fff" value="z">
+                                                                z
                                                             </option>
                                                         </select>
                                                     </div>
@@ -1723,7 +1945,8 @@
                                             <div class="form-group mb-3 mt-2">
                                                 <label for="redeem-select-clip-edit">Selecione uma recompensa</label>
                                                 <select class="bg-dark mt-3" id="redeem-select-clip-edit">
-                                                    <option style="background: #000; color: #fff" selected>Selecione
+                                                    <option style="background: #000; color: #fff" selected>
+                                                        Selecione
                                                     </option>
                                                 </select>
                                             </div>
@@ -1739,7 +1962,8 @@
                                             <div class="row mt-3">
                                                 <div class="col">
                                                     <p class="form-check-label">
-                                                        Somente moderador pode utilizar o comando.</p>
+                                                        Somente moderador pode utilizar o comando.
+                                                    </p>
                                                 </div>
                                                 <div class="col-2">
                                                     <div class="material-switch bg-white d-flex justify-content-end">
@@ -1749,70 +1973,17 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button type="submit" id="submit-clip-edit"
-                                                class="btn bt-submit mt-4">Salvar</button>
+                                            <button type="submit" id="submit-clip-edit" class="btn bt-submit mt-4">
+                                                Salvar
+                                            </button>
                                         </form>
-                                    </div>
-                                </div>
-                                <div class="modal fade" id="modal-edit-sucess" data-backdrop="static" tabindex="-1">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content bg-dark custom-border-modal">
-                                            <div class="modal-body text-center m-5">
-                                                <h2>Sucesso ao salvar.</h2>
-                                                <button type="button" class="btn bt-modal mt-4"
-                                                    data-bs-dismiss="modal">Voltar</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal fade" id="modal-edit-error" data-backdrop="static" tabindex="-1">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content bg-dark custom-border-modal">
-                                            <div class="modal-body text-center m-5">
-                                                <h2>Erro!</h2>
-                                                <p>
-                                                    Ocorreu um erro no salvamento, verifique se os dados
-                                                    estão corretos ou entre em contato com o suporte.
-                                                </p>
-                                                <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                    Voltar
-                                                </button>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="modal" id="sucess-create" data-backdrop="static" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content bg-dark custom-border-modal">
-                                    <div class="modal-body text-center m-2">
-                                        <h4>Sucesso!</h4>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            data-bs-dismiss="modal">Voltar</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal" id="error-create" data-backdrop="static" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content bg-dark custom-border-modal">
-                                    <div class="modal-body text-center m-5">
-                                        <h4>Erro!</h4>
-                                        <p>
-                                            Ocorreu um erro ao executar a função, verifique se os dados
-                                            estão corretos ou entre em contato com o suporte.
-                                        </p>
-                                        <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                            Voltar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-comandos" role="tabpanel" aria-labelledby="v-pills-comandos-tab">
+                    <div class="tab-pane" id="v-pills-comandos" role="tabpanel" aria-labelledby="v-pills-comandos-tab">
                         <div id="commands-div">
                             <div class="row">
                                 <h2>Comandos</h2>
@@ -1901,11 +2072,11 @@
                                             <label for="command-select-edit">Selecione um comando para editar</label>
                                             <div class="row mt-3">
                                                 <div class="col-10">
-                                                    <select class="bg-dark" id="command-select-edit">
-                                                    </select>
+                                                    <select class="bg-dark" id="command-select-edit"></select>
                                                 </div>
                                                 <div class="col">
-                                                    <button class="btn bt-form" type="button" onclick="commands_fun('event','get_info')">
+                                                    <button class="btn bt-form" type="button"
+                                                        onclick="commands_fun('event','get_info')">
                                                         Editar
                                                     </button>
                                                 </div>
@@ -1958,9 +2129,7 @@
                                     <form id="command-del-form" onsubmit="commands_fun(event,'delete')">
                                         <div class="form-group mb-3 mt-2">
                                             <label for="command-select-del">Selecione um comando</label>
-                                            <select class="form-control bg-dark mt-3" id="command-select-del">
-
-                                            </select>
+                                            <select class="form-control bg-dark mt-3" id="command-select-del"></select>
                                         </div>
 
                                         <button type="submit" id="submit-del-command" class="btn bt-submit mt-4">
@@ -1999,44 +2168,15 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="modal" id="sucess-command" data-backdrop="static" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content bg-dark custom-border-modal">
-                                    <div class="modal-body text-center m-2">
-                                        <h4>Sucesso!</h4>
-                                        <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                            Voltar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal" id="error-command" data-backdrop="static" tabindex="-1">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content bg-dark custom-border-modal">
-                                    <div class="modal-body text-center m-5">
-                                        <h4>Erro!</h4>
-                                        <p>
-                                            Ocorreu um erro ao executar a função, verifique se os dados
-                                            estão corretos ou entre em contato com o suporte.
-                                        </p>
-                                        <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                            Voltar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-timers" role="tabpanel"
-                        aria-labelledby="v-pills-timers-tab">
+                    <div class="tab-pane" id="v-pills-timers" role="tabpanel" aria-labelledby="v-pills-timers-tab">
                         <div id="ger-timer-div">
                             <div class="d-flex justify-content-between">
                                 <h3>Gerenciar mensagens automáticas</h3>
                             </div>
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5 mt-5" id="add-timer-internal" style="margin-left: 10%">
-                                    <h4> Habilitar/desabilitar Modulo timer </h4>
+                                    <h4>Habilitar/desabilitar Modulo timer</h4>
                                     <div class="row mt-3">
                                         <div class="col">
                                             <p class="form-check-label">Status do modulo.</p>
@@ -2049,8 +2189,8 @@
                                             </div>
                                         </div>
                                         <p class="text-muted">
-                                            Apenas habilitando ou desabilitando o seletor o modulo já
-                                            é alterado.
+                                            Apenas habilitando ou desabilitando o seletor o modulo
+                                            já é alterado.
                                         </p>
                                     </div>
                                 </div>
@@ -2074,11 +2214,11 @@
                                             <label for="timer-select-edit">Selecione uma mensagem</label>
                                             <div class="row mt-3">
                                                 <div class="col-10">
-                                                    <select class="bg-dark" id="timer-select-edit">
-                                                    </select>
+                                                    <select class="bg-dark" id="timer-select-edit"></select>
                                                 </div>
                                                 <div class="col">
-                                                    <button class="btn bt-form" type="button" onclick="get_timer_edit()">
+                                                    <button class="btn bt-form" type="button"
+                                                        onclick="get_timer_edit()">
                                                         Editar
                                                     </button>
                                                 </div>
@@ -2086,7 +2226,8 @@
                                         </div>
                                         <div class="form-group mt-3">
                                             <label for="timer-edit-message">Nova mensagem</label>
-                                            <input type="text" class="form-control bg-dark mt-3" id="timer-edit-message" />
+                                            <input type="text" class="form-control bg-dark mt-3"
+                                                id="timer-edit-message" />
                                         </div>
                                         <button type="submit" id="submit-timer-edit" class="btn bt-submit mt-4">
                                             Salvar
@@ -2097,9 +2238,7 @@
                                     <h4>Excluir mensagem automática</h4>
                                     <form id="timer-del-form" onsubmit="del_timer_js(event)">
                                         <div class="form-group mb-3 mt-4">
-                                            <select class="form-control bg-dark mt-3" id="timer-select-del">
-
-                                            </select>
+                                            <select class="form-control bg-dark mt-3" id="timer-select-del"></select>
                                         </div>
                                         <button type="submit" id="submit-timer-del" class="btn bt-submit mt-4">
                                             Excluir
@@ -2127,39 +2266,9 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-timer" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal"
-                                                onclick="get_timer_info()">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-timer" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-giveaway" role="tabpanel"
-                        aria-labelledby="v-pills-giveaway-tab">
+                    <div class="tab-pane" id="v-pills-giveaway" role="tabpanel" aria-labelledby="v-pills-giveaway-tab">
                         <div id="ger-giveaway-div">
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5" style="margin-left: 10%">
@@ -2192,11 +2301,12 @@
                                         <div class="form-group mb-3 mt-4">
                                             <label for="user-level-giveaway">Quem pode entrar.</label>
                                             <select class="form-control bg-dark mt-3" id="user-level-giveaway">
-
-                                                <option style="background: #000; color: #fff" value="todos">Todos
+                                                <option style="background: #000; color: #fff" value="todos">
+                                                    Todos
                                                 </option>
-                                                <option style="background: #000; color: #fff" value="subs-primes">Subs e
-                                                    primes</option>
+                                                <option style="background: #000; color: #fff" value="subs-primes">
+                                                    Subs e primes
+                                                </option>
                                             </select>
                                         </div>
                                         <div class="row mt-4">
@@ -2242,7 +2352,7 @@
                                     </form>
                                 </div>
                                 <div class="w-75 bg-dark p-5 mt-5" style="margin-left: 10%">
-                                    <h4> Adicionar usuário no sorteio manualmente </h4>
+                                    <h4>Adicionar usuário no sorteio manualmente</h4>
                                     <form id="giveaway-add-user-form" onsubmit="add_user_giveaway_js(event)">
                                         <div class="form-group mt-4">
                                             <label for="giveaway-add-user-to-list">Nome do usuário</label>
@@ -2308,102 +2418,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="modal" id="giveaway-modal" data-bs-backdrop="static" data-bs-keyboard="false"
-                            tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content bg-dark custom-border-modal">
-                                    <div class="modal-body text-center m-5" id="giveway-names-modal" hidden>
-                                        <textarea id="giveaway-names-list" rows="10"
-                                            class="form-control bg-dark text_resize" autocomplete="off"
-                                            readonly></textarea>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            onclick="giveaway_modal_hide('giveway-names-modal')">
-                                            Ok
-                                        </button>
-                                    </div>
-                                    <div class="modal-body text-center m-5" id="giveaway-sucess-save" hidden>
-                                        <h2>Sucesso ao salvar.</h2>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            onclick="giveaway_modal_hide('giveaway-sucess-save')">
-                                            Ok
-                                        </button>
-                                    </div>
-                                    <div class="modal-body text-center m-5" id="giveway-error-save" hidden>
-                                        <h2>Erro!</h2>
-                                        <p>
-                                            Ocorreu um erro no salvamento, verifique se os dados
-                                            estão corretos ou entre em contato com o suporte.
-                                        </p>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            onclick="giveaway_modal_hide('giveway-error-save')">
-                                            Ok
-                                        </button>
-                                    </div>
-                                    <div class="modal-body text-center m-5" id="giveway-winner" hidden>
-                                        <h2>Ganhador!!!</h2>
-                                        <p>
-                                            o usuário <b><span id="winner-name"></span></b> Foi o
-                                            Ganhador do sorteio
-                                        </p>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            onclick="giveaway_modal_hide('giveway-winner')">
-                                            Ok
-                                        </button>
-                                    </div>
-                                    <div class="modal-body text-center m-5" id="giveway-error-execute" hidden>
-                                        <h3>Erro!</h3>
-                                        <p>
-                                            Ocorreu um erro ao executar o sorteio, uma lista dos
-                                            nomes foi armazenada em web/src/giveaway/backup.json
-                                        </p>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            onclick="giveaway_modal_hide('giveway-error-execute')">
-                                            Ok
-                                        </button>
-                                    </div>
-                                    <div class="modal-body text-center m-5" id="giveaway-add-name" hidden>
-                                        <h3>Nome adicionado!</h3>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            onclick="giveaway_modal_hide('giveaway-add-name')">
-                                            Ok
-                                        </button>
-                                    </div>
-                                    <div class="modal-body text-center m-5" id="giveaway-add-name-error" hidden>
-                                        <h3>Erro!</h3>
-                                        <p>
-                                            Erro ao adicionar o nome, tente novamente ou entre em
-                                            contato com o suporte.
-                                        </p>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            onclick="giveaway_modal_hide('giveaway-add-name-error')">
-                                            Ok
-                                        </button>
-                                    </div>
-                                    <div class="modal-body text-center m-5" id="giveaway-clear-sucess" hidden>
-                                        <h3>Sucesso!</h3>
-                                        <p>Lista de nomes limpa.</p>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            onclick="giveaway_modal_hide('giveaway-clear-sucess')">
-                                            Ok
-                                        </button>
-                                    </div>
-                                    <div class="modal-body text-center m-5" id="giveaway-clear-error" hidden>
-                                        <h3>Erro!</h3>
-                                        <p>
-                                            Erro ao limpar a lista de usuários, tente novamente ou
-                                            entre em contato com o suporte.
-                                        </p>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            onclick="giveaway_modal_hide('giveaway-clear-error')">
-                                            Ok
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-counter" role="tabpanel"
-                        aria-labelledby="v-pills-counter-tab">
+                    <div class="tab-pane" id="v-pills-counter" role="tabpanel" aria-labelledby="v-pills-counter-tab">
                         <div id="ger-counter-div">
                             <div class="h-scroll">
                                 <div class="w-75 bg-dark p-5" style="margin-left: 10%">
@@ -2480,32 +2496,13 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="modal" id="counter-modal" data-bs-backdrop="static" data-bs-keyboard="false"
-                            tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content bg-dark custom-border-modal">
-                                    <div class="modal-body text-center m-5" id="counter-error-save" hidden>
-                                        <h2>Erro!</h2>
-                                        <p>
-                                            Ocorreu um erro no salvamento, verifique se os dados
-                                            estão corretos ou entre em contato com o suporte.
-                                        </p>
-                                        <button type="button" class="btn bt-modal mt-4"
-                                            onclick="counter_modal_hide('')">
-                                            Ok
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-player" role="tabpanel"
-                        aria-labelledby="v-pills-player-tab">
+                    <div class="tab-pane" id="v-pills-player" role="tabpanel" aria-labelledby="v-pills-player-tab">
                         <div id="ger-player-div">
                             <div class="w-75 bg-dark p-5 mt-5" id="player-div" style="margin-left: 13%">
                                 <div class="row text-left">
                                     <div class="col">
-                                        <p class="form-check-label">Permitir pedidos de musica </p>
+                                        <p class="form-check-label">Permitir pedidos de musica</p>
                                     </div>
                                     <div class="col-2">
                                         <div class="material-switch bg-white d-flex justify-content-end">
@@ -2517,7 +2514,7 @@
                                 </div>
                                 <div class="song-img text-center">
                                     <audio controls id="player">
-                                        <source src="/src/player/cache/music.mp3" type="audio/ogg">
+                                        <source src="/src/player/cache/music.mp3" type="audio/ogg" />
                                     </audio>
                                 </div>
                             </div>
@@ -2552,8 +2549,9 @@
                                             </button>
                                         </form>
                                         <p class="m-2 text-center" id="playlist-music-added"></p>
-                                        <button class="btn bt-submit mt-4" onclick="playlist_clear()">Limpar
-                                            playlist</button>
+                                        <button class="btn bt-submit mt-4" onclick="playlist_clear()">
+                                            Limpar playlist
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -2571,16 +2569,14 @@
                                                     <th scope="col">Usuário</th>
                                                 </tr>
                                             </thead>
-                                            <tbody id="list-body">
-                                            </tbody>
+                                            <tbody id="list-body"></tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-config" role="tabpanel"
-                        aria-labelledby="v-pills-config-tab">
+                    <div class="tab-pane" id="v-pills-config" role="tabpanel" aria-labelledby="v-pills-config-tab">
                         <div id="config-div">
                             <div class="row">
                                 <h2>Configurações</h2>
@@ -2660,39 +2656,10 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-config-obs-conn" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal"
-                                                onclick="hide_config_div('config-conn-obs-div')">
-                                                Voltar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-config-obs-conn" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="config-not-obs-div" hidden>
                             <div class="d-flex justify-content-between">
-                                <h3> Configurar Notificações no OBS Studio </h3>
+                                <h3>Configurar Notificações no OBS Studio</h3>
                                 <button class="btn" onclick="hide_config_div('config-not-obs-div')"
                                     data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                                     <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -2703,8 +2670,10 @@
                                     <form id="obs-not-form" onsubmit="save_obs_not(event)">
                                         <div class="row mt-3">
                                             <div class="col">
-                                                <p class="form-check-label"> Ativar Notificações para resgate de
-                                                    recompensas no OBS Studio.</p>
+                                                <p class="form-check-label">
+                                                    Ativar Notificações para resgate de recompensas no
+                                                    OBS Studio.
+                                                </p>
                                             </div>
                                             <div class="col-2">
                                                 <div class="material-switch bg-white d-flex justify-content-end">
@@ -2715,8 +2684,10 @@
                                         </div>
                                         <div class="row mt-3">
                                             <div class="col">
-                                                <p class="form-check-label"> Ativar Notificações para pedidos de musica
-                                                    no OBS Studio.</p>
+                                                <p class="form-check-label">
+                                                    Ativar Notificações para pedidos de musica no OBS
+                                                    Studio.
+                                                </p>
                                             </div>
                                             <div class="col-2">
                                                 <div class="material-switch bg-white d-flex justify-content-end">
@@ -2727,7 +2698,8 @@
                                         </div>
                                         <div class="form-group mt-4">
                                             <label for="not-source-name">Selecione a fonte que está configurada o
-                                                arquivo HTML de notificações.</label>
+                                                arquivo HTML
+                                                de notificações.</label>
                                             <div class="row mt-3">
                                                 <div class="col-9">
                                                     <select class="bg-dark" id="not-source-name">
@@ -2738,8 +2710,9 @@
                                                 </div>
                                                 <div class="col">
                                                     <button class="btn bt-form" type="button"
-                                                        onclick="get_sources('not-source-name')">Carregar
-                                                        fontes</button>
+                                                        onclick="get_sources('not-source-name')">
+                                                        Carregar fontes
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -2751,34 +2724,6 @@
                                             Salvar
                                         </button>
                                     </form>
-                                </div>
-                            </div>
-                            <div class="modal" id="sucess-config-obs-not" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-config-obs-not" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2875,7 +2820,8 @@
                                         <div class="row mt-3">
                                             <div class="col">
                                                 <p class="form-check-label">
-                                                    Enviar uma mensagem de confirmação de pedido de musica.
+                                                    Enviar uma mensagem de confirmação de pedido de
+                                                    musica.
                                                 </p>
                                             </div>
                                             <div class="col-2">
@@ -2888,7 +2834,8 @@
                                         <div class="row mt-3">
                                             <div class="col">
                                                 <p class="form-check-label">
-                                                    Enviar nome da musica que vai ser reproduzida no chat.
+                                                    Enviar nome da musica que vai ser reproduzida no
+                                                    chat.
                                                 </p>
                                             </div>
                                             <div class="col-2">
@@ -2929,68 +2876,13 @@
                                         <button type="submit" id="submit-messages-config" class="btn bt-submit mt-4">
                                             Atualizar configurações
                                         </button>
-                                        <div class="modal" id="modal-chat-messages" data-backdrop="static"
-                                            tabindex="-1">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content bg-dark custom-border-modal">
-                                                    <div class="modal-body text-center m-5"
-                                                        id="modal-chat-messages-sucess" hidden>
-                                                        <h2>Sucesso ao salvar.</h2>
-                                                        <button type="button" class="btn bt-modal mt-4"
-                                                            data-bs-dismiss="modal">
-                                                            Ok
-                                                        </button>
-                                                    </div>
-                                                    <div class="modal-body text-center m-5"
-                                                        id="modal-chat-messages-error" hidden>
-                                                        <h2>Erro!</h2>
-                                                        <p>
-                                                            Ocorreu um erro no salvamento, verifique se os
-                                                            dados estão corretos ou entre em contato com o
-                                                            suporte.
-                                                        </p>
-                                                        <button type="button" class="btn bt-modal mt-4"
-                                                            data-bs-dismiss="modal">
-                                                            Ok
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </form>
-                                </div>
-                            </div>
-                            <div class="modal" id="modal-chat-messages" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Configuração atualizada.</h2>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="modal-chat-messages" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!.</h2>
-                                            <p>Ocorreu um erro ao salvar a configuração, verifique
-                                                os arquivos do programa ou entre em contato com o
-                                                suporte</p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div id="config-discord-div" hidden>
                             <div class="d-flex justify-content-between">
-                                <h3> Configurar discord webhook para clipes </h3>
+                                <h3>Configurar discord webhook para clipes</h3>
                                 <button class="btn" onclick="hide_config_div('config-discord-div')"
                                     data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                                     <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -3055,30 +2947,6 @@
                                             Salvar
                                         </button>
                                     </form>
-                                </div>
-                            </div>
-                            <div class="modal" id="sucess-discord-config" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-discord-config" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3231,7 +3099,8 @@
                                                     </option>
                                                     <option style="background: #000; color: #fff"
                                                         value="music_link_youtube">
-                                                        Erro no link da musica (Links devem ser do youtube)
+                                                        Erro no link da musica (Links devem ser do
+                                                        youtube)
                                                     </option>
                                                     <option style="background: #000; color: #fff"
                                                         value="command_sr_error_link">
@@ -3280,34 +3149,10 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="modal-responses" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5" id="modal-sucess-response" hidden>
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal"
-                                                onclick="modal_responses_hide('modal-sucess-response')">
-                                                Ok
-                                            </button>
-                                        </div>
-                                        <div class="modal-body text-center m-5" id="modal-error-response" hidden>
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Verifique a informação inserida ou entre em contato
-                                                com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal"
-                                                onclick="modal_responses_hide('modal-error-response')">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         <div id="config-music-div" hidden>
                             <div class="d-flex justify-content-between">
-                                <h3> Configurar modulo de pedidos de musica </h3>
+                                <h3>Configurar modulo de pedidos de musica</h3>
                                 <button class="btn" onclick="hide_config_div('config-music-div')" data-toggle="tooltip"
                                     data-bs-placement="left" title="Voltar">
                                     <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -3318,7 +3163,8 @@
                                     <form id="music-config-form" onsubmit="save_music_config(event)">
                                         <div class="row mt-5">
                                             <div class="col">
-                                                <p class="form-check-label"> Ativar Notificações para pedidos de musica.
+                                                <p class="form-check-label">
+                                                    Ativar Notificações para pedidos de musica.
                                                 </p>
                                             </div>
                                             <div class="col-2">
@@ -3330,9 +3176,7 @@
                                         </div>
                                         <div class="form-group mb-3 mt-2">
                                             <label for="redeem-select-music">Recompensa para pedidos de musica</label>
-                                            <select class="form-control bg-dark mt-3" id="redeem-select-music">
-
-                                            </select>
+                                            <select class="form-control bg-dark mt-3" id="redeem-select-music"></select>
                                         </div>
                                         <div class="form-group mt-4">
                                             <label for="comand-request">Comando para pedidos de musica
@@ -3361,38 +3205,9 @@
                                     </form>
                                 </div>
                             </div>
-                            <div class="modal" id="sucess-config-music" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Sucesso ao salvar.</h2>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal" id="error-config-music" data-backdrop="static" tabindex="-1">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content bg-dark custom-border-modal">
-                                        <div class="modal-body text-center m-5">
-                                            <h2>Erro!</h2>
-                                            <p>
-                                                Ocorreu um erro no salvamento, verifique se os dados
-                                                estão corretos ou entre em contato com o suporte.
-                                            </p>
-                                            <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
-                                                Ok
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-perfil" role="tabpanel"
-                        aria-labelledby="v-pills-perfil-tab">
+                    <div class="tab-pane" id="v-pills-perfil" role="tabpanel" aria-labelledby="v-pills-perfil-tab">
                         <span>
                             <h1>Perfil</h1>
                         </span>
@@ -3401,7 +3216,7 @@
                                 <img id="profile_image" src="./src/profile.png" class="rounded mx-auto d-block"
                                     width="200px" />
                                 <div class="card-body">
-                                    <div class="row w-100 h-100" style="margin-left: 0%">
+                                    <div class="row w-100" style="margin-left: 0%">
                                         <div class="col w-100">
                                             <p class="card-text"><b>Login name</b></p>
                                             <p class="card-text"><b>Nome de exibição</b></p>
@@ -3419,8 +3234,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="tab-pane fade h-100" id="v-pills-sobre" role="tabpanel"
-                        aria-labelledby="v-pills-sobre-tab">
+                    <div class="tab-pane" id="v-pills-sobre" role="tabpanel" aria-labelledby="v-pills-sobre-tab">
                         <span>
                             <h1>Sobre</h1>
                         </span>
@@ -3429,11 +3243,13 @@
                                 <img src="./src/profile.png" class="rounded mx-auto d-block" width="200px" />
                                 <div class="card-body text-center">
                                     <h2 class="card-title">RewardEvents</h2>
-                                    <h4 class="card-title">V3.0</h4>
+                                    <h4 class="card-title">V3.2</h4>
                                     <button class="bt-update btn mt-5" onclick="update_modal('get')">
                                         Verificar Atualização
                                     </button>
-                                    <h4 id="no-update" class="card-text" hidden>Você já está na ultima versão </h4>
+                                    <h4 id="no-update" class="card-text" hidden>
+                                        Você já está na ultima versão
+                                    </h4>
                                 </div>
                             </div>
                         </div>
@@ -3459,8 +3275,10 @@
                     <div class="modal-content bg-dark custom-border-modal">
                         <div class="modal-body text-center m-5">
                             <h2>Continuar ?</h2>
-                            <h5>Ao confirmar você irá desconectar a(s) sua(s) conta(s) e será
-                                necessário efetuar o processo de autenticação novamente</h5>
+                            <h5>
+                                Ao confirmar você irá desconectar a(s) sua(s) conta(s) e será
+                                necessário efetuar o processo de autenticação novamente
+                            </h5>
                             <div class="d-flex justify-content-between">
                                 <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal">
                                     Voltar
@@ -3470,30 +3288,24 @@
                                     Confirmar
                                 </button>
                             </div>
-
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="toast position-absolute m-5 bg-dark p-0" id="notific" role="alert" data-bs-animation="true"
-                aria-live="assertive" aria-atomic="true">
+            <div class="toast m-5 bg-dark p-0 d-none" id="notific" role="alert">
                 <div class="toast-header d-flex justify-content-between">
                     <div>
                         <i class="fa-solid fa-triangle-exclamation text-black"></i>
                         <strong class="ms-2 text-white">Notificação</strong>
                     </div>
                     <div>
-                        <button type="button" class="btn-close-white btn-close" data-bs-dismiss="toast">
-                        </button>
+                        <button type="button" class="btn-close-white btn-close" data-bs-dismiss="toast"></button>
                     </div>
                 </div>
-                <div class="toast-body" id="notific-message">
-                    Notificação
-                </div>
+                <div class="toast-body" id="notific-message">Notificação</div>
             </div>
         </div>
     </div>
-
 
     <script src="assets/js/actions.js"></script>
     <script src="assets/js/edit_actions.js"></script>
@@ -3506,6 +3318,7 @@
     <script src="assets/js/viewcounter.js"></script>
     <script src="assets/js/audioplayer.js"></script>
     <script src="assets/js/parse_message.js"></script>
+    <script src="assets/js/chat.js"></script>
     <script src="assets/js/main.js"></script>
 </body>
 

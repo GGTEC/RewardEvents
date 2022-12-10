@@ -1,21 +1,7 @@
 //TIMERS
-
-
-eel.expose(timer_modal);
-function timer_modal(modal_id) {
-    $("#" + modal_id).modal("show");
-    get_timer_info()
-}
-
 function show_timer_div(div_id) {
     document.getElementById("timers-div").hidden = true;
     document.getElementById(div_id).hidden = false;
-}
-
-function hide_timer_div(div_id, modal) {
-    $("#" + modal).modal("hide");
-    document.getElementById("timers-div").hidden = false;
-    document.getElementById(div_id).hidden = true;
 }
 
 async function get_timer_info() {

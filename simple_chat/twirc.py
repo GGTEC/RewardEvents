@@ -1,6 +1,13 @@
 
-import socket, re, json, argparse, emoji, csv
+import argparse
+import csv
+import json
+import re
+import socket
+
+import emoji
 from decouple import config
+
 
 class DefaultUser(Exception):
 	"""Raised when you try send a message with the default user"""

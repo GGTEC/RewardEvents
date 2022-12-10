@@ -1,8 +1,3 @@
-eel.expose(modal_discord);
-function modal_discord(modal_id){
-    $("#" + modal_id).modal("show");
-}
-
 function discord_js(event) {
     event.preventDefault();
 

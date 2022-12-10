@@ -1,16 +1,18 @@
-from datetime import datetime, timedelta
-from dateutil import tz
-import sys, os
+import json
+import os
+import shutil
+import sys
 import time
-import yt_dlp
-from pytube import YouTube, Search
-from PIL import Image
-import validators
+from datetime import datetime, timedelta
+
 import coverpy
 import requests
-import json
+import validators
+import yt_dlp
 from bs4 import BeautifulSoup as bs
-import shutil
+from dateutil import tz
+from PIL import Image
+from pytube import Search, YouTube
 
 coverpy = coverpy.CoverPy()
 
@@ -101,7 +103,7 @@ def removestring(value):
     except:
         return value
 
-def album_search(user_input, redem_by_user):
+def album_search(user_input):
     
     music = '0'
     artist = '0'
@@ -115,7 +117,7 @@ def album_search(user_input, redem_by_user):
             yt = YouTube(user_input)
             url_youtube = user_input
             video_title = yt.title
-            rep_input = utils.removestring(video_title)
+            rep_input = removestring(video_title)
 
         else:
 
@@ -357,63 +359,85 @@ def send_message(type_message):
     except Exception as e:
         error_log(e)
  
-def update_notif(redeem,user,artist,type_not):
-
-    html = open('web/src/html/notification.html')
-    html_backup = open('web/src/html/backup.html')
+def copy_file(source, dest):
+    copy = 0
     
     try:
-        
-        soup = bs(html, 'html.parser')
 
-        redeem_block = soup.find("div", {"class": "redem_block"})
-        music_block = soup.find("div", {"class": "music_block"})
-
-        if type_not == 'redeem':
-            
-            redeem_src = "../Request.png"
-            music_block['style'] = 'display: none;'
-            redeem_block['style'] = 'display: block;'
-            
-            image_redeem = soup.find("img", {"class": "img-responsive"})
-            redeem_name_tag = soup.find("span", {"class": "redem_name"})
-            redeem_user_tag = soup.find("span", {"class": "redem_user"})
-
-            image_redeem['src'] = redeem_src
-            redeem_name_tag.string = redeem
-            redeem_user_tag.string = user
-            
-            
-            # Alter HTML file to see the changes done
-            with open("web/src/html/notification.html", "wb") as f_output:
-                f_output.write(soup.prettify("utf-8"))
-
-        elif type_not == 'music':
-
-            album_src = "../player/images/album.png"
-            music_block['style'] = 'display: block;'
-            redeem_block['style'] = 'display: none;'
-            
-            image_redeem = soup.find("img", {"class": "img-responsive"})
-            music_name_tag = soup.find("span", {"class": "music_name"})
-            artist_name_tag = soup.find("span", {"class": "artist_name"})
-            redeem_user_music_tag = soup.find("span", {"class": "redem_user_music"})
-
-            image_redeem['src'] = album_src
-            music_name_tag.string = redeem
-            artist_name_tag.string = artist
-            redeem_user_music_tag.string = user
-            
-            # Alter HTML file to see the changes done
-            with open("web/src/html/notification.html", "wb") as f_output:
-                f_output.write(soup.prettify("utf-8"))
+        shutil.copy2(source, dest)
 
     except Exception as e:
 
-        os.remove("web/src/html/notification.html")
-
-        shutil.copy2('web/src/html/backup.html', 'web/src/html/notification.html')
         error_log(e)
+        copy = 1
+        return copy
+    
+    copy = 1
+    return copy
+    
+def update_notif(redeem,user,artist,type_not):
+
+    os.remove("web/src/html/backup.html")
+
+    if copy_file('web/src/html/notification.html', 'web/src/html/backup.html') == 1:
+
+        html = open('web/src/html/notification.html')
+
+        try:
+            
+            soup = bs(html, 'html.parser')
+
+            redeem_block = soup.find("div", {"class": "redem_block"})
+            music_block = soup.find("div", {"class": "music_block"})
+
+            if type_not == 'redeem':
+                
+                redeem_src = "../Request.png"
+                music_block['style'] = 'display: none !important;'
+                redeem_block['style'] = 'display: block;'
+                
+                image_redeem = soup.find("img", {"class": "img-responsive"})
+                redeem_name_tag = soup.find("span", {"class": "redem_name"})
+                redeem_user_tag = soup.find("span", {"class": "redem_user"})
+
+                image_redeem['src'] = redeem_src
+                redeem_name_tag.string = redeem
+                redeem_user_tag.string = user
+                
+                html.close()
+                f_output = open("web/src/html/notification.html", "wb")
+                f_output.write(soup.prettify("utf-8"))
+                f_output.close()
+
+            elif type_not == 'music':
+
+                album_src = "../player/images/album.png"
+                music_block['style'] = 'display: block ;'
+                redeem_block['style'] = 'display: none !important;'
+                
+                image_redeem = soup.find("img", {"class": "img-responsive"})
+                music_name_tag = soup.find("span", {"class": "music_name"})
+                artist_name_tag = soup.find("span", {"class": "artist_name"})
+                redeem_user_music_tag = soup.find("span", {"class": "redem_user_music"})
+
+                image_redeem['src'] = album_src
+                music_name_tag.string = redeem
+                artist_name_tag.string = artist
+                redeem_user_music_tag.string = user
+                
+                html.close()
+                f_output = open("web/src/html/notification.html", "wb")
+                f_output.write(soup.prettify("utf-8"))
+                f_output.close()
+
+        except Exception as e:
+            html.close()
+
+            os.remove("web/src/html/notification.html")
+
+            copy_file('web/src/html/backup.html', 'web/src/html/notification.html')
+
+            error_log(e)
 
 
 

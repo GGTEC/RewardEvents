@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RewardEvents Chat</title>
+
+    <!-- Favicons -->
+    <link href="assets/img/favicon.png" rel="icon" />
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/css/bootstrap-select.min.css"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/js/bootstrap-select.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
+    <link href="assets/css/chat.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" />
+    <script type="text/javascript" src="/eel.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet" />
+</head>
+<body>
+    <div class="chat-col-new">
+        <div class="bg-dark nav nav-tabs flex-column flex-sm-row top-tab" id="nav-tab" role="tablist">
+            <button class="nav-link flex-sm-fill text-sm-center active" id="nav-chat-tab"
+                data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab"
+                aria-controls="nav-chat" aria-selected="true">Chat</button>
+            <button class="nav-link flex-sm-fill text-sm-center" id="nav-users-tab"
+                data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab"
+                aria-controls="nav-users" aria-selected="false">Usuários no chat</button>
+            <button class="nav-link text-sm-center" style="width: 32px;" id="nav-config-chat-tab"
+                data-bs-toggle="tab" data-bs-target="#nav-config-chat" type="button" role="tab"
+                aria-controls="nav-config-chat" aria-selected="false"><i class="fa-solid fa-gear"></i></button>
+        </div>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane show active purple-border-block" id="nav-chat" role="tabpanel" aria-labelledby="nav-chat-tab">
+                <div class="tab-chat d-flex flex-column align-items-stretch">
+                    <div class="chat-block-new w-100" id="chat-block">
+                    </div>
+                    <form id="input-chat-form" class="form-chat" onsubmit="send_message_chat_js(event)">
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-dark" id="message-chat-send" aria-describedby="submit-message-chat" />
+                            <button class="btn bt-submit" type="submit" id="submit-message-chat"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+            <div class="tab-pane purple-border-block" id="nav-users" role="tabpanel"
+                aria-labelledby="nav-users-tab">
+                <div class="users-chat-list" id="users-chat-list">
+                </div>
+            </div>
+            <div class="tab-pane purple-border-block" id="nav-config-chat" role="tabpanel" aria-labelledby="nav-config-chat-tab">
+                <div class="config-tab-chat">
+                    <div class="form-group">
+                        <label for="slider-font" >Tamanho da letra no chat</label>
+                        <input class="form-range w-100" type="range" min="0" max="100" value="0" id="slider-font" step="1">
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col">
+                            <p class="form-check-label">
+                                Aplicar cor aos nomes no chat.
+                            </p>
+                        </div>
+                        <div class="col-2">
+                            <div class="material-switch bg-white d-flex justify-content-end">
+                                <input id="chat-colors" type="checkbox" checked/>
+                                <label for="chat-colors" class="form-check-label"></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col">
+                            <p class="form-check-label">
+                                Aplicar cor fixa aos nomes no chat que não definiram uma cor.
+                            </p>
+                        </div>
+                        <div class="col-2">
+                            <div class="material-switch bg-white d-flex justify-content-end">
+                                <input id="chat-colors-fixed" type="checkbox"/>
+                                <label for="chat-colors-fixed" class="form-check-label"></label>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3 mt-2">
+                            <label for="select-color">Selecione uma cor</label>
+                            <select class="form-control bg-dark mt-3" id="select-color">
+                                <option value="Blue" style="color: white;">Azul</option>
+                                <option value="Coral" style="color: white;">Coral</option>
+                                <option value="DodgerBlue" style="color: white;">Azul furtivo</option>
+                                <option value="SpringGreen" style="color: white;">Verde primavera</option>
+                                <option value="YellowGreen" style="color: white;">Verde amarelado</option>
+                                <option value="Green" style="color: white;">Verde</option>
+                                <option value="OrangeRed" style="color: white;">Vermelão</option>
+                                <option value="Red" style="color: white;">Vermelho</option>
+                                <option value="GoldenRod" style="color: white;">Dourado</option>
+                                <option value="HotPink" style="color: white;">Rosa forte</option>
+                                <option value="CadetBlue" style="color: white;">Azul cadete</option>
+                                <option value="SeaGreen" style="color: white;">Verde mar</option>
+                                <option value="Chocolate" style="color: white;">Chocolate</option>
+                                <option value="BlueViolet" style="color: white;">Azul violeta</option>
+                                <option value="Firebrick" style="color: white;">Tijolo</option>
+
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col">
+                            <p class="form-check-label">
+                                Exibir distintivos
+                            </p>
+                        </div>
+                        <div class="col-2">
+                            <div class="material-switch bg-white d-flex justify-content-end">
+                                <input id="chat-bageds-show" type="checkbox" checked/>
+                                <label for="chat-bageds-show" class="form-check-label"></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col">
+                            <p class="form-check-label">
+                                Exibir as mensagens em uma linha separada do nome
+                            </p>
+                        </div>
+                        <div class="col-2">
+                            <div class="material-switch bg-white d-flex justify-content-end">
+                                <input id="chat-newline" type="checkbox" checked/>
+                                <label for="chat-newline" class="form-check-label"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="toast position-absolute m-5 bg-dark p-0" id="notific" role="alert" data-bs-animation="true"
+    aria-live="assertive" aria-atomic="true">
+    <div class="toast-header d-flex justify-content-between">
+        <div>
+            <i class="fa-solid fa-triangle-exclamation text-black"></i>
+            <strong class="ms-2 text-white">Notificação</strong>
+        </div>
+        <div>
+            <button type="button" class="btn-close-white btn-close" data-bs-dismiss="toast">
+            </button>
+        </div>
+    </div>
+    <div class="toast-body" id="notific-message">
+        Notificação
+    </div>
+</div>
+    <script src="assets/js/chat.js"></script>
+</body>
+</html>

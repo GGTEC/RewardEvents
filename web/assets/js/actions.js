@@ -1,9 +1,4 @@
 
-eel.expose(modal_actions);
-function modal_actions(modal_id) {
-    $("#" + modal_id).modal("show");
-}
-
 async function getFolder() {
     var dosya_path = await eel.select_file_py()();
     if (dosya_path) {
@@ -12,61 +7,87 @@ async function getFolder() {
 }
 
 function removeOptions(selectElement) {
+
     $("#" + selectElement).empty();
+    $("#" + selectElement).selectpicker("refresh");
+
 }
 
-async function get_redeem_del_js(el_id) {
 
-    var list_redem = await eel.get_redeem_created()();
-
-    if (list_redem) {
-
-        $("#action-del-select").empty();
-        $("#action-del-select").selectpicker("refresh");
-
-        var list_redem_parse = JSON.parse(list_redem);
-
-        for (var i = 0; i < list_redem_parse.redeem.length; i++) {
-            var optn = list_redem_parse.redeem[i];
-
-            $("#action-del-select").append('<option class="bg-dark" style="color: #fff;" value="'+ optn +'">'+ optn +'</option>');
-            $("#action-del-select").selectpicker("refresh");
-        }
-    }
-}
-
-async function get_redeem_js(el_id, btn_id) {
+async function get_redeem_js(el_id, btn_id, type_get) {
 
     var btn_el = document.getElementById(btn_id);
-    var list_redem = await eel.get_redeem()();
 
-    if (list_redem) {
-        
-        btn_el.removeAttribute("disabled");
-        $("#" + el_id).empty();
+    if (type_get == 'del' || type_get == 'edit'){
 
-        var list_redem_parse = JSON.parse(list_redem);
+        var list_redem = await eel.get_redeem('del')();
 
-        for (var i = 0; i < list_redem_parse.redeem.length; i++) {
-            var optn = list_redem_parse.redeem[i];
+        if (list_redem) {
+            
+            if (btn_el == 'submit-del'){
+                btn_el.removeAttribute("disabled");
+            } 
 
-            $("#" + el_id).append('<option style="background: #000; color: #fff;" value="'+ optn +'">'+ optn +'</option>');
-            $("#" + el_id).selectpicker("refresh");
+            removeOptions(el_id)
+    
+            var list_redem_parse = JSON.parse(list_redem);
+    
+            for (var i = 0; i < list_redem_parse.redeem.length; i++) {
+                var optn = list_redem_parse.redeem[i];
+    
+                $("#" + el_id).append('<option class="bg-dark" style="color: #fff;" value="'+ optn +'">'+ optn +'</option>');
+                $("#" + el_id).selectpicker("refresh");
+            }
         }
+
+    } else {
+
+        var list_redem = await eel.get_redeem('null')();
+
+        if (list_redem) {
+            
+            btn_el.removeAttribute("disabled");
+
+            removeOptions(el_id)
+
+            var list_redem_parse = JSON.parse(list_redem);
+
+            for (var i = 0; i < list_redem_parse.redeem.length; i++) {
+                var optn = list_redem_parse.redeem[i];
+
+                $("#" + el_id).append('<option style="background: #000; color: #fff;" value="'+ optn +'">'+ optn +'</option>');
+                $("#" + el_id).selectpicker("refresh");
+            }
+        }
+        $("#" + el_id + " option[value='Carregando']").remove();
+
     }
-    $("#" + el_id + " option[value='Carregando']").remove();
+
 }
 
 function show_div(div_id, select_redeem, btn_id) {
-    get_redeem_js(select_redeem, btn_id);
-    document.getElementById("create-redeem").hidden = true;
-    document.getElementById(div_id).hidden = false;
-}
 
-function show_div_del(div_id, select_redeem) {
-    get_redeem_del_js(select_redeem);
-    document.getElementById("create-redeem").hidden = true;
-    document.getElementById(div_id).hidden = false;
+    if (div_id == 'del-div'){
+
+        get_redeem_js(select_redeem, btn_id,'del');
+
+        document.getElementById("create-redeem").hidden = true;
+        document.getElementById(div_id).hidden = false;
+
+    } else if (div_id == 'edit-div') {
+
+        get_redeem_js(select_redeem, btn_id,'edit');
+
+        document.getElementById("create-redeem").hidden = true;
+        document.getElementById(div_id).hidden = false;
+
+    } else {
+
+        get_redeem_js(select_redeem, btn_id,'null');
+
+        document.getElementById("create-redeem").hidden = true;
+        document.getElementById(div_id).hidden = false;
+    }
 }
 
 function hide_create(div_id_hide, select_redeem, form, btn_id) {
@@ -179,7 +200,7 @@ function create_action(event,type_id){
             redeem_value: form.querySelector('select[id="redeem-select-tts"]').value,
             command_value: form.querySelector('input[id="command-text"]').value,
             chat_response: form.querySelector('input[id="chat-message"]').value,
-            caracters: form.querySelector('input[id="caracters"]').value,
+            characters: form.querySelector('input[id="characters"]').value,
             user_level_value: mod_value,
         };
 
@@ -361,10 +382,6 @@ function create_action(event,type_id){
             };
         }
 
-        var formData = JSON.stringify(data);
-
-        eel.create_keypress(formData);
-
     } else if (type_id == 'clip') {
         var form = document.querySelector("#clip-create");
         var mod_value = form.querySelector('input[id="mod-switch-clip"]').checked;
@@ -391,16 +408,11 @@ function create_action(event,type_id){
         }
 
         removeOptions("action-del-select");
-        get_redeem_del_js("action-del-select", "submit-del");
+        get_redeem_js("action-del-select", "submit-del","del");
     }
 
     var formData = JSON.stringify(data);
     eel.create_action_save(formData,type_id);
-
-}
-
-function del_action(event) {
-    
 
 }
 

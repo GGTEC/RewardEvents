@@ -1,14 +1,9 @@
 //CONFIG
 
-eel.expose(config_modal);
-function config_modal(modal_id) {
-    $("#" + modal_id).modal("show");
-}
-
 async function get_redeem_js_config(el_id) {
 
     console.log('exec')
-    var list_redem = await eel.get_redeem()();
+    var list_redem = await eel.get_redeem('null')();
 
     if (list_redem) {
         

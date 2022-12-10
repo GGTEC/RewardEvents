@@ -1,20 +1,4 @@
 //GIVEAWAY
-eel.expose(giveaway_modal_show);
-function giveaway_modal_show(id,name) {
-    $("#giveaway-modal").modal("show");
-
-    if (id == 'giveway-winner' ){
-        document.getElementById('winner-name').innerHTML = name; 
-    } 
-    document.getElementById(id).hidden = false;
-}
-
-
-function giveaway_modal_hide(id) {
-    $("#giveaway-modal").modal("hide");
-    document.getElementById(id).hidden = true;
-}
-
 async function get_giveaway_config() {
 
     var giveaway_name_inp = document.getElementById("giveaway-name");

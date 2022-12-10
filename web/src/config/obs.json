@@ -1,6 +1,6 @@
 {
       "OBS_HOST": "localhost",
-      "OBS_PORT": "5555",
-      "OBS_PASSWORD": "123456",
+      "OBS_PORT": "",
+      "OBS_PASSWORD": "",
       "OBS_TEST_CON": 1
 }

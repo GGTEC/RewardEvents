@@ -3,3 +3,6 @@
 ffmpeg/ffprobe.exe
 ffmpeg/ffmpeg.exe
 ffmpeg/ffplay.exe
+.vscode/settings.json
+dist/RewardEvents.exe
+file_version_info.txt

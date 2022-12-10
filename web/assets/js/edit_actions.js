@@ -1,6 +1,6 @@
 async function get_redeem_edit(el_id) {
 
-    var list_redem = await eel.get_redeem()();
+    var list_redem = await eel.get_redeem('null')();
 
     if (list_redem) {
 
@@ -854,10 +854,12 @@ function save_edit(event,type_edit){
 
 async function get_redeem_edit_js(el_id) {
     
-    var list_redem = await eel.get_redeem_created()();
+    var list_redem = await eel.get_redeem('edit')();
 
     if (list_redem) {
+        
         $("#" + el_id).empty();
+        $("#" + el_id).selectpicker("refresh");
 
         var list_redem_parse = JSON.parse(list_redem);
 

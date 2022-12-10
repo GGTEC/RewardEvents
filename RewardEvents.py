@@ -20,6 +20,7 @@ import simple_chat as chat_res
 from screeninfo import get_monitors
 import utils
 
+
 from dotenv import load_dotenv
 from pytube import Playlist, YouTube, Search
 from io import BytesIO
@@ -38,9 +39,12 @@ from twitchAPI.oauth import refresh_access_token
 
 extDataDir = os.getcwd()
 
+ffmpeg_loc = '.'
+
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     if getattr(sys, 'frozen', False):
         extDataDir = sys._MEIPASS
+        ffmpeg_loc = extDataDir
 
 load_dotenv(dotenv_path=os.path.join(extDataDir, '.env'))
 
@@ -50,6 +54,7 @@ clientsecret = get_key.start_apikey()
 global caching, loaded_status, chat, window, twitch_api,bot_loaded
 
 screen = get_monitors()[0]
+
 chat_active = False
 caching = 0
 loaded_status = 0
@@ -74,6 +79,27 @@ def bot():
         chat.subscribe(command_fallback)
         bot_loaded = 1
 
+
+def send(message):
+
+    global chat
+    
+    if loaded_status == 1:
+        data_res = {
+            'type': 'PRIVMSG',
+            "color": '',
+            "display_name": BOTNAME,
+            "user_name": BOTNAME,
+            "mod": 1,
+            "subscriber": 0,
+            "user_id": BROADCASTER_ID,
+            "message": message
+        }
+
+        message_data_dump = json.dumps(data_res, ensure_ascii=False)
+        eel.append_message(message_data_dump)
+
+        chat.send(message)
 
 @eel.expose
 def loaded():
@@ -365,7 +391,7 @@ def start_auth_window(username, type_auth):
 
     oauth_uri_bot = f"{twitch_prefix}oauth2/authorize?response_type=token&force_verify=true&client_id={clientid}&redirect_uri={redirect_uri}&scope={scope}"
 
-    if type == 'streamer':
+    if type_auth == 'streamer':
 
         streamer_name = username
         data_user = {'USERNAME': streamer_name.lower(), 'BROADCASTER_ID': '', 'CODE': '', 'TOKEN': '',
@@ -380,7 +406,7 @@ def start_auth_window(username, type_auth):
 
         window_auth.events.loaded += on_loaded
 
-    elif type == 'bot':
+    elif type_auth == 'bot':
 
         auth_file_bot_load = open("web/src/auth/auth.json")
         data_bot_load = json.load(auth_file_bot_load)
@@ -407,7 +433,7 @@ def start_auth_window(username, type_auth):
 
         window_auth.events.loaded += on_loaded
 
-    elif type == 'streamer_as_bot':
+    elif type_auth == 'streamer_as_bot':
 
         streamer_name = username
         data_user = {'USERNAME': streamer_name.lower(), 'BROADCASTER_ID': '', 'CODE': '', 'TOKEN': '',
@@ -442,24 +468,6 @@ def minimize():
 
 
 @eel.expose
-def maximize():
-    global maximized
-
-    if maximized == 0:
-
-        maximized = 1
-
-        window.resize(screen.width, screen.height)
-        window.move(0, 0)
-
-    elif maximized == 1:
-
-        maximized = 0
-
-        window.resize(1200, 680)
-
-
-@eel.expose
 def logout_auth():
     data = {'USERNAME': '', 'BROADCASTER_ID': '', 'CODE': '', 'TOKEN': '', 'REFRESH_TOKEN': '', 'CODEBOT': '',
             'TOKENBOT': '', 'REFRESH_TOKENBOT': '', 'BOTUSERNAME': ''}
@@ -467,6 +475,8 @@ def logout_auth():
     logout_file = open("web/src/auth/auth.json", "w")
     json.dump(data, logout_file, indent=6)
     logout_file.close()
+
+    close('normal')
 
 
 @eel.expose
@@ -595,48 +605,52 @@ def profile_info():
 
 
 @eel.expose
-def get_redeem():
-    list_titles = {"redeem": []}
-    path_file = open('web/src/config/pathfiles.json', 'r', encoding='utf-8')
-    path = json.load(path_file)
+def get_redeem(type_id):
 
-    path_counter_file = open('web/src/counter/config.json', 'r', encoding='utf-8')
-    path_counter = json.load(path_counter_file)
+    if type_id == 'del' or type_id == "edit":
 
-    counter_redeem = path_counter['redeem']
+        list_titles = {"redeem": []}
+        path_file = open('web/src/config/pathfiles.json', 'r', encoding='utf-8')
+        path = json.load(path_file)
 
-    path_giveaway_file = open('web/src/giveaway/config.json', 'r', encoding='utf-8')
-    path_giveaway = json.load(path_giveaway_file)
+        for key in path:
+            list_titles["redeem"].append(key)
 
-    giveaway_redeem = path_giveaway['redeem']
+        list_titles_dump = json.dumps(list_titles, ensure_ascii=False)
 
-    list_rewards = twitch_api.get_custom_reward(broadcaster_id=BROADCASTER_ID)
-    for indx in list_rewards['data'][0:]:
+        path_file.close()
 
-        if indx['title'] not in path and indx['title'] != giveaway_redeem and indx['title'] != counter_redeem:
-            list_titles["redeem"].append(indx['title'])
+        return list_titles_dump
+    
+    else:
 
-    list_titles_dump = json.dumps(list_titles, ensure_ascii=False)
+        list_titles = {"redeem": []}
+        path_file = open('web/src/config/pathfiles.json', 'r', encoding='utf-8')
+        path = json.load(path_file)
 
-    path_giveaway_file.close()
-    path_counter_file.close()
-    path_file.close()
-    return list_titles_dump
+        path_counter_file = open('web/src/counter/config.json', 'r', encoding='utf-8')
+        path_counter = json.load(path_counter_file)
 
+        counter_redeem = path_counter['redeem']
 
-@eel.expose
-def get_redeem_created():
-    list_titles = {"redeem": []}
-    path_file = open('web/src/config/pathfiles.json', 'r', encoding='utf-8')
-    path = json.load(path_file)
+        path_giveaway_file = open('web/src/giveaway/config.json', 'r', encoding='utf-8')
+        path_giveaway = json.load(path_giveaway_file)
 
-    for key in path:
-        list_titles["redeem"].append(key)
+        giveaway_redeem = path_giveaway['redeem']
 
-    list_titles_dump = json.dumps(list_titles, ensure_ascii=False)
+        list_rewards = twitch_api.get_custom_reward(broadcaster_id=BROADCASTER_ID)
+        for indx in list_rewards['data'][0:]:
 
-    path_file.close()
-    return list_titles_dump
+            if indx['title'] not in path and indx['title'] != giveaway_redeem and indx['title'] != counter_redeem:
+                list_titles["redeem"].append(indx['title'])
+
+        list_titles_dump = json.dumps(list_titles, ensure_ascii=False)
+
+        path_giveaway_file.close()
+        path_counter_file.close()
+        path_file.close()
+        return list_titles_dump
+
 
 
 @eel.expose
@@ -949,6 +963,15 @@ def create_action_save(data, type_id):
             key3 = data_receive['key3']
             key4 = data_receive['key4']
 
+            if key1 == "none":
+                key1 = "NONE"
+            if key2 == "none":
+                key2 = "NONE"
+            if key3 == "none":
+                key3 = "NONE"
+            if key4 == "none":
+                key4 = "NONE"
+
             if chat_response == "":
                 send_response = 0
             else:
@@ -1072,13 +1095,13 @@ def create_action_save(data, type_id):
 
             event_data_write.close()
 
-        eel.modal_actions('sucess-create')
+        eel.toast_notifc('success')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.modal_actions('error-create')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1107,12 +1130,12 @@ def commands_py(type_rec, data_receive):
             json.dump(new_data_command, old_data_write_command, indent=6, ensure_ascii=False)
             old_data_write_command.close()
 
-            eel.command_modal('sucess-command')
+            eel.toast_notifc('success')
 
         except Exception as e:
             utils.error_log(e)
 
-            eel.command_modal('error-command')
+            eel.toast_notifc('error')
 
     elif type_rec == 'edit':
 
@@ -1139,11 +1162,11 @@ def commands_py(type_rec, data_receive):
             json.dump(command_data, old_data_write, indent=6, ensure_ascii=False)
             old_data_write.close()
 
-            eel.command_modal('sucess-command')
+            eel.toast_notifc('success')
 
         except Exception as e:
             utils.error_log(e)
-            eel.command_modal('error-command')
+            eel.toast_notifc('error')
 
     elif type_rec == 'delete':
 
@@ -1158,11 +1181,12 @@ def commands_py(type_rec, data_receive):
             json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
             old_data_write.close()
 
-            eel.command_modal('sucess-command')
+            eel.toast_notifc('Comando excluido')
 
         except Exception as e:
             utils.error_log(e)
-            eel.command_modal('error-command')
+            
+            eel.toast_notifc('error')
 
     elif type_rec == 'get_info':
         try:
@@ -1246,8 +1270,8 @@ def commands_py(type_rec, data_receive):
         try:
             data = json.loads(data_receive)
 
-            value_commands = data['value_commands']
-            value_tts = data['value_tts']
+            value_commands = data['command_delay']
+            value_tts = data['tts_delay']
 
             time_delay_file = open('web/src/config/commands_config.json')
             time_delay_data = json.load(time_delay_file)
@@ -1269,10 +1293,10 @@ def commands_py(type_rec, data_receive):
             json.dump(time_delay_data_tts, time_delay_write_tts, indent=6, ensure_ascii=False)
             time_delay_write_tts.close()
 
-            eel.command_modal('sucess-command')
+            eel.toast_notifc('Delay alterado')
         except Exception as e:
             utils.error_log(e)
-            eel.command_modal('error-command')
+            eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1329,13 +1353,13 @@ def edit_timer(key, message):
         json.dump(timer_data, timer_data_file_w, indent=6, ensure_ascii=False)
         timer_data_file_w.close()
 
-        eel.timer_modal('sucess-timer')
+        eel.toast_notifc('success')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.timer_modal('error-timer')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1364,13 +1388,13 @@ def add_timer(message):
 
         old_data_write.close()
 
-        eel.timer_modal('sucess-timer')
+        eel.toast_notifc('success')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.timer_modal('error-timer')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1388,13 +1412,13 @@ def del_timer(message_key):
         json.dump(message_del_data, message_del_file_write, indent=6, ensure_ascii=False)
         message_del_file_write.close()
 
-        eel.timer_modal('sucess-timer')
+        eel.toast_notifc('Mensagem excluida')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.timer_modal('error-timer')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1413,13 +1437,13 @@ def edit_delay_timer(min_time, max_time):
         json.dump(message_del_data, message_del_file_write, indent=6, ensure_ascii=False)
         message_del_file_write.close()
 
-        eel.timer_modal('sucess-timer')
+        eel.toast_notifc('Delay alterado')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.timer_modal('error-timer')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1482,13 +1506,13 @@ def save_obs_conn_py(data_receive):
         json.dump(data_save, out_file, indent=6, ensure_ascii=False)
         out_file.close()
 
-        eel.config_modal('sucess-config-obs-conn')
+        eel.toast_notifc('success')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.config_modal('error-config-obs-conn')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1514,13 +1538,13 @@ def save_obs_not_py(data_receive):
         json.dump(data_save, out_file, indent=6, ensure_ascii=False)
         out_file.close()
 
-        eel.config_modal('sucess-config-obs-not')
+        eel.toast_notifc('success')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.config_modal('error-config-obs-not')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1600,13 +1624,13 @@ def save_messages_config(data_receive):
         json.dump(old_message_data, old_data_write, indent=6, ensure_ascii=False)
         old_data_write.close()
 
-        eel.modal_messages_config('sucess')
+        eel.toast_notifc('success')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.modal_messages_config('error')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1659,13 +1683,13 @@ def save_giveaway_config_py(data_receive):
         json.dump(giveaway_data_new, old_data_write, indent=6, ensure_ascii=False)
         old_data_write.close()
 
-        eel.giveaway_modal_show('giveaway-sucess-save', 'none')
+        eel.toast_notifc('success')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.giveaway_modal_show('giveway-error-save', 'none')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1692,13 +1716,13 @@ def save_giveaway_commands_py(data_receive):
         json.dump(giveaway_data_new, old_data_write, indent=6, ensure_ascii=False)
         old_data_write.close()
 
-        eel.giveaway_modal_show('giveaway-sucess-save', 'none')
+        eel.toast_notifc('success')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.giveaway_modal_show('giveway-error-save', 'none')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1758,7 +1782,7 @@ def execute_giveaway():
 
         message_win = message_load_winner_giveaway.replace('{name}', name)
         if utils.send_message("RESPONSE"):
-            chat.send(message_win)
+            send(message_win)
 
         giveaway_backup_file = open('web/src/giveaway/backup.json', 'w', encoding="utf-8")
         json.dump(giveaway_name_data, giveaway_backup_file, indent=6, ensure_ascii=False)
@@ -1775,13 +1799,13 @@ def execute_giveaway():
             json.dump(reset_data, giveaway_reset_file, indent=6, ensure_ascii=False)
             giveaway_reset_file.close()
 
-        eel.giveaway_modal_show('giveway-winner', name)
+        eel.toast_notifc(f'{name} Ganhou o sorteio !', )
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.giveaway_modal_show('giveway-error-execute')
+        eel.toast_notifc('Erro ao executar o sorteio')
 
 
 @eel.expose
@@ -1794,13 +1818,13 @@ def clear_name_list():
         json.dump(reset_data, giveaway_reset_file, indent=6, ensure_ascii=False)
         giveaway_reset_file.close()
 
-        eel.giveaway_modal_show('giveaway-clear-sucess', 'none')
+        eel.toast_notifc('Lista de sorteio limpa')
 
 
     except Exception as e:
         utils.error_log(e)
 
-        eel.giveaway_modal_show('giveaway-clear-error', 'none')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1818,13 +1842,13 @@ def add_name_giveaway(new_name):
         json.dump(names, giveaway_save_file, indent=6, ensure_ascii=False)
         giveaway_save_file.close()
 
-        eel.giveaway_modal_show('giveaway-add-name', new_name)
+        eel.toast_notifc(f'O usuário {new_name} foi adicionado na lista')
 
 
     except Exception as e:
         utils.error_log(e)
 
-        eel.giveaway_modal_show('giveaway-add-name-error', new_name)
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -1873,13 +1897,13 @@ def counter(fun_id, redeem, commands, value):
             json.dump(data_save, counter_file_save, indent=6, ensure_ascii=False)
             counter_file_save.close()
 
-            eel.counter_modal('save_redeem_sucess')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
 
-            eel.counter_modal('save_redeem_error')
+            eel.toast_notifc('error')
 
     if fun_id == "save-counter-commands":
 
@@ -1900,13 +1924,13 @@ def counter(fun_id, redeem, commands, value):
             json.dump(commands_save, counter_file_save_commands, indent=6, ensure_ascii=False)
             counter_file_save_commands.close()
 
-            eel.counter_modal('save_commands_sucess')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
 
-            eel.counter_modal('save_commands_error')
+            eel.toast_notifc('error')
 
     if fun_id == "set-counter-value":
         with open("web/src/counter/counter.txt", "w") as counter_file_w:
@@ -1939,11 +1963,11 @@ def responses_config(fun_id, response_key, message):
             json.dump(responses_data, responses_file_w, indent=6, ensure_ascii=False)
 
             responses_file_w.close()
-            eel.modal_responses('modal-sucess-response')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
-            eel.modal_responses('modal-error-response')
+            eel.toast_notifc('error')
             utils.error_log(e)
 
 
@@ -1990,11 +2014,11 @@ def discord_config(data_discord_save, mode):
             json.dump(responses_data, responses_file_w, indent=6, ensure_ascii=False)
             responses_file_w.close()
 
-            eel.modal_discord('sucess-discord-config')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
-            eel.modal_discord('error-discord-config')
+            eel.toast_notifc('error')
             utils.error_log(e)
 
     if mode == 'get':
@@ -2043,7 +2067,7 @@ def obs_try_conn():
 
 @eel.expose
 def send_message_chat(message):
-    chat.send(message)
+    send(message)
 
 
 @eel.expose
@@ -2446,8 +2470,6 @@ def save_edit_redeen(data, redeem_type):
 
             elif old_command != command and old_command == "":
 
-                print('SEGUNDA')
-
                 if command != "":
                     command_data[command.lower()] = {
                         'redeem': redeem,
@@ -2459,13 +2481,13 @@ def save_edit_redeen(data, redeem_type):
                     command_file_write = open('web/src/config/commands.json', 'w', encoding='utf-8')
                     json.dump(command_data, command_file_write, indent=6, ensure_ascii=False)
 
-            eel.modal_edit_actions('sucess', 'edit-audio-div')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
 
-            eel.modal_edit_actions('error', 'edit-audio-div')
+            eel.toast_notifc('error')
 
     if redeem_type == 'tts':
 
@@ -2514,14 +2536,13 @@ def save_edit_redeen(data, redeem_type):
             json.dump(tts_command_data, tts_command_file_write, indent=6, ensure_ascii=False)
             tts_command_file_write.close()
 
-            eel.modal_edit_actions('sucess', 'edit-tts-div')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
 
-            eel.modal_edit_actions('error', 'edit-tts-div')
-
+            eel.toast_notifc('error')
     if redeem_type == 'scene':
 
         try:
@@ -2588,13 +2609,13 @@ def save_edit_redeen(data, redeem_type):
 
                 command_file_write.close()
 
-            eel.modal_edit_actions('sucess', 'edit-scene-div')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
 
-            eel.modal_edit_actions('error', 'edit-scene-div')
+            eel.toast_notifc('error')
 
     if redeem_type == 'response':
 
@@ -2656,13 +2677,13 @@ def save_edit_redeen(data, redeem_type):
 
                 command_file_write.close()
 
-            eel.modal_edit_actions('sucess', 'edit-response-div')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
 
-            eel.modal_edit_actions('error', 'edit-response-div')
+            eel.toast_notifc('error')
 
     if redeem_type == 'filter':
 
@@ -2732,13 +2753,13 @@ def save_edit_redeen(data, redeem_type):
 
                 command_file_write.close()
 
-            eel.modal_edit_actions('sucess', 'edit-filter-div')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
 
-            eel.modal_edit_actions('error', 'edit-filter-div')
+            eel.toast_notifc('error')
 
     if redeem_type == 'source':
 
@@ -2807,13 +2828,13 @@ def save_edit_redeen(data, redeem_type):
 
                 command_file_write.close()
 
-            eel.modal_edit_actions('sucess', 'edit-source-div')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
 
-            eel.modal_edit_actions('error', 'edit-source-div')
+            eel.toast_notifc('error')
 
     if redeem_type == 'keypress':
 
@@ -2930,13 +2951,13 @@ def save_edit_redeen(data, redeem_type):
 
                 command_file_write.close()
 
-            eel.modal_edit_actions('sucess', 'edit-keypress-div')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
 
-            eel.modal_edit_actions('error', 'edit-keypress-div')
+            eel.toast_notifc('error')
 
     if redeem_type == 'clip':
 
@@ -2990,13 +3011,13 @@ def save_edit_redeen(data, redeem_type):
 
                 command_file_write.close()
 
-            eel.modal_edit_actions('sucess', 'edit-clip-div')
+            eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
 
-            eel.modal_edit_actions('error', 'edit-clip-div')
+            eel.toast_notifc('error')
 
 
 @eel.expose
@@ -3197,12 +3218,12 @@ def save_music_config(data_receive):
         redeem_music_file_w = open('web/src/player/config/redem_data.json', 'w', encoding='utf-8')
         json.dump(redeem_music_data, redeem_music_file_w, indent=6, ensure_ascii=False)
 
-        eel.config_modal('sucess-config-music')
+        eel.toast_notifc('success')
 
     except Exception as e:
         utils.error_log(e)
 
-        eel.config_modal('error-config-music')
+        eel.toast_notifc('error')
 
 
 @eel.expose
@@ -3242,7 +3263,7 @@ def update_check(type_id):
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'V3.0.0':
+        if version != 'V3.2.0':
 
             return 'true'
         else:
@@ -3263,7 +3284,9 @@ def clip():
 
         message_clip_error_load = messages_file_load('clip_error_clip')
         if utils.send_message("CLIP"):
-            chat.send(message_clip_error_load)
+            send(message_clip_error_load)
+
+        eel.toast_notifc('Erro ao criar o clip')
 
     else:
 
@@ -3274,8 +3297,10 @@ def clip():
         message_clip_user = message_clip_user_load.replace('{user}', USERNAME)
         message_final = message_clip_user.replace('{clip_id}', clip_id)
 
+        eel.toast_notifc(message_final)
+
         if utils.send_message("CLIP"):
-            chat.send(message_final)
+            send(message_final)
 
         discord_config_file = open('web/src/config/discord.json', 'r', encoding='utf-8')
         discord_config_data = json.load(discord_config_file)
@@ -3304,7 +3329,6 @@ def clip():
 
 @eel.expose
 def timer():
-    print('Modulo timer iniciado')
 
     while True:
 
@@ -3340,7 +3364,7 @@ def timer():
                             json.dump(timer_data, update_last_file, indent=4, ensure_ascii=False)
                             update_last_file.close()
 
-                            chat.send(timer_message[message_key])
+                            send(timer_message[message_key])
                             time.sleep(next_timer)
 
                     else:
@@ -3352,6 +3376,13 @@ def timer():
         except Exception as e:
             utils.error_log(e)
             time.sleep(5)
+
+
+@eel.expose
+def new_chat():
+
+    window_chat = webview.create_window('RewardEvents Chat', '')
+    window_chat.load_url('http://localhost:8000/chat.html')
 
 
 def get_users_info(type_id, user_id):
@@ -3405,17 +3436,8 @@ def get_users_info(type_id, user_id):
 
 
 def start_play(user_input, redem_by_user):
-    def my_hook(d):
 
-        if d['status'] == 'downloading':
-
-            percent = d['_percent_str']
-            try:
-                percent_numbers = int(float(percent.split()[0].replace('%', ''))) / 10
-            except Exception as e:
-                utils.error_log(e)
-                pass
-
+    global caching
 
     def download_music(link):
 
@@ -3428,6 +3450,7 @@ def start_play(user_input, redem_by_user):
         if music_dir_check:
             os.remove(extDataDir + '/web/src/player/cache/music.mp3')
 
+
         try:
             ydl_opts = {
                 'final_ext': 'mp3',
@@ -3436,11 +3459,10 @@ def start_play(user_input, redem_by_user):
                 'quiet': True,
                 'no_color': True,
                 'outtmpl': extDataDir + '/web/src/player/cache/music.%(ext)s',
-                'ffmpeg_location': extDataDir,
+                'ffmpeg_location': ffmpeg_loc,
                 'force-write-archive': True,
                 'force-overwrites': True,
                 'keepvideo': True,
-                'progress_hooks': [my_hook],
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'nopostoverwrites': False,
@@ -3459,7 +3481,7 @@ def start_play(user_input, redem_by_user):
 
             return False
 
-    response_album = utils.album_search(user_input, redem_by_user)
+    response_album = utils.album_search(user_input)
     success = response_album['success']
 
     if success == 1:
@@ -3504,9 +3526,10 @@ def start_play(user_input, redem_by_user):
 
                 message_replace = replace_all(messages_file_load('music_playing'), aliases)
                 if utils.send_message("STATUS_MUSIC"):
-                    chat.send(message_replace)
+                    send(message_replace)
 
                 eel.player('play', 'http://localhost:8000/src/player/cache/music.mp3', '1')
+                eel.toast_notifc(f'Reproduzindo {music_name_short} - {music_artist}')
 
                 caching = 0
 
@@ -3514,8 +3537,9 @@ def start_play(user_input, redem_by_user):
 
                 caching = 0
                 eel.update_music_name('Erro ao processar musica', 'Erro ao processar musica')
+                eel.toast_notifc(f'Erro ao processar musica')
                 if utils.send_message("STATUS_MUSIC"):
-                    chat.send(messages_file_load('music_process_cache_error'))
+                    send(messages_file_load('music_process_cache_error'))
 
 
         else:
@@ -3527,12 +3551,13 @@ def start_play(user_input, redem_by_user):
 
             message_replace = replace_all(messages_file_load('music_leght_error'), aliases)
             if utils.send_message("STATUS_MUSIC"):
-                chat.send(message_replace)
+                send(message_replace)
 
     else:
+        eel.toast_notifc(f'Erro ao processar musica')
         message_replace = messages_file_load('music_process_error')
         if utils.send_message("STATUS_MUSIC"):
-            chat.send(message_replace)
+            send(message_replace)
 
 
 def loopcheck():
@@ -3619,6 +3644,7 @@ def loopcheck():
 
 
 def obs_test_conn():
+    
     if loaded_status == 1:
 
         sucess_conn = obs_events.test_obs_conn()
@@ -3644,6 +3670,7 @@ def receive_redeem(data_rewards, received_type):
     def process_redem_music(user_input, redem_by_user):
 
         eel.update_music_name('Processando musica', 'Aguarde')
+        eel.toast_notifc(f'Processando musica...')
 
         queue_file = open('web/src/player/list_files/queue.json', "r", encoding="utf-8")
         queue_data = json.load(queue_file)
@@ -3685,7 +3712,7 @@ def receive_redeem(data_rewards, received_type):
                         message_replaced = replace_all(message, aliases)
 
                         if utils.send_message("STATUS_MUSIC_CONFIRM"):
-                            chat.send(message_replaced)
+                            send(message_replaced)
 
                     else:
 
@@ -3702,7 +3729,7 @@ def receive_redeem(data_rewards, received_type):
                         message_replaced = replace_all(message, aliases)
 
                         if utils.send_message("STATUS_MUSIC_CONFIRM"):
-                            chat.send(message_replaced)
+                            send(message_replaced)
 
                 except Exception as e:
                     utils.error_log(e)
@@ -3712,12 +3739,12 @@ def receive_redeem(data_rewards, received_type):
                     message_replaced = replace_all(message, aliases)
 
                     if utils.send_message("STATUS_MUSIC_CONFIRM"):
-                        chat.send(message_replaced)
+                        send(message_replaced)
 
             else:
                 message_replaced = messages_file_load('music_link_youtube')
                 if utils.send_message("STATUS_MUSIC_CONFIRM"):
-                    chat.send(message_replaced)
+                    send(message_replaced)
 
         else:
 
@@ -3754,7 +3781,7 @@ def receive_redeem(data_rewards, received_type):
             message_replaced = replace_all(message, aliases)
 
             if utils.send_message("STATUS_MUSIC_CONFIRM"):
-                chat.send(message_replaced)
+                send(message_replaced)
 
     with open("web/src/counter/counter.txt", "r") as counter_file_r:
         counter_file_r.seek(0)
@@ -3863,7 +3890,7 @@ def receive_redeem(data_rewards, received_type):
             response_redus = replace_all(chat_response, aliases)
 
             if utils.send_message("RESPONSE"):
-                chat.send(response_redus)
+                send(response_redus)
 
     def play_tts():
 
@@ -3897,12 +3924,12 @@ def receive_redeem(data_rewards, received_type):
             try:
                 response_redus = replace_all(chat_response, aliases)
                 if utils.send_message("RESPONSE"):
-                    chat.send(response_redus)
+                    send(response_redus)
             except Exception as e:
 
                 utils.error_log(e)
                 if utils.send_message("RESPONSE"):
-                    chat.send(chat_response)
+                    send(chat_response)
 
     def change_scene():
 
@@ -3918,13 +3945,13 @@ def receive_redeem(data_rewards, received_type):
             try:
                 response_redus = replace_all(chat_response, aliases)
                 if utils.send_message("RESPONSE"):
-                    chat.send(response_redus)
+                    send(response_redus)
 
             except Exception as e:
 
                 utils.error_log(e)
                 if utils.send_message("RESPONSE"):
-                    chat.send(chat_response)
+                    send(chat_response)
 
         obs_events.show_scene(scene_name, time_show, keep)
 
@@ -3936,12 +3963,12 @@ def receive_redeem(data_rewards, received_type):
             response_redus = replace_all(chat_response, aliases)
 
             if utils.send_message("RESPONSE"):
-                chat.send(response_redus)
+                send(response_redus)
         except Exception as e:
 
             utils.error_log(e)
             if utils.send_message("RESPONSE"):
-                chat.send(chat_response)
+                send(chat_response)
 
     def toggle_filter():
 
@@ -3960,12 +3987,12 @@ def receive_redeem(data_rewards, received_type):
                 response_redus = replace_all(chat_response, aliases)
 
                 if utils.send_message("RESPONSE"):
-                    chat.send(response_redus)
+                    send(response_redus)
             except Exception as e:
 
                 utils.error_log(e)
                 if utils.send_message("RESPONSE"):
-                    chat.send(chat_response)
+                    send(chat_response)
 
         obs_events.show_filter(source_name, filter_name, time_show, keep)
 
@@ -3992,13 +4019,13 @@ def receive_redeem(data_rewards, received_type):
 
                 response_redus = replace_all(chat_response, aliases)
                 if utils.send_message("RESPONSE"):
-                    chat.send(response_redus)
+                    send(response_redus)
 
             except Exception as e:
 
                 utils.error_log(e)
                 if utils.send_message("RESPONSE"):
-                    chat.send(chat_response)
+                    send(chat_response)
 
         def mult_press():
 
@@ -4075,7 +4102,7 @@ def receive_redeem(data_rewards, received_type):
             response_redus = replace_all(chat_response, aliases)
 
             if utils.send_message("RESPONSE"):
-                chat.send(response_redus)
+                send(response_redus)
 
         obs_events.show_source(source_name, time_show, keep)
 
@@ -4088,7 +4115,7 @@ def receive_redeem(data_rewards, received_type):
             message_clip_error_load = messages_file_load('clip_error_clip')
 
             if utils.send_message("CLIP"):
-                chat.send(message_clip_error_load)
+                send(message_clip_error_load)
 
         else:
 
@@ -4100,7 +4127,7 @@ def receive_redeem(data_rewards, received_type):
             message_final = message_clip_user.replace('{clip_id}', clip_id)
 
             if utils.send_message("CLIP"):
-                chat.send(message_final)
+                send(message_final)
 
             discord_config_file = open('web/src/config/discord.json', 'r', encoding='utf-8')
             discord_config_data = json.load(discord_config_file)
@@ -4163,13 +4190,13 @@ def receive_redeem(data_rewards, received_type):
                 response_redus = replace_all(chat_response, aliases)
 
                 if utils.send_message("RESPONSE"):
-                    chat.send(response_redus)
+                    send(response_redus)
             except Exception as e:
 
                 utils.error_log(e)
 
                 if utils.send_message("RESPONSE"):
-                    chat.send(chat_response)
+                    send(chat_response)
 
     def add_giveaway():
 
@@ -4189,20 +4216,20 @@ def receive_redeem(data_rewards, received_type):
                 response_redus = replace_all(response_give_load, aliases)
 
                 if utils.send_message("RESPONSE"):
-                    chat.send(response_redus)
+                    send(response_redus)
 
             except Exception as e:
 
                 utils.error_log(e)
 
                 if utils.send_message("RESPONSE"):
-                    chat.send(response_give_load)
+                    send(response_give_load)
         else:
 
             response_give_disabled_load = messages_file_load('response_giveaway_disabled')
 
             if utils.send_message("RESPONSE"):
-                chat.send(response_give_disabled_load)
+                send(response_give_disabled_load)
 
     eventos = {
 
@@ -4239,7 +4266,7 @@ def receive_redeem(data_rewards, received_type):
                 message_replace_response = replace_all(messages_file_load('music_disabled'), aliases_commands)
 
                 if utils.send_message("RESPONSE"):
-                    chat.send(message_replace_response)
+                    send(message_replace_response)
 
 
 def pubsub_start():
@@ -4270,7 +4297,7 @@ def commands_module(data) -> None:
         message_error_level_command = message_error_level.replace('{command}', str(command))
 
         if utils.send_message("ERROR_USER"):
-            chat.send(message_error_level_command)
+            send(message_error_level_command)
 
     message_sender = data['display_name']
     message_sender_id = data['user_id']
@@ -4351,11 +4378,13 @@ def commands_module(data) -> None:
 
             if check_time:
 
-                if user_type == user_type_tts:
+                if user_type == user_type_tts or user_type == 'mod':
 
                     redeem = command_data_tts['redeem']
 
+                    
                     if len(command_lower.split(command_tts, 1)) > 1:
+
                         user_input = command_lower.split(command_tts, 1)[1]
 
                         data_rewards = {'USERNAME': user, 'REDEEM': redeem, 'USER_INPUT': user_input,
@@ -4364,6 +4393,7 @@ def commands_module(data) -> None:
 
                         received_type = 'command'
 
+                        
                         receive_thread = threading.Thread(target=receive_redeem, args=(data_rewards, received_type,),
                                                           daemon=True)
                         receive_thread.start()
@@ -4373,17 +4403,17 @@ def commands_module(data) -> None:
                         message_error_tts_no_txt = messages_file_load('error_tts_no_text')
 
                         if utils.send_message("RESPONSE"):
-                            chat.send(message_error_tts_no_txt)
+                            send(message_error_tts_no_txt)
             else:
 
                 if utils.send_message("ERROR_TIME"):
-                    chat.send(message_delay)
+                    send(message_delay)
         else:
 
             error_tts_disabled = messages_file_load('error_tts_disabled')
 
             if utils.send_message("RESPONSE"):
-                chat.send(error_tts_disabled)
+                send(error_tts_disabled)
 
     if command_tts != "":
 
@@ -4420,7 +4450,7 @@ def commands_module(data) -> None:
                 else:
 
                     if utils.send_message("ERROR_TIME"):
-                        chat.send(message_delay_global)
+                        send(message_delay_global)
             else:
 
                 send_error_level(str(user_level), str(command))
@@ -4454,12 +4484,12 @@ def commands_module(data) -> None:
                 if check_time_global:
 
                     if utils.send_message("RESPONSE"):
-                        chat.send(response_redus)
+                        send(response_redus)
 
                 else:
 
                     if utils.send_message("ERROR_TIME"):
-                        chat.send(message_delay_global)
+                        send(message_delay_global)
 
             else:
 
@@ -4482,12 +4512,12 @@ def commands_module(data) -> None:
 
                         response_reset = messages_file_load('response_reset_counter')
                         if utils.send_message("RESPONSE"):
-                            chat.send(response_reset)
+                            send(response_reset)
 
                     else:
 
                         if utils.send_message("ERROR_TIME"):
-                            chat.send(message_delay_global)
+                            send(message_delay_global)
                 else:
                     send_error_level('Moderador', str(command))
 
@@ -4512,22 +4542,22 @@ def commands_module(data) -> None:
                                 response_set_repl = response_set.replace('{value}', user_input)
 
                                 if utils.send_message("RESPONSE"):
-                                    chat.send(response_set_repl)
+                                    send(response_set_repl)
                             else:
 
                                 response_not_digit = messages_file_load('response_not_digit_counter')
                                 if utils.send_message("RESPONSE"):
-                                    chat.send(response_not_digit)
+                                    send(response_not_digit)
                         else:
 
                             response_null_counter = messages_file_load('response_null_set_counter')
 
                             if utils.send_message("RESPONSE"):
-                                chat.send(response_null_counter)
+                                send(response_null_counter)
                     else:
 
                         if utils.send_message("ERROR_TIME"):
-                            chat.send(message_delay_global)
+                            send(message_delay_global)
                 else:
                     send_error_level('Moderador', str(command))
 
@@ -4545,10 +4575,10 @@ def commands_module(data) -> None:
                     response_check_repl = response_check_counter.replace('{value}', str(digit))
 
                     if utils.send_message("RESPONSE"):
-                        chat.send(response_check_repl)
+                        send(response_check_repl)
                 else:
                     if utils.send_message("ERROR_TIME"):
-                        chat.send(message_delay_global)
+                        send(message_delay_global)
 
         elif command in result_giveaway_check.values():
 
@@ -4581,7 +4611,7 @@ def commands_module(data) -> None:
                                     message_win = message_win_load.replace('{name}', name)
 
                                     if utils.send_message("RESPONSE"):
-                                        chat.send(message_win)
+                                        send(message_win)
 
                                     with open("web/src/giveaway/backup.txt", "r+") as give_file_backup:
                                         give_file_backup.writelines(lines)
@@ -4594,7 +4624,7 @@ def commands_module(data) -> None:
 
                     else:
                         if utils.send_message("ERROR_TIME"):
-                            chat.send(message_delay_global)
+                            send(message_delay_global)
 
                 else:
 
@@ -4613,7 +4643,7 @@ def commands_module(data) -> None:
                     else:
 
                         if utils.send_message("ERROR_TIME"):
-                            chat.send(message_delay_global)
+                            send(message_delay_global)
                 else:
                     send_error_level('Moderador', str(command))
 
@@ -4640,18 +4670,18 @@ def commands_module(data) -> None:
                                 message_check = message_check_user.replace('{user}', user_input)
 
                                 if utils.send_message("RESPONSE"):
-                                    chat.send(message_check)
+                                    send(message_check)
                             else:
 
                                 message_check_no_user_load = messages_file_load('response_nouser_giveaway')
 
                                 message_check_no_user = message_check_no_user_load.replace('{user}', user_input)
                                 if utils.send_message("RESPONSE"):
-                                    chat.send(message_check_no_user)
+                                    send(message_check_no_user)
                     else:
 
                         if utils.send_message("ERROR_TIME"):
-                            chat.send(message_delay_global)
+                            send(message_delay_global)
 
                 else:
                     send_error_level('Moderador', str(command))
@@ -4675,12 +4705,12 @@ def commands_module(data) -> None:
                         message_add_user = message_add_user_load.replace('{user}', user_input)
 
                         if utils.send_message("RESPONSE"):
-                            chat.send(message_add_user)
+                            send(message_add_user)
 
                     else:
 
                         if utils.send_message("ERROR_TIME"):
-                            chat.send(message_delay_global)
+                            send(message_delay_global)
 
                 else:
                     send_error_level('Moderador', str(command))
@@ -4702,7 +4732,7 @@ def commands_module(data) -> None:
                             message_check_user = message_check_user_load.replace('{user}', str(user))
 
                             if utils.send_message("RESPONSE"):
-                                chat.send(message_check_user)
+                                send(message_check_user)
 
                         else:
 
@@ -4710,12 +4740,12 @@ def commands_module(data) -> None:
                             message_no_user_giveaway = message_no_user_giveaway_load.replace('{user}', user)
 
                             if utils.send_message("RESPONSE"):
-                                chat.send(message_no_user_giveaway)
+                                send(message_no_user_giveaway)
 
                 else:
 
                     if utils.send_message("ERROR_TIME"):
-                        chat.send(message_delay_global)
+                        send(message_delay_global)
 
         elif command in result_player_check.values():
 
@@ -4746,7 +4776,7 @@ def commands_module(data) -> None:
                                                                    aliases_commands)
 
                             if utils.send_message("RESPONSE"):
-                                chat.send(message_replace_response)
+                                send(message_replace_response)
 
                         else:
 
@@ -4758,11 +4788,11 @@ def commands_module(data) -> None:
                                                                    aliases_commands)
 
                             if utils.send_message("RESPONSE"):
-                                chat.send(message_replace_response)
+                                send(message_replace_response)
 
                     else:
                         if utils.send_message("ERROR_TIME"):
-                            chat.send(message_delay)
+                            send(message_delay)
 
                 else:
                     send_error_level('Moderador', str(command))
@@ -4784,13 +4814,13 @@ def commands_module(data) -> None:
                                                                aliases_commands)
 
                         if utils.send_message("RESPONSE"):
-                            chat.send(message_replace_response)
+                            send(message_replace_response)
 
 
                     else:
 
                         if utils.send_message("ERROR_TIME"):
-                            chat.send(message_delay)
+                            send(message_delay)
 
                 else:
 
@@ -4831,12 +4861,12 @@ def commands_module(data) -> None:
                                                                    aliases_commands)
 
                             if utils.send_message("RESPONSE"):
-                                chat.send(message_replace_response)
+                                send(message_replace_response)
 
                     else:
 
                         if utils.send_message("ERROR_TIME"):
-                            chat.send(message_delay)
+                            send(message_delay)
                 else:
                     send_error_level('Moderador', str(command))
 
@@ -4853,11 +4883,11 @@ def commands_module(data) -> None:
                     message_replace_response = replace_all(messages_file_load('command_current_confirm'),
                                                            aliases_commands)
                     if utils.send_message("RESPONSE"):
-                        chat.send(message_replace_response)
+                        send(message_replace_response)
 
                 else:
                     if utils.send_message("ERROR_TIME"):
-                        chat.send(message_delay)
+                        send(message_delay)
 
             elif 'next' in result_player_check.keys():
 
@@ -4892,7 +4922,7 @@ def commands_module(data) -> None:
                         response_replace = replace_all(messages_file_load('command_next_confirm'), aliases_commands)
 
                         if utils.send_message("RESPONSE"):
-                            chat.send(response_replace)
+                            send(response_replace)
 
                     elif check_playlist:
 
@@ -4912,7 +4942,7 @@ def commands_module(data) -> None:
                         response_replace = replace_all(messages_file_load('command_next_confirm'), aliases_commands)
 
                         if utils.send_message("RESPONSE"):
-                            chat.send(response_replace)
+                            send(response_replace)
 
                     else:
 
@@ -4923,17 +4953,17 @@ def commands_module(data) -> None:
                         response_replace = replace_all(messages_file_load('command_next_no_music'), aliases_commands)
 
                         if utils.send_message("RESPONSE"):
-                            chat.send(response_replace)
+                            send(response_replace)
 
                 else:
                     if utils.send_message("ERROR_TIME"):
-                        chat.send(message_delay)
+                        send(message_delay)
 
     else:
 
         message_command_disabled = messages_file_load('commands_disabled')
         if utils.send_message("RESPONSE"):
-            chat.send(message_command_disabled)
+            send(message_command_disabled)
 
 
 def command_fallback(message_data) -> None:
@@ -4947,7 +4977,6 @@ def command_fallback(message_data) -> None:
 
     message_parse = eel.parseMessage(message_data.text)()
 
-    print(message_parse)
     if message_parse is not None:
 
         try:
@@ -4968,11 +4997,9 @@ def command_fallback(message_data) -> None:
                                                     f'\r\n:{BOTNAME}.tmi.twitch.tv')
                         restult = filter_names.split(" ")
 
-                        print(restult)
                         for item in restult:
                             namelist.append(item)
 
-                        print(f"Lista = {namelist} | {restult}")
                         eel.users_chat(namelist)
 
                 else:
@@ -4983,7 +5010,6 @@ def command_fallback(message_data) -> None:
                     if name_to_add not in namelist:
                         namelist.append(name_to_add)
 
-                        print(f"Nome adicionado = {name_to_add} | Lista = {namelist}")
                         eel.users_chat(namelist)
 
             if message_type['command'] == 'PART':
@@ -4992,10 +5018,9 @@ def command_fallback(message_data) -> None:
                 name_to_remove = source['nick']
 
                 if name_to_remove in namelist:
-                    print(namelist)
+
                     namelist.remove(name_to_remove)
 
-                    print(f"Nome removido = {name_to_remove} | Lista = {namelist}")
                     eel.users_chat(namelist)
 
             if message_type['command'] == 'PRIVMSG':
@@ -5095,7 +5120,7 @@ def webview_start_app(app_mode):
         window = webview.create_window("RewardEvents 3.0", "http://localhost:8000/index.html", width=1200, height=680,
                                        min_size=(1200, 680), frameless=True, easy_drag=True)
         window.events.closed += pubsub.stop
-        webview.start(debug=True, gui='edgechromium')
+        webview.start(debug=False, gui='edgechromium')
 
     elif app_mode == "auth":
 
@@ -5141,27 +5166,8 @@ def start_app(start_mode):
         webview_start_app('auth')
 
 
-def update_auth_tkn(access_token, refresh_token):
-    if USERNAME == BOTNAME:
-
-        data_bot = {'USERNAME': USERNAME, 'BROADCASTER_ID': BROADCASTER_ID, 'CODE': CODE, 'TOKEN': access_token,
-                    'REFRESH_TOKEN': refresh_token, 'TOKENBOT': access_token, 'BOTUSERNAME': BOTNAME}
-
-        auth_file_bot = open("web/src/auth/auth.json", "w")
-        json.dump(data_bot, auth_file_bot, indent=6, ensure_ascii=False)
-        auth_file_bot.close()
-
-    else:
-
-        data_bot = {'USERNAME': USERNAME, 'BROADCASTER_ID': BROADCASTER_ID, 'CODE': CODE, 'TOKEN': access_token,
-                    'REFRESH_TOKEN': refresh_token, 'TOKENBOT': TOKENBOT, 'BOTUSERNAME': BOTNAME}
-
-        auth_file_bot = open("web/src/auth/auth.json", "w")
-        json.dump(data_bot, auth_file_bot, indent=6, ensure_ascii=False)
-        auth_file_bot.close()
-
-
 def auto_refresh_token(token, refresh_token):
+
     if USERNAME == BOTNAME:
 
         data_bot = {'USERNAME': USERNAME, 'BROADCASTER_ID': BROADCASTER_ID, 'CODE': CODE, 'TOKEN': token,
@@ -5213,7 +5219,7 @@ def start_auth_pub():
             try:
 
                 token_new, refresh_token_new = refresh_access_token(REFRESH_TOKEN, clientid, clientsecret)
-                update_auth_tkn(token_new, refresh_token_new)
+                auto_refresh_token(token_new, refresh_token_new)
 
                 twitch_api.set_user_authentication(token_new, scopes, refresh_token_new)
 
