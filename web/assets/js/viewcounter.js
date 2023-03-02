@@ -5,36 +5,33 @@ function sleep(ms) {
 
 $(window).on("load",async function(){
 
-    var disclosure = await eel.load_disclosure()();
+    var disclosure = await eel.disclosure_py('get','null')();
     if (disclosure){
         document.getElementById('message-disclosure-send').value = disclosure
     }
 
-    while (true){
-
-        data_receive = await eel.get_spec()();
-
-            if (data_receive){
-
-                var spec_data = JSON.parse(data_receive);
-
-                document.getElementById('text-counter').innerText = " " + spec_data.specs;
-                document.getElementById('time-in-live').innerText = spec_data.time;
-                document.getElementById('follow_name_text').innerHTML = spec_data.follow;
-                document.getElementById('last_timer_text').innerHTML = spec_data.last_timer;
-
-                if (spec_data.specs != 'Offline'){
-
-                    document.getElementById('live-dot').style.color = 'red';
-                    
-                }
-                
-            }
-        await sleep(600000)
-    }
-
 });
 
+eel.expose(receive_live_info)
+function receive_live_info(data){
+
+    const spec_data = JSON.parse(data);
+
+    document.getElementById('text-counter').innerText = " " + spec_data.specs;
+    document.getElementById('time-in-live').innerText = spec_data.time;
+
+    if (spec_data.specs != 'Offline'){
+        document.getElementById('live-dot').style.color = 'red';
+    }
+}
+
+eel.expose(receive_follow_info)
+function  receive_follow_info(data){
+
+    const follow_data = JSON.parse(data);
+    document.getElementById('follow_name_text').innerHTML = follow_data.follow;
+
+}
 
 eel.profile_info()(async function(data_auth){
 
@@ -50,7 +47,6 @@ eel.profile_info()(async function(data_auth){
     document.getElementById('login_name').innerText = data_profile.login_name;
     
 })
-
 
 eel.expose(update_div_redeem);
 function update_div_redeem(data_redeem) {

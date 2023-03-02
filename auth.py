@@ -1,17 +1,24 @@
 import json
 
-def auth_data():
-    
-    c = open('web/src/auth/auth.json')
-    data = json.load(c)
+class auth_data:
+    def __init__(self, filename):
+        with open(filename) as f:
+            self.data = json.load(f)
 
-    USERNAME = data['USERNAME']
-    BROADCASTER_ID = data['BROADCASTER_ID']
-    TOKEN = data['TOKEN']
-    CODE = data['CODE']
-    REFRESH_TOKEN = data['REFRESH_TOKEN']
-    BOTNAME = data['BOTUSERNAME']
-    TOKENBOT = data['TOKENBOT']
+    def USERNAME(self):
+        return self.data['USERNAME']
 
+    def BOTUSERNAME(self):
+        return self.data['BOTUSERNAME']
+
+    def BROADCASTER_ID(self):
+        return self.data['BROADCASTER_ID']
     
-    return USERNAME,BROADCASTER_ID,BOTNAME,CODE,TOKENBOT,TOKEN,REFRESH_TOKEN
+    def BOT_ID(self):
+        return self.data['BOT_ID']
+
+    def TOKEN(self):
+        return self.data['TOKEN']
+
+    def TOKENBOT(self):
+        return self.data['TOKENBOT']

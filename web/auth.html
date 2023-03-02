@@ -10,14 +10,16 @@
 
   <!-- Favicons -->
   <link href="assets/img/favicon.png" rel="icon" />
-  <link href="assets/css/style.css" rel="stylesheet" />
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/css/bootstrap-select.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/js/bootstrap-select.min.js"></script>
 
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Kanit" />
+  <link href="assets/css/style.css" rel="stylesheet" />
   <script type="text/javascript" src="/eel.js"></script>
   <script>
     $(function () {
@@ -35,22 +37,6 @@
         <h1 class="navbar-brand text-white mt-1 mb-0">
           RewardEvents autenticação
         </h1>
-
-        <ul class="navbar-nav ms-auto d-flex flex-row">
-
-          <li class="nav-item bg-dark text-white">
-            <button class="btn bg-dark text-white win-icon" id="minimize" onclick="eel.minimize()" role="button"
-              data-toggle="tooltip" data-bs-placement="bottom" title="Minimizar">
-              <i class="fa-solid fa-window-minimize fa-lg"></i>
-            </button>
-          </li>
-          <li class="nav-item bg-dark text-white">
-            <button class="btn bg-dark text-white win-icon" id="close-auth" onclick="eel.close('auth')" role="button"
-              data-toggle="tooltip" data-bs-placement="bottom" title="Fechar" aria-expanded="false">
-              <i class="fa-sharp fa-solid fa-xmark fa-xl"></i>
-            </button>
-          </li>
-        </ul>
       </div>
     </nav>
 
@@ -140,6 +126,7 @@
       </div>
 
       <div class="w-75 bg-dark p-5 mt-5" id="div-user-auth" style="margin-left: 13%" hidden>
+
         <div class="text-center m-5">
           <h4 class="text-white">
             Vamos iniciar com a autenticação da conta streamer.
@@ -166,9 +153,28 @@
               </div>
             </div>
           </div>
+          <button type="submit" class="btn bt-submit mt-4">Iniciar autenticação</button>
+        </form>
+      </div>
+
+      <div class="w-75 bg-dark p-5 mt-5" id="div-user-token" style="margin-left: 13%" hidden>
+        
+        <div class="text-center m-5">
+          <h4 class="text-white">
+            Aguardando o token de usuário
+          </h4>
+          <p class="text-white">Insira as informações requisitadas abaixo</p>
+        </div>
+
+        <form id="submit-auth-token" class="m-5" onsubmit="send_auth_info(event,'submit-user-token')">
+          <div class="form-group text-white mt-3">
+            <label for="streamer-token">Token fornecido na página de autenticação</label>
+            <input type="text" class="form-control bg-dark text-white mt-3" id="streamer-token" minlength="30" maxlength="30" placeholder="Token" required />
+          </div>
           <button type="submit" class="btn bt-submit mt-4">Autenticar</button>
         </form>
       </div>
+
 
       <div class="w-75 bg-dark p-5" id="div-bot-auth" style="margin-left: 12%;margin-top: 7%;" hidden>
         <div class="text-center m-5">
@@ -179,6 +185,41 @@
             <label for="bot-name">Nome de usuário da conta bot</label>
             <input type="text" class="form-control bg-dark text-white mt-3" id="bot-name"
               placeholder="Digite o seu nickname da twitch" required />
+          </div>
+          <button type="submit" class="btn bt-submit mt-4">Iniciar Autenticação Bot</button>
+        </form>
+      </div>
+
+      <div class="w-75 bg-dark p-5 mt-5" id="div-bot-token" style="margin-left: 13%" hidden>
+        <div class="text-center m-5">
+          <h4 class="text-white">
+            Aguardando o token da conta bot
+          </h4>
+          <p class="text-white">Insira as informações requisitadas abaixo</p>
+        </div>
+
+        <form id="submit-bot-token" class="m-5" onsubmit="send_auth_info(event,'submit-bot-token')">
+          <div class="form-group text-white mt-3">
+            <label for="bot-token">Token fornecido na página de autenticação</label>
+            <input type="text" class="form-control bg-dark text-white mt-3" id="bot-token" minlength="30" maxlength="30" placeholder="Token" required />
+          </div>
+          <button type="submit" class="btn bt-submit mt-4">Autenticar</button>
+        </form>
+      </div>
+
+      <div class="w-75 bg-dark p-5 mt-5" id="div-user-bot-token" style="margin-left: 13%" hidden>
+        
+        <div class="text-center m-5">
+          <h4 class="text-white">
+            Aguardando o token de usuário
+          </h4>
+          <p class="text-white">Insira as informações requisitadas abaixo</p>
+        </div>
+
+        <form id="submit-user-bot-token" class="m-5" onsubmit="send_auth_info(event,'submit-user-bot-token')">
+          <div class="form-group text-white mt-3">
+            <label for="streamer-bot-token">Token fornecido na página de autenticação</label>
+            <input type="text" class="form-control bg-dark text-white mt-3" id="streamer-bot-token" minlength="30" maxlength="30" placeholder="Token" required />
           </div>
           <button type="submit" class="btn bt-submit mt-4">Autenticar</button>
         </form>
@@ -194,6 +235,8 @@
           </h3>
         </div>
       </div>
+
+      
     </div>
   </div>
 

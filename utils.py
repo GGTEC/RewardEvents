@@ -4,6 +4,7 @@ import shutil
 import sys
 import time
 from datetime import datetime, timedelta
+import pytz
 
 import coverpy
 import requests
@@ -14,53 +15,56 @@ from dateutil import tz
 from PIL import Image
 from pytube import Search, YouTube
 
+import urllib.request
+import zipfile
+
 coverpy = coverpy.CoverPy()
 
-messages_file = open('web/src/messages/messages_file.json', "r", encoding='utf-8') 
-messages_data = json.load(messages_file) 
-
-message_error = messages_data['response_delay_error']
-
 extDataDir = os.getcwd()
+
+appdata_path = os.getenv('APPDATA')
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     if getattr(sys, 'frozen', False):
         extDataDir = sys._MEIPASS
 
+def find_between( s, first, last ):
+
+    try:
+        start = s.index( first ) + len( first )
+        end = s.index( last, start )
+        return s[start:end]
+    
+    except ValueError:
+        
+        return False
+
 def calculate_time(started):
     
     try:
+        
+        utc_now = datetime.utcnow().replace(tzinfo=pytz.utc)
+        utc_date = datetime.fromisoformat(started).replace(tzinfo=pytz.utc)
 
-        ts = time.strptime(started[:19], "%Y-%m-%dT%H:%M:%S")
-        time_conv = time.strftime("%Y-%m-%d %H:%M:%S", ts)
+        gmt_minus_3_now = utc_now.astimezone(pytz.timezone("Etc/GMT+3"))
+        gmt_minus_3_date = utc_date.astimezone(pytz.timezone("Etc/GMT+3"))
+        
 
-        from_zone = tz.tzutc()
-        to_zone = tz.tzlocal()
+        difference = gmt_minus_3_now - gmt_minus_3_date
+    
+        days = difference.days
+        hours = difference.seconds//3600
+        minutes = (difference.seconds//60)%60
+        sec = difference.seconds%60
+        
+        time_in_live = {
+            'days' : str(days),
+            'hours': str(hours),
+            'minutes': str(minutes),
+            'sec': str(sec)
+        }
 
-        utc = datetime.strptime(time_conv, '%Y-%m-%d %H:%M:%S')
-        utc = utc.replace(tzinfo=from_zone)
-
-        central = utc.astimezone(to_zone)
-
-        now = datetime.now()
-        time_now = now.strftime("%H:%M:%S")
-
-        time_not = datetime.strftime(central, '%H:%M:%S')
-
-        t1 = datetime.strptime(time_not, '%H:%M:%S')
-        t2 = datetime.strptime(time_now, '%H:%M:%S')
-
-        diff = t2 - t1
-
-        seconds_get = diff.seconds
-
-        time_in_live = str(timedelta(seconds=seconds_get))
-
-        time_obj = time.strptime(time_in_live, "%H:%M:%S")
-
-        time_in_live_stip = time.strftime("%H:%M", time_obj)
-
-        return time_in_live_stip
+        return time_in_live
 
     except Exception as e:
 
@@ -88,7 +92,7 @@ def error_log(ex):
 
     print(error)
 
-    with open("web/src/error_log.txt", "a+", encoding='utf-8') as log_file_r:
+    with open(f"{appdata_path}/rewardevents/web/src/error_log.txt", "a+", encoding='utf-8') as log_file_r:
         log_file_r.write(error)
 
 def removestring(value):
@@ -103,7 +107,9 @@ def removestring(value):
     except:
         return value
 
-def album_search(user_input):
+def album_search(title,user_input):
+    
+    user_input = user_input.strip()
     
     music = '0'
     artist = '0'
@@ -111,40 +117,21 @@ def album_search(user_input):
     success = 0
 
     try:
-
-        if validators.url(user_input):
-            
-            yt = YouTube(user_input)
-            url_youtube = user_input
-            video_title = yt.title
-            rep_input = removestring(video_title)
-
-        else:
-
-            search_youtube = Search(user_input)
-            result_search = search_youtube.results[0].__dict__
-            url_youtube = result_search['watch_url']
-
-            yt = YouTube(url_youtube)
-            video_title = yt.title
-            rep_input = user_input 
+        url_youtube = user_input
+        rep_input = removestring(title)
 
         try:
             
             result = coverpy.get_cover(rep_input, 1)
             album_art = result.artwork(625)
-            artist = result.artist
-            music = result.name
 
             img_data = requests.get(album_art).content
 
-            album_art_mei = open(extDataDir + '/web/src/player/images/album.png', 'wb')
-            album_art_mei.write(img_data)
-            album_art_mei.close()
+            with open(extDataDir + 'f/{appdata_path}/rewardevents/web/src/player/images/album.png', 'wb') as album_art_mei:
+                album_art_mei.write(img_data)
 
-            album_art_local = open('web/src/player/images/album.png', 'wb')
-            album_art_local.write(img_data)
-            album_art_local.close()
+            with open(f'{appdata_path}/rewardevents/web/src/player/images/album.png', 'wb') as album_art_local:
+                album_art_local.write(img_data)
         
         except:
 
@@ -154,32 +141,31 @@ def album_search(user_input):
                 'quiet' : True,
                 'no_color': True,
                 'write_thumbnails' : True,
-                'outtmpl': 'web/src/player/images/album.%(ext)s',
+                'outtmpl': f'{appdata_path}/rewardevents/web/src/player/images/album.%(ext)s',
                 'force-write-archive' : True
-                }
+            }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url_youtube])
 
-            img_webp = Image.open('web/src/player/images/album.webp').convert("RGB")
-            img_webp.save('web/src/player/images/album.png','png')
-
-            try:
-                
-                title_split = video_title.split(' - ')
-                artist = title_split[0]
-                music = title_split[1]
-            
-            except Exception as e:
-
-                music = video_title
-                artist = '0'
+            img_webp = Image.open(f'{appdata_path}/rewardevents/web/src/player/images/album.webp').convert("RGB")
+            img_webp.save(f'{appdata_path}/rewardevents/web/src/player/images/album.png','png')
 
         success = 1
+        
+        try:
+            
+            title_split = rep_input.split(' - ')
+            artist = title_split[0]
+            music = title_split[1]
+        
+        except Exception as e:
+
+            music = rep_input
+            artist = '0'
 
     except Exception as e:
         error_log(e)
-
         success = 0
 
 
@@ -193,102 +179,63 @@ def album_search(user_input):
 
     return response_albumart
 
-def check_delay():
+def check_delay(delay_command,last_use):
     
-    now = datetime.now()
-    time = now.strftime("%d/%m/%Y %H:%M:%S")
+    with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8')  as messages_file:
+        messages_data = json.load(messages_file) 
 
-    time_delay_file = open('web/src/config/prefix_tts.json')
-    time_delay_data = json.load(time_delay_file)
+    message_error = messages_data['response_delay_error']
 
-    delay = time_delay_data['delay_date']
+    last_command_time = last_use
+    delay_compare = int(delay_command)
+    
+    current_time = int(time.time())
 
-    delay_compare = time_delay_data['delay_config']
+    if current_time >= last_command_time + delay_compare:
 
-    t1 = datetime.strptime(delay, "%d/%m/%Y %H:%M:%S")
-    t2 = datetime.strptime(time, "%d/%m/%Y %H:%M:%S")
-
-    if t1 > t2:
-        
-        diff = t1 - t2
-        
-        message = message_error.replace('{seconds}', str(diff.seconds))
-        value = False
-        
-        return message,value
-        
-    else:
-
-        datetime_object = datetime.strptime(time, "%d/%m/%Y %H:%M:%S")
-
-        time_delay_file = open('web/src/config/prefix_tts.json')
-        time_delay_data = json.load(time_delay_file)
-        delay_compare = time_delay_data['delay_config']
-
-        future_date = datetime_object + timedelta(seconds= int(delay_compare))
-        delay_save = future_date.strftime("%d/%m/%Y %H:%M:%S")
-
-        time_delay_data['delay_date'] = delay_save
-
-        time_delay_write = open('web/src/config/prefix_tts.json' , 'w', encoding='utf-8') 
-        json.dump(time_delay_data, time_delay_write, indent = 4, ensure_ascii=False)
-        
         message = 'OK'
         value = True
         
-        return message,value
-
-def check_global_delay():
+        return message, value, current_time
     
-    now = datetime.now()
-    time = now.strftime("%d/%m/%Y %H:%M:%S")
-
-    time_delay_file = open('web/src/config/commands_config.json')
-    time_delay_data = json.load(time_delay_file)
-
-    delay = time_delay_data['delay_date']
-
-    delay_compare = time_delay_data['delay_config'] 
-
-    t1 = datetime.strptime(delay, "%d/%m/%Y %H:%M:%S")
-    t2 = datetime.strptime(time, "%d/%m/%Y %H:%M:%S")
-
-    if t1 > t2:
-        
-        diff = t1 - t2
-        
-
-        message = message_error.replace('{seconds}', str(diff.seconds))
-        value = False
-        
-        return message,value
-        
     else:
-
-        datetime_object = datetime.strptime(time, "%d/%m/%Y %H:%M:%S")
-
-        time_delay_file = open('web/src/config/commands_config.json')
-        time_delay_data = json.load(time_delay_file)
-        delay_compare = time_delay_data['delay_config']
-
-        future_date = datetime_object + timedelta(seconds= int(delay_compare))
-        delay_save = future_date.strftime("%d/%m/%Y %H:%M:%S")
-
-        time_delay_data['delay_date'] = delay_save
-
-        time_delay_write = open('web/src/config/commands_config.json' , 'w', encoding='utf-8') 
-        json.dump(time_delay_data, time_delay_write, indent = 4, ensure_ascii=False)
         
+        remaining_time = last_command_time + delay_compare - current_time
+    
+        message = message_error.replace('{seconds}', str(remaining_time))
+        value = False
+        current_time = ''
+        
+        return message, value, current_time
+    
+def check_delay_duel(delay_command,last_use):
+    
+    last_command_time = last_use
+    delay_compare = int(delay_command)
+    
+    current_time = int(time.time())
+
+    if current_time >= last_command_time + delay_compare:
+
         message = 'OK'
         value = True
         
-        return message,value
+        return message, value, current_time
+    
+    else:
+        
+        remaining_time = last_command_time + delay_compare - current_time
+    
+        value = False
+        current_time = ''
+        
+        return remaining_time, value, current_time
 
 def send_message(type_message):
     
     try:
-        status_commands_check = open('web/src/config/commands_config.json')
-        status_commands_data = json.load(status_commands_check)
+        with open(f'{appdata_path}/rewardevents/web/src/config/commands_config.json') as status_commands_check:
+            status_commands_data = json.load(status_commands_check)
         
         status_error_time = status_commands_data['STATUS_ERROR_TIME']
         status_error_user = status_commands_data['STATUS_ERROR_USER']
@@ -296,13 +243,11 @@ def send_message(type_message):
         status_clip = status_commands_data['STATUS_CLIP']
         status_tts = status_commands_data['STATUS_TTS']
         status_timer = status_commands_data['STATUS_TIMER']
-        status_bot = status_commands_data['STATUS_BOT']
         status_music = status_commands_data['STATUS_MUSIC']
         status_music_error = status_commands_data['STATUS_MUSIC_ERROR']
         status_music_confirm = status_commands_data['STATUS_MUSIC_CONFIRM']
 
         if type_message == 'CHAT':
-
                 return True
         
         elif type_message == 'ERROR_TIME':
@@ -325,7 +270,7 @@ def send_message(type_message):
             if status_clip == 1:
                 return True
                     
-        elif type_message == 'ERROR_TTS':
+        elif type_message == 'STATUS_TTS':
             
             if status_tts == 1:
                 return True
@@ -333,11 +278,6 @@ def send_message(type_message):
         elif type_message == 'TIMER':
             
             if status_timer == 1:
-                return True
-                
-        elif type_message == 'STATUS_BOT':
-            
-            if status_bot == 1:
                 return True
 
         elif type_message == 'STATUS_MUSIC':
@@ -354,6 +294,7 @@ def send_message(type_message):
             
             if status_music_error == 1:
                 return True
+        
 
 
     except Exception as e:
@@ -377,68 +318,343 @@ def copy_file(source, dest):
     
 def update_notif(redeem,user,artist,type_not):
 
-    os.remove("web/src/html/backup.html")
+   html_backup = f"{appdata_path}/rewardevents/web/src/html/notification.html.tmp"
+   html_file = f"{appdata_path}/rewardevents/web/src/html/notification.html"
 
-    if copy_file('web/src/html/notification.html', 'web/src/html/backup.html') == 1:
 
-        html = open('web/src/html/notification.html')
-
-        try:
-            
+   try:
+        os.remove(html_file)
+    
+        with open(html_backup, "r") as html:
             soup = bs(html, 'html.parser')
 
-            redeem_block = soup.find("div", {"class": "redem_block"})
-            music_block = soup.find("div", {"class": "music_block"})
+        redeem_block = soup.find("div", {"class": "col-6 redem_block"})
+        music_block = soup.find("div", {"class": "col-7 music_block"})
 
-            if type_not == 'redeem':
+        if type_not == 'redeem':
+            
+            redeem_src = "../Request.png"
+            music_block['style'] = 'display: none !important;'
+            redeem_block['style'] = 'display: block;'
+            
+            image_redeem = soup.find("img", {"class": "img-responsive"})
+            redeem_name_tag = soup.find("span", {"class": "redem_name"})
+            redeem_user_tag = soup.find("span", {"class": "redem_user"})
+
+            image_redeem['src'] = redeem_src
+            redeem_name_tag.string = redeem
+            redeem_user_tag.string = user
+            
                 
-                redeem_src = "../Request.png"
-                music_block['style'] = 'display: none !important;'
-                redeem_block['style'] = 'display: block;'
+        elif type_not == 'music':
+
+            album_src = "../player/images/album.png"
+            music_block['style'] = 'display: block ;'
+            redeem_block['style'] = 'display: none !important;'
+            
+            image_redeem = soup.find("img", {"class": "img-responsive"})
+            music_name_tag = soup.find("span", {"class": "music_name"})
+            artist_name_tag = soup.find("span", {"class": "artist_name"})
+            redeem_user_music_tag = soup.find("span", {"class": "redem_user_music"})
+
+            image_redeem['src'] = album_src
+            music_name_tag.string = redeem
+            artist_name_tag.string = artist
+            redeem_user_music_tag.string = user
                 
-                image_redeem = soup.find("img", {"class": "img-responsive"})
-                redeem_name_tag = soup.find("span", {"class": "redem_name"})
-                redeem_user_tag = soup.find("span", {"class": "redem_user"})
+        with open(html_file, "wb") as f_output:
+            f_output.write(soup.prettify("utf-8"))
 
-                image_redeem['src'] = redeem_src
-                redeem_name_tag.string = redeem
-                redeem_user_tag.string = user
+
+   except Exception as e:
+      error_log(e)
+      
+def update_video(video):
+    
+    html_video_backup = f"{appdata_path}/rewardevents/web/src/html/video.html.tmp"
+    html_video_file = f"{appdata_path}/rewardevents/web/src/html/video.html"
+
+    try:
+
+        with open(html_video_backup, "r") as html:
+            soup = bs(html, 'html.parser')
+
+        video_div = soup.find("div", {"id": "video_div"})
+        gif_div = soup.find("div", {"id": "gif_div"})
+
+        if video.endswith('.gif'):
+
+            video_div['style'] = 'display: none !important;'
+            gif_div['style'] = 'display: block;'
+
+            video_redeem = soup.find("img")
+            video_redeem['src'] = 'http://absolute/' + video
+        
+        else:
+
+            gif_div['style'] = 'display: none !important;'
+            video_div['style'] = 'display: block;'
+
+            video_redeem = soup.find("video")
+            video_redeem['src'] = 'http://absolute/' + video
+               
+        with open(html_video_file, "wb") as f_output:
+            f_output.write(soup.prettify("utf-8"))
+
+        return True
+
+
+    except Exception as e:
+
+        error_log(e)
+
+        return True
+
+def update_event(data):
+    
+    html_event_backup = f"{appdata_path}/rewardevents/web/src/html/event.html.tmp"
+    html_event_file = f"{appdata_path}/rewardevents/web/src/html/event.html"
+
+    image_src = data['img_src']
+    img_px = data['img_px']
+    response_px = data['response_px']
+    duration = int(data['duration']) - 1
+    image_above = data['image_above']	
+    audio_src = data['audio_src']
+    audio_volume = data['audio_volume']
+    tts_src = 'src/player/cache/tts.mp3'
+    play_tts = data['play_tts']
+    
+    audio_volume = int(audio_volume)/100
+    
+    username = data['username']
+    message = data['message']
+    
+    username_soup = bs(username, 'html.parser')
+    message_soup = bs(message, 'html.parser')
+    
+    try:
+        
+        if image_above == 0: 
+
+            with open(html_event_backup, "r",encoding='utf-8') as html:
+                soup = bs(html, 'html.parser')
+
+                png_div = soup.find("div", {"id": "png_div_above"})
+                gif_div = soup.find("div", {"id": "gif_div_above"})
+
+                main_div = soup.find("div", {"id": "main_div_above"})
+                main_div['style'] = f'animation-duration: {duration}s'
                 
-                html.close()
-                f_output = open("web/src/html/notification.html", "wb")
-                f_output.write(soup.prettify("utf-8"))
-                f_output.close()
-
-            elif type_not == 'music':
-
-                album_src = "../player/images/album.png"
-                music_block['style'] = 'display: block ;'
-                redeem_block['style'] = 'display: none !important;'
+                main_div_over = soup.find("div", {"id": "main_div_over"})
+                main_div_over['style'] = 'display: none !important;'
                 
-                image_redeem = soup.find("img", {"class": "img-responsive"})
-                music_name_tag = soup.find("span", {"class": "music_name"})
-                artist_name_tag = soup.find("span", {"class": "artist_name"})
-                redeem_user_music_tag = soup.find("span", {"class": "redem_user_music"})
-
-                image_redeem['src'] = album_src
-                music_name_tag.string = redeem
-                artist_name_tag.string = artist
-                redeem_user_music_tag.string = user
+                audio_tag = soup.find("audio", {"id": "audio1"})
+                audio_tag['src'] = f'http://absolute/{audio_src}'
                 
-                html.close()
-                f_output = open("web/src/html/notification.html", "wb")
-                f_output.write(soup.prettify("utf-8"))
-                f_output.close()
+                audio2_tag = soup.find("audio", {"id": "audio2"})
+                
+                if play_tts == 0:
+                    audio2_tag['src'] = f''
+                else:
+                    audio2_tag['src'] = f'http://localhost:7000/{tts_src}'
+                    
+                volume_tag = soup.find("input", {"id": "volume"})
+                volume_tag['value'] = audio_volume
 
-        except Exception as e:
-            html.close()
+                if image_src.endswith('.gif'):
+                    
+                    png_div['style'] = 'display: none !important;'
+                    gif_div['style'] = 'display: block;'
 
-            os.remove("web/src/html/notification.html")
+                    gif_source = soup.find("img" ,{"id":"gif_above"})
+                    gif_source['src'] = 'http://absolute/' + image_src
+                    gif_source['style'] = f'width: {img_px}px;'
+                    
+                    user_tag = soup.find("p", {"id": "username-gif-above"})
+                    user_tag['style'] = f'font-size: {response_px}px;'
+                    
+                    message_tag = soup.find("p", {"id": "message-gif-above"})
+                    message_tag['style'] = f'font-size: {response_px}px;'
+                    
+                    user_tag.insert(1,username_soup)
+                    message_tag.insert(1,message_soup)
+                    
+                elif image_src.endswith('.png'):
+                    
+                    png_div['style'] = 'display: block;'
+                    gif_div['style'] = 'display: none !important;'
 
-            copy_file('web/src/html/backup.html', 'web/src/html/notification.html')
+                    png_source = soup.find("img" ,{"id":"png_above"})
+                    png_source['src'] = 'http://absolute/' + image_src
+                    png_source['style'] = f'width: {img_px}px;'
+                    
+                    user_tag = soup.find("p", {"id": "username-png-above"})
+                    user_tag['style'] = f'font-size: {response_px}px;'
+                    
+                    message_tag = soup.find("p", {"id": "message-png-above"})
+                    message_tag['style'] = f'font-size: {response_px}px;'
+                    
+                    user_tag.string = ""
+                    message_tag.string = ""
+                    
+                    user_tag.insert(1,username_soup)
+                    message_tag.insert(1,message_soup)
+                
+                with open(html_event_file, "wb") as f_output:
+                    f_output.write(soup.prettify("utf-8"))
 
-            error_log(e)
+            return True
+        
+        else:
+            
+            with open(html_event_backup, "r",encoding='utf-8') as html:
+                soup = bs(html, 'html.parser')
+
+                png_div = soup.find("div", {"id": "png_div_over"})
+                gif_div = soup.find("div", {"id": "gif_div_over"})
+
+                main_div = soup.find("div", {"id": "main_div_over"})
+                main_div['style'] = f'animation-duration: {duration}s'
+                
+                main_div_above = soup.find("div", {"id": "main_div_above"})
+                main_div_above['style'] = 'display: none !important;'
+                
+                audio_tag = soup.find("audio", {"id": "audio1"})
+                audio_tag['src'] = f'http://absolute/{audio_src}'
+                
+                audio2_tag = soup.find("audio", {"id": "audio2"})
+                
+                if play_tts == 0:
+                    audio2_tag['src'] = f''
+                else:
+                    audio2_tag['src'] = f'http://localhost:7000/{tts_src}'
+                    
+                volume_tag = soup.find("input", {"id": "volume"})
+                volume_tag['value'] = audio_volume
+
+                if image_src.endswith('.gif'):
+                    
+                    png_div['style'] = 'display: none !important;'
+                    gif_div['style'] = 'display: block;'
+
+                    gif_source = soup.find("img" ,{"id":"gif_over"})
+                    gif_source['src'] = 'http://absolute/' + image_src
+                    gif_source['style'] = f'width: {img_px}px;'
+                    
+                    user_tag = soup.find("p", {"id": "username-gif-over"})
+                    user_tag['style'] = f'font-size: {response_px}px;'
+                    
+                    message_tag = soup.find("p", {"id": "message-gif-over"})
+                    message_tag['style'] = f'font-size: {response_px}px;'
+                    
+                    user_tag.string = ""
+                    message_tag.string = ""
+                    
+                    user_tag.insert(1,username_soup)
+                    message_tag.insert(1,message_soup)
+                    
+                elif image_src.endswith('.png'):
+                    
+                    png_div['style'] = 'display: block;'
+                    gif_div['style'] = 'display: none !important;'
+
+                    png_source = soup.find("img" ,{"id":"png_over"})
+                    png_source['src'] = 'http://absolute/' + image_src
+                    png_source['style'] = f'width: {img_px}px;'
+                    
+                    user_tag = soup.find("p", {"id": "username-png-over"})
+                    user_tag['style'] = f'font-size: {response_px}px;'
+                    message_tag = soup.find("p", {"id": "message-png-over"})
+                    message_tag['style'] = f'font-size: {response_px}px;'
+                    
+                    user_tag.string = ""
+                    message_tag.string = ""
+                    
+                    user_tag.insert(1,username_soup)
+                    message_tag.insert(1,message_soup)
+                
+                with open(html_event_file, "wb") as f_output:
+                    f_output.write(soup.prettify("utf-8"))
+
+            return True
+            
+    except Exception as e:
+        error_log(e)
+
+        return False
+    
+def replace_all(text, dic_res):
+    
+    try:
+        for i, j in dic_res.items():
+            text = text.replace(i, j)
+
+        return text
+    
+    except Exception as e:
+        error_log(e)
+        
+        return ''
+
+def messages_file_load(key):
+    
+    with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
+        messages_data = json.load(messages_file)
+
+    message = messages_data[key]
+
+    return message
+ 
+def get_files_list():
+    
+    dir = f"{appdata_path}/rewardevents/web"
+
+    if not os.path.exists(dir):
+    
+        os.makedirs(dir)
+
+        url = "https://ggtec.github.io/GGTECApps/assets/web.zip"
+
+        zip_path = f"{appdata_path}/rewardevents/web.zip"
+        unzip_path = f"{appdata_path}/rewardevents/"
+
+        # Baixar o arquivo zip
+        urllib.request.urlretrieve(url, zip_path)
+
+        # Descompactar o arquivo zip
+        with zipfile.ZipFile(unzip_path, 'r') as zip_ref:
+            zip_ref.extractall(unzip_path)
+
+        # Excluir o arquivo zip baixado
+        os.remove(zip_path)
 
 
+    response = requests.get('https://api.twitchinsights.net/v1/bots/all')
 
+    data = json.loads(response.text)
+    data_save = []
+    data = data['bots']
+    for idx, i in enumerate(data):
+        name = data[idx][0]
+        data_save.append(name)
+
+    with open(f"{appdata_path}/rewardevents/web/src/user_info/bot_list.json", "w") as outfile:
+        json.dump(data_save, outfile,indent=6)
+
+    respo_tags = requests.get("https://ggtec.github.io/list_games_tags_tw/tags.json")
+    data_save_tags = json.loads(respo_tags.text)
+
+    with open(f'{appdata_path}/rewardevents/web/src/games/tags.json', "w" , encoding="UTF-8") as tags_file:
+        json.dump(data_save_tags,tags_file,indent=4,ensure_ascii=False)
+
+
+    respo_games = requests.get("https://ggtec.github.io/list_games_tags_tw/games.json")
+    data_save_games = json.loads(respo_games.text)
+
+    with open(f'{appdata_path}/rewardevents/web/src/games/games.json', "w" , encoding="UTF-8") as games_file:
+        json.dump(data_save_games,games_file,indent=4,ensure_ascii=False)
+
+        
+get_files_list()
 

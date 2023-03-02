@@ -85,16 +85,6 @@ function get_key_mode_edit() {
     }
 }
 
-eel.expose(modal_edit_actions);
-function modal_edit_actions(type,div_id){
-    if (type == 'sucess' ){
-        $("#modal-edit-sucess").modal("show");
-    } else if (type == 'error'){
-        $("#modal-edit-error").modal("show");
-    }
-    document.getElementById(div_id).hidden = true;
-}
-
 async function get_edit_type(){
 
     var select_edit = document.getElementById('action-edit-select');
@@ -106,6 +96,7 @@ async function get_edit_type(){
         if (type == 'sound'){
 
             document.getElementById("edit-audio-div").hidden = false;
+            document.getElementById("edit-video-div").hidden = true;
             document.getElementById("edit-tts-div").hidden = true;
             document.getElementById("edit-scene-div").hidden = true;
             document.getElementById("edit-response-div").hidden = true;
@@ -129,30 +120,92 @@ async function get_edit_type(){
                     var form_sound = document.querySelector('#audio-edit-form');
                     var old_command_audio = form_sound.querySelector('#old-audio-command');
                     var command_audio = form_sound.querySelector('#command-text-audio-edit');
+                    var command_audio_status = form_sound.querySelector('#command-audio-status');
+                    var command_delay = form_sound.querySelector('#command-audio-delay');
                     var chat_message = form_sound.querySelector('#chat-message-audio-edit');
-                    var user_level = form_sound.querySelector('#mod-switch-audio-edit');
                     var sound_info = form_sound.querySelector('#file-select-audio-edit');
+                    var audio_volume = form_sound.querySelector('#audio-volume-edit');
     
                     $("#redeem-select-audio-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
                     $("#redeem-select-audio-edit").selectpicker("refresh");
 
-                    if (data_sound_parse.user_level == 'mod'){
-                        user_level.checked = true
+
+                    if (data_sound_parse.command_status == 1){
+                        command_audio_status.checked = true;
+                    } else if (data_sound_parse.command_status == 0){
+                        command_audio_status.checked = false;
                     }
 
                     old_command_audio.value = data_sound_parse.command
                     command_audio.value = data_sound_parse.command
+                    
                     chat_message.value = data_sound_parse.response
+                    command_delay.value = data_sound_parse.delay
                     select.value = edit_redeem_name;
                     sound_info.value = data_sound_parse.sound
+                    audio_volume.values = data_sound_parse.volume
                 }
 
                 
             }
 
+        } else if (type == 'video'){
+
+            document.getElementById("edit-video-div").hidden = false;
+            document.getElementById("edit-audio-div").hidden = true;
+            document.getElementById("edit-tts-div").hidden = true;
+            document.getElementById("edit-scene-div").hidden = true;
+            document.getElementById("edit-response-div").hidden = true;
+            document.getElementById("edit-filter-div").hidden = true;
+            document.getElementById("edit-source-div").hidden = true;
+            document.getElementById("edit-keypress-div").hidden = true;
+            document.getElementById("edit-clip-div").hidden = true;
+
+            
+            var video_data = await eel.get_edit_data(edit_redeem_name,type)()
+
+            if (video_data) {
+
+                var return_true = await get_redeem_edit('redeem-select-video-edit')
+
+                if(return_true){
+
+                    var select = document.getElementById('redeem-select-video-edit');
+    
+                    var data_video_parse = JSON.parse(video_data);
+                    var form_video = document.querySelector('#video-edit-form');
+                    var old_command_video = form_video.querySelector('#old-video-command');
+                    var command_video = form_video.querySelector('#command-text-video-edit');
+                    var command_video_status = form_sound.querySelector('#command-video-status');
+                    var command_delay = form_sound.querySelector('#command-video-delay');
+                    var chat_message = form_video.querySelector('#chat-message-video-edit');
+                    var video_info = form_video.querySelector('#file-select-video-edit');
+                    var time_showing_video = form_video.querySelector('#time-showing-video-edit');
+    
+                    $("#redeem-select-video-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
+                    $("#redeem-select-video-edit").selectpicker("refresh");
+
+                    if (data_video_parse.command_status == 1){
+                        command_video_status.checked = true;
+                    } else if (data_video_parse.command_status == 0){
+                        command_video_status.checked = false;
+                    }
+
+                    old_command_video.value = data_video_parse.command
+                    command_video.value = data_video_parse.command
+                    command_delay.value = data_video_parse.delay
+                    chat_message.value = data_video_parse.response
+                    select.value = edit_redeem_name;
+                    video_info.value = data_video_parse.video
+                    time_showing_video.value = data_video_parse.time_showing
+                }
+
+                
+            }
         } else if (type == 'tts'){
 
             document.getElementById("edit-audio-div").hidden = true;
+            document.getElementById("edit-video-div").hidden = true;
             document.getElementById("edit-tts-div").hidden = false;
             document.getElementById("edit-scene-div").hidden = true;
             document.getElementById("edit-response-div").hidden = true;
@@ -174,21 +227,27 @@ async function get_edit_type(){
     
                     var data_tts_parse = JSON.parse(tts_data);
                     var form_tts = document.querySelector('#tts-edit-form');
+                    var old_command_tts = form_tts.querySelector('#old-tts-command');
                     var command_tts = form_tts.querySelector('#command-text-tts-edit');
-                    var chat_message = form_tts.querySelector('#chat-message-tts-edit');
-                    var user_level = form_tts.querySelector('#mod-switch-tts-edit');
+                    var command_tts_status = form_tts.querySelector('#command-tts-status');
+                    var command_delay = form_tts.querySelector('#command-tts-delay');
                     var characters = form_tts.querySelector('#characters-tts-edit');
     
                     $("#redeem-select-tts-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
                     $("#redeem-select-tts-edit").selectpicker("refresh");
 
-                    if (data_tts_parse.user_level == 'mod'){
-                        user_level.checked = true
-                    }
 
                     select.value = edit_redeem_name;
+                    old_command_tts.value = data_tts_parse.command;
                     command_tts.value = data_tts_parse.command;
-                    chat_message.value = data_tts_parse.response;
+
+                    if (data_tts_parse.command_status == 1){
+                        command_tts_status.checked = true;
+                    } else if (data_tts_parse.command_status == 0){
+                        command_tts_status.checked = false;
+                    }
+
+                    command_delay.value = data_tts_parse.delay;
                     characters.value = data_tts_parse.characters;
 
                     $("select").selectpicker("refresh");
@@ -200,6 +259,7 @@ async function get_edit_type(){
         } else if (type == 'scene'){
 
             document.getElementById("edit-audio-div").hidden = true;
+            document.getElementById("edit-video-div").hidden = true;
             document.getElementById("edit-tts-div").hidden = true;
             document.getElementById("edit-scene-div").hidden = false;
             document.getElementById("edit-response-div").hidden = true;
@@ -222,8 +282,9 @@ async function get_edit_type(){
                     var data_scene_parse = JSON.parse(scene_data);
                     var form_scene = document.querySelector('#scene-edit-form');
                     var command_scene = form_scene.querySelector('#command-text-scene-edit');
+                    var command_scene_status = command_scene.querySelector('#command-scene-status');
                     var chat_message = form_scene.querySelector('#chat-message-scene-edit');
-                    var user_level = form_scene.querySelector('#mod-switch-scene-edit');
+                    var command_delay = form_scene.querySelector('#command-scene-delay');
                     var scene_name = form_scene.querySelector('#scene-name-edit');
                     var keep = form_scene.querySelector('#keep-switch-scene-edit');
                     var time = form_scene.querySelector('#time-to-return-scene-edit');
@@ -231,15 +292,19 @@ async function get_edit_type(){
                     $("#redeem-select-scene-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
                     $("#redeem-select-scene-edit").selectpicker("refresh");
 
-                    if (data_scene_parse.user_level == 'mod'){
-                        user_level.checked = true
-                    }
                     if (data_scene_parse.keep == 1){
                         keep.checked = true
                     }
 
+                    if (data_scene_parse.command_status == 1){
+                        command_scene_status.checked = true;
+                    } else if (data_scene_parse.command_status == 0){
+                        command_scene_status.checked = false;
+                    }
+
                     select.value = edit_redeem_name;
                     command_scene.value = data_scene_parse.command;
+                    command_delay.value = data_scene_parse.delay;
                     chat_message.value = data_scene_parse.response;
                     time.value = data_scene_parse.time;
                     $("select").selectpicker("refresh");
@@ -249,6 +314,7 @@ async function get_edit_type(){
         } else if (type == 'response'){
 
             document.getElementById("edit-audio-div").hidden = true;
+            document.getElementById("edit-video-div").hidden = true;
             document.getElementById("edit-tts-div").hidden = true;
             document.getElementById("edit-scene-div").hidden = true;
             document.getElementById("edit-response-div").hidden = false;
@@ -271,19 +337,24 @@ async function get_edit_type(){
                     var form_response = document.querySelector('#response-edit-form');
                     var old_command_response = form_response.querySelector('#old-response-command');
                     var command_response = form_response.querySelector('#command-text-response-edit');
+                    var command_response_status = form_response.querySelector('#command-reponse-status');
                     var chat_message = form_response.querySelector('#chat-message-response-edit');
-                    var user_level = form_response.querySelector('#mod-switch-response-edit');
+                    var command_delay = form_response.querySelector('#command-response-delay');
     
                     $("#redeem-select-response-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
                     $("#redeem-select-response-edit").selectpicker("refresh");
 
-                    if (data_response_parse.user_level == 'mod'){
-                        user_level.checked = true
-                    }
-
                     select.value = edit_redeem_name;
                     old_command_response.value = data_response_parse.command;
                     command_response.value = data_response_parse.command;
+
+                    if (data_response_parse.command_status == 1){
+                        command_response_status.checked = true;
+                    } else if (data_response_parse.command_status == 0){
+                        command_response_status.checked = false;
+                    }
+
+                    command_delay.value = data_response_parse.delay;
                     chat_message.value = data_response_parse.response;
                     $("select").selectpicker("refresh");
                 }  
@@ -292,6 +363,7 @@ async function get_edit_type(){
         } else if (type == 'filter'){
 
             document.getElementById("edit-audio-div").hidden = true;
+            document.getElementById("edit-video-div").hidden = true;
             document.getElementById("edit-tts-div").hidden = true;
             document.getElementById("edit-scene-div").hidden = true;
             document.getElementById("edit-response-div").hidden = true;
@@ -314,19 +386,17 @@ async function get_edit_type(){
                     var form_filter = document.querySelector('#filter-edit-form');
                     var old_command_filter = form_filter.querySelector('#old-filter-command');
                     var command_filter = form_filter.querySelector('#command-text-filter-edit');
+                    var command_filter_status = form_filter.querySelector('#command-filter-status');
                     var chat_message = form_filter.querySelector('#chat-message-filter-edit');
-                    var user_level = form_filter.querySelector('#mod-switch-filter-edit');
                     var source_name = form_filter.querySelector('#source-name-filter-edit');
                     var filter_name = form_filter.querySelector('#filter-name-filter-edit');
+                    var command_delay = form_filter.querySelector('#command-filter-delay');
                     var keep = form_filter.querySelector('#keep-filter-switch-edit');
                     var time = form_filter.querySelector('#time-filter-edit');
     
                     $("#redeem-select-filter-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
                     $("#redeem-select-filter-edit").selectpicker("refresh");
 
-                    if (data_filter_parse.user_level == 'mod'){
-                        user_level.checked = true
-                    }
                     if (data_filter_parse.keep == 1){
                         keep.checked = true
                     }
@@ -334,6 +404,14 @@ async function get_edit_type(){
                     select.value = edit_redeem_name;
                     old_command_filter.value = data_filter_parse.command;
                     command_filter.value = data_filter_parse.command;
+
+                    if (data_filter_parse.command_status == 1){
+                        command_filter_status.checked = true;
+                    } else if (data_filter_parse.command_status == 0){
+                        command_filter_status.checked = false;
+                    }
+
+                    command_delay.value = data_filter_parse.delay;
                     chat_message.value = data_filter_parse.response;
                     time.value = data_filter_parse.time;
                     $("select").selectpicker("refresh");
@@ -343,6 +421,7 @@ async function get_edit_type(){
         } else if (type == 'source'){
 
             document.getElementById("edit-audio-div").hidden = true;
+            document.getElementById("edit-video-div").hidden = true;
             document.getElementById("edit-tts-div").hidden = true;
             document.getElementById("edit-scene-div").hidden = true;
             document.getElementById("edit-response-div").hidden = true;
@@ -366,18 +445,16 @@ async function get_edit_type(){
                     var form_source = document.querySelector('#source-edit-form');
                     var old_command_source = form_source.querySelector('#old-source-command');
                     var command_source = form_source.querySelector('#command-text-source-edit');
+                    var command_source_status = form_source.querySelector('#command-source-status');
                     var chat_message = form_source.querySelector('#chat-message-source-edit');
-                    var user_level = form_source.querySelector('#mod-switch-source-edit');
                     var source_name = form_source.querySelector('#source-name-edit');
+                    var command_delay = form_source.querySelector('#command-source-delay');
                     var keep = form_source.querySelector('#keep-source-edit');
                     var time = form_source.querySelector('#time-source-edit');
     
                     $("#redeem-select-source-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
                     $("#redeem-select-source-edit").selectpicker("refresh");
 
-                    if (data_source_parse.user_level == 'mod'){
-                        user_level.checked = true
-                    }
                     if (data_source_parse.keep == 1){
                         keep.checked = true
                     }
@@ -385,6 +462,14 @@ async function get_edit_type(){
                     select.value = edit_redeem_name;
                     old_command_source.value = data_source_parse.command;
                     command_source.value = data_source_parse.command;
+
+                    if (data_source_parse.command_status == 1){
+                        command_source_status.checked = true;
+                    } else if (data_source_parse.command_status == 0){
+                        command_source_status.checked = false;
+                    }
+
+                    command_delay.value = data_source_parse.delay;
                     chat_message.value = data_source_parse.response;
                     time.value = data_source_parse.time;
 
@@ -395,6 +480,7 @@ async function get_edit_type(){
         } else if (type == 'keypress'){
 
             document.getElementById("edit-audio-div").hidden = true;
+            document.getElementById("edit-video-div").hidden = true;
             document.getElementById("edit-tts-div").hidden = true;
             document.getElementById("edit-scene-div").hidden = true;
             document.getElementById("edit-response-div").hidden = true;
@@ -417,8 +503,9 @@ async function get_edit_type(){
                     var form_keypress = document.querySelector('#keypress-edit-form');
                     var old_command_keypress = form_keypress.querySelector('#old-keypress-command');
                     var command_keypress = form_keypress.querySelector('#command-keypress-edit');
+                    var command_keypress_status = form_keypress.querySelector('#command-keypress-status');
+                    var command_delay = form_keypress.querySelector('#command-keypress-delay');
                     var chat_message = form_keypress.querySelector('#chat-message-keypress-edit');
-                    var user_level = form_keypress.querySelector('#mod-switch-keypress-edit');
                     var mode = form_keypress.querySelector('#key-mode-select-edit');
                     var mult_press_time_input = form_keypress.querySelector('#mult-press-times-edit');
                     var mult_press_interval_input = form_keypress.querySelector('#mult-press-interval-edit');
@@ -434,11 +521,15 @@ async function get_edit_type(){
                     select.value = edit_redeem_name;
                     old_command_keypress.value = data_keypress_parse.command;
                     command_keypress.value = data_keypress_parse.command;
-                    chat_message.value = data_keypress_parse.response;
 
-                    if (data_keypress_parse.user_level == 'mod'){
-                        user_level.checked = true
+                    if (data_keypress_parse.command_status == 1){
+                        command_keypress_status.checked = true;
+                    } else if (data_keypress_parse.command_status == 0){
+                        command_keypress_status.checked = false;
                     }
+
+                    command_delay.value = data_keypress_parse.delay;
+                    chat_message.value = data_keypress_parse.response;
 
                     if (data_keypress_parse.mode == 'mult'){
 
@@ -471,6 +562,7 @@ async function get_edit_type(){
         } else if (type == 'clip'){
 
             document.getElementById("edit-audio-div").hidden = true;
+            document.getElementById("edit-video-div").hidden = true;
             document.getElementById("edit-tts-div").hidden = true;
             document.getElementById("edit-scene-div").hidden = true;
             document.getElementById("edit-response-div").hidden = true;
@@ -493,18 +585,23 @@ async function get_edit_type(){
                     var form_clip = document.querySelector('#clip-edit-form');
                     var old_command_clip = form_clip.querySelector('#old-clip-command');
                     var command_clip = form_clip.querySelector('#command-text-clip-edit');
-                    var user_level = form_clip.querySelector('#mod-switch-clip-edit');
+                    var command_clip_status = form_clip.querySelector('#command-clip-status');
+                    var command_delay = form_clip.querySelector('#command-clip-delay');
     
                     $("#redeem-select-clip-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
                     $("#redeem-select-clip-edit").selectpicker("refresh");
 
-                    if (data_clip_parse.user_level == 'mod'){
-                        user_level.checked = true
-                    }
-
                     select.value = edit_redeem_name;
                     old_command_clip.value = data_clip_parse.command;
                     command_clip.value = data_clip_parse.command;
+
+                    if (data_clip_parse.command_status == 1){
+                        command_clip_status.checked = true;
+                    } else if (data_clip_parse.command_status == 0){
+                        command_clip_status.checked = false;
+                    }
+
+                    command_delay.value = data_clip_parse.delay;
                 }  
             }
         }
@@ -521,23 +618,30 @@ function save_edit(event,type_edit){
         var redeem = form_save.querySelector('#redeem-select-audio-edit').value;
         var old_command = form_save.querySelector('#old-audio-command').value;
         var command = form_save.querySelector('#command-text-audio-edit').value;
+        var command_status = form_save.querySelector('#command-audio-status');
+        var command_delay = form_save.querySelector('#command-audio-delay').value;
         var chat_message = form_save.querySelector('#chat-message-audio-edit').value;
-        var user_level = form_save.querySelector('#mod-switch-audio-edit').checked;
+        var user_level = form_save.querySelector('#user-level-audio-edit').value;
         var sound_path = form_save.querySelector('#file-select-audio-edit').value;
+        var audio_volume = form_save.querySelector('#audio-volume-edit').value;
 
-        if (user_level == true ){
-            user_level = 'mod'
-        } else {
-            user_level = ''
+        if (command_status.checked == true){
+            command_status = 1
+        } else if (command_status.checked == false){
+            command_status = 0
         }
+
         data = {
             old_redeem: old_redeem,
             redeem: redeem,
             old_command: old_command,
             command: command,
+            command_status: command_status,
+            delay: command_delay,
             chat_message: chat_message,
             user_level: user_level,
-            sound_path: sound_path
+            sound_path: sound_path,
+            audio_volume: audio_volume
         }
 
         var formData = JSON.stringify(data);
@@ -545,27 +649,70 @@ function save_edit(event,type_edit){
         eel.save_edit_redeen(formData,'audio')
 
 
-    } else if (type_edit == 'tts'){
+    } else if (type_edit == 'video'){
 
-        var form_save = document.getElementById('tts-edit-form');
+        var form_save = document.getElementById('video-edit-form');
         var old_redeem = document.getElementById('action-edit-select').value;
-        var redeem = form_save.querySelector('#redeem-select-tts-edit').value;
-        var command = form_save.querySelector('#command-text-tts-edit').value;
-        var chat_message = form_save.querySelector('#chat-message-tts-edit').value;
-        var user_level = form_save.querySelector('#mod-switch-tts-edit').checked;
-        var characters = form_save.querySelector('#characters-tts-edit').value;
+        var redeem = form_save.querySelector('#redeem-select-video-edit').value;
+        var old_command = form_save.querySelector('#old-video-command').value;
+        var command = form_save.querySelector('#command-text-video-edit').value;
+        var command_status = form_save.querySelector('#command-video-status');
+        var command_delay = form_save.querySelector('#command-video-delay').value;
+        var chat_message = form_save.querySelector('#chat-message-video-edit').value;
+        var user_level = form_save.querySelector('#user-level-video-edit').value;
+        var video_path = form_save.querySelector('#file-select-video-edit').value;
+        var time_showing_video = form_save.querySelector('#time-showing-video-edit').value;
 
-        if (user_level == true ){
-            user_level = 'mod'
-        } else {
-            user_level = ''
+        if (command_status.checked == true){
+            command_status = 1
+        } else if (command_status.checked == false){
+            command_status = 0
         }
+
         data = {
             old_redeem: old_redeem,
             redeem: redeem,
             old_command: old_command,
             command: command,
+            command_status: command_status,
+            delay: command_delay,
             chat_message: chat_message,
+            user_level: user_level,
+            video_path: video_path,
+            time_showing_video: time_showing_video
+        }
+
+        var formData = JSON.stringify(data);
+
+        eel.save_edit_redeen(formData,'video')
+
+
+    } else if (type_edit == 'tts'){
+
+        var form_save = document.getElementById('tts-edit-form');
+        var old_redeem = document.getElementById('action-edit-select').value;
+        var redeem = form_save.querySelector('#redeem-select-tts-edit').value;
+        var old_command = form_save.querySelector('#old-tts-command').value;
+        var command = form_save.querySelector('#command-text-tts-edit').value;
+        var command_status = form_save.querySelector('#command-tts-status');
+        var command_delay = form_save.querySelector('#command-tts-delay').value;
+        var user_level = form_save.querySelector('#user-level-tts-edit').value;
+        var characters = form_save.querySelector('#characters-tts-edit').value;
+
+
+        if (command_status.checked == true){
+            command_status = 1
+        } else if (command_status.checked == false){
+            command_status = 0
+        }
+
+        data = {
+            old_redeem: old_redeem,
+            redeem: redeem,
+            old_command: old_command,
+            command: command,
+            command_status: command_status,
+            delay: command_delay,
             user_level: user_level,
             characters: characters
         }
@@ -581,17 +728,14 @@ function save_edit(event,type_edit){
         var redeem = form_save.querySelector('#redeem-select-scene-edit').value;
         var old_command = form_save.querySelector('#old-scene-command').value;
         var command = form_save.querySelector('#command-text-scene-edit').value;
+        var command_status = form_save.querySelector('#command-scene-status');
+        var command_delay = form_save.querySelector('#command-scene-delay').value;
         var chat_message = form_save.querySelector('#chat-message-scene-edit').value;
-        var user_level = form_save.querySelector('#mod-switch-scene-edit').checked;
+        var user_level = form_save.querySelector('#user-level-scene-edit').value;
         var scene_name = form_save.querySelector('#scene-name-edit').value;
         var keep = form_save.querySelector('#keep-switch-scene-edit').checked;
         var time = form_save.querySelector('#time-to-return-scene-edit').value;
 
-        if (user_level == true ){
-            user_level = 'mod'
-        } else {
-            user_level = ''
-        }
 
         if (keep == true){
             keep = 1
@@ -599,11 +743,19 @@ function save_edit(event,type_edit){
             keep = 0
         }
 
+        if (command_status.checked == true){
+            command_status = 1
+        } else if (command_status.checked == false){
+            command_status = 0
+        }
+
         data = {
             old_redeem: old_redeem,
             redeem: redeem,
             old_command: old_command,
             command: command,
+            command_status: command_status,
+            delay: command_delay,
             chat_message: chat_message,
             user_level: user_level,
             scene_name: scene_name,
@@ -622,13 +774,15 @@ function save_edit(event,type_edit){
         var redeem = form_save.querySelector('#redeem-select-response-edit').value;
         var old_command = form_save.querySelector('#old-response-command').value;
         var command = form_save.querySelector('#command-text-response-edit').value;
+        var command_status = form_save.querySelector('#command-response-status');
+        var command_delay = form_save.querySelector('#command-response-delay').value;
         var chat_message = form_save.querySelector('#chat-message-response-edit').value;
-        var user_level = form_save.querySelector('#mod-switch-response-edit').checked;
+        var user_level = form_save.querySelector('#user-level-response-edit').value;
 
-        if (user_level == true ){
-            user_level = 'mod'
-        } else {
-            user_level = ''
+        if (command_status.checked == true){
+            command_status = 1
+        } else if (command_status.checked == false){
+            command_status = 0
         }
 
         data = {
@@ -636,6 +790,8 @@ function save_edit(event,type_edit){
             redeem: redeem,
             old_command: old_command,
             command: command,
+            command_status: command_status,
+            delay: command_delay,
             chat_message: chat_message,
             user_level: user_level,
         }
@@ -652,17 +808,19 @@ function save_edit(event,type_edit){
 
         var old_command = form_save.querySelector('#old-filter-command').value;
         var command = form_save.querySelector('#command-text-filter-edit').value;
+        var command_status = form_save.querySelector('#command-filter-status');
+        var command_delay = form_save.querySelector('#command-filter-delay').value;
         var chat_message = form_save.querySelector('#chat-message-filter-edit').value;
-        var user_level = form_save.querySelector('#mod-switch-filter-edit').checked;
+        var user_level = form_save.querySelector('#user-level-filter-edit').value;
 
         var source = form_save.querySelector('#source-name-filter-edit').value;
         var filter = form_save.querySelector('#filter-name-edit').value;
         var keep = form_save.querySelector('#keep-filter-switch-edit').checked;
 
-        if (user_level == true ){
-            user_level = 'mod'
-        } else {
-            user_level = ''
+        if (command_status.checked == true){
+            command_status = 1
+        } else if (command_status.checked == false){
+            command_status = 0
         }
 
         if (keep == true ){
@@ -677,6 +835,8 @@ function save_edit(event,type_edit){
             redeem: redeem,
             old_command: old_command,
             command: command,
+            command_status: command_status,
+            delay: command_delay,
             chat_message: chat_message,
             user_level: user_level,
             source: source,
@@ -696,22 +856,24 @@ function save_edit(event,type_edit){
 
         var old_command = form_save.querySelector('#old-source-command').value;
         var command = form_save.querySelector('#command-text-source-edit').value;
+        var command_status = form_save.querySelector('#command-source-status');
+        var command_delay = form_save.querySelector('#command-source-delay').value;
         var chat_message = form_save.querySelector('#chat-message-source-edit').value;
-        var user_level = form_save.querySelector('#mod-switch-source-edit').checked;
+        var user_level = form_save.querySelector('#user-level-source-edit').value;
         var time = form_save.querySelector('#time-source-edit').value;
         var source = form_save.querySelector('#source-name-source-edit').value;
         var keep = form_save.querySelector('#keep-source-edit').checked;
-
-        if (user_level == true ){
-            user_level = 'mod'
-        } else {
-            user_level = ''
-        }
 
         if (keep == true ){
             keep = 1
         } else {
             keep = 0
+        }
+
+        if (command_status.checked == true){
+            command_status = 1
+        } else if (command_status.checked == false){
+            command_status = 0
         }
 
         data = {
@@ -720,6 +882,8 @@ function save_edit(event,type_edit){
             redeem: redeem,
             old_command: old_command,
             command: command,
+            command_status: command_status,
+            delay: command_delay,
             chat_message: chat_message,
             user_level: user_level,
             source: source,
@@ -739,8 +903,10 @@ function save_edit(event,type_edit){
 
         var old_command = form_save.querySelector('#old-keypress-command').value;
         var command = form_save.querySelector('#command-keypress-edit').value;
+        var command_status = form_save.querySelector('#command-keypress-status');
+        var command_delay = form_save.querySelector('#command-keypress-delay').value;
         var chat_message = form_save.querySelector('#chat-message-keypress-edit').value;
-        var user_level = form_save.querySelector('#mod-switch-keypress-edit').checked;
+        var user_level = form_save.querySelector('#user-level-key-edit').value;
 
         var mode = form_save.querySelector('#key-mode-select-edit').value;
         var mult_press_time_input = form_save.querySelector('#mult-press-times-edit').value;
@@ -752,10 +918,10 @@ function save_edit(event,type_edit){
         var key3_inp = form_save.querySelector('#key-3-edit').value;
         var key4_inp = form_save.querySelector('#key-4-edit').value;
 
-        if (user_level == true ){
-            user_level = 'mod'
-        } else {
-            user_level = ''
+        if (command_status.checked == true){
+            command_status = 1
+        } else if (command_status.checked == false){
+            command_status = 0
         }
 
         if (mode == 'mult'){
@@ -766,6 +932,8 @@ function save_edit(event,type_edit){
                 redeem: redeem,
                 old_command: old_command,
                 command: command,
+                command_status: command_status,
+                delay: command_delay,
                 chat_message: chat_message,
                 user_level: user_level,
                 mode: mode,
@@ -786,6 +954,7 @@ function save_edit(event,type_edit){
                 redeem: redeem,
                 old_command: old_command,
                 command: command,
+                command_status: command_status,
                 chat_message: chat_message,
                 user_level: user_level,
                 mode: mode,
@@ -804,6 +973,7 @@ function save_edit(event,type_edit){
                 redeem: redeem,
                 old_command: old_command,
                 command: command,
+                command_status: command_status,
                 chat_message: chat_message,
                 user_level: user_level,
                 mode: mode,
@@ -829,19 +999,23 @@ function save_edit(event,type_edit){
         var redeem = form_save.querySelector('#redeem-select-clip-edit').value;
         var old_command = form_save.querySelector('#old-clip-command').value;
         var command = form_save.querySelector('#command-text-clip-edit').value;
-        var user_level = form_save.querySelector('#mod-switch-clip-edit').checked;
+        var command_status = form_save.querySelector('#command-clip-status');
+        var command_delay = form_save.querySelector('#command-clip-delay').value;
+        var user_level = form_save.querySelector('#user-level-clip-edit').value;
 
-        if (user_level == true ){
-            user_level = 'mod'
-        } else {
-            user_level = ''
+        if (command_status.checked == true){
+            command_status = 1
+        } else if (command_status.checked == false){
+            command_status = 0
         }
-
+        
         data = {
             old_redeem: old_redeem,
             redeem: redeem,
             old_command: old_command,
             command: command,
+            command_status: command_status,
+            delay: command_delay,
             user_level: user_level,
         }
 
@@ -886,32 +1060,4 @@ function hide_div_edit(div_id, select_redeem) {
 function hide_create_edit(div_id_hide) {
     document.getElementById("create-redeem").hidden = false;
     document.getElementById(div_id_hide).hidden = true;
-}
-
-function edit_action_save(event,type){
-    event.preventDefault()
-
-    if (type == 'audio'){
-
-        var form_sound = document.querySelector('#audio-edit-form');
-        var redeem = form_sound.querySelector('#redeem-select-audio-edit');
-        var command = form_sound.querySelector('#command-text-audio-edit');
-        var message = form_sound.querySelector('#chat-message-audio-edit');
-        var user_level = form_sound.querySelector('#mod-switch-audio-edit');
-        var sound_path = form_sound.querySelector('#file-select-audio-edit');
-
-        if (user_level.checked == true){
-            user_level = 1
-        } else {
-            user_level = 0
-        }
-
-        data = {
-            redeem_save : redeem,
-            command_save : command,
-            message_save : message,
-            user_level_save : user_level,
-            sound_path_save : sound_path,
-        }
-    }
 }

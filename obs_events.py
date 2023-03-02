@@ -2,23 +2,28 @@ import obsws_python as obs
 import time
 import json
 import utils
+import os
 
+appdata_path = os.getenv('APPDATA')
+is_started = 0
 
-config_file = open('web/src/config/obs.json','r',encoding='utf-8')
-config_data = json.load(config_file)
-
-host_data = config_data['OBS_HOST']
-port_data = config_data['OBS_PORT']
-pass_data = config_data['OBS_PASSWORD']
-test_data = config_data['OBS_TEST_CON']
-
+def load_config():
+    
+    with open(f'{appdata_path}/rewardevents/web/src/config/obs.json','r',encoding='utf-8') as config_file:
+        config_data = json.load(config_file)
+        
+    return config_data
+    
 def test_obs_conn():
 
-    if test_data == 1:
+    config_data = load_config()
+
+    if config_data['OBS_TEST_CON'] == 1:
 
         try:
-            cl = obs.ReqClient(host=host_data, port=port_data, password=pass_data)
-
+            
+            cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+            
             return True
 
         except:
@@ -32,8 +37,10 @@ def test_obs_conn():
 def get_scenes():
 
     try:
-
-        cl = obs.ReqClient(host=host_data, port=port_data, password=pass_data)
+        
+        config_data = load_config()
+    
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
 
         resp_OBS = cl.get_scene_list()
 
@@ -58,8 +65,9 @@ def get_scenes():
 def get_sources():
 
     try:
-
-        cl = obs.ReqClient(host=host_data, port=port_data, password=pass_data)
+        config_data = load_config()
+        
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
 
         actual_scene_name_resp = cl.get_current_program_scene()
 
@@ -87,8 +95,9 @@ def get_sources():
 
 def get_filters(source_name):
 
-
-    cl = obs.ReqClient(host=host_data, port=port_data, password=pass_data)
+    config_data = load_config()
+    
+    cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
 
     resp_OBS = cl.get_source_filter_list(source_name)
 
@@ -107,8 +116,9 @@ def get_filters(source_name):
 def show_scene(scene_name, time_show, keep):
 
     try:
-
-        cl = obs.ReqClient(host=host_data, port=port_data, password=pass_data)
+        config_data = load_config()
+        
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
 
         actual_scene_name_resp = cl.get_current_program_scene()
 
@@ -132,7 +142,9 @@ def show_source(source_name, time_show, keep):
 
     try:
 
-        cl = obs.ReqClient(host=host_data, port=port_data, password=pass_data)
+        config_data = load_config()
+        
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
 
         scene_resp = cl.get_current_program_scene()
         scene_atual = scene_resp.current_program_scene_name
@@ -147,18 +159,45 @@ def show_source(source_name, time_show, keep):
         else:
 
             cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
-            time.sleep(time_show)
+            time.sleep(int(time_show))
             cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
-    
+
     except:
+        
+        pass
+
+def show_source_video(source_name, time_show):
+
+    try:
+    
+        config_data = load_config()
+        
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+
+        scene_resp = cl.get_current_program_scene()
+        scene_atual = scene_resp.current_program_scene_name
+
+        item_id_resp = cl.get_scene_item_id(scene_atual,source_name)
+
+        item_id = item_id_resp.scene_item_id
+
+        cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
+        
+        time.sleep(int(time_show))
+
+        cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
+
+    except:
+        
         pass
 
 def show_filter(source_name, filter_name, time_show,keep):
 
     try:
+        
+        config_data = load_config()
 
-
-        cl = obs.ReqClient(host=host_data, port=port_data, password=pass_data)
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
 
         if keep == 1:
 
@@ -171,23 +210,30 @@ def show_filter(source_name, filter_name, time_show,keep):
             time.sleep(time_show)
 
             cl.set_source_filter_enabled(source_name,filter_name,False)
-    
+
     except:
         pass
 
 def notification():
 
+    global is_started
+    
     try:
-        notifc_config_file = open('web/src/config/notfic.json','r',encoding='utf-8')
-        notifc_config_Data = json.load(notifc_config_file)
+        
+        is_started = 1
+        
+        config_data = load_config()
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notifc_config_file:
+            notifc_config_Data = json.load(notifc_config_file)
 
         notifc_status = notifc_config_Data['HTML_ACTIVE']
         source_name = notifc_config_Data['HTML_TITLE']
         time_show = notifc_config_Data['HTML_TIME']
 
         if notifc_status == 1:
-
-            cl = obs.ReqClient(host=host_data, port=port_data, password=pass_data)
+            
+            cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
 
             scene_resp = cl.get_current_program_scene()
             scene_atual = scene_resp.current_program_scene_name
@@ -210,23 +256,26 @@ def notification():
                 cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
                 time.sleep(time_show)
                 cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
-    
-    except Exception as e:
-        utils.error_log(e)
+
+    except:
+        pass
 
 def notification_player():
 
     try:
-        notifc_config_file = open('web/src/config/notfic.json','r',encoding='utf-8')
-        notifc_config_Data = json.load(notifc_config_file)
+        
+        config_data = load_config()
+        
+        with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notifc_config_file:
+            notifc_config_Data = json.load(notifc_config_file)
 
         notifc_status = notifc_config_Data['HTML_PLAYER_ACTIVE']
         source_name = notifc_config_Data['HTML_TITLE']
         time_show = notifc_config_Data['HTML_TIME']
 
         if notifc_status == 1:
-
-            cl = obs.ReqClient(host=host_data, port=port_data, password=pass_data)
+            
+            cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
 
             scene_resp = cl.get_current_program_scene()
             scene_atual = scene_resp.current_program_scene_name
@@ -250,5 +299,50 @@ def notification_player():
                 time.sleep(time_show)
                 cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
     
-    except Exception as e:
-        utils.error_log(e)
+    except:
+        pass
+
+def notification_event():
+    
+    global is_started
+    
+    try:
+        
+        is_started = 1
+        
+        config_data = load_config()
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notifc_config_file:
+            notifc_config_Data = json.load(notifc_config_file)
+
+        notifc_status = notifc_config_Data['HTML_EVENTS_ACTIVE']
+        source_name = notifc_config_Data['HTML_EVENTS']
+        time_show = notifc_config_Data['HTML_EVENTS_TIME']
+        
+        if notifc_status == 1:
+
+            cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+
+            scene_resp = cl.get_current_program_scene()
+            scene_atual = scene_resp.current_program_scene_name
+
+            resp_OBS = cl.get_scene_item_list(scene_atual)
+            itens_resp = resp_OBS.scene_items
+            source_list = {"source":[]}
+            
+            for item in itens_resp:
+
+                sources = item['sourceName']
+                source_list['source'].append(sources)
+
+            if source_name in source_list['source']:
+                
+                item_id_resp = cl.get_scene_item_id(scene_atual,source_name)
+                item_id = item_id_resp.scene_item_id
+
+                cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
+                time.sleep(int(time_show))
+                cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
+
+    except:
+        pass

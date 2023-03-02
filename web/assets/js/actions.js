@@ -1,8 +1,18 @@
 
-async function getFolder() {
+async function getFolder(id) {
     var dosya_path = await eel.select_file_py()();
     if (dosya_path) {
-        document.getElementById("file-select").value = dosya_path;
+        document.getElementById(id).value = dosya_path;
+        if (id == 'file-select-notific'){
+            chat_config('save')
+        }
+    }
+}
+
+async function getFolder_video(id){
+    var dosya_path = await eel.select_file_video_py()();
+    if (dosya_path) {
+        document.getElementById(id).value = dosya_path;
     }
 }
 
@@ -12,7 +22,6 @@ function removeOptions(selectElement) {
     $("#" + selectElement).selectpicker("refresh");
 
 }
-
 
 async function get_redeem_js(el_id, btn_id, type_get) {
 
@@ -38,6 +47,7 @@ async function get_redeem_js(el_id, btn_id, type_get) {
                 $("#" + el_id).append('<option class="bg-dark" style="color: #fff;" value="'+ optn +'">'+ optn +'</option>');
                 $("#" + el_id).selectpicker("refresh");
             }
+
         }
 
     } else {
@@ -57,6 +67,13 @@ async function get_redeem_js(el_id, btn_id, type_get) {
 
                 $("#" + el_id).append('<option style="background: #000; color: #fff;" value="'+ optn +'">'+ optn +'</option>');
                 $("#" + el_id).selectpicker("refresh");
+            }
+
+            if (el_id == 'redeem-select-giveaway' || el_id == 'redeem-select-counter') {
+
+                $("#" + el_id).append('<option class="bg-dark" style="color: #fff;" value="None">Sem recompensa</option>');
+                $("#" + el_id).selectpicker("refresh");
+                
             }
         }
         $("#" + el_id + " option[value='Carregando']").remove();
@@ -168,40 +185,42 @@ function create_action(event,type_id){
     if (type_id == 'audio'){
 
         var form = document.querySelector("#audio-create");
-        var mod_value = form.querySelector('input[id="mod-switch-audio"]').checked;
-
-        if (mod_value == true) {
-            mod_value = 'mod';
-        } else {
-            mod_value = '';
-        }
 
         data = {
             redeem_value: form.querySelector('select[id="redeem-select-audio"]').value,
             command_value: form.querySelector('input[id="command-text"]').value,
             chat_response: form.querySelector('input[id="chat-message"]').value,
+            command_delay: form.querySelector('input[id="command-delay"]').value,
             audio_path: form.querySelector('input[id="file-select"]').value,
-            user_level_value: mod_value,
+            audio_volume: form.querySelector('input[id="audio-volume"]').value,
+            user_level_value: form.querySelector('select[id="user-level-audio"]').value,
         };
 
+    } else if (type_id == 'video'){
+
+        var form = document.querySelector("#video-create");
         
+        data = {
+            redeem_value: form.querySelector('select[id="redeem-select-video"]').value,
+            command_value: form.querySelector('input[id="command-text"]').value,
+            chat_response: form.querySelector('input[id="chat-message"]').value,
+            command_delay: form.querySelector('input[id="command-delay"]').value,
+            video_path: form.querySelector('input[id="file-select-video"]').value,
+            time_showing_video: form.querySelector('input[id="time-showing-video"]').value,
+            user_level_value: form.querySelector('select[id="user-level-video"]').value,
+        };
+
+            
     } else if (type_id == 'tts') {
 
         var form = document.querySelector("#tts-create");
-        var mod_value = form.querySelector('input[id="mod-switch-tts"]').checked;
-
-        if (mod_value == true) {
-            mod_value = 'mod';
-        } else {
-            mod_value = '';
-        }
 
         data = {
             redeem_value: form.querySelector('select[id="redeem-select-tts"]').value,
             command_value: form.querySelector('input[id="command-text"]').value,
-            chat_response: form.querySelector('input[id="chat-message"]').value,
+            command_delay: form.querySelector('input[id="command-delay"]').value,
             characters: form.querySelector('input[id="characters"]').value,
-            user_level_value: mod_value,
+            user_level_value: form.querySelector('select[id="user-level-tts"]').value,
         };
 
 
@@ -209,26 +228,16 @@ function create_action(event,type_id){
     } else if (type_id == 'scene') {
 
         var form = document.querySelector("#scene-create");
-        var mod_value = form.querySelector('input[id="mod-switch-scene"]').checked;
         var keep_scene = form.querySelector('input[id="keep-switch-scene"]').checked;
 
-        if (mod_value == true) {
-            mod_value = 'mod';
-        } else {
-            mod_value = '';
-        }
-
-        if (keep_scene == true) {
-            keep_scene = 1;
-        } else {
-            keep_scene = 0;
-        }
+        keep_scene = keep_scene ? 1 : 0;
 
         data = {
             redeem_value: form.querySelector('select[id="redeem-select-scene"]').value,
             command_value: form.querySelector('input[id="command-text"]').value,
             chat_response: form.querySelector('input[id="chat-message"]').value,
-            user_level_value: mod_value,
+            command_delay: form.querySelector('input[id="command-delay"]').value,
+            user_level_value: form.querySelector('select[id="user-level-scene"]').value,
             scene_name: form.querySelector('select[id="scene_name"]').value,
             time: form.querySelector('input[id="time-to-return-scene"]').value,
             keep_scene_value: keep_scene,
@@ -237,34 +246,20 @@ function create_action(event,type_id){
 
     } else if (type_id == 'response') {
 
-
         var form = document.querySelector("#response-create");
-        var mod_value = form.querySelector('input[id="mod-switch-response"]').checked;
-
-        if (mod_value == true) {
-            mod_value = 'mod';
-        } else {
-            mod_value = '';
-        }
 
         data = {
             redeem_value: form.querySelector('select[id="redeem-select-response"]').value,
             command_value: form.querySelector('input[id="command-text"]').value,
             chat_response: form.querySelector('input[id="chat-message"]').value,
-            user_level_value: mod_value,
+            command_delay: form.querySelector('input[id="command-delay"]').value,
+            user_level_value: form.querySelector('select[id="user-level-response"]').value,
         };
 
     } else if (type_id == 'filter') {
 
         var form = document.querySelector("#filter-create");
-        var mod_value = form.querySelector('input[id="mod-switch-filter"]').checked;
         var keep_filter = form.querySelector('input[id="keep-filter-switch"]').checked;
-
-        if (mod_value == true) {
-            mod_value = 'mod';
-        } else {
-            mod_value = '';
-        }
 
         if (keep_filter == true) {
             keep_filter = 1;
@@ -276,9 +271,10 @@ function create_action(event,type_id){
             redeem_value: form.querySelector('select[id="redeem-select-filter"]').value,
             command_value: form.querySelector('input[id="command-text"]').value,
             chat_response: form.querySelector('input[id="chat-message"]').value,
-            user_level_value: mod_value,
+            user_level_value: form.querySelector('select[id="user-level-filter"]').value,
             source_name: form.querySelector('select[id="source_name_filter"]').value,
             filter_name: form.querySelector('select[id="filter_name"]').value,
+            command_delay: form.querySelector('input[id="command-delay"]').value,
             time_showing: form.querySelector('input[id="time-filter-create"]').value,
             keep: keep_filter,
         };
@@ -286,14 +282,7 @@ function create_action(event,type_id){
     } else if (type_id == 'source') {
 
         var form = document.querySelector("#source-create");
-        var mod_value = form.querySelector('input[id="mod-switch-source"]').checked;
         var keep_source = form.querySelector('input[id="keep-source"]').checked;
-
-        if (mod_value == true) {
-            mod_value = 'mod';
-        } else {
-            mod_value = '';
-        }
 
         if (keep_source == true) {
             keep_source = 1;
@@ -305,7 +294,8 @@ function create_action(event,type_id){
             redeem_value: form.querySelector('select[id="redeem-select-source"]').value,
             command_value: form.querySelector('input[id="command-text"]').value,
             chat_response: form.querySelector('input[id="chat-message"]').value,
-            user_level_value: mod_value,
+            command_delay: form.querySelector('input[id="command-delay"]').value,
+            user_level_value: form.querySelector('select[id="user-level-source"]').value,
             source_name: form.querySelector('select[id="source_name_source"]').value,
             time_showing: form.querySelector('input[id="time_showing-source"]').value,
             keep: keep_source,
@@ -317,29 +307,20 @@ function create_action(event,type_id){
 
         var form = document.querySelector("#keypress-create");
         var mode = form.querySelector('select[id="key-mode-select"]').value;
-        var mod_value = form.querySelector('input[id="mod-switch-keypress"]').checked;
-
-        if (mod_value == true) {
-            mod_value = 'mod';
-        } else {
-            mod_value = '';
-        }
 
         if (mode == "mult") {
 
             data = {
-                redeem_value: form.querySelector('select[id="redeem-select-keypress"]')
-                    .value,
+                redeem_value: form.querySelector('select[id="redeem-select-keypress"]').value,
                 command_value: form.querySelector('input[id="command-text"]').value,
                 chat_response: form.querySelector('input[id="chat-message"]').value,
-                user_level_value: mod_value,
+                command_delay: form.querySelector('input[id="command-delay"]').value,
+                user_level_value: form.querySelector('select[id="user-level-key"]').value,
 
                 mode: form.querySelector('select[id="key-mode-select"]').value,
 
-                mult_press_times: form.querySelector('input[id="mult-press-times"]')
-                    .value,
-                mult_press_interval: form.querySelector('input[id="mult-press-interval"]')
-                    .value,
+                mult_press_times: form.querySelector('input[id="mult-press-times"]').value,
+                mult_press_interval: form.querySelector('input[id="mult-press-interval"]').value,
 
                 key1: form.querySelector('select[id="key-1"]').value,
                 key2: form.querySelector('select[id="key-2"]').value,
@@ -349,11 +330,10 @@ function create_action(event,type_id){
         } else if (mode == "re") {
 
             data = {
-                redeem_value: form.querySelector('select[id="redeem-select-keypress"]')
-                    .value,
+                redeem_value: form.querySelector('select[id="redeem-select-keypress"]').value,
                 command_value: form.querySelector('input[id="command-text"]').value,
                 chat_response: form.querySelector('input[id="chat-message"]').value,
-                user_level_value: mod_value,
+                user_level_value: form.querySelector('select[id="user-level-key"]').value,
                 mode: form.querySelector('select[id="key-mode-select"]').value,
 
                 re_press_time: form.querySelector('input[id="re-press-time"]').value,
@@ -370,7 +350,7 @@ function create_action(event,type_id){
                     .value,
                 command_value: form.querySelector('input[id="command-text"]').value,
                 chat_response: form.querySelector('input[id="chat-message"]').value,
-                user_level_value: mod_value,
+                user_level_value: form.querySelector('select[id="user-level-key"]').value,
                 mode: form.querySelector('select[id="key-mode-select"]').value,
 
                 keep_press_time: form.querySelector('input[id="keep-press-time"]').value,
@@ -383,19 +363,14 @@ function create_action(event,type_id){
         }
 
     } else if (type_id == 'clip') {
+        
         var form = document.querySelector("#clip-create");
-        var mod_value = form.querySelector('input[id="mod-switch-clip"]').checked;
-
-        if (mod_value == true) {
-            mod_value = 'mod';
-        } else {
-            mod_value = '';
-        }
 
         data = {
             redeem_value: form.querySelector('select[id="redeem-select-clip"]').value,
             command_value: form.querySelector('input[id="command-text"]').value,
-            user_level_value: mod_value,
+            command_delay: form.querySelector('input[id="command-delay"]').value,
+            user_level_value: form.querySelector('#user-level-clip').value,
         };
 
     } else if (type_id == 'delete') {

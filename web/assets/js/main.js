@@ -1,9 +1,11 @@
-
-
 $(document).ready(function () {
 
   eel.loaded()();
-  $('audio').audioPlayer();
+  updateTimeDiff()
+  prediction_small()
+  poll_small()
+  update_timer_small()
+  goal()
   $('[data-toggle="tooltip"]').tooltip();
   $("input, select, textarea").attr("autocomplete", "off");
   $("input, select, textarea").attr("spellcheck", "false");
@@ -17,12 +19,33 @@ $(document).ready(function () {
     liveSearchPlaceholder: "Pesquise o item",
     noneSelectedText : 'Selecione um item'
   });
+
+  const carousel = document.querySelector('.carousel');
+  const flkty = new Flickity(carousel, {
+    // Opções do Flickity aqui
+    contain: true,
+    wrapAround: true,
+    autoPlay: true,
+    prevNextButtons: false,
+    pageDots: false,
+    setGallerySize: false
+  });
   
 
 });
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function create_clip() {
+  var buttom_clip = document.getElementById('create-clip');
+  eel.clip()
+  buttom_clip.disabled = true;
+  buttom_clip.classList.add('disabled');
+  await sleep(5000)
+  buttom_clip.disabled = false;
+  buttom_clip.classList.remove('disabled');
 }
 
 eel.expose(toast_notifc);
@@ -58,6 +81,7 @@ function toast_notifc(text){
 });
 
 }
+
 function logout() {
   $("#confirm-logout").modal("show");
 }
@@ -70,58 +94,57 @@ eel.expose(callback_obs);
 function callback_obs(type_id){
   if(type_id == 'sucess'){
     document.getElementById('obs_conn_status').innerHTML = 'Conectado'
-    document.getElementById('obs_retry_button').style.display = 'None'
   } else if (type_id == 'error'){
     document.getElementById('obs_conn_status').innerHTML = 'Desconectado'
-    document.getElementById('obs_retry_button').style.display = 'inline-block'
   }
 }
 
-function try_obs(){
-  document.getElementById('obs_conn_status').innerHTML = 'Conectando...'
-  document.getElementById('obs_retry_button').style.display = 'None'
-  eel.obs_try_conn();
-}
+async function disclosure(event,type_id){
 
-async function save_message_disclosure(event){
+  if (type_id == 'save'){
 
-  event.preventDefault()
+      event.preventDefault()
 
-  var form_disclosure = document.querySelector('#form-disclosure');
-  var disclosure = form_disclosure.querySelector('#message-disclosure-send').value;
+      var form_disclosure = document.querySelector('#form-disclosure');
+      var disclosure = form_disclosure.querySelector('#message-disclosure-send').value;
+      var button_copy = document.getElementById("copy-dis");
+      var button_save = document.getElementById("submit-message-disclosure");
+    
+      eel.disclosure_py(type_id,disclosure);
+    
+      button_copy.disabled = true;
+      button_save.disabled = true;
+      document.getElementById('message-disclosure-send').value = 'Salvo!';
+    
+      await sleep(3000)
+    
+      button_copy.disabled = false;
+      button_save.disabled = false;
+      
+      document.getElementById('message-disclosure-send').value = disclosure;
 
-  eel.save_disclosure(disclosure);
+  } else if (type_id == 'copy'){
 
-  document.getElementById('message-disclosure-send').value = 'Salvo!';
+      var copyText = document.getElementById("message-disclosure-send");
+      var button_copy = document.getElementById("copy-dis");
+      var button_save = document.getElementById("submit-message-disclosure");
 
-  await sleep(3000)
+      var saved_message = copyText.value
 
-  document.getElementById('message-disclosure-send').value = disclosure;
+      copyText.select(); 
+      navigator.clipboard.writeText(copyText.value);
 
-}
-
-async function copy_message_disclosure() {
-
-  var copyText = document.getElementById("message-disclosure-send");
-  var button_copy = document.getElementById("copy-dis");
-  var button_save = document.getElementById("submit-message-disclosure");
-
-  var saved_message = copyText.value
-
-  copyText.select(); 
-  navigator.clipboard.writeText(copyText.value);
-
-  button_copy.disabled = true;
-  button_save.disabled = true;
-  document.getElementById('message-disclosure-send').value = 'Copiado para a Clipboard!';
+      button_copy.disabled = true;
+      button_save.disabled = true;
+      document.getElementById('message-disclosure-send').value = 'Copiado para a Clipboard!';
 
 
-  await sleep(3000)
+      await sleep(3000)
 
-  button_copy.disabled = false;
-  button_save.disabled = false;
-  document.getElementById('message-disclosure-send').value = saved_message;
-
+      button_copy.disabled = false;
+      button_save.disabled = false;
+      document.getElementById('message-disclosure-send').value = saved_message;
+  }
 }
 
 eel.expose(last_command);
@@ -131,209 +154,6 @@ function last_command(command){
 
   command_text.innerHTML = command
 
-}
-
-async function save_music_status(type_id){
-
-  var check_seletor = document.getElementById('music-enable');
-
-  if (type_id == 'save'){
-
-    if (check_seletor.checked == true){
-
-        eel.music_status_save(1,'save')
-    } else if (check_seletor.checked == false) {
-
-        eel.music_status_save(0,'save')
-    }
-
-  } else if (type_id == 'get'){
-
-    var value = await eel.music_status_save('null','get')();
-
-    if (value){
-
-    if (value == 1){
-      check_seletor.checked = true
-    } else {
-      check_seletor.checked = false
-    }
-
-    }
-
-  }
-
-
-}
-
-function update_image(){
-  var player_img = document.getElementsByClassName('song-img')[0];
-  player_img.style.backgroundImage = "url('/src/player/images/album.png?noCache=" + Math.floor(Math.random() * 1000000)+")";
-}
-
-eel.expose(update_music_name);
-function update_music_name(name,artist){
-  var player_music_name = document.getElementsByClassName('music-name')[0];
-  var player_artist_name = document.getElementsByClassName('music-artist')[0];
-
-  player_artist_name.innerHTML = artist;
-  player_music_name.innerHTML = name;
-}
-
-function play_pause(){
-
-  var player_id = document.getElementById('player');
-
-  if (player_id.currentTime == player_id.duration){
-    player_id.play()
-  }
-}
-
-function player_stop(){
-  var player_id = document.getElementById('player');
-  player_id.pause();
-  player_id.currentTime = 0;
-}
-
-async function list_modal(){
-
-  $("#list-mod").modal("show");
-
-  var list = await eel.list_queue()();
-
-  if (list){
-
-    list_parse = JSON.parse(list);
-
-    var tbody = document.getElementById('list-body');
-
-    Object.entries(list_parse).forEach(([k,v]) => {
-
-      tbody.innerHTML += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
-
-    })
-  }
-}
-
-async function playlist_modal(){
-  $("#playlist-mod").modal("show");
-
-  var switch_value = document.getElementById('playlist-switch');
-
-  var status = await eel.playlist_execute_save('none','get')()
-
-  if (status){
-
-    if (status == 1){ 
-
-      switch_value.checked = true;
-
-    } else if (status == 0){
-
-      switch_value.checked = false;
-
-    }
-  }
-}
-
-function playlist_add(event){
-
-  event.preventDefault();
-
-  var form_playlist = document.querySelector('#playlist-add-form');
-  var playlist_url = form_playlist.querySelector('#playlist-url').value;
-
-  eel.add_playlist(playlist_url)
-
-}
-
-function playlist_execute(){
-
-  var switch_value_playlist = document.getElementById('playlist-switch');
-  
-  console.log(switch_value_playlist.checked)
-
-  if (switch_value_playlist.checked == true){
-
-    value = 1;
-
-  } else if (switch_value_playlist.checked == false){
-
-    value = 0;
-
-  }
-  
-  eel.playlist_execute_save(value,'save')
-}
-
-eel.expose(playlist_stats_music);
-function playlist_stats_music(name,type_id){
-
-  var music_name_playlist = document.getElementById('playlist-music-added');
-
-  if (type_id == "Add"){
-
-    music_name_playlist.innerHTML = name
-
-  } else if (type_id == "Close"){
-
-    music_name_playlist.innerHTML = ''
-
-    $("#playlist-mod").modal("hide");
-
-  }
-
-}
-
-function playlist_clear(){
-  eel.playlist_clear_py()
-  $("#playlist-mod").modal("hide");
-}
-
-eel.expose(player);
-function player(event_type,music_src,volume){
-
-  var player_id = document.getElementById('player');
-  
-  if(event_type == 'play'){
-
-    player_id.pause();
-
-    update_image()
-
-    $("#player").attr("src", music_src + '?noCache=' + Math.floor(Math.random() * 1000000))
-  
-    player_id.load();
-    player_id.play();
-
-  } else if (event_type == 'stop'){
-
-    player_id.pause();
-    player_id.currentTime = 0;
-
-  } else if (event_type == 'volume'){
-
-    player_id.volume = volume
-
-  } else if (event_type == 'playing'){
-
-    if (player_id.paused == true && player_id.ended == false && player_id.currentTime == 0){
-
-      return 'False'
-
-    } else if (player_id.paused == false && player_id.ended == false && player_id.currentTime > 0){
-
-      return 'True'
-      
-    } else if (player_id.paused == true && player_id.ended == false && player_id.currentTime > 0){
-
-      return 'True'
-
-    } else if (player_id.paused == true && player_id.ended == true && player_id.currentTime == player_id.duration){
-
-      return 'False'
-    }
-  }
 }
 
 
@@ -355,4 +175,39 @@ async function update_modal(type_id){
   }
 }
 
+async function updateTimeDiff() {
 
+  while (true){
+    
+      let dateTimeObjs = [];
+
+      let messageTimeElements = document.querySelectorAll(".message-time");
+
+      messageTimeElements.forEach(function(element) {
+          let dateString = element.getAttribute("data-time");
+          dateTimeObjs.push(new Date(dateString));
+      });
+
+      //Data e hora atual
+      let now = new Date();
+      messageTimeElements.forEach(function(element, index) {
+          let dateTimeObj = dateTimeObjs[index];
+          //Calculando a diferença entre as datas
+          let delta = now - dateTimeObj;
+          let minutes = Math.floor(delta / (1000 * 60));
+          let hours = Math.floor(delta / (1000 * 60 * 60));
+          let seconds = Math.floor(delta / 1000);
+          if(hours < 1){
+              if(minutes < 1){
+                  element.innerHTML = seconds + " segundos";
+              }else{
+                  element.innerHTML = minutes + " minutos";
+              }
+          }else {
+              element.innerHTML = hours + " horas";
+          }
+      });
+
+      await sleep(5000)
+  }
+}
