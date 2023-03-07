@@ -9,6 +9,8 @@ $(document).ready(function () {
   $('[data-toggle="tooltip"]').tooltip();
   $("input, select, textarea").attr("autocomplete", "off");
   $("input, select, textarea").attr("spellcheck", "false");
+
+
   $('select').selectpicker({
     liveSearch: true,
     showSubtext: true,

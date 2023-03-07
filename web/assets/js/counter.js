@@ -8,6 +8,7 @@ async function counter_js(fun_id,event) {
     var command_checkcounter_status = document.getElementById('command-checkcounter-status');
     
     var response_status = document.getElementById('response-counter-status');
+    var response_counter = document.getElementById('counter-response');
 
     var command_check_counter = document.getElementById('command-check-counter');
     var command_check_delay = document.getElementById('command-check-delay');
@@ -50,6 +51,8 @@ async function counter_js(fun_id,event) {
             command_checkcounter_status.checked = counter_parse.counter_status_check == 1 ? true : false;
             response_status.checked = counter_parse.response == 1 ? true : false;
 
+            response_counter.value = counter_parse.response_chat
+
             command_check_counter.value = counter_parse.counter_command_check;
             command_check_delay.value = counter_parse.counter_delay_check;
             command_reset_counter.value = counter_parse.counter_command_reset;
@@ -72,7 +75,8 @@ async function counter_js(fun_id,event) {
 
         data = {
             redeem : redeem_save,
-            response : response_status
+            response : response_status,
+            response_chat : response_counter.value
         }
 
         var formData = JSON.stringify(data);

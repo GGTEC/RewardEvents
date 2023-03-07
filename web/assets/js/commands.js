@@ -26,6 +26,30 @@ function hide_commands_div(div_id, modal) {
 
 }
 
+function exibirFormulario(valor) {
+    const formularios = [
+      '#form-cmd-command',
+      '#form-dice-command',
+      '#form-random-command',
+      '#form-uptime-command',
+      '#form-followage-command',
+      '#form-game-command',
+      '#form-msgcount-command',
+      '#form-watchtime-command',
+      '#form-interaction_1-command',
+      '#form-interaction_2-command',
+      '#form-interaction_3-command',
+      '#form-interaction_4-command',
+      '#form-interaction_5-command'
+    ];
+  
+    for (const form of formularios) {
+      document.querySelector(form).hidden = true;
+    }
+  
+    document.querySelector(`#form-${valor}-command`).hidden = false;
+  }
+
 async function commands_fun(event,type_id){
     
     if (type_id == 'create'){
@@ -1069,188 +1093,6 @@ async function commands_fun(event,type_id){
     } else if (type_id == 'select_edit'){
 
         var select_editor = document.querySelector('#command-default-edit');
-
-        if (select_editor.value == 'dice'){
-
-            document.querySelector('#form-dice-command').hidden = false
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = true
-
-        } else if (select_editor.value == 'random'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = false
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = true
-            
-        } else if (select_editor.value == 'uptime'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = false
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = true
-            
-        } else if (select_editor.value == 'game'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = false
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = true
-
-            
-        } else if (select_editor.value == 'followage'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = false
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = true
-            
-        } else if (select_editor.value == 'msgcount'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = false
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = true
-            
-        } else if (select_editor.value == 'watchtime'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = false
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = true
-            
-        } else if (select_editor.value == 'interaction_1'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = false
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = true
-            
-        } else if (select_editor.value == 'interaction_2'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = false
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = true
-            
-        } else if (select_editor.value == 'interaction_3'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = false
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = true
-            
-        } else if (select_editor.value == 'interaction_4'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = false
-            document.querySelector('#form-interaction_5-command').hidden = true
-            
-        } else if (select_editor.value == 'interaction_5'){
-
-            document.querySelector('#form-dice-command').hidden = true
-            document.querySelector('#form-random-command').hidden = true
-            document.querySelector('#form-uptime-command').hidden = true
-            document.querySelector('#form-followage-command').hidden = true
-            document.querySelector('#form-game-command').hidden = true
-            document.querySelector('#form-msgcount-command').hidden = true
-            document.querySelector('#form-watchtime-command').hidden = true
-            document.querySelector('#form-interaction_1-command').hidden = true
-            document.querySelector('#form-interaction_2-command').hidden = true
-            document.querySelector('#form-interaction_3-command').hidden = true
-            document.querySelector('#form-interaction_4-command').hidden = true
-            document.querySelector('#form-interaction_5-command').hidden = false
-            
-        }
+        exibirFormulario(select_editor.value);
     }
 }

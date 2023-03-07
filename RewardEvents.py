@@ -1,4 +1,5 @@
 import sys,os,platform
+import subprocess
 from collections import namedtuple
 import utils
 import webview
@@ -76,161 +77,194 @@ def receive_url():
 
 
 @eel.expose
-def save_access_token(type_id,token):
-    
-    def get_id(token, username):
-    
-        twitch_api = Twitch(clientid,authenticate_app=False)
-        twitch_api.auto_refresh_auth = False
+def save_access_token(type_id: str, token: str) -> None:
+    """Saves a token for a given type_id to a JSON file.
 
-        scopes = [
-            AuthScope.CHANNEL_MANAGE_PREDICTIONS,
-            AuthScope.CHANNEL_MANAGE_POLLS,
-            AuthScope.USER_READ_SUBSCRIPTIONS,
-            AuthScope.USER_READ_EMAIL,
-            AuthScope.CHANNEL_READ_SUBSCRIPTIONS,
-            AuthScope.MODERATION_READ,
-            AuthScope.CHANNEL_READ_REDEMPTIONS,
-            AuthScope.CLIPS_EDIT,
-            AuthScope.CHAT_EDIT,
-            AuthScope.CHAT_READ
-        ]
+    Args:
+        type_id: The type of token, either 'streamer', 'bot', or 'streamer_asbot'.
+        token: The token to be saved.
 
-        twitch_api.set_user_authentication(token,scopes)
-        user_id = twitch_api.get_users(logins=[username])
-        
-        user_id_resp = user_id['data'][0]['id']
-        
-        return user_id_resp
+    Raises:
+        ValueError: If type_id is not one of the valid options.
+    """
+    # Define constants
+    CLIENT_ID = "your_client_id"
+    SCOPES = [
+        AuthScope.CHANNEL_MANAGE_PREDICTIONS,
+        AuthScope.CHANNEL_MANAGE_POLLS,
+        AuthScope.USER_READ_SUBSCRIPTIONS,
+        AuthScope.USER_READ_EMAIL,
+        AuthScope.CHANNEL_READ_SUBSCRIPTIONS,
+        AuthScope.MODERATION_READ,
+        AuthScope.CHANNEL_READ_REDEMPTIONS,
+        AuthScope.CLIPS_EDIT,
+        AuthScope.CHAT_EDIT,
+        AuthScope.CHAT_READ
+    ]
+    AUTH_FILE = f"{appdata_path}/rewardevents/web/src/auth/auth.json"
 
-    with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json") as auth_file:
+    # Load data from JSON file
+    with open(AUTH_FILE) as auth_file:
         data = json.load(auth_file)
 
-    if type_id == 'streamer':
+    # Create Twitch API object
+    twitch_api = Twitch(CLIENT_ID, authenticate_app=False)
+    twitch_api.auto_refresh_auth = False
 
-        username = data['USERNAME']
+    # Set user authentication based on type_id
+    if type_id == "streamer":
+        username = data["USERNAME"]
+        twitch_api.set_user_authentication(token, SCOPES)
         
-        data['TOKEN'] = token
-        data['BROADCASTER_ID'] = get_id(token,username)
-        
-        with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json", "w") as out_file:
-            json.dump(data, out_file, indent=6)
-            
-    elif type_id == 'bot':
-        
-        username = data['BOTUSERNAME']
+    elif type_id == "bot":
+        username = data["BOTUSERNAME"]
+        twitch_api.set_user_authentication(token, SCOPES)
 
-        data['TOKENBOT'] = token
-        data['BOT_ID'] = get_id(token,username)
+    elif type_id == "streamer_asbot":
+        username = data["USERNAME"]
+        twitch_api.set_user_authentication(token, SCOPES)
 
-        with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json", "w") as out_file:
-            json.dump(data, out_file, indent=6)
-            
-    elif type_id == 'streamer_asbot':
-        
-        username = data['USERNAME']
-        
-        data['TOKEN'] = token
-        data['BROADCASTER_ID'] = get_id(token,username)
-        data['TOKENBOT'] = token
+    else:
+        raise ValueError(f"Invalid type_id: {type_id}")
 
-        with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json", "w") as out_file:
-            json.dump(data, out_file, indent=6)
-   
-         
+    # Get user id from Twitch API
+    user_id_resp = twitch_api.get_users(logins=[username])["data"][0]["id"]
+
+    # Update data based on type_id
+    if type_id == "streamer":
+        data["TOKEN"] = token
+        data["BROADCASTER_ID"] = user_id_resp
+
+    elif type_id == "bot":
+        data["TOKENBOT"] = token
+        data["BOT_ID"] = user_id_resp
+
+    elif type_id == "streamer_asbot":
+         data["TOKEN"] = token
+         data["BROADCASTER_ID"] = user_id_resp 
+         data["TOKENBOT"] = token
+
+    # Save updated data to JSON file   
+    with open(AUTH_FILE, "w") as out_file:
+        json.dump(data, out_file, indent=6)
+
+
 @eel.expose
 def start_auth_window(username,type_id):
 
+    """Exposes a python function to javascript and opens an OAuth URI in a web browser.
+
+    Args:
+        username (str): The username of the user or the bot.
+        type_id (str): The type of the user: 'streamer', 'bot' or 'streamer_asbot'.
+
+    Raises:
+        FileNotFoundError: If the json files for authentication or authorization are not found.
+        ValueError: If the type_id is not one of the valid options.
+    """
+
     with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json") as auth_file:
         data = json.load(auth_file)
-        
+    # Intern strings for efficiency
+    type_id = sys.intern(type_id)
     if type_id == 'streamer':
-        
         data['USERNAME'] = username
-        
-        with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json", "w") as out_file:
-            json.dump(data, out_file, indent=6)
-            
     elif type_id == 'bot':
-        
         data['BOTUSERNAME'] = username
-        
-        with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json", "w") as out_file:
-            json.dump(data, out_file, indent=6)
-            
     elif type_id == 'streamer_asbot':
-        
         data['USERNAME'] = username
         data['BOTUSERNAME'] = username
-        
-        with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json", "w") as out_file:
-            json.dump(data, out_file, indent=6)
-       
+
+    # Write to file only once instead of multiple times
+    with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json", "w") as out_file:
+        json.dump(data, out_file, indent=6)
+
     with open(f'{appdata_path}/rewardevents/web/src/auth/scopes.json', 'r') as file:
-        scope_auth = json.load(file) 
-        
+        scope_auth = json.load(file)
+
     redirect_uri = scope_auth['redirect_uri']
     url = scope_auth['url']
     response_type = scope_auth['response_type']
     force_verify = scope_auth['force_verify']
-    
+
+    # Use generator expression instead of list comprehension for scope
     scope_list = scope_auth['scopes']
 
-    scope = '+'.join(scope_list)
- 
-    oauth_uri = f"{url}oauth2/authorize?response_type={response_type}&force_verify={force_verify}&client_id={clientid}&redirect_uri={redirect_uri}&scope={scope}"
+    scope = '+'.join(scope for scope in scope_list)
 
+    oauth_uri = f"{url}oauth2/authorize?response_type={response_type}&force_verify={force_verify}&client_id={clientid}&redirect_uri={redirect_uri}&scope={scope}"
     webbrowser.open(oauth_uri)
 
 
 @eel.expose
 def send_announcement(message,color):
+    """Exposes a python function to javascript and sends an announcement message to a Twitch chat.
 
+    Args:
+        message (str): The announcement message to be sent.
+        color (str): The color of the announcement message.
+
+    Returns:
+        bool: True if the request was successful, False otherwise.
+
+    Raises:
+        requests.exceptions.RequestException: If the request failed for any reason.
+    """
     url = f"https://api.twitch.tv/helix/chat/announcements?broadcaster_id={authdata.BROADCASTER_ID()}&moderator_id={authdata.BOT_ID()}"
-
-    headers = CaseInsensitiveDict()
-    headers["Authorization"] = f"Bearer {authdata.TOKENBOT()}"
-    headers["Client-Id"] = f"{clientid}"
-    headers["Content-Type"] = "application/json"
-
-    data = '{"message":" '+ message +' ","color":"'+ color +'"}'
+    
+    headers = {
+        "Authorization": f"Bearer {authdata.TOKENBOT()}",
+        "Client-Id": clientid,
+        "Content-Type": "application/json"
+    }
+    data = json.dumps({"message": message, "color": color})
 
     response = req.post(url, headers=headers, data=data.encode('utf-8'))
 
-    return True
+    return response.ok # Returns True if status code is 200
 
 
 @eel.expose
 def send(message):
+    """Exposes a python function to javascript and sends a message to a Twitch chat.
 
+    Args:
+        message (str): The message to be sent.
+
+    Returns:
+        dict: A dictionary containing the response data and the chat configuration.
+
+    Raises:
+        FileNotFoundError: If the chat_config.json file is not found.
+        twitchio.errors.HTTPException: If the chat.send() method failed for any reason.
+    """
     global chat
     
     if loaded_status == 1:
 
+        # Check if the message is an announcement command
         if message.startswith('/announce'):
-
-            if message.startswith('/announceblue'):
-                send_announcement(message.split('/announceblue')[1],'blue')
-            elif message.startswith('/announcegreen'):
-                send_announcement(message.split('/announcegreen')[1],'green')
-            elif message.startswith('/announceorange'):
-                send_announcement(message.split('/announceorange')[1],'orange')
-            elif message.startswith('/announcepurple'):
-                send_announcement(message.split('/announcepurple')[1],'purple')
-            else :
-                send_announcement(message.split('/announce')[1],'primary')
+            # Get the color from the command or use primary as default
+            color = message.split('/')[1].replace('announce', '') or 'primary'
+            # Get the actual message from the command
+            announcement = message.split(color)[1]
+            # Send the announcement using the send_announcement function
+            send_announcement(announcement, color)
 
         else:
             
+            # Send the message using the twitchio chat object
             chat.send(message)
             
+            # Load the chat configuration from a json file
             with open(f'{appdata_path}/rewardevents/web/src/config/chat_config.json','r',encoding='utf-8') as chat_file:
                 chat_data = json.load(chat_file)
 
             now = datetime.datetime.now()
-            format = chat_data['time-format']
             
+            # Format and show the time according to the configuration
             if chat_data['data-show'] == 1:
+                format = chat_data['time-format']
                 if chat_data['type-data'] == "passed":
                     chat_time = now.strftime('%Y-%m-%dT%H:%M:%S')
                 elif chat_data['type-data'] == "current":
@@ -239,6 +273,7 @@ def send(message):
                 chat_time = ''
                     
             
+            # Create a dictionary with the response data and configuration
             data_res = {
                 "response": 0,
                 "frist_message" : 0,
@@ -248,6 +283,7 @@ def send(message):
                 "show_badges" : chat_data["show-badges"],
                 "wrapp_message" : chat_data["wrapp-message"],
                 "font_size" : chat_data["font-size"],
+                'chat_time' : f'{chat_time}',
                 'type': 'PRIVMSG',
                 "color": '',
                 "display_name": authdata.BOTUSERNAME(),
@@ -261,23 +297,27 @@ def send(message):
                 "user_replied" : '',
                 "message_replied" : '',
                 "data_show" : chat_data["data-show"],
-                "chat_time" : chat_time,
                 "type_data" : chat_data["type-data"],
                 "block_color" : chat_data["block-color"],
-            }
-
+                
+             }
+             
             message_data_dump = json.dumps(data_res, ensure_ascii=False)
             eel.append_message(message_data_dump)
-
+        
 
 def send_discord_webhook(data):
     
-    """
-        Send a discord webhook by a type message
+    """Send a discord webhook by a type message.
 
-        >>> valid types = clips_create, clips_edit, follow, sub, live_start,live_end,live_cat
-        
+    Args:
+        data (dict): A dictionary containing the type_id and other relevant data for the webhook.
+
+    Raises:
+        FileNotFoundError: If the discord.json file is not found.
+        discord_webhook.DiscordWebhookException: If the webhook execution failed for any reason.
     """
+
     type_id = data['type_id']
 
     with open(f'{appdata_path}/rewardevents/web/src/config/discord.json', 'r', encoding='utf-8') as discord_config_file:
@@ -374,7 +414,7 @@ def send_discord_webhook(data):
             username = data['username']
             
             aliases = {
-                '{user}' : username
+                '{username}' : username
             }
             
             webhook_title = utils.replace_all(webhook_title, aliases)
@@ -789,28 +829,37 @@ def send_discord_webhook(data):
 
             webhook.add_embed(embed)
             webhook.execute()
-    
+
+
 @eel.expose
 def get_auth_py(type_id):
-    if type_id == 'USERNAME':
-        type_id = authdata.USERNAME()
+    """Exposes a python function to javascript and returns an authentication value based on the type_id.
 
-    elif type_id == 'TOKEN':
-        type_id = authdata.TOKEN()
+    Args:
+        type_id (str): The type of authentication value to be returned. Valid values are: 'USERNAME', 'TOKEN', 'BROADCASTER_ID', 'CLIENTID', 'TOKENBOT', 'BOTNAME'.
 
-    elif type_id == 'BROADCASTER_ID':
-        type_id = authdata.BROADCASTER_ID()
+    Returns:
+        str: The authentication value corresponding to the type_id.
 
-    elif type_id == 'CLIENTID':
-        type_id = clientid
-
-    elif type_id == 'TOKENBOT':
-        type_id = authdata.TOKEN()
-        
-    elif type_id == 'BOTNAME':
-        type_id = authdata.BOTUSERNAME()
-
-    return type_id
+    Raises:
+        ValueError: If the type_id is not valid.
+    """
+    
+    # Use a dictionary to map the type_id to the authentication value
+    auth_values = {
+        'USERNAME': authdata.USERNAME(),
+        'TOKEN': authdata.TOKEN(),
+        'BROADCASTER_ID': authdata.BROADCASTER_ID(),
+        'CLIENTID': clientid,
+        'TOKENBOT': authdata.TOKEN(),
+        'BOTNAME': authdata.BOTUSERNAME()
+    }
+    
+    # Check if the type_id is valid and return the value or raise an exception
+    if type_id in auth_values:
+        return auth_values[type_id]
+    else:
+        raise ValueError(f"Invalid type_id: {type_id}")
 
 
 @eel.expose
@@ -873,7 +922,6 @@ def get_spec():
                     }
 
                     data_time_dump = json.dumps(data_time, ensure_ascii=False)
-
                     eel.receive_live_info(data_time_dump)
                 
                     time.sleep(600)
@@ -1425,6 +1473,7 @@ def poll_py(data):
         data_dump = json.dumps(data)
 
         return data_dump
+
 
 @eel.expose
 def goal_py():
@@ -2863,11 +2912,13 @@ def counter(fun_id, redeem, commands, value):
             counter_file_r.seek(0)
             counter_value_get = counter_file_r.read()
 
+        response_chat = utils.messages_file_load('response_counter')
 
         data = {
 
             "redeem": counter_data['redeem'],
             "response" : counter_data['response'],
+            "response_chat" : response_chat,
             "value_counter": counter_value_get,
             "counter_command_reset": counter_commands_data['reset_counter'],
             "counter_delay_reset" : delay_counter_data['reset'],
@@ -2890,8 +2941,16 @@ def counter(fun_id, redeem, commands, value):
         try:
             with open(f'{appdata_path}/rewardevents/web/src/counter/config.json', 'r', encoding='utf-8') as counter_file:
                 counter_data = json.load(counter_file)
+
+            with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
+                messages_data = json.load(messages_file)
             
             data_save = json.loads(redeem)
+
+            messages_data['response_counter'] = data_save['response_chat']
+
+            with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "w", encoding='utf-8') as messages_file:
+                json.dump(messages_data, messages_file, indent=6, ensure_ascii=False)
 
             counter_data['redeem'] = data_save['redeem']
             counter_data['response'] = data_save['response']
@@ -3038,232 +3097,52 @@ def obs_config_py(type_id,data_receive):
 
 
 @eel.expose
-def not_config_py(data_receive,type_id):
+def not_config_py(data_receive,type_id,type_not):
     
     with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'r', encoding='utf-8') as event_config_file:
         event_config_data = json.load(event_config_file)
-            
-    if type_id == "get_sub":
 
-        sub_data = event_config_data['sub']
-        
+    if type_id == "get":   
+         
+        file_data = event_config_data[type_not]
+
         data = {
-            'sub_not': sub_data['status'],
-            'sub_image_over': sub_data['text_over_image'],
-            'sub_image': sub_data['image'],
-            'sub_image_px': sub_data['image_px'],
-            'sub_audio': sub_data['audio'],
-            'sub_audio_volume': sub_data['audio_volume'],
-            'sub_tts': sub_data['tts'],
-            'sub_response': sub_data['response'],
-            'sub_response_chat': sub_data['response_chat'],
-            'sub_response_px': sub_data['response_px'],
-        }
-        
-        event_not_data_dump = json.dumps(data, ensure_ascii=False)
-
-        return event_not_data_dump
-
-    elif type_id == "get_follow":
-
-        follow_data = event_config_data['follow']
-        
-        data = {
-            'follow_not': follow_data['status'],
-            'follow_image_over': follow_data['text_over_image'],
-            'follow_image': follow_data['image'],
-            'follow_image_px': follow_data['image_px'],
-            'follow_audio': follow_data['audio'],
-            'follow_audio_volume': follow_data['audio_volume'],
-            'follow_tts': follow_data['tts'],
-            'follow_response': follow_data['response'],
-            'follow_response_chat': follow_data['response_chat'],
-            'follow_response_px': follow_data['response_px']
-        }
-        
-        event_not_data_dump = json.dumps(data, ensure_ascii=False)
-
-        return event_not_data_dump
-            
-    elif type_id == "get_resub":
-        
-        resub_data = event_config_data['resub']
-        
-        data = {
-            'resub_not': resub_data['status'],
-            'resub_image_over': resub_data['text_over_image'],
-            'resub_image': resub_data['image'],
-            'resub_image_px': resub_data['image_px'],
-            'resub_audio': resub_data['audio'],
-            'resub_audio_volume': resub_data['audio_volume'],
-            'resub_tts': resub_data['tts'],
-            'resub_response': resub_data['response'],
-            'resub_response_chat': resub_data['response_chat'],
-            'resub_response_px': resub_data['response_px'],
+            'not': file_data['status'],
+            'image_over': file_data['text_over_image'],
+            'image': file_data['image'],
+            'image_px': file_data['image_px'],
+            'audio': file_data['audio'],
+            'audio_volume': file_data['audio_volume'],
+            'tts': file_data['tts'],
+            'response': file_data['response'],
+            'response_chat': file_data['response_chat'],
+            'response_px': file_data['response_px'],
+            'response_weight': file_data['response_weight'],
+            'response_color': file_data['response_color'],
         }
         
         event_not_data_dump = json.dumps(data, ensure_ascii=False)
 
         return event_not_data_dump
     
-    elif type_id == "get_giftsub":
-        
-        giftsub_data = event_config_data['giftsub']
-        mysterygift_data = event_config_data['mysterygift']
-        re_mysterygift_data = event_config_data['re-mysterygift']
-        
-        data = {
-            
-            'giftsub_not': giftsub_data['status'],
-            'giftsub_image_over': giftsub_data['text_over_image'],
-            'giftsub_image': giftsub_data['image'],
-            'giftsub_image_px': giftsub_data['image_px'],
-            'giftsub_audio': giftsub_data['audio'],
-            'giftsub_audio_volume': giftsub_data['audio_volume'],
-            'giftsub_tts': giftsub_data['tts'],
-            'giftsub_response': giftsub_data['response'],
-            'giftsub_response_chat': giftsub_data['response_chat'],
-            'giftsub_response_px': giftsub_data['response_px'],
-            
-            'mysterygift_response' : mysterygift_data['response'],
-            'mysterygift_response_chat' : mysterygift_data['response_chat'],
-            'mysterygift_response_px' : mysterygift_data['response_px'],
-            
-            're_mysterygift_response' : re_mysterygift_data['response'],
-            're_mysterygift_response_chat' : re_mysterygift_data['response_chat'],
-            're_mysterygift_response_px' : re_mysterygift_data['response_px'],
-        }
-        
-        event_not_data_dump = json.dumps(data, ensure_ascii=False)
-
-        return event_not_data_dump
-            
-    elif type_id == "get_raid":
-        
-        raid_data = event_config_data['raid']
-        
-        data = {
-            
-            'raid_not': raid_data['status'],
-            'raid_image_over': raid_data['text_over_image'],
-            'raid_image_px': raid_data['image_px'],
-            'raid_image': raid_data['image'],
-            'raid_audio': raid_data['audio'],
-            'raid_audio_volume': raid_data['audio_volume'],
-            'raid_tts': raid_data['tts'],
-            'raid_response': raid_data['response'],
-            'raid_response_chat': raid_data['response_chat'],
-            'raid_response_px': raid_data['response_px'],
-        }
-        
-        event_not_data_dump = json.dumps(data, ensure_ascii=False)
-
-        return event_not_data_dump
-    
-    elif type_id == "get_bits1":
-        
-        bits1_data = event_config_data['bits1']
-                
-        data = {
-            
-            'bits1_not': bits1_data['status'],
-            'bits1_image_over': bits1_data['text_over_image'],
-            'bits1_image_px': bits1_data['image_px'],
-            'bits1_image': bits1_data['image'],
-            'bits1_audio': bits1_data['audio'],
-            'bits1_audio_volume': bits1_data['audio_volume'],
-            'bits1_tts': bits1_data['tts'],
-            'bits1_response': bits1_data['response'],
-            'bits1_response_chat': bits1_data['response_chat'],
-            'bits1_response_px': bits1_data['response_px'],
-        }
-
-        event_not_data_dump = json.dumps(data, ensure_ascii=False)
-
-        return event_not_data_dump
-    
-    elif type_id == "get_bits100":  
-        
-        bits100_data = event_config_data['bits100']
-                
-        data = {
-            
-            'bits100_not': bits100_data['status'],
-            'bits100_image_over': bits100_data['text_over_image'],
-            'bits100_image_px': bits100_data['image_px'],
-            'bits100_image': bits100_data['image'],
-            'bits100_audio': bits100_data['audio'],
-            'bits100_audio_volume': bits100_data['audio_volume'],
-            'bits100_tts': bits100_data['tts'],
-            'bits100_response': bits100_data['response'],
-            'bits100_response_chat': bits100_data['response'],
-            'bits100_response_px': bits100_data['response_px'],
-        }
-
-        event_not_data_dump = json.dumps(data, ensure_ascii=False)
-
-        return event_not_data_dump
-    
-    elif type_id == "get_bits1000":  
-        
-        bits1000_data = event_config_data['bits1000']
-                
-        data = {
-            
-            'bits1000_not': bits1000_data['status'],
-            'bits1000_image_over': bits1000_data['text_over_image'],
-            'bits1000_image_px': bits1000_data['image_px'],
-            'bits1000_image': bits1000_data['image'],
-            'bits1000_audio': bits1000_data['audio'],
-            'bits1000_audio_volume': bits1000_data['audio_volume'],
-            'bits1000_tts': bits1000_data['tts'],
-            'bits1000_response': bits1000_data['response'],
-            'bits1000_response_chat': bits1000_data['response_chat'],
-            'bits1000_response_px': bits1000_data['response_px'],
-        }
-
-        event_not_data_dump = json.dumps(data, ensure_ascii=False)
-
-        return event_not_data_dump
-    
-    elif type_id == "get_bits5000":  
-        
-        bits5000_data = event_config_data['bits5000']
-                        
-        data = {
-            
-            'bits5000_not': bits5000_data['status'],
-            'bits5000_image_over': bits5000_data['text_over_image'],
-            'bits5000_image_px': bits5000_data['image_px'],
-            'bits5000_image': bits5000_data['image'],
-            'bits5000_audio': bits5000_data['audio'],
-            'bits5000_audio_volume': bits5000_data['audio_volume'],
-            'bits5000_tts': bits5000_data['tts'],
-            'bits5000_response': bits5000_data['response'],
-            'bits5000_response_chat': bits5000_data['response_chat'],
-            'bits5000_response_px': bits5000_data['response_px'],
-        }
-
-        event_not_data_dump = json.dumps(data, ensure_ascii=False)
-
-        return event_not_data_dump
-           
-    elif type_id == "save_follow":
+    elif type_id == "save":
         
         try:
+
             data = json.loads(data_receive)
             
-            
-            event_config_data['follow']['status'] = data['follow_not']
-            event_config_data['follow']['text_over_image'] = data['follow_image_over']
-            event_config_data['follow']['image'] = data['follow_image']
-            event_config_data['follow']['image_px'] = data['follow_image_px']
-            event_config_data['follow']['audio'] = data['follow_audio']
-            event_config_data['follow']['audio_volume'] = data['follow_audio_volume']
-            event_config_data['follow']['tts'] = data['follow_tts']
-            event_config_data['follow']['response'] = data['follow_response']
-            event_config_data['follow']['response_chat'] = data['follow_response_chat']
-            event_config_data['follow']['response_px'] = data['follow_response_px']
+            event_config_data[type_not]['status'] = data['not']
+            event_config_data[type_not]['text_over_image'] = data['image_over']
+            event_config_data[type_not]['image'] = data['image']
+            event_config_data[type_not]['image_px'] = data['image_px']
+            event_config_data[type_not]['audio'] = data['audio']
+            event_config_data[type_not]['audio_volume'] = data['audio_volume']
+            event_config_data[type_not]['tts'] = data['tts']
+            event_config_data[type_not]['response'] = data['response']
+            event_config_data[type_not]['response_chat'] = data['response_chat']
+            event_config_data[type_not]['response_px'] = data['response_px']
+            event_config_data[type_not]['response_weight'] = data['response_weight']
+            event_config_data[type_not]['response_color'] = data['response_color']
             
             
             with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
@@ -3276,220 +3155,6 @@ def not_config_py(data_receive,type_id):
             utils.error_log(e)
             eel.toast_notifc('error')
     
-    elif type_id == "save_sub":
-        
-        try:
-            data = json.loads(data_receive)
-            
-            event_config_data['sub']['status'] = data['sub_not']
-            event_config_data['sub']['text_over_image'] = data['sub_image_over']
-            event_config_data['sub']['image'] = data['sub_image']
-            event_config_data['sub']['image_px'] = data['sub_image_px']
-            event_config_data['sub']['audio'] = data['sub_audio']
-            event_config_data['sub']['audio_volume'] = data['sub_audio_volume']
-            event_config_data['sub']['tts'] = data['sub_tts']
-            event_config_data['sub']['response'] = data['sub_response']
-            event_config_data['sub']['response_chat'] = data['sub_response_chat']
-            event_config_data['sub']['response_px'] = data['sub_response_px']
-            
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
-                json.dump(event_config_data, event_config_file_w,indent=6,ensure_ascii=False)
-                
-            eel.toast_notifc('success')
-            
-        except Exception as e:
-
-            utils.error_log(e)
-            eel.toast_notifc('error')
-            
-    elif type_id == "save_resub":
-        
-        try:
-            data = json.loads(data_receive)
-    
-            
-            event_config_data['resub']['status'] = data['resub_not']
-            event_config_data['resub']['text_over_image'] = data['resub_image_over']
-            event_config_data['resub']['image'] = data['resub_image']
-            event_config_data['resub']['image_px'] = data['resub_image_px']
-            event_config_data['resub']['audio'] = data['resub_audio']
-            event_config_data['resub']['audio_volume'] = data['resub_audio_volume']
-            event_config_data['resub']['response'] = data['resub_response']
-            event_config_data['resub']['response_chat'] = data['resub_response_chat']
-            event_config_data['resub']['response_px'] = data['resub_response_px']
-            event_config_data['resub']['tts'] = data['resub_tts']
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
-                json.dump(event_config_data, event_config_file_w,indent=6,ensure_ascii=False)
-                
-            eel.toast_notifc('success')
-            
-        except Exception as e:
-
-            utils.error_log(e)
-            eel.toast_notifc('error')
-            
-    elif type_id == "save_giftsub":
-        
-        try:
-            data = json.loads(data_receive)
-
-            event_config_data['giftsub']['status'] = data['giftsub_not']
-            event_config_data['giftsub']['text_over_image'] = data['giftsub_image_over']
-            event_config_data['giftsub']['image'] = data['giftsub_image']
-            event_config_data['giftsub']['image_px'] = data['giftsub_image_px']
-            event_config_data['giftsub']['audio'] = data['giftsub_audio']
-            event_config_data['giftsub']['audio_volume'] = data['giftsub_audio_volume']
-            event_config_data['giftsub']['response'] = data['giftsub_response']
-            event_config_data['giftsub']['response_chat'] = data['giftsub_response_chat']
-            event_config_data['giftsub']['response_px'] = data['giftsub_response_px']
-            event_config_data['mysterygift']['response'] = data['mysterygift_response']
-            event_config_data['mysterygift']['response_chat'] = data['mysterygift_response_chat']
-            event_config_data['mysterygift']['response_px'] = data['mysterygift_response_px']
-            event_config_data['re-mysterygift']['response'] = data['re_mysterygift_response']
-            event_config_data['re-mysterygift']['response_chat'] = data['re_mysterygift_response_chat']
-            event_config_data['re-mysterygift']['response_px'] = data['re_mysterygift_response_px']
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
-                json.dump(event_config_data, event_config_file_w,indent=6,ensure_ascii=False)
-                
-            eel.toast_notifc('success')
-            
-        except Exception as e:
-
-            utils.error_log(e)
-            eel.toast_notifc('error')
-                    
-    elif type_id == "save_raid":
-        
-        try:
-            data = json.loads(data_receive)
-            
-            event_config_data['raid']['status'] = data['raid_not']
-            event_config_data['raid']['text_over_image'] = data['raid_image_over']
-            event_config_data['raid']['image'] = data['raid_image']
-            event_config_data['raid']['image_px'] = data['raid_image_px']
-            event_config_data['raid']['audio'] = data['raid_audio']
-            event_config_data['raid']['audio_volume'] = data['raid_audio_volume']
-            event_config_data['raid']['response'] = data['raid_response']
-            event_config_data['raid']['response_chat'] = data['raid_response_chat']
-            event_config_data['raid']['response_px'] = data['raid_response_px']
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
-                json.dump(event_config_data, event_config_file_w,indent=6,ensure_ascii=False)
-                
-            eel.toast_notifc('success')
-            
-        except Exception as e:
-
-            utils.error_log(e)
-            eel.toast_notifc('error')
-
-    elif type_id == "save_bits1":
-        
-        try:
-
-            data = json.loads(data_receive)
-
-            event_config_data['bits1']['status'] = data['bits1_not']
-            event_config_data['bits1']['text_over_image'] = data['bits1_image_over']
-            event_config_data['bits1']['image'] = data['bits1_image']
-            event_config_data['bits1']['image_px'] = data['bits1_image_px']
-            event_config_data['bits1']['audio'] = data['bits1_audio']
-            event_config_data['bits1']['audio_volume'] = data['bits1_audio_volume']
-            event_config_data['bits1']['response'] = data['bits1_response']
-            event_config_data['bits1']['response_chat'] = data['bits1_response_chat']
-            event_config_data['bits1']['response_px'] = data['bits1_response_px']
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
-                json.dump(event_config_data, event_config_file_w,indent=6,ensure_ascii=False)
-                
-            eel.toast_notifc('success')
-
-        except Exception as e:
-
-            utils.error_log(e)
-            eel.toast_notifc('error')
-        
-    elif type_id == "save_bits100":  
-        
-        try:
-
-            data = json.loads(data_receive)
-
-            event_config_data['bits100']['status'] = data['bits100_not']
-            event_config_data['bits100']['text_over_image'] = data['bits100_image_over']
-            event_config_data['bits100']['image'] = data['bits100_image']
-            event_config_data['bits100']['image_px'] = data['bits100_image_px']
-            event_config_data['bits100']['audio'] = data['bits100_audio']
-            event_config_data['bits100']['audio_volume'] = data['bits100_audio_volume']
-            event_config_data['bits100']['response'] = data['bits100_response']
-            event_config_data['bits100']['response_chat'] = data['bits100_response_chat']
-            event_config_data['bits100']['response_px'] = data['bits100_response_px']
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
-                json.dump(event_config_data, event_config_file_w,indent=6,ensure_ascii=False)
-                
-            eel.toast_notifc('success')
-
-        except Exception as e:
-
-            utils.error_log(e)
-            eel.toast_notifc('error')
-        
-    elif type_id == "save_bits1000":  
-        
-        try:
-
-            data = json.loads(data_receive)
-
-            event_config_data['bits1000']['status'] = data['bits1000_not']
-            event_config_data['bits1000']['text_over_image'] = data['bits1000_image_over']
-            event_config_data['bits1000']['image'] = data['bits1000_image']
-            event_config_data['bits1000']['image_px'] = data['bits1000_image_px']
-            event_config_data['bits1000']['audio'] = data['bits1000_audio']
-            event_config_data['bits1000']['audio_volume'] = data['bits1000_audio_volume']
-            event_config_data['bits1000']['response'] = data['bits1000_response']
-            event_config_data['bits1000']['response_chat'] = data['bits1000_response_chat']
-            event_config_data['bits1000']['response_px'] = data['bits1000_response_px']
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
-                json.dump(event_config_data, event_config_file_w,indent=6,ensure_ascii=False)
-                
-            eel.toast_notifc('success')
-
-        except Exception as e:
-
-            utils.error_log(e)
-            eel.toast_notifc('error')
-        
-    elif type_id == "save_bits5000": 
-        
-        try:
-
-            data = json.loads(data_receive)
-
-            event_config_data['bits5000']['status'] = data['bits5000_not']
-            event_config_data['bits5000']['text_over_image'] = data['bits5000_image_over']
-            event_config_data['bits5000']['image'] = data['bits5000_image']
-            event_config_data['bits5000']['image_px'] = data['bits5000_image_px']
-            event_config_data['bits5000']['audio'] = data['bits5000_audio']
-            event_config_data['bits5000']['audio_volume'] = data['bits5000_audio_volume']
-            event_config_data['bits5000']['response'] = data['bits5000_response']
-            event_config_data['bits5000']['response_chat'] = data['bits5000_response_chat']
-            event_config_data['bits5000']['response_px'] = data['bits5000_response_px']
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
-                json.dump(event_config_data, event_config_file_w,indent=6,ensure_ascii=False)
-                
-            eel.toast_notifc('success')
-
-        except Exception as e:
-
-            utils.error_log(e)
-            eel.toast_notifc('error')
-        
         
 @eel.expose
 def get_messages_config():
@@ -3687,7 +3352,7 @@ def disclosure_py(type_id,data_receive):
             disclosure_data['message'] = data_receive
     
         with open(f'{appdata_path}/rewardevents/web/src/config/disclosure.json', 'w', encoding='utf-8') as file_disclosure_w:
-            json.dump(disclosure,file_disclosure_w,indent=4,ensure_ascii=False)
+            json.dump(disclosure_data,file_disclosure_w,indent=4,ensure_ascii=False)
             
     elif type_id == "get":
         
@@ -4528,23 +4193,19 @@ def save_edit_redeen(data, redeem_type):
 
             eel.toast_notifc('error')
 
-
 @eel.expose
-def add_playlist(playlist_url):
+def playlist_py(type_id,data):
     
     def start_add(playlist_url):
 
         try:
 
             p = Playlist(playlist_url)
-
-            print(p.video_urls)
             
-            playlist_file = open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8")
-            playlist_data = json.load(playlist_file)
+            with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8") as playlist_file:
+                playlist_data = json.load(playlist_file)
 
             check_have = any(playlist_data.keys())
-            playlist_file.close()
 
             if not check_have:
 
@@ -4566,61 +4227,83 @@ def add_playlist(playlist_url):
 
                     video_title_short = textwrap.shorten(video_title, width=40, placeholder="...")
 
-                    eel.playlist_stats_music('Adicionando, aguarde... ' + video_title_short, 'Add')
+                    eel.playlist_js('Adicionando, aguarde... ' + video_title_short, 'queue_add')
 
-                    playlist_file = open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8")
-                    playlist_data = json.load(playlist_file)
+                    with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8") as playlist_file:
+                        playlist_data = json.load(playlist_file)
 
                     playlist_data[last_key] = {"MUSIC": url, "USER": "playlist", "MUSIC_NAME": video_title}
-                    playlist_file.close()
 
-                    playlist_file_write = open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "w", encoding="utf-8")
-                    json.dump(playlist_data, playlist_file_write, indent=4, ensure_ascii=False)
-                    playlist_file_write.close()
+                    with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "w", encoding="utf-8") as playlist_file_write:
+                        json.dump(playlist_data, playlist_file_write, indent=4, ensure_ascii=False)
 
                 except Exception as e:
 
                     utils.error_log(e)
 
-            eel.playlist_stats_music('None', 'Close')
+            eel.playlist_js('None', 'queue_close')
 
         except Exception as e:
 
             utils.error_log(e)
 
-    playelist_thread = threading.Thread(target=start_add, args=(playlist_url,), daemon=True)
-    playelist_thread.start()
+    if type_id == "add":
 
+        playlist_thread = threading.Thread(target=start_add, args=(data,), daemon=True)
+        playlist_thread.start()
 
-@eel.expose
-def playlist_clear_py():
-    playlist_data = {}
-
-    playlist_file_write = open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "w", encoding="utf-8")
-    json.dump(playlist_data, playlist_file_write, indent=4, ensure_ascii=False)
-    playlist_file_write.close()
-
-
-@eel.expose
-def playlist_execute_save(value, type_rec):
     
-    with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', 'r', encoding="utf-8") as playlist_stats_file:
-        playlist_stats_data = json.load(playlist_stats_file)
-    
-    if type_rec == 'save':
+    elif type_id == 'save':
 
-        playlist_stats_data['STATUS'] = value
+        with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', 'r', encoding="utf-8") as playlist_stats_file:
+            playlist_stats_data = json.load(playlist_stats_file)
+
+        playlist_stats_data['STATUS'] = data
 
         with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', 'w', encoding="utf-8") as playlist_stats_file_w:
             json.dump(playlist_stats_data, playlist_stats_file_w, indent=4)
    
+    elif type_id == 'get':
 
-    elif type_rec == 'get':
+        with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', 'r', encoding="utf-8") as playlist_stats_file:
+            playlist_stats_data = json.load(playlist_stats_file)
 
         value_status = playlist_stats_data['STATUS']
 
         return value_status
+    
+    elif type_id == 'clear':
    
+        playlist_data = {}
+
+        with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "w", encoding="utf-8") as playlist_file_write:
+            json.dump(playlist_data, playlist_file_write, indent=4, ensure_ascii=False)
+
+    elif type_id == 'queue':
+        
+        with open(f'{appdata_path}/rewardevents/web/src/player/list_files/queue.json', "r", encoding="utf-8") as queue_file:
+            queue_data = json.load(queue_file)
+
+        with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8") as playlist_file:
+            playlist_data = json.load(playlist_file)
+
+        list_queue_list = {}
+        for key in queue_data:
+            music = queue_data[key]['MUSIC_NAME']
+            user = queue_data[key]['USER']
+
+            list_queue_list[music] = user
+
+        for key in playlist_data:
+            music = playlist_data[key]['MUSIC_NAME']
+            user = playlist_data[key]['USER']
+
+            list_queue_list[music] = user
+
+        data_dump = json.dumps(list_queue_list, ensure_ascii=False)
+
+        return data_dump
+
 
 @eel.expose
 def sr_config_py(type_id,data_receive):
@@ -4817,35 +4500,6 @@ def sr_config_py(type_id,data_receive):
                 
                 eel.toast_notifc('O termo ou nome não está na lista') 
 
-        
-@eel.expose
-def list_queue():
-    queue_file = open(f'{appdata_path}/rewardevents/web/src/player/list_files/queue.json', "r", encoding="utf-8")
-    queue_data = json.load(queue_file)
-
-    playlist_file = open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8")
-    playlist_data = json.load(playlist_file)
-
-    list_queue_list = {}
-    for key in queue_data:
-        music = queue_data[key]['MUSIC_NAME']
-        user = queue_data[key]['USER']
-
-        list_queue_list[music] = user
-
-    for key in playlist_data:
-        music = playlist_data[key]['MUSIC_NAME']
-        user = playlist_data[key]['USER']
-
-        list_queue_list[music] = user
-
-    queue_file.close()
-    playlist_file.close()
-
-    data_dump = json.dumps(list_queue_list, ensure_ascii=False)
-
-    return data_dump
-
 
 @eel.expose
 def update_check(type_id):
@@ -4855,7 +4509,7 @@ def update_check(type_id):
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'V4.2.7':
+        if version != 'V5.0.0':
 
             return 'true'
         else:
@@ -5049,14 +4703,14 @@ def start_play(title, user_input, redem_by_user):
 
     def download_music(link):
 
-        music_dir_check = os.path.exists(extDataDir + 'f/{appdata_path}/rewardevents/web/src/player/cache/music.mp3')
-        music_mp4_check = os.path.exists(extDataDir + 'f/{appdata_path}/rewardevents/web/src/player/cache/music.mp4')
+        music_dir_check = os.path.exists(extDataDir + f'/web/src/player/cache/music.mp3')
+        music_mp4_check = os.path.exists(extDataDir + f'/web/src/player/cache/music.mp4')
 
         if music_mp4_check:
-            os.remove(extDataDir + 'f/{appdata_path}/rewardevents/web/src/player/cache/music.mp4')
+            os.remove(extDataDir + f'/web/src/player/cache/music.mp4')
 
         if music_dir_check:
-            os.remove(extDataDir + 'f/{appdata_path}/rewardevents/web/src/player/cache/music.mp3')
+            os.remove(extDataDir + f'/web/src/player/cache/music.mp3')
 
         def my_hook(d):
             if d['status'] == 'finished':
@@ -5075,7 +4729,7 @@ def start_play(title, user_input, redem_by_user):
                 'noplaylist': True,
                 'quiet': True,
                 'no_color': True,
-                'outtmpl': extDataDir + 'f/{appdata_path}/rewardevents/web/src/player/cache/music.%(ext)s',
+                'outtmpl': extDataDir + f'/web/src/player/cache/music.%(ext)s',
                 'ffmpeg_location': ffmpeg_loc,
                 'force-write-archive': True,
                 'force-overwrites': True,
@@ -5521,7 +5175,7 @@ def receive_redeem(data_rewards, received_type):
 
         img_redeem_data = req.get(redeem_reward_image).content
 
-        with open(extDataDir + 'f/{appdata_path}/rewardevents/web/src/Request.png', 'wb') as image_redeem:
+        with open(extDataDir + f'/web/src/Request.png', 'wb') as image_redeem:
             image_redeem.write(img_redeem_data)
 
         with open(f'{appdata_path}/rewardevents/web/src/Request.png', 'wb') as image_redeem:
@@ -5992,16 +5646,29 @@ def receive_redeem(data_rewards, received_type):
         elif redeem_reward_name == counter_redeem:
             add_counter()
 
-@eel.expose
-def open_link(link_profile):
-
-    webbrowser.open('https://www.twitch.tv/'+link_profile, new=0, autoraise=True)
-
 
 @eel.expose
-def open_link_chat(link):
+def open_py(type_id,link_profile):
 
-    webbrowser.open(link, new=0, autoraise=True)
+    if type_id == "user":
+        webbrowser.open('https://www.twitch.tv/'+link_profile, new=0, autoraise=True)
+
+    elif type_id == "appdata":
+
+        try:
+            subprocess.Popen(f'explorer "{appdata_path}\\rewardevents\\web"')
+        except subprocess.CalledProcessError as e:
+            print(f"Erro ao chamar subprocesso: {e}")
+
+    elif type_id == "errolog":
+        arquivo = f'{appdata_path}/rewardevents/web/src/error_log.txt'
+        os.system('notepad.exe ' + arquivo)
+
+    elif type_id == "discord":
+        webbrowser.open('https://discord.io/ggtec', new=0, autoraise=True)
+    
+    elif type_id == "wiki":
+        webbrowser.open('https://ggtec.netlify.app', new=0, autoraise=True)
 
 
 @eel.expose
@@ -6038,6 +5705,7 @@ def send_not_fun(data: dict) -> None:
         def save_tts():
             
             message = data['message']
+            message = message.replace('<br>','')
             
             if message != "":
                     
@@ -6056,13 +5724,16 @@ def send_not_fun(data: dict) -> None:
         audio_volume = event_data[type_id]['audio_volume']
         response_px = event_data[type_id]['response_px']
         image_above = event_data[type_id]['text_over_image']
+        weight = event_data[type_id]['response_weight']
+        color = event_data[type_id]['response_color']
         
 
         if event_data[type_id]['tts'] == 1:
-   
+
             data_not = {
+                "type_id" : type_id,
                 "username" : data['username'],
-                "message" : data['message'],
+                "message" : data['message_html'],
                 "duration" : not_config_data['HTML_EVENTS_TIME'],
                 "img_src" : img_src,
                 "img_px": img_px,
@@ -6071,6 +5742,8 @@ def send_not_fun(data: dict) -> None:
                 "response_px": response_px,
                 "image_above" : image_above,
                 "play_tts" : 1,
+                "weight" : weight,
+                "color" : color
             }
 
             if save_tts():
@@ -6084,7 +5757,7 @@ def send_not_fun(data: dict) -> None:
             
             data_not = {
                 "username" : data['username'],
-                "message" : data['message'],
+                "message" : data['message_html'],
                 "duration" : not_config_data['HTML_EVENTS_TIME'],
                 "img_src" : img_src,
                 "img_px": img_px,
@@ -6093,6 +5766,8 @@ def send_not_fun(data: dict) -> None:
                 "response_px": response_px,
                 "image_above" : image_above,
                 "play_tts" : 0,
+                "weight" : weight,
+                "color" : color
             }
             
             if utils.update_event(data_not):
@@ -8765,6 +8440,14 @@ def command_fallback(message: str) -> None:
                         else:
                             plan_type = "Prime"
                             
+                        
+                        data_discord = {
+                            'type_id' : 'sub',
+                            'username' : data['display_name'],
+                        }
+                        
+                        send_discord_webhook(data_discord)
+
                         aliases = {
                             '{username}' : data['display_name'],
                             '{type}' : plan_type,
@@ -8778,8 +8461,10 @@ def command_fallback(message: str) -> None:
                         response_send = utils.replace_all(response_send,aliases)  
                         
                         data = {
+                            'type_id' : 'sub',
                             'type' : 'sub',
                             'username' : response_send,
+                            'message_html' : message,
                             'message' : message
                         }
                         
@@ -8838,6 +8523,7 @@ def command_fallback(message: str) -> None:
                         data = {
                             'type' : 'giftsub',
                             'username' : response,
+                            'message_html' : '',
                             'message' : ''
                         }  
                         
@@ -8862,6 +8548,7 @@ def command_fallback(message: str) -> None:
                         data = {
                             'type' : 'giftsub',
                             'username' : response,
+                            'message_html' : '',
                             'message' : ''
                         }  
                         
@@ -9403,6 +9090,7 @@ def on_message(ws, message):
                     data = {
                         'type' : 'follow',
                         'username' : follow_name,
+                        'message_html' : message,
                         'message' : message
                     }
                     
@@ -9455,16 +9143,19 @@ def on_message(ws, message):
                 message_chat = utils.replace_all(message_chat,aliases)
                 message = utils.replace_all(message,aliases)
                 
+                
                 send_announcement(message_chat,'purple')   
                 
-                
+                send_discord_webhook(data_send)
+
+
                 data = {
                     'type' : 'follow',
-                    'username' : '',
+                    'username' : follow_name,
+                    'message_html' : message,
                     'message' : message
                 }
-                
-                send_discord_webhook(data_send)
+
                 send_not_fun(data)
                    
         elif subscription_type == 'channel.channel_points_custom_reward_redemption.add':
@@ -9660,31 +9351,41 @@ def on_message(ws, message):
                 '{user_mesage}' : str(message_text)
             }
 
-            response = utils.replace_all(response,aliases_html) 
+            response_html = utils.replace_all(response,aliases_html) 
+
 
             response_chat =  message_data['resub']['response_chat']
+            
+
+            data = {
+                'type_id' : 'resub',
+                'username' : user_name,
+                'message' : response_chat
+            }
+            
+            send_discord_webhook(data)
 
             aliases_chat = {
-                '{username}' : user_name,
-                '{tier}' : str(tier),
-                '{total_months}' : str(cumulative_months),
-                '{streak_months}' : str(streak_months),
-                '{months}' : str(duration_months),
-                '{user_mesage}' : str(message_parse_chat)
-            }
+                    '{username}' : user_name,
+                    '{tier}' : str(tier),
+                    '{total_months}' : str(cumulative_months),
+                    '{streak_months}' : str(streak_months),
+                    '{months}' : str(duration_months),
+                    '{user_mesage}' : str(message_parse_chat)
+                }
             
             response_chat = utils.replace_all(response_chat,aliases_chat)     
-            
-            
-            
+
+            send_announcement(response_chat,'purple')
+
+
             data = {
                 'type' : 'resub',
-                'username' : response,
+                'username' : response_html,
+                'message_html' : response_html,
                 'message' : message_text
             }
-            
 
-            send_announcement(message_text,'purple')
             send_not_fun(data) 
             
         elif subscription_type == 'channel.raid':  
@@ -9698,6 +9399,7 @@ def on_message(ws, message):
                 event_config_data = json.load(event_config_file)
     
             response = event_config_data['raid']['response']
+            response_chat = event_config_data['raid']['response_chat']
             
             aliases = {
                 '{username}' : username,
@@ -9705,14 +9407,17 @@ def on_message(ws, message):
             }
 
             response = utils.replace_all(response,aliases) 
+            response_chat = utils.replace_all(response_chat,aliases) 
             
             data = {
-                'type' : 'raid',
+                'type_id' : 'raid',
                 'username' : username,
+                'message_html' : response,
                 'message' : response
             }  
             
-            send_announcement(response,'purple')
+            send_announcement(response_chat,'purple')
+            send_discord_webhook(data)
             send_not_fun(data)   
                             
         elif subscription_type == 'channel.cheer':  
@@ -9732,33 +9437,39 @@ def on_message(ws, message):
             with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'r', encoding='utf-8') as event_config_file:
                 event_config_data = json.load(event_config_file)
 
-            if int(bits) == 1:
+            if int(bits) >= 1:
                 type_not = 'bits1'
-                response = event_config_data['bits1']['response']
+
             elif int(bits) >= 100:
                 type_not = 'bits100'
-                response = event_config_data['bits100']['response']
+
             elif int(bits) >= 1000:
                 type_not = 'bits1000'
-                response = event_config_data['bits1000']['response']
+
             elif int(bits) >= 1000:
                 type_not = 'bits5000'
-                response = event_config_data['bits1000']['response']
+
+            response = event_config_data[type_not]['response']
+            response_chat = event_config_data[type_not]['response_chat']
                 
             aliases = {
                 '{username}' : user_name,
-                '{amoun}' : str(bits),
-            }
+                '{amount}' : str(bits),
+            }   
 
             response = utils.replace_all(response,aliases) 
+            response_chat = utils.replace_all(response_chat,aliases) 
             
             data = {
+                'type_id' : 'bits',
                 'type' : type_not,
                 'username' : user_name,
+                'message_html' : message,
                 'message' : message
             }  
             
-            send_announcement(response,'purple')
+            send_announcement(response_chat,'purple')
+            send_discord_webhook(data)
             send_not_fun(data)  
 
         elif subscription_type == 'channel.ban':  
@@ -10137,6 +9848,7 @@ def on_message(ws, message):
     else:
         print(message_type)
 
+
 def on_resize(width, height):
     min_width = 1200 
     min_height = 600
@@ -10178,7 +9890,7 @@ def webview_start_app(app_mode):
         window.events.closed += close
         window.events.resized += on_resize
         
-        webview.start(storage_path=extDataDir,private_mode=False,debug=True,http_server=False)
+        webview.start(storage_path=extDataDir,private_mode=False,debug=False,http_server=False)
         
     elif app_mode == "auth":
 

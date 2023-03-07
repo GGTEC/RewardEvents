@@ -414,7 +414,9 @@ def update_event(data):
     
     html_event_backup = f"{appdata_path}/rewardevents/web/src/html/event.html.tmp"
     html_event_file = f"{appdata_path}/rewardevents/web/src/html/event.html"
+    
 
+    type_id = data['type_id']
     image_src = data['img_src']
     img_px = data['img_px']
     response_px = data['response_px']
@@ -422,162 +424,70 @@ def update_event(data):
     image_above = data['image_above']	
     audio_src = data['audio_src']
     audio_volume = data['audio_volume']
-    tts_src = 'src/player/cache/tts.mp3'
+    tts_src = f'{appdata_path}/rewardevents/web/src/player/cache/tts.mp3'
     play_tts = data['play_tts']
+    color_highligh = data['color']
+    font_weight = data['weight']
     
+    html_event_style_path = f"event_styles/{type_id}.css"
+
     audio_volume = int(audio_volume)/100
     
-    username = data['username']
     message = data['message']
-    
-    username_soup = bs(username, 'html.parser')
+    username = data['username']
+
+    username_replace = f"<span id='username' style='color:{color_highligh};font-weight:{font_weight}'>{username}</span>"
+
+    message = message.replace(username,username_replace)
+
     message_soup = bs(message, 'html.parser')
     
     try:
+
+        with open(html_event_backup, "r",encoding='utf-8') as html:
+            soup = bs(html, 'html.parser')
+
+        # Encontre todas as tags <link> que referenciam folhas de estilo CSS
+        link_tags = soup.find_all('link', rel='stylesheet')
+
+        # Altere o atributo href da segunda tag <link> para apontar para o novo arquivo CSS
+        link_tags[1]['href'] = html_event_style_path
+
+        audio_tag = soup.find("input", {"id": "path_audio1"})
+        audio_tag['value'] = f'http://absolute/{audio_src}'
+
+        audio2_tag = soup.find("input", {"id": "path_audio2"})
         
-        if image_above == 0: 
-
-            with open(html_event_backup, "r",encoding='utf-8') as html:
-                soup = bs(html, 'html.parser')
-
-                png_div = soup.find("div", {"id": "png_div_above"})
-                gif_div = soup.find("div", {"id": "gif_div_above"})
-
-                main_div = soup.find("div", {"id": "main_div_above"})
-                main_div['style'] = f'animation-duration: {duration}s'
-                
-                main_div_over = soup.find("div", {"id": "main_div_over"})
-                main_div_over['style'] = 'display: none !important;'
-                
-                audio_tag = soup.find("audio", {"id": "audio1"})
-                audio_tag['src'] = f'http://absolute/{audio_src}'
-                
-                audio2_tag = soup.find("audio", {"id": "audio2"})
-                
-                if play_tts == 0:
-                    audio2_tag['src'] = f''
-                else:
-                    audio2_tag['src'] = f'http://localhost:7000/{tts_src}'
-                    
-                volume_tag = soup.find("input", {"id": "volume"})
-                volume_tag['value'] = audio_volume
-
-                if image_src.endswith('.gif'):
-                    
-                    png_div['style'] = 'display: none !important;'
-                    gif_div['style'] = 'display: block;'
-
-                    gif_source = soup.find("img" ,{"id":"gif_above"})
-                    gif_source['src'] = 'http://absolute/' + image_src
-                    gif_source['style'] = f'width: {img_px}px;'
-                    
-                    user_tag = soup.find("p", {"id": "username-gif-above"})
-                    user_tag['style'] = f'font-size: {response_px}px;'
-                    
-                    message_tag = soup.find("p", {"id": "message-gif-above"})
-                    message_tag['style'] = f'font-size: {response_px}px;'
-                    
-                    user_tag.insert(1,username_soup)
-                    message_tag.insert(1,message_soup)
-                    
-                elif image_src.endswith('.png'):
-                    
-                    png_div['style'] = 'display: block;'
-                    gif_div['style'] = 'display: none !important;'
-
-                    png_source = soup.find("img" ,{"id":"png_above"})
-                    png_source['src'] = 'http://absolute/' + image_src
-                    png_source['style'] = f'width: {img_px}px;'
-                    
-                    user_tag = soup.find("p", {"id": "username-png-above"})
-                    user_tag['style'] = f'font-size: {response_px}px;'
-                    
-                    message_tag = soup.find("p", {"id": "message-png-above"})
-                    message_tag['style'] = f'font-size: {response_px}px;'
-                    
-                    user_tag.string = ""
-                    message_tag.string = ""
-                    
-                    user_tag.insert(1,username_soup)
-                    message_tag.insert(1,message_soup)
-                
-                with open(html_event_file, "wb") as f_output:
-                    f_output.write(soup.prettify("utf-8"))
-
-            return True
-        
+        if play_tts == 0:
+            audio2_tag['value'] = f''
         else:
+            audio2_tag['value'] = f'http://absolute/{tts_src}'
             
-            with open(html_event_backup, "r",encoding='utf-8') as html:
-                soup = bs(html, 'html.parser')
+        volume_tag = soup.find("input", {"id": "volume"})
+        volume_tag['value'] = audio_volume
+    
+        if image_above == 0: 
+            type_div = "above"
+        else:
+            type_div = "over"
 
-                png_div = soup.find("div", {"id": "png_div_over"})
-                gif_div = soup.find("div", {"id": "gif_div_over"})
+        main_div = soup.find("div", {"id": f"main_div_{type_div}"})
+        main_div['style'] = f'animation-duration: {duration}s'
 
-                main_div = soup.find("div", {"id": "main_div_over"})
-                main_div['style'] = f'animation-duration: {duration}s'
-                
-                main_div_above = soup.find("div", {"id": "main_div_above"})
-                main_div_above['style'] = 'display: none !important;'
-                
-                audio_tag = soup.find("audio", {"id": "audio1"})
-                audio_tag['src'] = f'http://absolute/{audio_src}'
-                
-                audio2_tag = soup.find("audio", {"id": "audio2"})
-                
-                if play_tts == 0:
-                    audio2_tag['src'] = f''
-                else:
-                    audio2_tag['src'] = f'http://localhost:7000/{tts_src}'
-                    
-                volume_tag = soup.find("input", {"id": "volume"})
-                volume_tag['value'] = audio_volume
+        img_source = soup.find("img" ,{"id":f"img_{type_div}"})
+        img_source['src'] = 'http://absolute/' + image_src
+        img_source['style'] = f'width: {img_px}px;'
 
-                if image_src.endswith('.gif'):
-                    
-                    png_div['style'] = 'display: none !important;'
-                    gif_div['style'] = 'display: block;'
+        message_tag = soup.find("p", {"id": f"message-{type_div}"})
+        message_tag['style'] = f'font-size: {response_px}px;'
+        message_tag.string = ""
+        message_tag.insert(1,message_soup)
 
-                    gif_source = soup.find("img" ,{"id":"gif_over"})
-                    gif_source['src'] = 'http://absolute/' + image_src
-                    gif_source['style'] = f'width: {img_px}px;'
-                    
-                    user_tag = soup.find("p", {"id": "username-gif-over"})
-                    user_tag['style'] = f'font-size: {response_px}px;'
-                    
-                    message_tag = soup.find("p", {"id": "message-gif-over"})
-                    message_tag['style'] = f'font-size: {response_px}px;'
-                    
-                    user_tag.string = ""
-                    message_tag.string = ""
-                    
-                    user_tag.insert(1,username_soup)
-                    message_tag.insert(1,message_soup)
-                    
-                elif image_src.endswith('.png'):
-                    
-                    png_div['style'] = 'display: block;'
-                    gif_div['style'] = 'display: none !important;'
 
-                    png_source = soup.find("img" ,{"id":"png_over"})
-                    png_source['src'] = 'http://absolute/' + image_src
-                    png_source['style'] = f'width: {img_px}px;'
-                    
-                    user_tag = soup.find("p", {"id": "username-png-over"})
-                    user_tag['style'] = f'font-size: {response_px}px;'
-                    message_tag = soup.find("p", {"id": "message-png-over"})
-                    message_tag['style'] = f'font-size: {response_px}px;'
-                    
-                    user_tag.string = ""
-                    message_tag.string = ""
-                    
-                    user_tag.insert(1,username_soup)
-                    message_tag.insert(1,message_soup)
-                
-                with open(html_event_file, "wb") as f_output:
-                    f_output.write(soup.prettify("utf-8"))
+        with open(html_event_file, "wb") as f_output:
+            f_output.write(soup.prettify("utf-8"))
 
-            return True
+        return True
             
     except Exception as e:
         error_log(e)

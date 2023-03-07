@@ -1,13 +1,7 @@
 eel.expose(timer_js);
 async function timer_js(event,type_id) {
 
-    timer_internal = document.getElementById('timer-ger-internal');
-    timer_loader = document.getElementById('timer-loader');
-
     if (type_id == "get" ){
-
-        timer_internal.hidden = true;
-        timer_loader.hidden = false;
 
         document.getElementById("timer-add-form").reset();
         document.getElementById("timer-edit-form").reset();
@@ -25,51 +19,32 @@ async function timer_js(event,type_id) {
         var list_messages = await eel.timer_py(type_id,'null')();
     
         if (list_messages) {
-    
+            
             var list_messages_parse = JSON.parse(list_messages);
-    
             var delay_min_info = list_messages_parse.delay_min;
             var delay_max_info = list_messages_parse.delay_max;
-    
+            
             timer_inp_delay_min.value = delay_min_info;
             timer_inp_delay_max.value = delay_max_info;
- 
+         
             if (list_messages_parse.status == 1){
                 timer_enable_check.checked = true;
             }
-
-            data = list_messages_parse.messages;
-    
-            for (var key in data) {
-                
-                var value = data[key]['message'];
-                var value_slice = value.slice(0,60)
-    
-                $("#timer-select-edit").append('<option class="timer-wrap" style="background: #000; color: #fff;" value="'+ key +'">'+ value_slice +'</option>');
-                $("#timer-select-edit").selectpicker("refresh");
-    
-            }
-    
-            for (var key in data) {
-    
-                var value = data[key]['message'];
-                
-                var value_slice = value.slice(0,65)
         
-                $("#timer-select-del").append('<option class="timer-wrap" style="background: #000; color: #fff;" value="'+ key +'">'+ value_slice +'</option>');
-                $("#timer-select-del").selectpicker("refresh");
+            var data = list_messages_parse.messages;
+            var $timerSelectEdit = $("#timer-select-edit");
+            var $timerSelectDel = $("#timer-select-del");
+        
+            for (var key in data) {
+                var value = data[key]['message'];
+                var value_slice = value.slice(0,60);
+                $timerSelectEdit.append('<option class="timer-wrap" style="background: #000; color: #fff;" value="'+ key +'">'+ value_slice +'</option>');
+                $timerSelectDel.append('<option class="timer-wrap" style="background: #000; color: #fff;" value="'+ key +'">'+ value_slice +'</option>');
             }
-    
-            $("select").selectpicker("refresh");
-
-
-            document.getElementById('timer-ger-internal').hidden = false;
-            document.getElementById('timer-loader').hidden = true;
-            
+        
+            $timerSelectEdit.add($timerSelectDel).selectpicker("refresh");
         }
 
-        timer_internal.hidden = false;
-        timer_loader.hidden = true;
 
     } else if (type_id == "get_message") {
 

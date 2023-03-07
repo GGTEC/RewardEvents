@@ -184,8 +184,6 @@ async function config_responses_js(event,fun_id_responses) {
     var in_reponse_el = document.getElementById('response-message-new');
 
     if (fun_id_responses == 'get_response'){
-        
-        console.log(select_id_el)
 
         var messages = await eel.responses_config('get_response',select_id_el,'none')();
     
@@ -332,7 +330,10 @@ function config_messages_change(event) {
     eel.save_messages_config(formData);
 }
 
-function test_not(type_id){
+function test_not(){
+    var type_id = document.getElementById('type_edit_not').value
+
+    console.log(type_id)
 
     if (type_id == 'follow'){
 
@@ -554,7 +555,7 @@ function test_not(type_id){
                     "broadcaster_user_login": "cooler_user",
                     "broadcaster_user_name": "Cooler_User",
                     "message": "pogchamp",
-                    "bits": 1
+                    "bits": 60
                 }
             }
         }
@@ -927,665 +928,81 @@ async function sr_config_js(event,type_id){
     } 
 }
 
-async function not_config_js(event, type_id){
+async function not_config_js(event, type_id, type_not){
+    
+    var type_edit = document.getElementById(`type_edit_not`);
+    var not = document.getElementById(`not`);
+    var image_over = document.getElementById(`over-image`);
+    var image = document.getElementById(`image`);
+    var image_px = document.getElementById(`image-px`);
+    var audio = document.getElementById(`audio`);
+    var audio_volume = document.getElementById(`not-audio-volume`);
+    var tts = document.getElementById(`tts`);
+    var response = document.getElementById(`response`);
+    var response_chat = document.getElementById(`response-chat`);
+    var response_px = document.getElementById(`response-px`);
+    var response_weight = document.getElementById(`response-weight`);
+    var response_color = document.getElementById(`response-color`);
     
 
-    if (type_id == 'get_sub'){    
+    if (type_id == 'get'){ 
 
-        var sub_not = document.getElementById('sub-not');
-        var sub_image_over = document.getElementById('sub-over-image');
-        var sub_image = document.getElementById('sub-image');
-        var sub_image_px = document.getElementById('sub-image-px');
-        var sub_audio = document.getElementById('sub-audio');
-        var sub_audio_volume = document.getElementById('sub-audio-volume');
-        var sub_tts = document.getElementById('sub-tts');
-        var sub_response = document.getElementById('sub-response');
-        var sub_response_chat = document.getElementById('sub-response-chat');
-        var sub_response_px = document.getElementById('sub-response-px');
-
-        var not_config_data = await eel.not_config_py('data',type_id)();
+        var not_config_data = await eel.not_config_py('data',type_id, type_not)();
 
         if (not_config_data){
 
             var not_config_data_load = JSON.parse(not_config_data);
 
-            sub_not.checked = not_config_data_load.sub_not == 1 ? true : false;
-            sub_tts.checked = not_config_data_load.sub_tts == 1 ? true : false;
-            sub_image_over.checked = not_config_data_load.sub_image_over == 1 ? true : false;
+            type_edit.value = type_not
 
-            sub_image.value = not_config_data_load.sub_image;
-            sub_image_px.value = not_config_data_load.sub_image_px;
-            sub_audio.value = not_config_data_load.sub_audio;
-            sub_audio_volume.value = not_config_data_load.sub_audio_volume;
-            sub_response.value = not_config_data_load.sub_response;
-            sub_response_chat.value = not_config_data_load.sub_response_chat;
-            sub_response_px.value = not_config_data_load.sub_response_px;
+            not.checked = not_config_data_load.not == 1 ? true : false;
+            tts.checked = not_config_data_load.tts == 1 ? true : false;
+            image_over.checked = not_config_data_load.image_over == 1 ? true : false;
 
-        }
-        
-    } else if (type_id == 'get_resub'){
-
-        var resub_not = document.getElementById('resub-not');
-        var resub_image_over = document.getElementById('resub-over-image');
-        var resub_image = document.getElementById('resub-image');
-        var resub_image_px = document.getElementById('resub-image-px');
-        var resub_audio = document.getElementById('resub-audio');
-        var resub_audio_volume = document.getElementById('resub-audio-volume');
-        var resub_tts = document.getElementById('resub-tts');
-        var resub_response = document.getElementById('resub-response');
-        var resub_response_chat = document.getElementById('resub-response-chat');
-        var resub_response_px = document.getElementById('resub-response-px');
-
-        var not_config_data = await eel.not_config_py('data',type_id)();
-
-        if (not_config_data){
-
-            var not_config_data_load = JSON.parse(not_config_data);
-
-            resub_tts.checked = not_config_data_load.resub_tts == 1 ? true : false;
-            resub_not.checked = not_config_data_load.resub_not == 1 ? true : false;
-            resub_image_over.checked = not_config_data_load.resub_image_over == 1 ? true : false;
-
-            resub_image.value = not_config_data_load.resub_image;
-            resub_image_px.value = not_config_data_load.resub_image_px;
-            resub_audio.value = not_config_data_load.resub_audio;
-            resub_audio_volume.value = not_config_data_load.resub_audio_volume;
-            resub_response.value = not_config_data_load.resub_response;
-            resub_response_chat.value = not_config_data_load.resub_response_chat;
-            resub_response_px.value = not_config_data_load.resub_response_px;
+            image.value = not_config_data_load.image;
+            image_px.value = not_config_data_load.image_px;
+            audio.value = not_config_data_load.audio;
+            audio_volume.value = not_config_data_load.audio_volume;
+            response.value = not_config_data_load.response;
+            response_chat.value = not_config_data_load.response_chat;
+            response_px.value = not_config_data_load.response_px;
+            response_weight.value = not_config_data_load.response_weight;
+            response_color.value = not_config_data_load.response_color;
 
         }
 
-    } else if (type_id == 'get_giftsub'){
+    } else if (type_id == 'save'){
 
-        var giftsub_not = document.getElementById('giftsub-not'); 
-        var giftsub_image_over = document.getElementById('giftsub-over-image');
-        var giftsub_image = document.getElementById('giftsub-image');
-        var giftsub_image_px = document.getElementById('giftsub-image-px');
-        var giftsub_audio = document.getElementById('giftsub-audio');
-        var giftsub_audio_volume = document.getElementById('giftsub-audio-volume');
-        var giftsub_tts = document.getElementById('giftsub-tts');
-
-        var giftsub_response = document.getElementById('giftsub-response');
-        var giftsub_response_chat = document.getElementById('giftsub-response-chat');
-        var giftsub_response_px = document.getElementById('giftsub-response-px');
-    
-        var mysterygift_response = document.getElementById('mysterygift-response');
-        var mysterygift_response_chat = document.getElementById('mysterygift-response-chat');
-        var mysterygift_response_px = document.getElementById('mysterygift-response-px');
-        
-        var re_mysterygift_response = document.getElementById('re-mysterygift-response');
-        var re_mysterygift_response_chat = document.getElementById('re-mysterygift-response-chat');
-        var re_mysterygift_response_px = document.getElementById('re-mysterygift-response-px');
-
-
-        var not_config_data = await eel.not_config_py('data',type_id)();
-
-        if (not_config_data){
-
-            var not_config_data_load = JSON.parse(not_config_data);
-
-            
-            giftsub_tts.checked = not_config_data_load.giftsub_tts == 1 ? true : false;
-            giftsub_not.checked = not_config_data_load.giftsub_not == 1 ? true : false;
-            giftsub_image_over.checked = not_config_data_load.giftsub_image_over == 1 ? true : false;
-
-            giftsub_image.value = not_config_data_load.giftsub_image;
-            giftsub_image_px.value = not_config_data_load.giftsub_image_px;
-            giftsub_audio.value = not_config_data_load.giftsub_audio;
-            giftsub_audio_volume.value = not_config_data_load.giftsub_audio_volume;
-
-            giftsub_response.value = not_config_data_load.giftsub_response;
-            giftsub_response_chat.value = not_config_data_load.giftsub_response_chat;
-            giftsub_response_px.value = not_config_data_load.giftsub_response_px;
-
-            mysterygift_response.value = not_config_data_load.mysterygift_response;
-            mysterygift_response_chat.value = not_config_data_load.mysterygift_response_chat;
-            mysterygift_response_px.value = not_config_data_load.mysterygift_response_px;
-
-            re_mysterygift_response.value = not_config_data_load.re_mysterygift_response;
-            re_mysterygift_response_chat.value = not_config_data_load.re_mysterygift_response_chat;
-            re_mysterygift_response_px.value = not_config_data_load.re_mysterygift_response_px;
-        }
-
-
-    } else if (type_id == 'get_raid'){
-
-        var raid_not = document.getElementById('raid-not');
-        var raid_image_over = document.getElementById('raid-over-image');
-        var raid_image = document.getElementById('raid-image');
-        var raid_image_px = document.getElementById('raid-image-px');
-        var raid_audio = document.getElementById('raid-audio');
-        var raid_audio_volume = document.getElementById('raid-audio-volume');
-        var raid_tts = document.getElementById('raid-tts');
-    
-        var raid_response = document.getElementById('raid-response');
-        var raid_response_px = document.getElementById('raid-response-px');
-
-        var not_config_data = await eel.not_config_py('data',type_id)();
-
-        if (not_config_data){
-
-            var not_config_data_load = JSON.parse(not_config_data);
-
-            raid_tts.checked = not_config_data_load.raid_tts == 1 ? true : false;
-            raid_not.checked = not_config_data_load.raid_not == 1 ? true : false;
-            raid_image_over.checked = not_config_data_load.raid_image_over == 1 ? true : false;
-            
-            raid_image.value = not_config_data_load.raid_image;
-            raid_image_px.value = not_config_data_load.raid_image_px;
-            raid_audio.value = not_config_data_load.raid_audio;
-            raid_audio_volume.value = not_config_data_load.raid_audio_volume;
-            raid_response.value = not_config_data_load.raid_response;
-            raid_response_px.value = not_config_data_load.raid_response_px;
-
-        }
-
-    } else if (type_id == 'get_follow'){
-
-        var follow_not = document.getElementById('follow-not');
-        var follow_image_over = document.getElementById('follow-over-image');
-        var follow_image = document.getElementById('follow-image');
-        var follow_image_px = document.getElementById('follow-image-px');
-        var follow_audio = document.getElementById('follow-audio');
-        var follow_audio_volume = document.getElementById('follow-audio-volume');
-        var follow_tts = document.getElementById('follow-tts');
-    
-        var follow_response = document.getElementById('follow-response');
-        var follow_response_chat = document.getElementById('follow-response-chat');
-        var follow_response_px = document.getElementById('follow-response-px');
-
-        var not_config_data = await eel.not_config_py('data',type_id)();
-
-        if (not_config_data){
-
-            var not_config_data_load = JSON.parse(not_config_data);
-            
-            follow_not.checked = not_config_data_load.follow_not == 1 ? true : false;
-            follow_tts.checked = not_config_data_load.follow_tts == 1 ? true : false;
-            follow_image_over.checked = not_config_data_load.follow_image_over == 1 ? true : false;
-
-            follow_image.value = not_config_data_load.follow_image;
-            follow_image_px.value = not_config_data_load.follow_image_px;
-            follow_audio.value = not_config_data_load.follow_audio;
-            follow_audio_volume.value = not_config_data_load.rfollow_audio_volume;
-            follow_response.value = not_config_data_load.follow_response;
-            follow_response_chat.value = not_config_data_load.follow_response_chat;
-            follow_response_px.value = not_config_data_load.follow_response_px;
-
-        }
-
-    } else if (type_id == 'get_bits1'){
-        
-        var bits1_not = document.getElementById('bits1-not');
-        var bits1_image_over = document.getElementById('bits1-over-image');
-        var bits1_image = document.getElementById('bits1-image');
-        var bits1_image_px = document.getElementById('bits1-image-px');
-        var bits1_audio = document.getElementById('bits1-audio');
-        var bits1_audio_volume = document.getElementById('bits1-audio-volume');
-        var bits1_tts = document.getElementById('bits1-tts');
-        var bits1_response = document.getElementById('bits1-response');
-        var bits1_response_chat = document.getElementById('bits1-response-chat');
-        var bits1_response_px = document.getElementById('bits1-response-px');
-
-        var not_config_data = await eel.not_config_py('data',type_id)();
-
-        if (not_config_data){
-
-            var not_config_data_load = JSON.parse(not_config_data);
-
-            bits1_not.checked = not_config_data_load.bits1_not == 1 ? true : false;
-            bits1_tts.checked = not_config_data_load.bits1_tts == 1 ? true : false;
-            bits1_image_over.checked = not_config_data_load.bits1_image_over == 1 ? true : false;
-
-            bits1_image.value = not_config_data_load.bits1_image;
-            bits1_image_px.value = not_config_data_load.bits1_image_px;
-            bits1_audio.value = not_config_data_load.bits1_audio;
-            bits1_audio_volume.value = not_config_data_load.bits1_audio_volume;
-            bits1_response.value = not_config_data_load.bits1_response;
-            bits1_response_chat.value = not_config_data_load.bits1_response_chat;
-            bits1_response_px.value = not_config_data_load.bits1_response_px;
-
-        }
-    } else if (type_id == 'get_bits100'){
-
-        var bits100_not = document.getElementById('bits100-not');
-        var bits100_image_over = document.getElementById('bits100-over-image');
-        var bits100_image = document.getElementById('bits100-image');
-        var bits100_image_px = document.getElementById('bits100-image-px');
-        var bits100_audio = document.getElementById('bits100-audio');
-        var bits100_audio_volume = document.getElementById('bits100-audio-volume');
-        var bits100_tts = document.getElementById('bits100-tts');
-        var bits100_response = document.getElementById('bits100-response');
-        var bits100_response_chat = document.getElementById('bits100-response-chat');
-        var bits100_response_px = document.getElementById('bits100-response-px');
-        
-        var not_config_data = await eel.not_config_py('data',type_id)();
-        
-        if (not_config_data){
-        
-            var not_config_data_load = JSON.parse(not_config_data);
-        
-            bits100_not.checked = not_config_data_load.bits100_not == 1 ? true : false;
-            bits100_tts.checked = not_config_data_load.bits100_tts == 1 ? true : false;
-            bits100_image_over.checked = not_config_data_load.bits100_image_over == 1 ? true : false;
-        
-            bits100_image.value = not_config_data_load.bits100_image;
-            bits100_image_px.value = not_config_data_load.bits100_image_px;
-            bits100_audio.value = not_config_data_load.bits100_audio;
-            bits100_audio_volume.value = not_config_data_load.bits100_audio_volume;
-            bits100_response.value = not_config_data_load.bits100_response;
-            bits100_response_chat.value = not_config_data_load.bits100_response_chat;
-            bits100_response_px.value = not_config_data_load.bits100_response_px;
-        
-        }
-
-    } else if (type_id == 'get_bits1000'){
-
-        var bits1000_not = document.getElementById('bits1000-not');
-        var bits1000_image_over = document.getElementById('bits1000-over-image');
-        var bits1000_image = document.getElementById('bits1000-image');
-        var bits1000_image_px = document.getElementById('bits1000-image-px');
-        var bits1000_audio = document.getElementById('bits1000-audio');
-        var bits1000_audio_volume = document.getElementById('bits1000-audio-volume');
-        var bits1000_tts = document.getElementById('bits1000-tts');
-        var bits1000_response = document.getElementById('bits1000-response');
-        var bits1000_response_chat = document.getElementById('bits1000-response-chat');
-        var bits1000_response_px = document.getElementById('bits1000-response-px');
-
-        var not_config_data = await eel.not_config_py('data',type_id)();
-
-        if (not_config_data){
-
-            var not_config_data_load = JSON.parse(not_config_data);
-
-            bits1000_not.checked = not_config_data_load.bits1000_not == 1 ? true : false;
-            bits1000_tts.checked = not_config_data_load.bits1000_tts == 1 ? true : false;
-            bits1000_image_over.checked = not_config_data_load.bits1000_image_over == 1 ? true : false;
-
-            bits1000_image.value = not_config_data_load.bits1000_image;
-            bits1000_image_px.value = not_config_data_load.bits1000_image_px;
-            bits1000_audio.value = not_config_data_load.bits1000_audio;
-            bits1000_audio_volume.value = not_config_data_load.bits1000_audio_volume;
-            bits1000_response.value = not_config_data_load.bits1000_response;
-            bits1000_response_chat.value = not_config_data_load.bits1000_response_chat;
-            bits1000_response_px.value = not_config_data_load.bits1000_response_px;
-
-        }
-
-    } else if (type_id == 'get_bits5000'){
-
-        var bits5000_not = document.getElementById('bits5000-not');
-        var bits5000_image_over = document.getElementById('bits5000-over-image');
-        var bits5000_image = document.getElementById('bits5000-image');
-        var bits5000_image_px = document.getElementById('bits5000-image-px');
-        var bits5000_audio = document.getElementById('bits5000-audio');
-        var bits5000_audio_volume = document.getElementById('bits5000-audio-volume');
-        var bits5000_tts = document.getElementById('bits5000-tts');
-        var bits5000_response = document.getElementById('bits5000-response');
-        var bits5000_response_chat = document.getElementById('bits5000-response-chat');
-        var bits5000_response_px = document.getElementById('bits5000-response-px');
-
-        var not_config_data = await eel.not_config_py('data',type_id)();
-
-        if (not_config_data){
-
-            var not_config_data_load = JSON.parse(not_config_data);
-
-            bits5000_not.checked = not_config_data_load.bits5000_not == 1 ? true : false;
-            bits5000_tts.checked = not_config_data_load.bits5000_tts == 1 ? true : false;
-            bits5000_image_over.checked = not_config_data_load.bits5000_image_over == 1 ? true : false;
-
-            bits5000_image.value = not_config_data_load.bits5000_image;
-            bits5000_image_px.value = not_config_data_load.bits5000_image_px;
-            bits5000_audio.value = not_config_data_load.bits5000_audio;
-            bits5000_audio_volume.value = not_config_data_load.bits5000_audio_volume;
-            bits5000_response.value = not_config_data_load.bits5000_response;
-            bits5000_response_chat.value = not_config_data_load.bits5000_response_chat;
-            bits5000_response_px.value = not_config_data_load.bits5000_response_px;
-
-        }
-
-    } else if (type_id == 'save_sub'){
-
-        var sub_not = document.getElementById('sub-not');
-        var sub_image_over = document.getElementById('sub-over-image');
-        var sub_image = document.getElementById('sub-image');
-        var sub_image_px = document.getElementById('sub-image-px');
-        var sub_audio = document.getElementById('sub-audio');
-        var sub_audio_volume = document.getElementById('sub-audio-volume');
-        var sub_tts = document.getElementById('sub-tts');
-        var sub_response = document.getElementById('sub-response');
-        var sub_response_chat = document.getElementById('sub-response-chat');
-        var sub_response_px = document.getElementById('sub-response-px');
-
-        sub_not_save = sub_not.checked ? 1 : 0;
-        sub_tts_save = sub_tts.checked ? 1 : 0;
-        sub_image_over = sub_image_over.checked ? 1 : 0;
+        not_save = not.checked ? 1 : 0;
+        tts_save = tts.checked ? 1 : 0;
+        image_over = image_over.checked ? 1 : 0;
 
         data = {
-            sub_not: sub_not_save,
-            sub_image_over: sub_image_over,
-            sub_image: sub_image.value,
-            sub_image_px: sub_image_px.value,
-            sub_audio: sub_audio.value,
-            sub_audio_volume: sub_audio_volume.value,
-            sub_tts: sub_tts_save,
-            sub_response: sub_response.value,
-            sub_response_chat: sub_response_chat.value,
-            sub_response_px: sub_response_px.value,
+            not: not_save,
+            image_over: image_over,
+            image: image.value,
+            image_px: image_px.value,
+            audio: audio.value,
+            audio_volume: audio_volume.value,
+            tts: tts_save,
+            response: response.value,
+            response_chat: response_chat.value,
+            response_px: response_px.value,
+            response_weight: response_weight.value,
+            response_color: response_color.value,
         }
 
         var formData = JSON.stringify(data);
-        eel.not_config_py(formData,type_id);
-
-    } else if (type_id == 'save_resub'){
-        
-        var resub_not = document.getElementById('resub-not');
-        var resub_image_over = document.getElementById('resub-over-image');
-        var resub_image = document.getElementById('resub-image');
-        var resub_image_px = document.getElementById('resub-image-px');
-        var resub_audio = document.getElementById('resub-audio');
-        var resub_audio_volume = document.getElementById('resub-audio-volume');
-        var resub_tts = document.getElementById('resub-tts');
-        var resub_response = document.getElementById('resub-response');
-        var resub_response_chat = document.getElementById('resub-response-chat');
-        var resub_response_px = document.getElementById('resub-response-px');
-
-        resub_not_save = resub_not.checked ? 1 : 0;
-        resub_tts_save = resub_tts.checked ? 1 : 0;
-        resub_image_over = resub_image_over.checked ? 1 : 0;
-
-        data = {
-            resub_not: resub_not_save,
-            resub_image_over: resub_image_over,
-            resub_image: resub_image.value,
-            resub_image_px: resub_image_px.value,
-            resub_audio: resub_audio.value,
-            resub_audio_volume: resub_audio_volume.value,
-            resub_tts: resub_tts_save,
-            resub_response: resub_response.value,
-            resub_response_chat: resub_response_chat.value,
-            resub_response_px: resub_response_px.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.not_config_py(formData,type_id);
-
-    } else if (type_id == 'save_giftsub'){
-
-        var giftsub_not = document.getElementById('giftsub-not'); 
-        var giftsub_image_over = document.getElementById('giftsub-over-image');
-        var giftsub_image = document.getElementById('giftsub-image');
-        var giftsub_image_px = document.getElementById('giftsub-image-px');
-        var giftsub_audio = document.getElementById('giftsub-audio');
-        var giftsub_audio_volume = document.getElementById('giftsub-audio-volume');
-        var giftsub_tts = document.getElementById('giftsub-tts');
-
-        var giftsub_response = document.getElementById('giftsub-response');
-        var giftsub_response_chat = document.getElementById('giftsub-response-chat');
-        var giftsub_response_px = document.getElementById('giftsub-response-px');
-    
-        var mysterygift_response = document.getElementById('mysterygift-response');
-        var mysterygift_response_chat = document.getElementById('mysterygift-response-chat');
-        var mysterygift_response_px = document.getElementById('mysterygift-response-px');
-        
-        var re_mysterygift_response = document.getElementById('re-mysterygift-response');
-        var re_mysterygift_response_chat = document.getElementById('re-mysterygift-response-chat');
-        var re_mysterygift_response_px = document.getElementById('re-mysterygift-response-px');
-
-        giftsub_not_save = giftsub_not.checked ? 1 : 0;
-        giftsub_tts_save = giftsub_tts.checked ? 1 : 0;
-        giftsub_image_over = giftsub_image_over.checked ? 1 : 0;
-
-        data = {
-            giftsub_not: giftsub_not_save,
-            giftsub_image_over: giftsub_image_over,
-            giftsub_image: giftsub_image.value,
-            giftsub_image_px: giftsub_image_px.value,
-            giftsub_audio: giftsub_audio.value,
-            giftsub_audio_volume: giftsub_audio_volume.value,
-            giftsub_tts:giftsub_tts_save,
-            giftsub_response: giftsub_response.value,
-            giftsub_response_chat: giftsub_response_chat.value,
-            giftsub_response_px: giftsub_response.value,    
-            mysterygift_response: mysterygift_response.value,
-            mysterygift_response_chat: mysterygift_response_chat.value,
-            mysterygift_response_px: mysterygift_response_px.value,
-            re_mysterygift_response: re_mysterygift_response.value,
-            re_mysterygift_response_chat: re_mysterygift_response_chat.value,
-            re_mysterygift_response_px: re_mysterygift_response_px.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.not_config_py(formData,type_id);
-
-    } else if (type_id == 'save_raid'){
-
-        var raid_not = document.getElementById('raid-not');
-        var raid_image_over = document.getElementById('raid-over-image');
-        var raid_image = document.getElementById('raid-image');
-        var raid_image_px = document.getElementById('raid-image-px');
-        var raid_audio = document.getElementById('raid-audio');
-        var raid_audio_volume = document.getElementById('raid-audio-volume');
-        var raid_tts = document.getElementById('raid-tts');
-    
-        var raid_response = document.getElementById('raid-response');
-        var raid_response_chat = document.getElementById('raid-response-chat');
-        var raid_response_px = document.getElementById('raid-response-px');
-
-        raid_not_save = raid_not.checked ? 1 : 0;
-        raid_tts_save = raid_tts.checked ? 1 : 0;
-        raid_image_over = raid_image_over.checked ? 1 : 0;
-
-        data = {
-
-            raid_not: raid_not_save,
-            raid_image_over: raid_image_over,
-            raid_image: raid_image.value,
-            raid_image_px: raid_image_px.value,
-            raid_audio: raid_audio.value,
-            raid_audio_volume: raid_audio_volume.value,
-            raid_tts: raid_tts_save,
-            raid_response: raid_response.value,
-            raid_response_chat: raid_response_chat.value,
-            raid_response_px: raid_response_px.value,
-
-        }
-
-        var formData = JSON.stringify(data);
-        eel.not_config_py(formData,type_id);
-
-
-    } else if (type_id == 'save_follow'){
-
-        var follow_not = document.getElementById('follow-not');
-        var follow_image_over = document.getElementById('follow-over-image');
-        var follow_image = document.getElementById('follow-image');
-        var follow_image_px = document.getElementById('follow-image-px');
-        var follow_audio = document.getElementById('follow-audio');
-        var follow_audio_volume = document.getElementById('follow-audio-volume');
-        var follow_tts = document.getElementById('follow-tts');
-    
-        var follow_response = document.getElementById('follow-response');
-        var follow_response_chat = document.getElementById('follow-response-chat');
-        var follow_response_px = document.getElementById('follow-response-px');
-
-        follow_not_save = follow_not.checked ? 1 : 0;
-        follow_tts_save = follow_tts.checked ? 1 : 0;
-        follow_image_over = follow_image_over.checked ? 1 : 0;
-
-        data = {
-
-            follow_not: follow_not_save,
-            follow_image_over: follow_image_over,
-            follow_image: follow_image.value,
-            follow_image_px: follow_image_px.value,
-            follow_audio: follow_audio.value,
-            follow_audio_volume: follow_audio_volume.value,
-            follow_tts:  follow_tts_save,
-            follow_response: follow_response.value,
-            follow_response_chat: follow_response_chat.value,
-            follow_response_px: follow_response_px.value,
-
-        }
-
-        var formData = JSON.stringify(data);
-        eel.not_config_py(formData,type_id);
-
-
-    } else if (type_id == 'save_bits1'){
-
-        var bits1_not = document.getElementById('bits1-not');
-        var bits1_image_over = document.getElementById('bits1-over-image');
-        var bits1_image = document.getElementById('bits1-image');
-        var bits1_image_px = document.getElementById('bits1-image-px');
-        var bits1_audio = document.getElementById('bits1-audio');
-        var bits1_audio_volume = document.getElementById('bits1-audio-volume');
-        var bits1_tts = document.getElementById('bits1-tts');
-        var bits1_response = document.getElementById('bits1-response');
-        var bits1_response_chat = document.getElementById('bits1-response-chat');
-        var bits1_response_px = document.getElementById('bits1-response-px');
-
-        bits1_not_save = bits1_not.checked ? 1 : 0;
-        bits1_tts_save = bits1_tts.checked ? 1 : 0;
-        bits1_image_over = bits1_image_over.checked ? 1 : 0;
-
-        data = {
-            bits1_not: bits1_not_save,
-            bits1_image_over: bits1_image_over,
-            bits1_image: bits1_image.value,
-            bits1_image_px: bits1_image_px.value,
-            bits1_audio: bits1_audio.value,
-            bits1_audio_volume: bits1_audio_volume.value,
-            bits1_tts: bits1_tts_save,
-            bits1_response: bits1_response.value,
-            bits1_response_chat: bits1_response_chat.value,
-            bits1_response_px: bits1_response_px.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.not_config_py(formData,type_id);
-
-    } else if (type_id == 'save_bits100'){
-
-        var bits100_not = document.getElementById('bits100-not');
-        var bits100_image_over = document.getElementById('bits100-over-image');
-        var bits100_image = document.getElementById('bits100-image');
-        var bits100_image_px = document.getElementById('bits100-image-px');
-        var bits100_audio = document.getElementById('bits100-audio');
-        var bits100_audio_volume = document.getElementById('bits100-audio-volume');
-        var bits100_tts = document.getElementById('bits100-tts');
-        var bits100_response = document.getElementById('bits100-response');
-        var bits100_response_chat = document.getElementById('bits100-response-chat');
-        var bits100_response_px = document.getElementById('bits100-response-px');
-
-        bits100_not_save = bits100_not.checked ? 1 : 0;
-        bits100_tts_save = bits100_tts.checked ? 1 : 0;
-        bits100_image_px = bits100_image_px.checked ? 1 : 0;
-
-        data = {
-            bits100_not: bits100_not_save,
-            bits100_image_over: bits100_image_over.value,
-            bits100_image: bits100_image.value,
-            bits100_image_px: bits100_image_px,
-            bits100_audio: bits100_audio.value,
-            bits100_audio_volume: bits100_audio_volume.value,
-            bits100_tts: bits100_tts_save,
-            bits100_response: bits100_response.value,
-            bits100_response_chat: bits100_response_chat.value,
-            bits100_response_px: bits100_response_px.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.not_config_py(formData,type_id);
-
-    } else if (type_id == 'save_bits1000'){
-
-        var bits1000_not = document.getElementById('bits1000-not');
-        var bits1000_image_over = document.getElementById('bits1000-over-image');
-        var bits1000_image = document.getElementById('bits1000-image');
-        var bits1000_image_px = document.getElementById('bits1000-image-px');
-        var bits1000_audio = document.getElementById('bits1000-audio');
-        var bits1000_audio_volume = document.getElementById('bits1000-audio-volume');
-        var bits1000_tts = document.getElementById('bits1000-tts');
-        var bits1000_response = document.getElementById('bits1000-response');
-        var bits1000_response_chat = document.getElementById('bits1000-response-chat');
-        var bits1000_response_px = document.getElementById('bits1000-response-px');
-
-        bits1000_not_save = bits1000_not.checked ? 1 : 0;
-        bits1000_tts_save = bits1000_tts.checked ? 1 : 0;
-        bits1000_image_over = bits1000_image_over.checked ? 1 : 0;
-
-        data = {
-            bits1000_not: bits1000_not_save,
-            bits1000_image_over: bits1000_image_over,
-            bits1000_image: bits1000_image.value,
-            bits1000_image_px: bits1000_image_px.value,
-            bits1000_audio: bits1000_audio.value,
-            bits1000_audio_volume: bits1000_audio_volume.value,
-            bits1000_tts: bits1000_tts_save,
-            bits1000_response: bits1000_response.value,
-            bits1000_response_chat: bits1000_response_chat.value,
-            bits1000_response_px: bits1000_response_px.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.not_config_py(formData,type_id);
-
-    } else if (type_id == 'save_bits5000'){
-
-        var bits5000_not = document.getElementById('bits5000-not');
-        var bits5000_image_over = document.getElementById('bits5000-over-image');
-        var bits5000_image = document.getElementById('bits5000-image');
-        var bits5000_image_px = document.getElementById('bits5000-image-px');
-        var bits5000_audio = document.getElementById('bits5000-audio');
-        var bits5000_audio_volume = document.getElementById('bits5000-audio-volume');
-        var bits5000_tts = document.getElementById('bits5000-tts');
-        var bits5000_response = document.getElementById('bits5000-response');
-        var bits5000_response_chat = document.getElementById('bits5000-response-chat');
-        var bits5000_response_px = document.getElementById('bits5000-response-px');
-
-        bits5000_not_save = bits5000_not.checked ? 1 : 0;
-        bits5000_tts_save = bits5000_tts.checked ? 1 : 0;
-        bits5000_image_over = bits5000_image_over.checked ? 1 : 0;
-
-        data = {
-            bits5000_not: bits5000_not_save,
-            bits5000_image_over: bits5000_image_over,
-            bits5000_image: bits5000_image.value,
-            bits5000_image_px: bits5000_image_px.value,
-            bits5000_audio: bits5000_audio.value,
-            bits5000_audio_volume: bits5000_audio_volume.value,
-            bits5000_tts: bits5000_tts_save,
-            bits5000_response: bits5000_response.value,
-            bits5000_response_chat: bits5000_response_chat.value,
-            bits5000_response_px: bits5000_response_px.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.not_config_py(formData,type_id);
+        eel.not_config_py(formData,type_id,type_edit.value);
 
     } else if (type_id == 'select_edit'){
 
-        const notDivs = {
-            sub: document.getElementById('sub-not-div'),
-            resub: document.getElementById('resub-not-div'),
-            giftsub: document.getElementById('giftsub-not-div'),
-            raid: document.getElementById('raid-not-div'),
-            follow: document.getElementById('follow-not-div'),
-            bits1: document.getElementById('bits1-not-div'),
-            bits100: document.getElementById('bits100-not-div'),
-            bits1000: document.getElementById('bits1000-not-div'),
-            bits5000: document.getElementById('bits5000-not-div'),
-          };
-          
-          const selectEdit = document.getElementById('not-select-edit');
-          
-          for (const [key, value] of Object.entries(notDivs)) {
-            value.hidden = key !== selectEdit.value;
-            not_config_js(event, `get_${key}`);
-          }
+        var div = document.getElementById('not-div')
+        var selectEdit = document.getElementById('not-select-edit');
+        
+        div.hidden = false 
+        not_config_js(event, `get`, selectEdit.value);
+
     }
 }
 
@@ -1960,6 +1377,7 @@ function channel_points_pool(){
 }
 
 let isRunning_poll
+
 async function updateProgressBar_poll(startTime, endTime) {
 
     if (isRunning_poll) { // Verifica se a função já está sendo executada

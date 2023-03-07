@@ -1,6 +1,7 @@
 body {
   max-height: 100vh;
   font-family: 'Kanit';
+  font-weight: 100 !important;
   color: white;
   background-repeat: no-repeat;
   background-size: cover;
@@ -18,12 +19,20 @@ body {
   
 }
 
+h1, h2, h3, h4, h5{
+  font-weight: 100;
+}
+
 .bg-dark {
   background-color: #000 !important;
 }
 
 .text-muted-1{
   color: rgb(244, 244, 244) !important;
+}
+
+.btn {
+  font-weight: 100 !important;
 }
 
 .main {
@@ -98,7 +107,7 @@ span {
 
 .navbar-brand {
   font-size: 25px !important;
-  font-weight: 600;
+  font-weight: 100;
 }
 
 .navbar-brand img {
@@ -163,15 +172,15 @@ span {
   transform:rotate(360deg);
 }
 
-
-.group-acoes button{
-  transition: 0.15s  !important;
-  color: white
+.internal-block {
+  width: 75%;
 }
 
-.group-acoes button:hover{
-  color: white;
-  background-color: #754b99 !important;
+.form-block {
+  margin-bottom: 5%;
+  margin-top: 5%;
+  position:relative;
+  padding: 5%;
 }
 
 .bt-update {
@@ -284,6 +293,11 @@ select {
   height: 40px !important;
 }
 
+option {
+  background: #000; 
+  color: #fff
+}
+
 #slider-font {
   width: 100%;
   height: 20px;
@@ -374,7 +388,6 @@ input::-webkit-inner-spin-button {
 
 .h-scroll {
   display: flex;
-  flex-direction: column;
   height: 92vh; /* %-height of the viewport */
   position:inherit;
   overflow-y: scroll;
@@ -476,10 +489,19 @@ input::-webkit-inner-spin-button {
 }
 
 .redeem-block-bt {
+  color: #fff;
+  padding: auto;
+  width: 75%;
+  margin: 1% !important;
   font-size: 20px;
-  text-align: center;
-  padding: 1%;
   border:  solid #4f016c 1px;
+  transition: 0.15s  !important;
+  color: white
+}
+
+.redeem-block-bt:hover{
+  color: white;
+  background-color: #754b99 !important;
 }
 
 
@@ -579,7 +601,7 @@ input::-webkit-inner-spin-button {
 #user-chat {
   margin-left: 2px;
   display: inline-block;
-  font-weight: 500;
+  font-weight: 400;
   user-select: text;
 }
 
@@ -660,14 +682,36 @@ table td {
 
 #block-list-body td{
   width: 100vw;
+  color: #fff;
 }
 
 #chat-list-body td {
   width: 100vw;
+  color: #fff;
 }
 
 #list_musics td {
   width: 100vw;
+  color: #fff;
+}
+
+#list_chat td {
+  width: 100vw;
+  color: #fff;
+}
+
+#list_musics_block td {
+  width: 100vw;
+  color: #fff;
+}
+
+#list_giveaway_names td {
+  width: 100vw;
+  color: #fff;
+}
+
+#list-body {
+  color: #fff;
 }
 
 #last_timer_text-1 {
@@ -763,9 +807,6 @@ hr {
   background-color: #4f016c;
 }
 
-#select-message-edit-form .dropdown .dropdown-menu .inner .dropdown-item {
-  white-space: pre-wrap !important;
-}
 
 .container-player {
   height: 70vh;
@@ -801,6 +842,29 @@ hr {
   --plyr-menu-background :rgba(0, 0, 0, 0) !important;
 }
 
+
+
+/* Selecionar os elementos options */
+#response-select-edit option {
+  /* Limitar a largura do texto */
+  max-width: 200px;
+  /* Esconder o texto que exceder a largura */
+  overflow: hidden;
+  /* Adicionar reticências no final do texto */
+  text-overflow: ellipsis;
+  /* Impedir que o texto quebre em várias linhas */
+  white-space: nowrap;
+}
+
+/* Selecionar os elementos options quando o mouse passar por cima */
+#response-select-edit option:hover {
+  /* Mostrar o texto completo */
+  overflow: visible;
+  /* Remover as reticências */
+  text-overflow: clip;
+  /* Permitir que o texto quebre em várias linhas */
+  white-space: normal;
+}
 
 .audioplayer-playlist {
   background-color: transparent;

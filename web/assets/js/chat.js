@@ -46,7 +46,7 @@ $(window).on("load",async function(){
                 name_user = document.createElement("spam");
                 name_user.innerHTML = item
                 name_user.classList.add("name-user-list");
-                name_user.setAttribute('onclick','eel.open_link("'+item+'")');
+                name_user.setAttribute('onclick','eel.open_py("user","'+item+'")');
 
                 div_name.appendChild(name_user);
                 div_buttom.appendChild(buttom_ban);
@@ -90,7 +90,7 @@ $(window).on("load",async function(){
                 name_user = document.createElement("spam");
                 name_user.innerHTML = item
                 name_user.classList.add("name-user-list");
-                name_user.setAttribute('onclick','eel.open_link("'+item+'")');
+                name_user.setAttribute('onclick','eel.open_py("user","'+item+'")');
 
                 div_name.appendChild(name_user);
                 div_buttom.appendChild(buttom_ban);
@@ -335,58 +335,16 @@ async function chat_config(type_config){
 
     if (type_config == 'save'){
 
-        if (chat_colors.checked == true){
-            chat_colors = 1
-        } else {
-            chat_colors = 0
-        }
-        if (chat_colors_fixed.checked == true){
-            chat_colors_fixed = 1
-        } else {
-            chat_colors_fixed = 0
-        }
-        if (chat_colors_block.checked == true){
-            chat_colors_block = 1
-        } else {
-            chat_colors_block = 0
-        }
-
-        if (data_show.checked == true){
-            data_show = 1
-        } else {
-            data_show = 0
-        }
-
-        if (chat_bageds_show.checked == true){
-            chat_bageds_show = 1
-        } else {
-            chat_bageds_show = 0
-        }
-        if (chat_newline.checked == true){
-            chat_newline = 1
-        } else {
-            chat_newline = 0
-        }
-        if (notfic_show_join.checked == true){
-            notfic_show_join = 1
-        } else {
-            notfic_show_join = 0
-        }
-        if (notfic_show_leave.checked == true){
-            notfic_show_leave = 1
-        } else {
-            notfic_show_leave = 0
-        }
-        if (notfic_play.checked == true){
-            notfic_play = 1
-        } else {
-            notfic_play = 0
-        }
-        if (notfic_show_greetings.checked == true){
-            notfic_show_greetings = 1
-        } else {
-            notfic_show_greetings = 0
-        }
+        chat_colors = chat_colors.checked ? 1 : 0;
+        chat_colors_fixed = chat_colors_fixed.checked ? 1 : 0;
+        chat_colors_block = chat_colors_block.checked ? 1 : 0;
+        data_show = data_show.checked ? 1 : 0;
+        chat_bageds_show = chat_bageds_show.checked ? 1 : 0;
+        chat_newline = chat_newline.checked ? 1 : 0;
+        notfic_show_join = notfic_show_join.checked ? 1 : 0;
+        notfic_show_leave = notfic_show_leave.checked ? 1 : 0;
+        notfic_play = notfic_play.checked ? 1 : 0;
+        notfic_show_greetings = notfic_show_greetings.checked ? 1 : 0;
 
         data = {
             appply_colors : chat_colors,
@@ -422,60 +380,17 @@ async function chat_config(type_config){
 
             var chat_data_parse = JSON.parse(chat_data);
 
-            if (chat_data_parse.appply_colors == 1){
-                chat_colors.checked = true;
-            } else {
-                chat_colors.checked = false;
-            }
-            if (chat_data_parse.appply_no_colors == 1){
-                chat_colors_fixed.checked = true;
-            } else {
-                chat_colors_fixed.checked = false;
-            }
+            chat_colors.checked = chat_data_parse.appply_colors == 1 ? true : false;
+            chat_colors_fixed.checked = chat_data_parse.appply_no_colors == 1 ? true : false;
+            data_show.checked = chat_data_parse.data_show == 1 ? true : false;
+            chat_colors_block.checked = chat_data_parse.block_color == 1 ? true : false;
+            chat_bageds_show.checked = chat_data_parse.show_badges == 1 ? true : false;
+            chat_newline.checked = chat_data_parse.wrapp_message == 1 ? true : false;
+            notfic_show_join.checked = chat_data_parse.not_user_join == 1 ? true : false;
+            notfic_show_leave.checked = chat_data_parse.not_user_leave == 1 ? true : false;
+            notfic_show_greetings.checked = chat_data_parse.greetings_join == 1 ? true : false;
+            notfic_play.checked = chat_data_parse.not_user_sound == 1 ? true : (chat_data_parse.not_user_sound == 0 ? false : notfic_play.checked);
 
-            if (chat_data_parse.data_show == 1){
-                data_show.checked = true;
-            } else {
-                data_show.checked = false;
-            }
-            
-            if (chat_data_parse.block_color == 1){
-                chat_colors_block.checked = true;
-            } else {
-                chat_colors_block.checked = false;
-            }
-            if (chat_data_parse.show_badges == 1){
-                chat_bageds_show.checked = true;
-            } else {
-                chat_bageds_show.checked = false;
-            }
-            if (chat_data_parse.wrapp_message == 1){
-                chat_newline.checked = true;
-            } else {
-                chat_newline.checked = false;
-            }
-            if (chat_data_parse.not_user_join == 1){
-                notfic_show_join.checked = true;
-            } else {
-                notfic_show_join.checked = false;
-            }
-            if (chat_data_parse.not_user_leave == 1){
-                notfic_show_leave.checked = true;
-            } else {
-                notfic_show_leave.checked = false;
-            }
-
-            if (chat_data_parse.greetings_join == 1){
-                notfic_show_greetings.checked = true;
-            } else {
-                notfic_show_greetings.checked = false;
-            }
-            
-            if (chat_data_parse.not_user_sound == 1){
-                notfic_play.checked = true;
-            } else if (chat_data_parse.not_user_sound = 0){
-                notfic_play.checked = false;
-            }
             
             greetings.value = chat_data_parse.greetings;
             slider_font.value = chat_data_parse.font_size;
@@ -633,44 +548,15 @@ function append_message(message_data){
         var color_rec = message_data_parse.color
         var color_block = message_data_parse.color
 
-        if (apply_color == 1){
-            if (color_rec == null){
-                
-                if (fix_color == 1){
-
-                    var color_rec = select_color;
-
-                } else {
-
-                    colors = ['Blue', 'Coral', 'DodgerBlue', 'SpringGreen', 'YellowGreen', 'Green', 'OrangeRed', 'Red', 'GoldenRod', 'HotPink', 'CadetBlue', 'SeaGreen', 'Chocolate', 'BlueViolet','Firebrick']
-                
-                    var color_rec = choose(colors);
-                }
-            }
-        } else {
-            color_rec = ""
-        }
-
-        if (block_color == 1){
-            if (color_block == ""){
-                if (fix_color == 1){
-                    var color_block = select_color;
-                } else {
-                    border_color = '#4f016c'
-                }
+        if (apply_color == 1) {
+            var color_rec = (color_rec == null && fix_color == 1) ? select_color : choose(['Blue', 'Coral', 'DodgerBlue', 'SpringGreen', 'YellowGreen', 'Green', 'OrangeRed', 'Red', 'GoldenRod', 'HotPink', 'CadetBlue', 'SeaGreen', 'Chocolate', 'BlueViolet','Firebrick']);
             } else {
-                border_color = color_block
+            var color_rec = "";
             }
-        } else {
-            border_color = '#4f016c'
-        }
-
-
-        if (show_badges == 1){
-            badges_data = badges
-        } else {
-            badges_data = '';
-        }
+            
+            var border_color = (block_color == 1) ? ((color_block == "" && fix_color == 1) ? select_color : color_block) : '#4f016c';
+            
+            var badges_data = (show_badges == 1) ? badges : '';
         
         var div = document.createElement("div");
 
@@ -726,6 +612,7 @@ function append_message(message_data){
         span_username.id = 'user-chat';
         span_username.style.color = color_rec;
         span_username.innerHTML = user_rec + ' :';
+        span_username.setAttribute('onclick','eel.open_py("user","'+user_rec+'")');
 
         var span_message = document.createElement("span");
         span_message.id = 'message-chat';
@@ -736,24 +623,16 @@ function append_message(message_data){
         div.id = 'chat-message-block'
         div.classList.add('chat-message', 'chat-block-color');
         div.style.fontSize = text_size + "px";
-        div.style.border = "3px solid "+ border_color + ""
+        div.style.border = "3px solid "+ border_color + "";
 
-        if (reply == 1){
-            div.appendChild(div_reply);
-        }
-        if (frist_message == 1){
-            div.appendChild(frist_div);
-        }
-        if (chat_data == 1){
-            div.appendChild(time_chat);
-        }
+        reply == 1 ? div.appendChild(div_reply) : null;
+        frist_message == 1 ? div.appendChild(frist_div) : null;
+        chat_data == 1 ? div.appendChild(time_chat) : null;
 
         div.appendChild(span_badges);
         div.appendChild(span_username);
 
-        if (chat_newline == 1) {
-            div.appendChild(new_line);
-        }
+        chat_newline == 1 ? div.appendChild(new_line) : null;
 
         div.appendChild(span_message);
 
