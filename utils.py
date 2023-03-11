@@ -10,10 +10,10 @@ import coverpy
 import requests
 import validators
 import yt_dlp
+from pytube import YouTube
 from bs4 import BeautifulSoup as bs
 from dateutil import tz
 from PIL import Image
-from pytube import Search, YouTube
 
 import urllib.request
 import zipfile
@@ -127,29 +127,17 @@ def album_search(title,user_input):
 
             img_data = requests.get(album_art).content
 
-            with open(extDataDir + 'f/{appdata_path}/rewardevents/web/src/player/images/album.png', 'wb') as album_art_mei:
-                album_art_mei.write(img_data)
-
-            with open(f'{appdata_path}/rewardevents/web/src/player/images/album.png', 'wb') as album_art_local:
+            with open(f'{extDataDir}/web/src/player/images/album.png', 'wb') as album_art_local:
                 album_art_local.write(img_data)
         
         except:
 
-            ydl_opts={
-                'skip_download' : True,
-                'noplaylist': True,
-                'quiet' : True,
-                'no_color': True,
-                'write_thumbnails' : True,
-                'outtmpl': f'{appdata_path}/rewardevents/web/src/player/images/album.%(ext)s',
-                'force-write-archive' : True
-            }
-
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url_youtube])
-
-            img_webp = Image.open(f'{appdata_path}/rewardevents/web/src/player/images/album.webp').convert("RGB")
-            img_webp.save(f'{appdata_path}/rewardevents/web/src/player/images/album.png','png')
+            yt = YouTube(url_youtube)
+            thumb_link = yt.thumbnail_url
+            img_data = requests.get(thumb_link).content
+            
+            with open(f'{extDataDir}/web/src/player/images/album.png', 'wb') as album_art_local:
+                album_art_local.write(img_data)
 
         success = 1
         

@@ -437,47 +437,8 @@ function test_not(){
 
     } else if (type_id == 'giftsub'){
 
-        data = {
-            "metadata": {
-                "message_id": "Rz5CUTXgiX7y3ZYAwSwX8ID7dYm1zkDW43W-w0DK3TY=",
-                "message_type": "notification",
-                "message_timestamp": "2023-02-15T21:26:03.587909679Z",
-                "subscription_type": "channel.subscription.gift",
-                "subscription_version": "1"
-            },
-            "payload": {
-                "subscription": {
-                    "id": "8ff22d32-4697-4d7e-a3a7-17535610af0f",
-                    "status": "enabled",
-                    "type": "channel.subscription.gift",
-                    "version": "1",
-                    "condition": {
-                        "broadcaster_user_id": "0000000"
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                    },
-                    "created_at": "2022-02-15T21:24:56.760792011Z",
-                    "cost": 0
-                },
-                "event": {
-                    "user_id": "1234",
-                    "user_login": "cool_user",
-                    "user_name": "Cool_User",
-                    "broadcaster_user_id": "1337",
-                    "broadcaster_user_login": "cooler_user",
-                    "broadcaster_user_name": "Cooler_User",
-                    "total": 2,
-                    "tier": "1000",
-                    "cumulative_total": 284, //null if anonymous or not shared by the user
-                    "is_anonymous": false
-                }
-            }
-        }
-
-        var not_data = JSON.stringify(data);
-        eel.on_message('null',not_data);
+        msg = '@badge-info=subscriber/1;badges=subscriber/0,sub-gifter/1;color=#FF00BD;display-name=Teste;emotes=;flags=;id=5b075d17-5802-4edd-b6fa-e499351cf3fc;login=Teste;mod=0;msg-id=subgift;msg-param-gift-months=1;msg-param-goal-contribution-type=SUBS;msg-param-goal-current-contributions=14;msg-param-goal-target-contributions=20;msg-param-goal-user-contributions=1;msg-param-months=3;msg-param-origin-id=35\s7d\sd3\sef\s36\s68\s30\sb0\s25\sb2\s26\sf1\se0\sce\sf0\sa4\sd0\sc3\sd9\sae;msg-param-recipient-display-name=TesteRecebe;msg-param-recipient-id=00000000;msg-param-recipient-user-name=testerecebe;msg-param-sender-count=1;msg-param-sub-plan-name=GG\sSubzim;msg-param-sub-plan=1000;room-id=779823875;subscriber=1;system-msg=Teste\sgifted\sa\sTier\s1\ssub\sto\sTesteRecebe!\sThis\sis\stheir\sfirst\sGift\sSub\sin\sthe\schannel!;tmi-sent-ts=1678225751303;user-id=490633382;user-type= :tmi.twitch.tv USERNOTICE #gg_tec'
+        eel.command_fallback(msg);
          
     } else if (type_id == 'raid'){
         

@@ -1,6 +1,7 @@
+eel.expose(update_image);
 function update_image(){
     var player_img = document.getElementById('song-img');
-    player_img.style.backgroundImage = "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7483368347338936) 89%, rgba(0,0,0,1) 100%),url('/src/player/images/album.png?noCache=" + Math.floor(Math.random() * 1000000)+")";
+    player_img.style.backgroundImage = `linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7483368347338936) 89%, rgba(0,0,0,1) 100%),url('/src/player/images/album.png?noCache=` + Math.floor(Math.random() * 1000000)+")";
 }
   
 eel.expose(update_music_name);
@@ -20,7 +21,6 @@ const player_id = new Plyr('#player', {
 });
   
 
-  
 eel.expose(playlist_js);
 async function playlist_js(event,type_id){
 
@@ -108,8 +108,6 @@ function player(event_type,music_src,volume){
   if(event_type == 'play'){
 
     player_id.stop();
-
-    update_image()
 
     player_id.source = {
       type: 'audio',

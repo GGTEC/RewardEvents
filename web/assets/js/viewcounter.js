@@ -48,21 +48,7 @@ eel.profile_info()(async function(data_auth){
     
 })
 
-eel.expose(update_div_redeem);
-function update_div_redeem(data_redeem) {
 
-    var data_redem_parse = JSON.parse(data_redeem);
-
-    var image_redeem = document.getElementById("image_redeem");
-    var name_redeem = document.getElementById("name_redeem");
-    var user_redeem = document.getElementById("user_redeem");
-
-    var image_redeem_new = image_redeem.src;
-    image_redeem.src = image_redeem_new; 
-
-    name_redeem.innerText = data_redem_parse.redeem_name
-    user_redeem.innerText = data_redem_parse.redeem_user
-}
 
 
 

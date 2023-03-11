@@ -1,4 +1,6 @@
 import sys,os,platform
+import msvcrt
+import signal
 import subprocess
 from collections import namedtuple
 import utils
@@ -54,6 +56,27 @@ load_dotenv(dotenv_path=os.path.join(extDataDir, '.env'))
 
 clientid = os.getenv('CLIENTID')
 appdata_path = os.getenv('APPDATA')
+
+lock_file_path = os.path.join(f"{appdata_path}/rewardevents/web", 'my_program.lock')
+lock_file = None
+
+def remove_lock_file(signum, frame):
+    global lock_file
+    if lock_file:
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+        lock_file.close()
+        os.remove(lock_file_path)
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, remove_lock_file)
+
+try:
+    lock_file = open(lock_file_path, 'w')
+    msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+except IOError:
+    print("O programa já está em execução.")
+    sys.exit(0)
+
 
 global caching, loaded_status, chat, window, twitch_api,bot_loaded
 
@@ -343,7 +366,7 @@ def send_discord_webhook(data):
             
             aliases = {
                 '{url}' : f'https://clips.twitch.tv/{clip_id}',
-                '{user}' : username
+                '{username}' : username
             }
             
             webhook_title = utils.replace_all(webhook_title, aliases)
@@ -368,7 +391,7 @@ def send_discord_webhook(data):
             
             aliases = {
                 '{url}' : f'https://clips.twitch.tv/{clip_id}/edit',
-                '{user}' : username
+                '{username}' : username
             }
             
             webhook_title = utils.replace_all(webhook_title, aliases)
@@ -391,7 +414,7 @@ def send_discord_webhook(data):
             username = data['follow_name']
             
             aliases = {
-                '{user}' : username
+                '{username}' : username
             }
             
             webhook_title = utils.replace_all(webhook_title, aliases)
@@ -2653,7 +2676,7 @@ def giveaway_py(type_id, data_receive):
                 response_give_stop = utils.messages_file_load('giveaway_status_disable')
 
                 aliases = {
-                    '{giveaway_name_data}' : giveaway_data['name'],
+                    '{giveaway_name}' : giveaway_data['name'],
                 }
                 
                 response_redus = utils.replace_all(response_give_stop, aliases)
@@ -2674,7 +2697,7 @@ def giveaway_py(type_id, data_receive):
                 response_give_start = utils.messages_file_load('giveaway_status_enable')
 
                 aliases = {
-                    '{giveaway_name_data}' : giveaway_data['name'],
+                    '{giveaway_name}' : giveaway_data['name'],
                     '{redeem}' : giveaway_data['redeem']
                 }
                 
@@ -2768,6 +2791,10 @@ def giveaway_py(type_id, data_receive):
 
                 response_give_load = utils.messages_file_load('giveaway_response_user_add')
 
+                aliases = {
+                    "{username}" : new_name
+                }
+
                 response_redus = utils.replace_all(response_give_load, aliases)
                 if utils.send_message("RESPONSE"):
                     send(response_redus)
@@ -2790,7 +2817,7 @@ def giveaway_py(type_id, data_receive):
 
 
                 aliases = {
-                    '{user}': str(new_name),
+                    '{username}': str(new_name),
                     '{perm}' : str(giveaway_perm)
                 }
 
@@ -2854,7 +2881,7 @@ def giveaway_py(type_id, data_receive):
 
             message_load_winner_giveaway = utils.messages_file_load('giveaway_response_win')
 
-            message_win = message_load_winner_giveaway.replace('{name}', name)
+            message_win = message_load_winner_giveaway.replace('{username}', name)
             if utils.send_message("RESPONSE"):
                 send(message_win)
 
@@ -4542,7 +4569,7 @@ def clip():
 
         message_clip_user_load = utils.messages_file_load('clip_create_clip')
 
-        message_clip_user = message_clip_user_load.replace('{user}', authdata.USERNAME())
+        message_clip_user = message_clip_user_load.replace('{username}', authdata.USERNAME())
         message_final = message_clip_user.replace('{clip_id}', clip_id)
 
         eel.toast_notifc(message_final)
@@ -4703,14 +4730,14 @@ def start_play(title, user_input, redem_by_user):
 
     def download_music(link):
 
-        music_dir_check = os.path.exists(extDataDir + f'/web/src/player/cache/music.mp3')
-        music_mp4_check = os.path.exists(extDataDir + f'/web/src/player/cache/music.mp4')
-
-        if music_mp4_check:
-            os.remove(extDataDir + f'/web/src/player/cache/music.mp4')
+        music_dir_check = os.path.exists(f'{extDataDir}/web/src/player/cache/music.mp3')
+        music_mp4_check = os.path.exists(f'{extDataDir}/web/src/player/cache/music.mp4')
 
         if music_dir_check:
-            os.remove(extDataDir + f'/web/src/player/cache/music.mp3')
+            os.remove(f'{extDataDir}/web/src/player/cache/music.mp3')
+
+        if music_mp4_check:
+            os.remove(f'{extDataDir}/web/src/player/cache/music.mp4')
 
         def my_hook(d):
             if d['status'] == 'finished':
@@ -4729,7 +4756,7 @@ def start_play(title, user_input, redem_by_user):
                 'noplaylist': True,
                 'quiet': True,
                 'no_color': True,
-                'outtmpl': extDataDir + f'/web/src/player/cache/music.%(ext)s',
+                'outtmpl': f'{extDataDir}/web/src/player/cache/music.%(ext)s',
                 'ffmpeg_location': ffmpeg_loc,
                 'force-write-archive': True,
                 'force-overwrites': True,
@@ -4760,6 +4787,7 @@ def start_play(title, user_input, redem_by_user):
         media_name = response_album['music']
         media_artist = response_album['artist']
         music_link = response_album['link']
+        eel.update_image()
 
         caching = 1
 
@@ -4786,7 +4814,7 @@ def start_play(title, user_input, redem_by_user):
                 '{music_name}': media_name,
                 '{music_name_short}': music_name_short,
                 '{music_artist}': music_artist,
-                '{user}': redem_by_user
+                '{username}': redem_by_user
             }
 
             message_replace = utils.replace_all(utils.messages_file_load('music_playing'), aliases)
@@ -4944,7 +4972,7 @@ def process_redem_music(user_input, redem_by_user):
                         with open(f'{appdata_path}/rewardevents/web/src/player/list_files/queue.json', "w", encoding="utf-8") as queue_file_write:
                             json.dump(queue_data, queue_file_write, indent=4)
 
-                        aliases = {'{user}': redem_by_user, '{user_input}': user_input, '{music}': music_name}
+                        aliases = {'{username}': redem_by_user, '{user_input}': user_input, '{music}': music_name}
                         message = utils.messages_file_load('music_added_to_queue')
                         message_replaced = utils.replace_all(message, aliases)
 
@@ -4956,7 +4984,7 @@ def process_redem_music(user_input, redem_by_user):
                         music_name_short = textwrap.shorten(music_name, width=13, placeholder="...")
 
                         aliases = {
-                            '{user}': str(redem_by_user),
+                            '{username}': str(redem_by_user),
                             '{user_input}': str(user_input),
                             '{music}': str(music_name),
                             '{music_short}': str(music_name_short)
@@ -4973,7 +5001,7 @@ def process_redem_music(user_input, redem_by_user):
                     music_name_short = textwrap.shorten(music_name, width=13, placeholder="...")
 
                     aliases = {
-                        '{user}': str(redem_by_user),
+                        '{username}': str(redem_by_user),
                         '{user_input}': str(user_input),
                         '{music}': str(music_name),
                         '{music_short}': str(music_name_short)
@@ -4989,7 +5017,7 @@ def process_redem_music(user_input, redem_by_user):
                 
                 utils.error_log(e)
 
-                aliases = {'{user}': str(redem_by_user), '{user_input}': str(user_input)}
+                aliases = {'{username}': str(redem_by_user), '{user_input}': str(user_input)}
                 message = utils.messages_file_load('music_add_error')
                 message_replaced = utils.replace_all(message, aliases)
 
@@ -5029,7 +5057,7 @@ def process_redem_music(user_input, redem_by_user):
                     music_name_short = textwrap.shorten(video_title, width=13, placeholder="...")
 
                     aliases = {
-                        '{user}': redem_by_user,
+                        '{username}': redem_by_user,
                         '{user_input}': user_input,
                         '{music}': video_title,
                         '{music_short}': music_name_short
@@ -5047,7 +5075,7 @@ def process_redem_music(user_input, redem_by_user):
                     music_name_short = textwrap.shorten(video_title, width=13, placeholder="...")
                     
                     aliases = {
-                        '{user}': str(redem_by_user),
+                        '{username}': str(redem_by_user),
                         '{user_input}': str(user_input),
                         '{music}': str(video_title),
                         '{music_short}': str(music_name_short)
@@ -5064,7 +5092,7 @@ def process_redem_music(user_input, redem_by_user):
                 music_name_short = textwrap.shorten(music_name, width=13, placeholder="...")
 
                 aliases = {
-                    '{user}': str(redem_by_user),
+                    '{username}': str(redem_by_user),
                     '{user_input}': str(user_input),
                     '{music}': str(music_name),
                     '{music_short}': str(music_name_short)
@@ -5211,7 +5239,7 @@ def receive_redeem(data_rewards, received_type):
 
     aliases = {
 
-        '{user}': str(redeem_by_user),
+        '{username}': str(redeem_by_user),
         '{command}': str(command_receive),
         '{prefix}': str(prefix),
         '{user_level}': str(user_level),
@@ -5399,14 +5427,6 @@ def receive_redeem(data_rewards, received_type):
 
         mode = path[redeem_reward_name]['mode']
 
-        aliases = {
-            '{user}': str(redeem_by_user),
-            '{command}': str(command_receive),
-            '{prefix}': str(prefix),
-            '{user_level}': str(user_level),
-            '{user_id}': str(user_id_command)
-        }
-
         if send_response_value:
 
             chat_response = path[redeem_reward_name]['chat_response']
@@ -5520,7 +5540,7 @@ def receive_redeem(data_rewards, received_type):
 
             message_clip_user_load = utils.messages_file_load('clip_create_clip')
 
-            message_clip_user = message_clip_user_load.replace('{user}', redeem_by_user)
+            message_clip_user = message_clip_user_load.replace('{username}', redeem_by_user)
             message_final = message_clip_user.replace('{clip_id}', clip_id)
 
 
@@ -5578,7 +5598,8 @@ def receive_redeem(data_rewards, received_type):
 
         if send_response_value:
 
-            chat_response = utils.messages_file_load('response_set_counter')
+            chat_response = utils.messages_file_load('response_counter')
+
             aliases = {
                 '{value}' : str(countercount)
             }
@@ -5637,12 +5658,11 @@ def receive_redeem(data_rewards, received_type):
                 music_process_thread.start()
                 
             else:
-                aliases_commands = {'{user}': str(redeem_by_user)}
+                aliases_commands = {'{username}': str(redeem_by_user)}
                 message_replace_response = utils.replace_all(utils.messages_file_load('music_disabled'), aliases_commands)
 
                 if utils.send_message("RESPONSE"):
                     send(message_replace_response)
-
         elif redeem_reward_name == counter_redeem:
             add_counter()
 
@@ -6033,7 +6053,7 @@ def commands_module(data) -> None:
         message_error_level_load = utils.messages_file_load('error_user_level')
 
         aliases = {
-            '{user}': str(user),
+            '{username}': str(user),
             '{user_level}' : str(user_level),
             '{command}' : str(command)
         }
@@ -6133,6 +6153,14 @@ def commands_module(data) -> None:
 
     status_commands = command_data_prefix['STATUS_COMMANDS']
 
+    aliases = {
+        '{username}': str(user),
+        '{command}': str(command),
+        '{prefix}': str(prefix),
+        '{user_level}': str(user_type),
+        '{user_id}': str(user_id_command),
+    }
+
     if status_commands == 1:
         
         if command in command_data.keys():
@@ -6181,7 +6209,7 @@ def commands_module(data) -> None:
                     else:
                         
                         if utils.send_message("RESPONSE"):
-                            send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                            send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                 else:
 
                     if utils.send_message("ERROR_TIME"):
@@ -6209,7 +6237,7 @@ def commands_module(data) -> None:
             if check_perm(user_type, user_level):
 
                 aliases = {
-                    '{user}': str(user),
+                    '{username}': str(user),
                     '{command}': str(command),
                     '{prefix}': str(prefix),
                     '{user_level}': str(user_type),
@@ -6242,7 +6270,7 @@ def commands_module(data) -> None:
                             send(message_delay)
                 else:
                     if utils.send_message("RESPONSE"):
-                        send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                        send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
             else:
 
                 send_error_level(user,str(user_level), str(command))
@@ -6289,7 +6317,7 @@ def commands_module(data) -> None:
                 
                 else:
                     if utils.send_message("RESPONSE"):
-                        send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                        send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                         
             elif 'set_counter' in result_counter_check.keys():
 
@@ -6319,7 +6347,7 @@ def commands_module(data) -> None:
                                     with open(f"{appdata_path}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
                                         counter_file_w.write(str(user_input))
 
-                                    response_set = utils.messages_file_load('response_set_counter')
+                                    response_set = utils.messages_file_load('response_counter')
                                     response_set_repl = response_set.replace('{value}', user_input)
 
                                     if utils.send_message("RESPONSE"):
@@ -6334,7 +6362,7 @@ def commands_module(data) -> None:
 
                                     response_not_digit = utils.messages_file_load('response_not_digit_counter')
                                     if utils.send_message("RESPONSE"):
-                                        send(response_not_digit.replace('{user}', user))
+                                        send(response_not_digit.replace('{username}', user))
                                         
                                     delay_counter_data['set_last'] = current
                                 
@@ -6346,7 +6374,7 @@ def commands_module(data) -> None:
                                 response_null_counter = utils.messages_file_load('response_null_set_counter')
 
                                 if utils.send_message("RESPONSE"):
-                                    send(response_null_counter.replace('{user}', user))
+                                    send(response_null_counter.replace('{username}', user))
                                     
                                 delay_counter_data['set_last'] = current
                             
@@ -6361,7 +6389,7 @@ def commands_module(data) -> None:
                         send_error_level(user,'mod', str(command))
                 else:
                     if utils.send_message("RESPONSE"):
-                        send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                        send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                         
             elif 'check_counter' in result_counter_check.keys():
                 
@@ -6400,7 +6428,7 @@ def commands_module(data) -> None:
                 else:
                     
                     if utils.send_message("RESPONSE"):
-                        send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                        send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     
         elif command in result_giveaway_check.values():
             with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'r', encoding='utf-8') as delay_giveaway_file:
@@ -6495,7 +6523,7 @@ def commands_module(data) -> None:
                                 message_check_user = utils.messages_file_load('response_user_giveaway')
 
                                 if utils.send_message("RESPONSE"):
-                                    send(message_check_user.replace('{user}', user_input))
+                                    send(message_check_user.replace('{username}', user_input))
                                     
                                 delay_giveaway_data['check_last_use'] = current
                         
@@ -6507,7 +6535,7 @@ def commands_module(data) -> None:
                                 message_check_no_user_load = utils.messages_file_load('response_no_user_giveaway')
 
                                 if utils.send_message("RESPONSE"):
-                                    send(message_check_no_user_load.replace('{user}', user_input))
+                                    send(message_check_no_user_load.replace('{username}', user_input))
                                     
                                 delay_giveaway_data['check_last_use'] = current
                         
@@ -6517,7 +6545,7 @@ def commands_module(data) -> None:
                             
                             message_check_error = utils.messages_file_load('response_check_error_giveaway')
                             if utils.send_message("RESPONSE"):
-                                send(message_check_error.replace('{user}',user ))
+                                send(message_check_error.replace('{username}',user ))
                             
                             delay_giveaway_data['check_last_use'] = current
                     
@@ -6565,7 +6593,7 @@ def commands_module(data) -> None:
                             
                             message_add_user_error = utils.messages_file_load('response_use_error_giveaway')
                             if utils.send_message("RESPONSE"):
-                                send(message_add_user_error.replace('{user}',user ))
+                                send(message_add_user_error.replace('{username}',user ))
                                 
                             delay_giveaway_data['add_user_last_use'] = current
                     
@@ -6595,7 +6623,7 @@ def commands_module(data) -> None:
                     if user in giveaway_name_data:
 
                         message_check_user_load = utils.messages_file_load('response_user_giveaway')
-                        message_check_user = message_check_user_load.replace('{user}', str(user))
+                        message_check_user = message_check_user_load.replace('{username}', str(user))
 
                         if utils.send_message("RESPONSE"):
                             send(message_check_user)
@@ -6608,7 +6636,7 @@ def commands_module(data) -> None:
                     else:
 
                         message_no_user_giveaway_load = utils.messages_file_load('response_no_user_giveaway')
-                        message_no_user_giveaway = message_no_user_giveaway_load.replace('{user}', user)
+                        message_no_user_giveaway = message_no_user_giveaway_load.replace('{username}', user)
 
                         if utils.send_message("RESPONSE"):
                             send(message_no_user_giveaway)
@@ -6662,7 +6690,7 @@ def commands_module(data) -> None:
                                         eel.player('volume', 'none', volume_value)
 
                                         aliases_commands = {
-                                            '{user}': str(user),
+                                            '{username}': str(user),
                                             '{volume}': str(volume_value_int)
                                         }
 
@@ -6679,7 +6707,7 @@ def commands_module(data) -> None:
                                     else:
 
                                         aliases_commands = {
-                                            '{user}': user,
+                                            '{username}': user,
                                             '{volume}': str(volume_value_int)
                                         }
 
@@ -6709,7 +6737,7 @@ def commands_module(data) -> None:
                                 volume_atual = eel.player('get_volume', 'none', 'none')()
                                 
                                 aliases_commands = {
-                                        '{user}': str(user),
+                                        '{username}': str(user),
                                         '{volume}': str(volume_atual)
                                     }
 
@@ -6728,7 +6756,7 @@ def commands_module(data) -> None:
                         else:
                             
                             if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                                send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     else:
                         
                         if utils.send_message("ERROR_TIME"):
@@ -6756,7 +6784,7 @@ def commands_module(data) -> None:
                             eel.player('stop', 'none', 'none')
 
                             aliases_commands = {
-                                '{user}': str(user),
+                                '{username}': str(user),
                             }
                             message_replace_response = utils.replace_all(utils.messages_file_load('command_skip_confirm'),
                                                                 aliases_commands)
@@ -6770,7 +6798,7 @@ def commands_module(data) -> None:
                                 json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
                         else:
                             if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                                send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
 
                     else:
 
@@ -6823,7 +6851,7 @@ def commands_module(data) -> None:
 
                             else:
 
-                                aliases_commands = {'{user}': str(user)}
+                                aliases_commands = {'{username}': str(user)}
                                 message_replace_response = utils.replace_all(utils.messages_file_load('command_sr_error_link'),
                                                                     aliases_commands)
 
@@ -6837,7 +6865,7 @@ def commands_module(data) -> None:
 
                         else:
                             if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                                send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     else:
 
                         if utils.send_message("ERROR_TIME"):
@@ -6864,7 +6892,7 @@ def commands_module(data) -> None:
                             f = open(f'{appdata_path}/rewardevents/web/src/player/list_files/currentsong.txt', 'r+', encoding="utf-8")
                             current_song = f.read()
 
-                            aliases_commands = {'{user}': str(user), '{music}': str(current_song)}
+                            aliases_commands = {'{username}': str(user), '{music}': str(current_song)}
                             message_replace_response = utils.replace_all(utils.messages_file_load('command_current_confirm'),
                                                                 aliases_commands)
                             if utils.send_message("RESPONSE"):
@@ -6877,7 +6905,7 @@ def commands_module(data) -> None:
 
                         else:
                             if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                                send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     else:
                         if utils.send_message("ERROR_TIME"):
                             send(message_delay)
@@ -6919,7 +6947,7 @@ def commands_module(data) -> None:
                                 resquest_by = queue_data[min_key_queue_str]['USER']
 
                                 aliases_commands = {
-                                    '{user}': str(user),
+                                    '{username}': str(user),
                                     '{music}': str(next_song),
                                     '{request_by}': str(resquest_by)
                                 }
@@ -6944,7 +6972,7 @@ def commands_module(data) -> None:
                                 resquest_by = playlist_data[min_key_playlist_str]['USER']
 
                                 aliases_commands = {
-                                    '{user}': str(user),
+                                    '{username}': str(user),
                                     '{music}': str(next_song),
                                     '{request_by}': str(resquest_by)
                                 }
@@ -6963,7 +6991,7 @@ def commands_module(data) -> None:
                             else:
 
                                 aliases_commands = {
-                                    '{user}': str(user),
+                                    '{username}': str(user),
                                 }
 
                                 response_replace = utils.replace_all(utils.messages_file_load('command_next_no_music'), aliases_commands)
@@ -6978,7 +7006,7 @@ def commands_module(data) -> None:
 
                         else:
                             if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                                send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     else:
                         if utils.send_message("ERROR_TIME"):
                             send(message_delay)
@@ -7174,7 +7202,7 @@ def commands_module(data) -> None:
                                             
                                         message_duel_aliases = {
                                             '{time}' : str(duel_data['time_to_accept']),
-                                            '{user}' : user,
+                                            '{username}' : user,
                                             '{challenged}' : challenged,
                                             '{command}' : duel_data['command'],
                                             '{accept}' : duel_data['command_accept']
@@ -7190,7 +7218,7 @@ def commands_module(data) -> None:
                                     else:
                                         
                                         aliases = {
-                                            '{user}' : user,
+                                            '{username}' : user,
                                             '{time}' : message_delay
                                         }
                                         
@@ -7202,7 +7230,7 @@ def commands_module(data) -> None:
                                 elif user != duel_data['challenger']:
                                         
                                     message_duel_aliases = {
-                                        '{user}' : user
+                                        '{username}' : user
                                     }
                                     
                                     message_replaced = utils.replace_all(utils.messages_file_load('duel_already_started'),message_duel_aliases)
@@ -7215,7 +7243,7 @@ def commands_module(data) -> None:
                                 if duel_data['challenged'] == "":
                                     
                                     message_duel_aliases = {
-                                        '{user}' : user,
+                                        '{username}' : user,
                                     }
                                     
                                     message_replaced = utils.replace_all(utils.messages_file_load('no_duel_request'),message_duel_aliases)
@@ -7231,7 +7259,7 @@ def commands_module(data) -> None:
                                         
                                         
                                     message_duel_aliases = {
-                                        '{user}' : user,
+                                        '{username}' : user,
                                         '{challenger}' : duel_data["challenger"]
                                     }
                                     
@@ -7242,7 +7270,7 @@ def commands_module(data) -> None:
                                 elif user != duel_data['challenged']:
                                     
                                     message_duel_aliases = {
-                                        '{user}' : user
+                                        '{username}' : user
                                     }
                                     
                                     message_replaced = utils.replace_all(utils.messages_file_load('duel_other'),message_duel_aliases)
@@ -7252,7 +7280,7 @@ def commands_module(data) -> None:
                         elif second_command == user:
                                 
                             message_duel_aliases = {
-                                '{user}' : user
+                                '{username}' : user
                             }
                             
                             message_replaced = utils.replace_all(utils.messages_file_load('duel_yorself'),message_duel_aliases)
@@ -7262,7 +7290,7 @@ def commands_module(data) -> None:
                     elif user == duel_data['challenger']:
                         
                         message_duel_aliases = {
-                            '{user}' : user
+                            '{username}' : user
                         }
                         
                         message_replaced = utils.replace_all(utils.messages_file_load('duel_again'),message_duel_aliases)
@@ -7272,13 +7300,14 @@ def commands_module(data) -> None:
                 else:
                 
                     message_duel_aliases = {
-                        '{user}' : user,
+                        '{username}' : user,
                         '{command}' : duel_data['command'],
                         '{accept}' : duel_data['command_accept']
                     }
                     
                     message_replaced = utils.replace_all(utils.messages_file_load('duel_parm'),message_duel_aliases)
                     if utils.send_message("RESPONSE"):
+                        
                         send(message_replaced)
             else:
                 send_error_level(user,user_level, str(command))  
@@ -7326,11 +7355,11 @@ def commands_module(data) -> None:
                                 commands_py("create",data)
 
                                 if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_created'),{'{user}' : user}))  
+                                    send(utils.replace_all(utils.messages_file_load('cmd_created'),{'{username}' : user}))  
                                     
                             else:
                                 if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_exists'),{'{user}' : user}))  
+                                    send(utils.replace_all(utils.messages_file_load('cmd_exists'),{'{username}' : user}))  
                         
                         if type_cmd == "edit":
 
@@ -7358,12 +7387,12 @@ def commands_module(data) -> None:
                                 commands_py("edit",data)
 
                                 if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_edited'),{'{user}' : user}))  
+                                    send(utils.replace_all(utils.messages_file_load('cmd_edited'),{'{username}' : user}))  
                             
                             else:
 
                                 if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_not_exists'),{'{user}' : user})) 
+                                    send(utils.replace_all(utils.messages_file_load('cmd_not_exists'),{'{username}' : user})) 
 
                         if type_cmd == "remove":
 
@@ -7374,20 +7403,20 @@ def commands_module(data) -> None:
                                 commands_py("delete",cmd)
 
                                 if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_removed'),{'{user}' : user}))  
+                                    send(utils.replace_all(utils.messages_file_load('cmd_removed'),{'{username}' : user}))  
                             
                             else:
                                 if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_not_exists'),{'{user}' : user})) 
+                                    send(utils.replace_all(utils.messages_file_load('cmd_not_exists'),{'{username}' : user})) 
 
                         else:
 
                             if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('cmd_use'),{'{user}' : user})) 
+                                send(utils.replace_all(utils.messages_file_load('cmd_use'),{'{username}' : user})) 
                     else:
 
                         if utils.send_message("RESPONSE"):
-                            send(utils.replace_all(utils.messages_file_load('cmd_use'),{'{user}' : user})) 
+                            send(utils.replace_all(utils.messages_file_load('cmd_use'),{'{username}' : user})) 
 
 
                     command_data_default['create_last'] = current
@@ -7402,7 +7431,7 @@ def commands_module(data) -> None:
             else:
 
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))    
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))    
 
         elif command.startswith(command_data_default['dice']):
             
@@ -7435,7 +7464,7 @@ def commands_module(data) -> None:
                         send(message_delay)
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                 
         elif command.startswith(command_data_default['random']):
             
@@ -7470,10 +7499,6 @@ def commands_module(data) -> None:
                     
                     else:
                         
-                        aliases = {
-                            '{user}' : user
-                        }
-                        
                         message_replaced = utils.replace_all(utils.messages_file_load('command_value'), aliases)
                         if utils.send_message("RESPONSE"):
                             send(message_replaced)
@@ -7484,7 +7509,7 @@ def commands_module(data) -> None:
                         send(message_delay)
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     
         elif command.startswith(command_data_default['game']):
             
@@ -7522,7 +7547,7 @@ def commands_module(data) -> None:
             
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user})) 
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases)) 
                                
         elif command.startswith(command_data_default['uptime']):  
             
@@ -7548,7 +7573,7 @@ def commands_module(data) -> None:
                         minutes = time_in_live['minutes']
                         
                         aliases = {
-                            "{user}" : str(user),
+                            "{username}" : str(user),
                             "{h}" : str(hours),
                             "{m}" : str(minutes)
                         }
@@ -7568,7 +7593,7 @@ def commands_module(data) -> None:
                         
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     
         elif command.startswith(command_data_default['followage']):  
             
@@ -7604,7 +7629,7 @@ def commands_module(data) -> None:
                             sec = difference.seconds%60
                             
                             aliases = {
-                                "{user}" : user,
+                                "{username}" : user,
                                 "{streamer}" : authdata.USERNAME(),
                                 "{d}" : str(days),
                                 "{h}" : str(hours),
@@ -7623,7 +7648,7 @@ def commands_module(data) -> None:
                                 
                         else:
                             aliases = {
-                                "{user}" : user,
+                                "{username}" : user,
                                 "{streamer}" : authdata.USERNAME(),
                             }
                             
@@ -7640,7 +7665,7 @@ def commands_module(data) -> None:
             
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                    
         elif command.startswith(command_data_default['msgcount']):  
             
@@ -7662,7 +7687,7 @@ def commands_module(data) -> None:
                             msgcount = user_data_load[user]['chat_freq']
                             
                             aliases = {
-                                '{user}' : user,
+                                '{username}' : user,
                                 '{count}' : str(msgcount)
                             }
                             
@@ -7677,7 +7702,7 @@ def commands_module(data) -> None:
             
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
         
         elif command.startswith(command_data_default['watchtime']):  
             
@@ -7710,7 +7735,7 @@ def commands_module(data) -> None:
                             '{m}' : str(minutos),
                             '{s}' : str(segundos),
                             '{streamer}' : authdata.USERNAME(),
-                            '{user}' : str(user)
+                            '{username}' : str(user)
                         }
                         
                         message = utils.replace_all(command_data_default['watchtime_response'],aliases)
@@ -7724,7 +7749,7 @@ def commands_module(data) -> None:
             
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                                                   
         elif command.startswith(command_data_default['interaction_1']):
 
@@ -7753,9 +7778,6 @@ def commands_module(data) -> None:
                         if utils.send_message("RESPONSE"):
                             send(message_replaced)
                     else:
-                        aliases = {
-                            '{user}' : user
-                        }
                         
                         message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
                         if utils.send_message("RESPONSE"):
@@ -7771,7 +7793,7 @@ def commands_module(data) -> None:
                         send(message_delay)
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     
         elif command.startswith(command_data_default['interaction_2']):
 
@@ -7801,9 +7823,6 @@ def commands_module(data) -> None:
                             send(message_replaced)
                     
                     else:
-                        aliases = {
-                            '{user}' : user
-                        }
                         
                         message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
                         if utils.send_message("RESPONSE"):
@@ -7820,7 +7839,7 @@ def commands_module(data) -> None:
             
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     
         elif command.startswith(command_data_default['interaction_3']):
 
@@ -7849,9 +7868,6 @@ def commands_module(data) -> None:
                             send(message_replaced)
                     
                     else:
-                        aliases = {
-                            '{user}' : user
-                        }
                         
                         message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
                         if utils.send_message("RESPONSE"):
@@ -7868,7 +7884,7 @@ def commands_module(data) -> None:
             
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     
         elif command.startswith(command_data_default['interaction_4']):
 
@@ -7896,9 +7912,6 @@ def commands_module(data) -> None:
                             send(message_replaced)
                     
                     else:
-                        aliases = {
-                            '{user}' : user
-                        }
                         
                         message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
                         if utils.send_message("RESPONSE"):
@@ -7911,7 +7924,7 @@ def commands_module(data) -> None:
             
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     
         elif command.startswith(command_data_default['interaction_5']):
             
@@ -7941,9 +7954,6 @@ def commands_module(data) -> None:
                     
                     else:
                         
-                        aliases = {
-                            '{user}' : user
-                        }
                         
                         message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
                         if utils.send_message("RESPONSE"):
@@ -7960,7 +7970,7 @@ def commands_module(data) -> None:
 
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),{'{user}' : user}))        
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))        
                                 
     else:
 
@@ -8427,12 +8437,11 @@ def command_fallback(message: str) -> None:
                         response_chat =  event_config_data['sub']['response_chat']
                         
                         if data['paran_talk'] != '' :
-                            response_send = response
-                            response += f", : {data['paran_talk']}"
+                            response += f" '{data['paran_talk']}'"
+                            response_chat += f"  '{data['paran_talk']}'"
                             message = data['paran_talk']
                         
                         else:
-                            response_send = response
                             message = ''   
                             
                         if data['plan_type'] != "Prime":
@@ -8458,18 +8467,17 @@ def command_fallback(message: str) -> None:
                         
                         response = utils.replace_all(response,aliases)
                         response_chat = utils.replace_all(response_chat,aliases)
-                        response_send = utils.replace_all(response_send,aliases)  
                         
-                        data = {
+                        data_send = {
                             'type_id' : 'sub',
                             'type' : 'sub',
-                            'username' : response_send,
-                            'message_html' : message,
-                            'message' : message
+                            'username' : data['display_name'],
+                            'message_html' : response,
+                            'message' : response_chat
                         }
                         
                         send_announcement(response_chat,'purple')                
-                        send_not_fun(data)   
+                        send_not_fun(data_send)   
                     
                     elif msg_id == 'subgift': 
                         
@@ -8482,6 +8490,7 @@ def command_fallback(message: str) -> None:
                         }
                         
                         response =  event_config_data['giftsub']['response']
+                        response_chat =  event_config_data['giftsub']['response_chat']
                         
                         aliases = {
                             '{months}' : data['months'],
@@ -8491,15 +8500,17 @@ def command_fallback(message: str) -> None:
                         }
                         
                         response = utils.replace_all(response,aliases)
+                        response_chat = utils.replace_all(response_chat,aliases)
                         
-                        data = {
+                        data_send = {
                             'type' : 'giftsub',
-                            'username' : response,
-                            'message' : ''
+                            'username' : data['display_name'],
+                            'message' : response_chat,
+                            'message_html' : response
                         }  
                         
-                        send_announcement(response,'purple')
-                        send_not_fun(data)     
+                        send_announcement(response_chat,'purple')
+                        send_not_fun(data_send)     
                     
                     elif msg_id == 'submysterygift': 
                         
@@ -8510,6 +8521,7 @@ def command_fallback(message: str) -> None:
                         }
                         
                         response =  event_config_data['mysterygift']['response']
+                        response_chat =  event_config_data['mysterygift']['response_chat']
                         
                         aliases = {
                             '{username}' : data['display_name'],
@@ -8521,13 +8533,13 @@ def command_fallback(message: str) -> None:
                         response = utils.replace_all(response,aliases) 
                         
                         data = {
-                            'type' : 'giftsub',
-                            'username' : response,
-                            'message_html' : '',
-                            'message' : ''
+                            'type' : 'mysterygift',
+                            'username' : data['display_name'],
+                            'message_html' : response,
+                            'message' : response_chat
                         }  
                         
-                        send_announcement(response,'purple')
+                        send_announcement(response_chat,'purple')
                         send_not_fun(data)   
 
                     elif msg_id == 'anongiftpaidupgrade': 
@@ -8537,6 +8549,7 @@ def command_fallback(message: str) -> None:
                         }
                         
                         response =  event_config_data['re-mysterygift']['response']
+                        response_chat =  event_config_data['re-mysterygift']['response_chat']
                         
                         aliases = {
                             '{username}' : data['display_name'],
@@ -8546,13 +8559,13 @@ def command_fallback(message: str) -> None:
                         response = utils.replace_all(response,aliases) 
                         
                         data = {
-                            'type' : 'giftsub',
-                            'username' : response,
-                            'message_html' : '',
-                            'message' : ''
+                            'type' : 're-mysterygift',
+                            'username' : data['display_name'],
+                            'message_html' : response,
+                            'message' : response_chat
                         }  
                         
-                        send_announcement(response,'purple')
+                        send_announcement(response_chat,'purple')
                         send_not_fun(data)         
 
                     elif msg_id == 'announcement':
@@ -8658,7 +8671,7 @@ def command_fallback(message: str) -> None:
                         if chat_data['send-greetings'] == 1:
 
                             aliases = {
-                                '{user}' : user_join
+                                '{username}' : user_join
                             }
                             
                             response_redus = utils.replace_all(chat_data['greetings'], aliases)
@@ -8880,7 +8893,7 @@ def close():
     with open(f'{appdata_path}/rewardevents/web/src/user_info/users_database.json','w',encoding='utf-8') as user_data_file_w:
         json.dump(user_data_load,user_data_file_w,indent=6,ensure_ascii=False)
         
-    sys.exit(0)
+    remove_lock_file("None","None")
            
 
 def download_badges():
@@ -9236,24 +9249,19 @@ def on_message(ws, message):
             event = data['payload']['event']
             
             user_name = event['user_name']
-            broadcaster_user_name = event['broadcaster_user_name']
-            tier = event['tier']
-            is_gift = event['is_gift']
-            
-            
+
             data = {
                 'type' : 'sub',
                 'username' : user_name,
-                
             }
             
-            print(event)
+            print(f"Evento Sub em dev - {event}")
 
         elif subscription_type == 'channel.subscription.gift':  
                 
             event = data['payload']['event']
-            
-            print(event)
+
+            print(f"Evento Subgift em dev - {event}")
                       
         elif subscription_type == 'channel.subscription.end':  
                 
@@ -9261,9 +9269,8 @@ def on_message(ws, message):
             
             user_name = event['user_name']
             tier = event['tier']
-            is_gift = event['is_gift']
             
-            print(f"Sub Acabou {event}")
+            print(f"Sub Acabou - {event}")
                 
         elif subscription_type == 'channel.subscription.message':  
                 
@@ -9348,7 +9355,7 @@ def on_message(ws, message):
                 '{total_months}' : str(cumulative_months),
                 '{streak_months}' : str(streak_months),
                 '{months}' : str(duration_months),
-                '{user_mesage}' : str(message_text)
+                '{user_message}' : str(message_text)
             }
 
             response_html = utils.replace_all(response,aliases_html) 
@@ -9413,11 +9420,10 @@ def on_message(ws, message):
                 'type_id' : 'raid',
                 'username' : username,
                 'message_html' : response,
-                'message' : response
+                'message' : response_chat
             }  
             
             send_announcement(response_chat,'purple')
-            send_discord_webhook(data)
             send_not_fun(data)   
                             
         elif subscription_type == 'channel.cheer':  
@@ -9464,7 +9470,7 @@ def on_message(ws, message):
                 'type_id' : 'bits',
                 'type' : type_not,
                 'username' : user_name,
-                'message_html' : message,
+                'message_html' : response,
                 'message' : message
             }  
             
@@ -9482,7 +9488,7 @@ def on_message(ws, message):
             banned_at = event['ends_at']
             is_permanent = event['is_permanent']
             
-            print(event)
+            print(f"Evento ban em dev - {event}")
             
         elif subscription_type == 'channel.unban':  
             
@@ -9491,7 +9497,7 @@ def on_message(ws, message):
             user_name = event['user_name']
             moderator_user_name = event['moderator_user_name']
             
-            print(event)
+            print(f"Evento Unban em dev - {event}")
             
         elif subscription_type == 'channel.poll.begin':  
             

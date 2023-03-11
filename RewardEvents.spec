@@ -1,9 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
-
+import os
 
 block_cipher = None
-
+appdata_path = os.getenv('APPDATA')
 
 a = Analysis(
     ['RewardEvents.py'],
@@ -35,7 +35,7 @@ exe = EXE(
     strip=False,
     upx=True,
     upx_exclude=[],
-    runtime_tmpdir=None,
+    runtime_tmpdir=f'{appdata_path}/rewardevents/web/src/temp',
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
