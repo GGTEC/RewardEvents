@@ -8,15 +8,17 @@ import pytz
 
 import coverpy
 import requests
-import validators
-import yt_dlp
 from pytube import YouTube
 from bs4 import BeautifulSoup as bs
 from dateutil import tz
 from PIL import Image
+from random import randint
 
 import urllib.request
 import zipfile
+import tempfile
+
+import tkinter.messagebox as messagebox
 
 coverpy = coverpy.CoverPy()
 
@@ -89,8 +91,6 @@ def error_log(ex):
         tb = tb.tb_next
 
     error = str(f'Erro = type: {type(ex).__name__} | message: {str(ex)} | trace: {trace} | time: {time_error} \n')
-
-    print(error)
 
     with open(f"{appdata_path}/rewardevents/web/src/error_log.txt", "a+", encoding='utf-8') as log_file_r:
         log_file_r.write(error)
@@ -304,13 +304,18 @@ def copy_file(source, dest):
     copy = 1
     return copy
     
-def update_notif(redeem,user,artist,type_not):
+def update_notif(data,type_not):
 
-   html_backup = f"{appdata_path}/rewardevents/web/src/html/notification.html.tmp"
-   html_file = f"{appdata_path}/rewardevents/web/src/html/notification.html"
+    redeem = data['redeem_name']
+    user = data['redeem_user']
+    artist = data['artist']
+    music = data['music']
 
 
-   try:
+    html_backup = f"{appdata_path}/rewardevents/web/src/html/notification/notification.html.tmp"
+    html_file = f"{appdata_path}/rewardevents/web/src/html/notification/notification.html"
+
+    try:
         os.remove(html_file)
     
         with open(html_backup, "r") as html:
@@ -332,8 +337,7 @@ def update_notif(redeem,user,artist,type_not):
             image_redeem['src'] = redeem_src
             redeem_name_tag.string = redeem
             redeem_user_tag.string = user
-            
-                
+                        
         elif type_not == 'music':
 
             album_src = "../player/images/album.png"
@@ -346,21 +350,24 @@ def update_notif(redeem,user,artist,type_not):
             redeem_user_music_tag = soup.find("span", {"class": "redem_user_music"})
 
             image_redeem['src'] = album_src
-            music_name_tag.string = redeem
+            music_name_tag.string = music
             artist_name_tag.string = artist
             redeem_user_music_tag.string = user
                 
         with open(html_file, "wb") as f_output:
             f_output.write(soup.prettify("utf-8"))
 
+        return True
 
-   except Exception as e:
-      error_log(e)
+    except Exception as e:
+        error_log(e)
+
+        return True
       
 def update_video(video):
     
-    html_video_backup = f"{appdata_path}/rewardevents/web/src/html/video.html.tmp"
-    html_video_file = f"{appdata_path}/rewardevents/web/src/html/video.html"
+    html_video_backup = f"{appdata_path}/rewardevents/web/src/html/video/video.html.tmp"
+    html_video_file = f"{appdata_path}/rewardevents/web/src/html/video/video.html"
 
     try:
 
@@ -400,10 +407,9 @@ def update_video(video):
 
 def update_event(data):
     
-    html_event_backup = f"{appdata_path}/rewardevents/web/src/html/event.html.tmp"
-    html_event_file = f"{appdata_path}/rewardevents/web/src/html/event.html"
+    html_event_backup = f"{appdata_path}/rewardevents/web/src/html/event/event.html.tmp"
+    html_event_file = f"{appdata_path}/rewardevents/web/src/html/event/event.html"
     
-
     type_id = data['type_id']
     image_src = data['img_src']
     img_px = data['img_px']
@@ -481,7 +487,86 @@ def update_event(data):
         error_log(e)
 
         return False
+
+def update_highlight(data):
     
+    html_highlight_backup = f"{appdata_path}/rewardevents/web/src/html/highlight/highlight.html.tmp"
+    html_highlight_file = f"{appdata_path}/rewardevents/web/src/html/highlight/highlight.html"
+    
+    duration = int(data['duration']) - 1
+
+    color_highligh_username = data['color_username']
+    color_highligh_message = data['color_message']
+    font_weight = data['weight']
+    font_size = data['size']
+    
+    message = data['user_input']
+    username = data['username']
+
+    try:
+
+        with open(html_highlight_backup, "r",encoding='utf-8') as html:
+            soup = bs(html, 'html.parser')
+
+        main_div = soup.find("div", {"id": f"highlight-block"})
+        main_div['style'] = f'animation-duration: {duration}s'
+
+        username_tag = soup.find("span", {"id": f"username"})
+        username_tag['style'] = f'font-size: {font_size};font-weight: {font_weight};color: {color_highligh_username};'
+        username_tag.string = username
+
+        message_tag = soup.find("span", {"id": f"message"})
+        message_tag['style'] = f'font-size: {font_size};font-weight: {font_weight};color: {color_highligh_message};'
+        message_tag.string = message
+
+        with open(html_highlight_file, "wb") as f_output:
+            f_output.write(soup.prettify("utf-8"))
+
+        return True
+            
+    except Exception as e:
+        
+        error_log(e)
+        return False
+
+def update_emote(data):
+
+    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding='utf-8') as obs_not_file:
+        obs_not_data = json.load(obs_not_file)
+
+    width = obs_not_data['EMOTE_PX']
+    height = obs_not_data['EMOTE_PX']
+
+    html_emote_backup = f"{appdata_path}/rewardevents/web/src/html/emote/emote.html.tmp"
+    html_emote_file = f"{appdata_path}/rewardevents/web/src/html/emote/emote.html"
+
+    try:
+
+        with open(html_emote_backup, "r",encoding='utf-8') as html:
+            soup = bs(html, 'html.parser')
+
+        main_div = soup.find("div", {"id": f"emojis"})
+        
+        
+
+        for emote in data:
+
+            random = randint(0,5)
+            element = bs(emote, 'html.parser')
+            element_style = element.find("img", {"class": f"emoji"})
+            element_style['style'] = f'width:{width}px;height:{height}px;animation-delay:{random}s'
+            main_div.append(element)
+
+        with open(html_emote_file, "wb") as f_output:
+            f_output.write(soup.prettify("utf-8"))
+
+        return True
+            
+    except Exception as e:
+        
+        error_log(e)
+        return False
+
 def replace_all(text, dic_res):
     
     try:
@@ -506,53 +591,319 @@ def messages_file_load(key):
  
 def get_files_list():
     
-    dir = f"{appdata_path}/rewardevents/web"
+    dir = f"{appdata_path}/rewardevents/web/src/auth"
+    dir1 = f"{appdata_path}/rewardevents/"
 
     if not os.path.exists(dir):
-    
-        os.makedirs(dir)
 
-        url = "https://ggtec.github.io/GGTECApps/assets/web.zip"
+        os.makedirs(dir1)
 
-        zip_path = f"{appdata_path}/rewardevents/web.zip"
-        unzip_path = f"{appdata_path}/rewardevents/"
+        is_writable = os.access(dir1, os.W_OK)
 
-        # Baixar o arquivo zip
-        urllib.request.urlretrieve(url, zip_path)
+        if not is_writable:
+            os.chmod(dir1, 0o700)
+            is_writable = os.access(dir1, os.W_OK)
 
-        # Descompactar o arquivo zip
-        with zipfile.ZipFile(unzip_path, 'r') as zip_ref:
-            zip_ref.extractall(unzip_path)
+        if is_writable:
 
-        # Excluir o arquivo zip baixado
-        os.remove(zip_path)
+            url = "https://ggtec.github.io/GGTECApps/assets/web.zip"
 
+            zip_path = f"{appdata_path}/rewardevents/web.zip"
+            unzip_path = f"{appdata_path}/rewardevents"
 
-    response = requests.get('https://api.twitchinsights.net/v1/bots/all')
-
-    data = json.loads(response.text)
-    data_save = []
-    data = data['bots']
-    for idx, i in enumerate(data):
-        name = data[idx][0]
-        data_save.append(name)
-
-    with open(f"{appdata_path}/rewardevents/web/src/user_info/bot_list.json", "w") as outfile:
-        json.dump(data_save, outfile,indent=6)
-
-    respo_tags = requests.get("https://ggtec.github.io/list_games_tags_tw/tags.json")
-    data_save_tags = json.loads(respo_tags.text)
-
-    with open(f'{appdata_path}/rewardevents/web/src/games/tags.json', "w" , encoding="UTF-8") as tags_file:
-        json.dump(data_save_tags,tags_file,indent=4,ensure_ascii=False)
+            # Baixar o arquivo zip
+            urllib.request.urlretrieve(url, zip_path)
 
 
-    respo_games = requests.get("https://ggtec.github.io/list_games_tags_tw/games.json")
-    data_save_games = json.loads(respo_games.text)
+            if os.path.exists(zip_path):
 
-    with open(f'{appdata_path}/rewardevents/web/src/games/games.json', "w" , encoding="UTF-8") as games_file:
-        json.dump(data_save_games,games_file,indent=4,ensure_ascii=False)
+                with tempfile.TemporaryDirectory() as temp_dir:
 
+                    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                        zip_ref.extractall(temp_dir)
+
+                    extracted_dir = os.path.join(temp_dir, "web")
+
+                    if os.path.exists(extracted_dir):
+                        shutil.move(extracted_dir, unzip_path)
+                        os.remove(zip_path)
+
+                    else:
+                        print("Diretório extraído não encontrado:", extracted_dir)
+            else:
+                print("Extração do arquivo zip falhou:", zip_path)
+        else:
+            print("Não foi possível conceder permissão para escrever na pasta:", dir1)
+
+
+    else:
+
+        try:
+
+            response = requests.get('https://api.twitchinsights.net/v1/bots/all')
+
+            data = json.loads(response.text)
+            data_save = []
+            data = data['bots']
+
+            for idx, i in enumerate(data):
+                name = data[idx][0]
+                data_save.append(name)
+
+            with open(f"{appdata_path}/rewardevents/web/src/user_info/bot_list.json", "w") as outfile:
+                json.dump(data_save, outfile,indent=6)
+
+            respo_tags = requests.get("https://ggtec.github.io/list_games_tags_tw/tags.json")
+            data_save_tags = json.loads(respo_tags.text)
+
+            with open(f'{appdata_path}/rewardevents/web/src/games/tags.json', "w" , encoding="UTF-8") as tags_file:
+                json.dump(data_save_tags,tags_file,indent=4,ensure_ascii=False)
+
+            respo_games = requests.get("https://ggtec.github.io/list_games_tags_tw/games.json")
+            data_save_games = json.loads(respo_games.text)
+
+            with open(f'{appdata_path}/rewardevents/web/src/games/games.json', "w" , encoding="UTF-8") as games_file:
+                json.dump(data_save_games,games_file,indent=4,ensure_ascii=False)
+
+        except Exception as e:
+
+            if type(e).__name__ ==  "ConnectionError":
+
+                ask = messagebox.showerror("Erro", "Erro de conexão, verifique a conexão com a internet e tente novamente.")
+            
+                if ask == 'ok':
+                    sys.exit(0)
+
+            else:
+
+                error_log(e)
         
+        with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'r', encoding='utf-8') as poll_file:
+            poll_data = json.load(poll_file)
+
+            if poll_data["status"] == "":
+
+                poll_data["status"] = "archived"
+
+                with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'w', encoding='utf-8') as poll_file:
+                    json.dump(poll_data, poll_file, indent=6, ensure_ascii=False)  
+
+        with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
+            messages_data = json.load(messages_file)
+
+            messages_data['emote_disabled'] = '/me O sistema de emotes está desativado'
+            messages_data['response_get_queue'] = '/me {username} --> Estes valores estão na lista {queue-3}'
+            messages_data['response_noname_queue'] = '/me O Nome {value} não está na fila'
+            messages_data['response_rem_queue'] = '/me Nome {value} removido da fila'
+            messages_data['response_namein_queue'] = '/me O Nome {value} já está na fila'
+            messages_data['response_add_queue'] = '/me Nome {value} adicionado na fila'
+            messages_data['response_queue'] = 'me {username} --> Você foi adicionado na fila de espera.'
+
+        with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "w", encoding='utf-8') as messages_file:
+            json.dump(messages_data, messages_file, indent=6, ensure_ascii=False)  
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', "r", encoding='utf-8') as commands_file:
+            commands_data = json.load(commands_file)
+
+            commands_data['emote'] = {
+                "command": "!emote",
+                "status": 1,
+                "delay": "10",
+                "last_use": 0,
+                "response": "/me {username} --> Exibindo emotes na tela",
+                "user_level": "mod"
+            }
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', "w", encoding='utf-8') as commands_file:
+            json.dump(commands_data, commands_file, indent=6, ensure_ascii=False)  
+
+        path_css = f'{appdata_path}/rewardevents/web/src/html/emote/emote.css'
+        path_js = f'{appdata_path}/rewardevents/web/src/html/emote/emote.js'
+        path_html = f'{appdata_path}/rewardevents/web/src/html/emote/emote.html'
+        path_html_bk = f'{appdata_path}/rewardevents/web/src/html/emote/emote.html.tmp'
+
+        dir_emote = f'{appdata_path}/rewardevents/web/src/html/emote'
+
+        if not os.path.exists(path_html):
+            
+            os.makedirs(dir_emote)
+
+            content = """
+                <!DOCTYPE html>
+                <html lang="pt-br">
+                <head>
+                <link href="emote.css" rel="stylesheet"/>
+                <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+                <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet"/>
+                <meta charset="utf-8"/>
+                <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+                <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+                <title>
+                Emote
+                </title>
+                </head>
+                <body>
+                <div id="emojis">
+                </div>
+                <script src="emote.js">
+                </script>
+                </body>
+                </html>
+                    """
+            
+            with open(path_html, "w", encoding='utf-8') as html_file:
+                html_file.write(content)
+
+            with open(path_html_bk, "w", encoding='utf-8') as html_bk_file:
+                html_bk_file.write(content)
+
+            content_css = """
+                        body{
+                                overflow:hidden;
+                        }
+
+                        #emojis img {
+                                position: absolute;
+                                opacity: 0.0;
+                            }
+                            
+                        .drop {
+
+                                animation-name: emojis-fall, emojis-shake;
+                                animation-duration: 5s, 3s;
+                                animation-timing-function: linear, ease-in-out;
+                                animation-play-state: running, running;
+                        }
+
+
+                        @keyframes emojis-fall {
+                                0% {
+                                        top: -10%;
+                                        opacity: 1.0;
+                                }
+                                80% {
+                                        opacity: 1.0;
+                                }
+                                100% {
+                                        top: 100%;
+                                }
+                        }
+                        @keyframes emojis-shake {
+                                0% {
+                                        transform: translateX(0px);
+                                }
+                                25% {
+                                        transform: translateX(15px);
+                                }
+                                50% {
+                                        transform: translateX(-15px);
+                                }
+                                100% {
+                                        transform: translateX(0px);
+                                }
+                        }
+                    """
+            
+            with open(path_css, "w", encoding='utf-8') as css_file:
+                css_file.write(content_css)
+
+            content_js = """
+                const emojis = document.querySelectorAll('#emojis img');
+                emojis.forEach((emoji) => {
+                emoji.style.left = `calc(100% * ${Math.random()})`;
+                });
+            """
+
+            with open(path_js, "w", encoding='utf-8') as js_file:
+                js_file.write(content_js)
+
+        path_html_highlight = f'{appdata_path}/rewardevents/web/src/html/highlight/highlight.html'
+        path_html_highlightbk = f'{appdata_path}/rewardevents/web/src/html/highlight/highlight.html.tmp'
+
+        dir_highlight = f'{appdata_path}/rewardevents/web/src/html/highlight'
+
+        if not os.path.exists(path_html_highlight):
+            
+            os.makedirs(dir_highlight)
+
+            content_highlight = """
+                    <!DOCTYPE html>
+                    <html lang="pt-br">
+                    <head>
+                        <link href="highlight.css" rel="stylesheet">
+                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                        <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet">
+                        <meta charset="UTF-8">
+                        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>highlight</title>
+                    </head>
+                    <body>
+                        <div class="container-fluid d-flex justify-content-center">
+                            <div class="fade-in fadeOut" id="highlight-block">
+                                <p><i class="fa-solid fa-thumbtack"></i><span id="username"></span> : <span id="message"></span></p>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                """
+            
+            with open(path_html_highlight, "w", encoding='utf-8') as html_highlight:
+                html_highlight.write(content_highlight)
+
+            with open(path_html_highlightbk, "w", encoding='utf-8') as html_highlight_bk_file:
+                html_highlight_bk_file.write(content_highlight)
+
+        path_html = f'{appdata_path}/rewardevents/web/src/html/'
+        path_events = f'{appdata_path}/rewardevents/web/src/html/event/event.html'
+        path_notification = f'{appdata_path}/rewardevents/web/src/html/notification/notification.html'
+        path_video = f'{appdata_path}/rewardevents/web/src/html/video/video.html'
+
+        if not os.path.exists(path_events):
+
+            os.makedirs(f'{appdata_path}/rewardevents/web/src/html/event')
+            shutil.move(f'{path_html}/event.html', path_events)
+
+            shutil.move(f'{path_html}/event_styles', f'{path_html}/event')
+            shutil.move(f'{path_html}/event.html.tmp', f'{path_events}.tmp')
+            shutil.move(f'{path_html}/default.mp3', f'{path_html}/event/default.mp3')
+
+        if not os.path.exists(path_notification):
+
+            os.makedirs(f'{appdata_path}/rewardevents/web/src/html/notification')
+
+            shutil.move(f'{path_html}/notification.html', path_notification)
+            shutil.move(f'{path_html}/notification.html.tmp', f'{path_notification}.tmp')
+            shutil.move(f'{path_html}/theme.css', f'{path_html}/notification/theme.css')
+
+        if not os.path.exists(path_video):
+
+            os.makedirs(f'{appdata_path}/rewardevents/web/src/html/video')
+
+            shutil.move(f'{path_html}/video.html', path_video)
+            shutil.move(f'{path_html}/video.html.tmp', f'{path_video}.tmp')
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/goal.json') as goal_file:
+            goal_data = json.load(goal_file)
+
+        if not "subscription_count" in goal_data and not "follow" in goal_data:
+
+            goal_data = {
+                "subscription_count" : {
+                    "type": "subscription_count",
+                    "description": "",
+                    "current_amount": 0,
+                    "target_amount": 0,
+                    "started_at": ""
+                },
+                "follow" : {
+                    "type": "follow",
+                    "description": "",
+                    "current_amount": 0,
+                    "target_amount": 0,
+                    "started_at": ""
+                }
+            }
+
 get_files_list()
 

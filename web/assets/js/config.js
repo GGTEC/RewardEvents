@@ -4,16 +4,9 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function getFolder_image(id) {
-    var dosya_path = await eel.select_file_image_py()();
-    if (dosya_path) {
-        document.getElementById(id).value = dosya_path;
-    }
-}
-
 async function get_redeem_js_config(el_id) {
 
-    var list_redem = await eel.get_redeem('null')();
+    var list_redem = await eel.get_redeem('player')();
 
     if (list_redem) {
         
@@ -100,10 +93,11 @@ async function obs_config_js(event,type_id) {
     } else if (type_id == 'get_not'){
 
         
-
         var not_enabled = document.getElementById('not-enabled')
         var not_music = document.getElementById('not-music-enabled')
         var not_events = document.getElementById('not-events-enabled')
+        var not_emote = document.getElementById('not-emote-enabled')
+        var emote_size = document.getElementById('emote-px')
         var time_show_not_events = document.getElementById('time-show-not-events')
         var time_show_not = document.getElementById('time-show-not')
 
@@ -116,17 +110,21 @@ async function obs_config_js(event,type_id) {
             not_enabled.checked = not_info_parse.html_active == 1 ? true : false;
             not_music.checked = not_info_parse.html_player_active == 1 ? true : false;
             not_events.checked = not_info_parse.html_events_active == 1 ? true : false;
+            not_emote.checked = not_info_parse.html_emote_active == 1 ? true : false;
 
             time_show_not_events.value = not_info_parse.html_events_time
             time_show_not.value = not_info_parse.html_time
+            emote_size.value = not_info_parse.emote_px
 
             $("#not-source-name").append('<option style="background: #000; color: #fff;" value="'+ not_info_parse.html_title +'"selected> '+ not_info_parse.html_title +'</option>');
             $("#video-source-name").append('<option style="background: #000; color: #fff;" value="'+ not_info_parse.html_video +'" selected> '+ not_info_parse.html_video +'</option>');
             $("#events-source-name").append('<option style="background: #000; color: #fff;" value="'+ not_info_parse.html_events +'" selected>'+ not_info_parse.html_events +'</option>');
+            $("#emote-source-name").append('<option style="background: #000; color: #fff;" value="'+ not_info_parse.html_emote +'" selected>'+ not_info_parse.html_emote +'</option>');
 
             $("#not-source-name").selectpicker("refresh");
             $("#video-source-name").selectpicker("refresh");
             $("#events-source-name").selectpicker("refresh");
+            $("#emote-source-name").selectpicker("refresh");
 
             
         }
@@ -139,7 +137,6 @@ async function obs_config_js(event,type_id) {
             host: form.querySelector('#obs-host').value,
             port: form.querySelector('#obs-port').value,
             pass: form.querySelector('#obs-password').value,
-            conn: auto_con
         };
     
         var formData = JSON.stringify(data);
@@ -152,18 +149,23 @@ async function obs_config_js(event,type_id) {
         var not_enabled_status = form.querySelector('#not-enabled').checked;
         var not_music_enabled_status = form.querySelector('#not-music-enabled').checked;
         var not_event_enabled_status = form.querySelector('#not-events-enabled').checked;
+        var not_emote_enabled_status = form.querySelector('#not-emote-enabled').checked;
         
         not_enabled_status = not_enabled_status ? 1 : 0;
         not_music_enabled_status = not_music_enabled_status ? 1 : 0;
         not_event_enabled_status = not_event_enabled_status ? 1 : 0;
+        not_emote_enabled_status = not_emote_enabled_status ? 1 : 0;
         
         data = {
             not_enabled: not_enabled_status,
             not_music: not_music_enabled_status,
             not_event: not_event_enabled_status,
+            not_emote: not_emote_enabled_status,
             source_name: form.querySelector('#not-source-name').value,
             video_source_name: form.querySelector('#video-source-name').value,
             event_source_name: form.querySelector('#events-source-name').value,
+            emote_source_name: form.querySelector('#emote-source-name').value,
+            emote_px: form.querySelector('#emote-px').value,
             time_showing_not: form.querySelector('#time-show-not').value,
             time_showing_event_not: form.querySelector('#time-show-not-events').value,
         };
@@ -182,6 +184,7 @@ async function config_responses_js(event,fun_id_responses) {
     var button_el = document.getElementById('submit-responses-config');
     var select_id_el = document.getElementById('response-select-edit').value;
     var in_reponse_el = document.getElementById('response-message-new');
+    var aliases_responses = document.getElementById('aliases-responses');
 
     if (fun_id_responses == 'get_response'){
 
@@ -193,6 +196,61 @@ async function config_responses_js(event,fun_id_responses) {
             in_reponse_el.value = messages;
     
             }
+
+        const responses_aliases_respo = {
+            giveaway_clear : '',
+            music_disabled : '{username}',
+            clip_create_clip : '{username}, {clip_id}',
+            clip_button_create_clip : '{username}, {clip_id}',
+            clip_created_by : '{username}',
+            create_clip_discord : ' {username}, {clip_id}',
+            create_clip_discord_edit : '{username}, {clip_url}',
+            response_delay_error : '{username}, {seconds}',
+            error_user_level: '{username}, {user_level}, {command}',
+            response_counter: '{username}, {value}',
+            response_set_counter: '{username}, {value}',
+            giveaway_response_user_add: '{username}',
+            giveaway_response_mult_add: '{username}, {perm}',
+            giveaway_response_perm: '{username}, {perm}',
+            giveaway_status_disable: '{username}, {perm}, {giveaway_name}',
+            giveaway_status_enable: '{username}, {giveaway_name}, {redeem}',
+            response_giveaway_disabled: '{username}, {giveaway_name}, {redeem}',
+            giveaway_response_win: '{name}',
+            music_playing: '{music_name}, {music_name_short}, {music_artist}, {username}',
+            music_added_to_queue: '{username}, {user_input}, {music}, {music_short}',
+            music_leght_error: '{max_duration}, {username}, {user_input}, {music}, {music_short}',
+            music_blacklist: '{username}, {user_input}, {music}, {music_short}',
+            music_add_error: '{username}, {user_input}',
+            command_sr_error_link: '{username}',
+            command_current_confirm: '{username}, {music}',
+            command_next_no_music: '{username}',
+            command_next_confirm: '{username}, {music}, {request_by}',
+            command_volume_confirm: '{username}, {volume}',
+            command_volume_error: '{username}, {volume}',
+            command_volume_response: '{username}, {volume}',
+            command_skip_confirm: '{username}',
+            duel_yorself: '{username}',
+            duel_again:'{username}',
+            duel_request: '{time}, {username}, {challenged}, {command}, {accept}',
+            duel_already_started: '{username}',
+            duel_other: '{username}',
+            duel_accepted: '{username}, {challenger}',
+            duel_long: '{challenged}',
+            duel_start: '{challenger}, {challenged}, {time_to_start}',
+            duel_title: '{challenger}, {challenged}, {time_to_start}',
+            duel_parm: '{username}, {command}, {accept}',
+            no_duel_request: '{username}',
+            duel_delay: '{username}{time}'
+
+        };
+            
+        aliases_responses.value = responses_aliases_respo[select_id_el];
+
+        if (select_id_el in responses_aliases_respo) {
+            aliases_responses.value = responses_aliases_respo[select_id_el];
+          } else {
+            aliases_responses.value = "{username}";
+          }
 
     } else if (fun_id_responses == "save-response"){
 
@@ -218,6 +276,10 @@ function show_config_div(div_id) {
         chat_config('get')
     } else if (div_id == "userdata-div"){
         userdata_js('get')
+    } else if (div_id == "events-config-div"){
+        event_log_config('get')
+    } else if (div_id == "config-highlight-div"){
+        highlight_js('get')
     }
 
     document.getElementById("config-div").hidden = true;
@@ -665,21 +727,6 @@ async function sr_config_js(event,type_id){
         var music_not_status = document.querySelector("#not-music");
         var check_seletor = document.querySelector('#music-enable');
         var max_duration = document.getElementById("max-duration")
-        var command_request = document.querySelector("#comand-request");
-        var command_request_status = document.querySelector("#command-request-status");
-        var command_request_delay = document.querySelector("#comand-request-delay");
-        var command_volume = document.querySelector("#comand-volume");
-        var command_volume_status = document.querySelector("#command-volume-status");
-        var command_volume_delay = document.querySelector("#comand-volume-delay");
-        var command_skip = document.querySelector("#comand-skip");
-        var command_skip_status = document.querySelector("#command-skip-status");
-        var command_skip_delay = document.querySelector("#comand-skip-delay");
-        var command_next = document.querySelector("#comand-next");
-        var command_next_status = document.querySelector("#command-next-status");
-        var command_next_delay = document.querySelector("#comand-next-delay");
-        var command_atual = document.querySelector("#comand-atual");
-        var command_atual_status = document.querySelector("#command-atual-status");
-        var command_atual_delay = document.querySelector("#comand-atual-delay");
     
         var data = await eel.sr_config_py(type_id,'null')();
     
@@ -697,153 +744,76 @@ async function sr_config_js(event,type_id){
                 check_seletor.checked = false;
             }
             
-            if (music_config.cmd_request_status == 1){
-                command_request_status.checked = true;
-            } else if (music_config.cmd_request_status == 0){
-                command_request_status.checked = false;
-            }
-
-            if (music_config.cmd_volume_status == 1){
-                command_volume_status.checked = true;
-            } else if (music_config.cmd_volume_status == 0){
-                command_volume_status.checked = false;
-            }
-
-            if (music_config.cmd_skip_status == 1){
-                command_skip_status.checked = true;
-            } else if (music_config.cmd_skip_status == 0){
-                command_skip_status.checked = false;
-            }
-
-            if (music_config.cmd_next_status == 1){
-                command_next_status.checked = true;
-            } else if (music_config.cmd_next_status == 0){
-                command_next_status.checked = false;
-            }
-
-            if (music_config.cmd_atual_status == 1){
-                command_atual_status.checked = true;
-            } else if (music_config.cmd_atual_status == 0){
-                command_atual_status.checked = false;
-            }
-
             max_duration.value = music_config.max_duration;
-            command_request.value = music_config.cmd_request;
-            command_request_delay.value = music_config.cmd_request_delay;
-            command_volume.value = music_config.cmd_volume;
-            command_volume_delay.value = music_config.cmd_volume_delay;
-            command_skip.value = music_config.cmd_skip;
-            command_skip_delay.value = music_config.cmd_skip_delay;
-            command_next.value = music_config.cmd_next;
-            command_next_delay.value = music_config.cmd_next_delay;
-            command_atual.value = music_config.cmd_atual;
-            command_atual_delay.value = music_config.cmd_atual_delay;
-    
-            $("#redeem-select-music").selectpicker('val',music_config.redeem_music)
-            $("#comand-sr-perm").selectpicker('val',music_config.request_perm)
-            $("#comand-volume-perm").selectpicker('val',music_config.volume_perm)
-            $("#comand-skip-perm").selectpicker('val',music_config.skip_perm)
-            $("#comand-next-perm").selectpicker('val',music_config.next_perm)
-            $("#comand-atual-perm").selectpicker('val',music_config.atual_perm)
+
+            $("#redeem-select-music").selectpicker('val', music_config.redeem);
     
             
         }
+
+    } else if (type_id == 'get_command'){
+
+        var select_command_player = document.getElementById('command-player-edit');
+
+        var form_player = document.getElementById('command_player_form');
+        var command_player_command = document.getElementById('command-player-command');
+        var command_player_status = document.getElementById('command-player-status');
+        var command_player_delay = document.getElementById('command-player-delay');
+
+        var command_data = await eel.sr_config_py(type_id,select_command_player.value)()
+
+        if (command_data){
+
+            form_player.hidden = false
+
+            var command_data_parse = JSON.parse(command_data);
+
+            command_player_command.value = command_data_parse.command
+            command_player_status.checked = command_data_parse.status == 1 ? true : false
+            command_player_delay.value = command_data_parse.delay
+
+            $("#command-player-perm").selectpicker('val', command_data_parse.user_level);
+            $("#command-player-perm").selectpicker("refresh");
+
+        }
+
+    } else if (type_id == 'save_command') {
+
+        var select_command_player = document.getElementById('command-player-edit');
+
+        var form_player = document.getElementById('command_player_form');
+        
+        var command_player_command = document.getElementById('command-player-command');
+        var command_player_status = document.getElementById('command-player-status');
+        var command_player_delay = document.getElementById('command-player-delay');
+        var command_player_perm = document.getElementById('command-player-perm');
+        
+        data = {
+            type_command : select_command_player.value,
+            command: command_player_command.value,
+            delay: command_player_delay.value,
+            user_level: command_player_perm.value,
+            status: command_player_status = command_player_status.checked ? 1 : 0
+        }
+
+        var formData = JSON.stringify(data);
+        eel.sr_config_py(type_id,formData);
+
     } else if (type_id == 'save'){
 
         var check_seletor = document.getElementById('music-enable');
         var redeem_music_save = document.getElementById("redeem-select-music");
         var max_duration = document.getElementById("max-duration")
         var music_not_status_save = document.getElementById("not-music");
-        var command_request_save = document.getElementById("comand-request");
-        var command_request_status = document.getElementById("command-request-status");
-        var command_request_perm = document.getElementById("comand-sr-perm");
-        var command_request_delay = document.getElementById("comand-request-delay");
-        var command_volume_save = document.getElementById("comand-volume");
-        var command_volume_status = document.getElementById("command-volume-status");
-        var command_volume_perm = document.getElementById("comand-volume-perm");
-        var command_volume_delay = document.getElementById("comand-volume-delay");
-        var command_skip_save = document.getElementById("comand-skip");
-        var command_skip_status = document.getElementById("command-skip-status");
-        var command_skip_perm = document.getElementById("comand-skip-perm");
-        var command_skip_delay = document.getElementById("comand-skip-delay");
-        var command_next_save = document.getElementById("comand-next");
-        var command_next_status = document.getElementById("command-next-status");
-        var command_next_perm = document.getElementById("comand-next-perm");
-        var command_next_delay = document.getElementById("comand-next-delay");
-        var command_atual_save = document.getElementById("comand-atual");
-        var command_atual_status = document.getElementById("command-atual-status");
-        var command_atual_perm = document.getElementById("comand-atual-perm");
-        var command_atual_delay = document.getElementById("comand-atual-delay");
     
-    
-        if (music_not_status_save.checked == true){
-            music_not_status_save = 1
-        } else {
-            music_not_status_save = 0
-        }
-
-        if (command_request_status.checked == true){
-            command_request_status = 1
-        } else {
-            command_request_status = 0
-        }
-
-        if (command_volume_status.checked == true){
-            command_volume_status = 1
-        } else {
-            command_volume_status = 0
-        }
-
-        if (command_skip_status.checked == true){
-            command_skip_status = 1
-        } else {
-            command_skip_status = 0
-        }
-
-        if (command_next_status.checked == true){
-            command_next_status = 1
-        } else {
-            command_next_status = 0
-        }
-
-        if (command_atual_status.checked == true){
-            command_atual_status = 1
-        } else {
-            command_atual_status = 0
-        }
-
-        if (check_seletor.checked == true){
-            allow_music = 1
-        } else if (check_seletor.checked == false) {
-            allow_music = 0
-        }
-    
+        music_not_status_save = music_not_status_save.checked == true ? 1 : 0
+        allow_music = check_seletor.checked == true ? 1 : 0
     
         data = {
             redeem_music_data: redeem_music_save.value,
             max_duration: max_duration.value,
             allow_music_save : allow_music,
             music_not_status_data: music_not_status_save,
-            command_request_data: command_request_save.value,
-            command_request_perm: command_request_perm.value,
-            command_request_delay: command_request_delay.value,
-            command_request_status : command_request_status,
-            command_volume_data: command_volume_save.value,
-            command_volume_status : command_volume_status,
-            command_volume_perm: command_volume_perm.value,
-            command_volume_delay : command_volume_delay.value,
-            command_skip_data: command_skip_save.value,
-            command_skip_status: command_skip_status,
-            command_skip_perm: command_skip_perm.value,
-            command_skip_delay: command_skip_delay.value,
-            command_next_data: command_next_save.value,
-            command_next_status: command_next_status,
-            command_next_perm: command_next_perm.value,
-            command_next_delay: command_next_delay.value,
-            command_atual_data: command_atual_save.value,
-            command_atual_status : command_atual_status,
-            command_atual_perm: command_atual_perm.value,
-            command_atual_delay: command_atual_delay.value,
         }
     
         var formData = JSON.stringify(data);
@@ -904,6 +874,7 @@ async function not_config_js(event, type_id, type_not){
     var response_px = document.getElementById(`response-px`);
     var response_weight = document.getElementById(`response-weight`);
     var response_color = document.getElementById(`response-color`);
+    var response_aliases = document.getElementById(`aliases-event`);
     
 
     if (type_id == 'get'){ 
@@ -965,6 +936,22 @@ async function not_config_js(event, type_id, type_not){
         not_config_js(event, `get`, selectEdit.value);
 
     }
+
+    const responses_aliases = {
+        follow: '{username}',
+        sub: '{username}, {type}, {plan}, {months}, {cumulative}',
+        resub: ' {username}, {tier}, {total_months}, {streak_months}, {months}, {user_message}',
+        giftsub: ' {username}, {months}, {rec_username}, {plan}',
+        mysterygift: '{username}, {count}, {plan}',
+        're-mysterygift': ' {username}',
+        raid: ' {username}, {specs}',
+        bits1: ' {username}, {amount}',
+        bits100: ' {username}, {amount}',
+        bits1000: ' {username}, {amount}',
+        bits5000: ' {username}, {amount}'
+    };
+      
+    response_aliases.value = responses_aliases[type_not];
 }
 
 async function userdata_js(type_id,data){
@@ -977,7 +964,6 @@ async function userdata_js(type_id,data){
         if (userdata){
 
             if ($.fn.DataTable.isDataTable("#userdata_table")) {
-                console.log('destroy')
                 $('#userdata_table').DataTable().clear().draw();
                 $('#userdata_table').DataTable().destroy();
             }
@@ -1002,7 +988,7 @@ async function userdata_js(type_id,data){
                 ordering:  true,
                 retrieve : false,
                 processing: true,
-                responsive: false,
+                responsive: true,
                 lengthMenu: [
                     [10, 25, 50, -1],
                     [10, 25, 50, 'All'],
@@ -1074,7 +1060,7 @@ async function userdata_js(type_id,data){
 
             $('#userdata_table tfoot th').each(function () {
                 var title = $(this).text();
-                $(this).html('<input type="text" class="form-control bg-dark" placeholder="Procure em' + title + '" />');
+                $(this).html('<input type="text" class="form-control bg-dark" placeholder="Procure em ' + title + '" />');
             });
 
             $('[data-toggle="tooltip"]').tooltip();
@@ -1097,14 +1083,17 @@ function show_userdata_modal(){
     userdata_js('get')
 }
 
-async function get_stream_info(){
+let runned = false
+async function get_stream_info_test(){
 
-    var select_games = "stream-game";
-    var select_tags = "stream-tags";
     var button_submt = document.getElementById('submit-stream-info');
     var title_inp = document.getElementById("stream-title");
 
+    var loading_title = document.getElementById('loading_title');
+    var title_body = document.getElementById('title_body');
+    
     button_submt.disabled = true
+    
     var stream_games_list = await eel.get_stream_info_py()()
     
     if (stream_games_list){
@@ -1113,121 +1102,170 @@ async function get_stream_info(){
 
         streamer_game = stream_games_parse.game;
         streamer_game_id = stream_games_parse.game_id;
-        games = stream_games_parse.game_list;
-        tags = stream_games_parse.tag_list;
         streamer_tags = stream_games_parse.tag;
         title_inp.value = stream_games_parse.title;
 
-        $("#" + select_games).empty();
-        $("#" + select_games).selectpicker("refresh");
-
-        $("#" + select_tags).empty();
-        $("#" + select_tags).selectpicker("refresh");
-
+        var div_tags = document.getElementById("tags");
+        var spans = div_tags.querySelectorAll('p');
+        var finded = false;
+    
         for (var id in streamer_tags){
-            
-            tag = streamer_tags[id]
 
-            var span_tags = document.createElement("p")
-            span_tags.innerHTML = tag.toLowerCase();
-            span_tags.id = tag.toLowerCase();
-            document.getElementById("tags").appendChild(span_tags);
-        }
-        
-        for (var id in games) {
+            for (var i = 0; i < spans.length; i++) { 
+    
+                if (spans[i].textContent.trim() === tag) { 
+                  finded = true;
+                }
+            }
+  
+            if (!finded) {
 
-            var game_new = games[id];
-            $("#" + select_games).append('<option class="bg-dark" style="color: #fff;" data-img="'+ game_new.box_art_url +'" value="'+ id +'">'+ game_new.name +'</option>');
+                tag = streamer_tags[id]
 
-        }
+                var span_tags = document.createElement("p")
+                span_tags.innerHTML = tag.toLowerCase();
+                span_tags.id = tag.toLowerCase();
+                document.getElementById("tags").appendChild(span_tags);
 
-        for (var name in tags) {
-
-            var tags_new = tags[name];
-            $("#" + select_tags).append('<option class="bg-dark" style="color: #fff;" data-desc="'+ tags_new.description +'" data-id="'+ tags_new.id +'" value="'+ name +'">'+ name +'</option>');
+            }
 
         }
-
-        $("#" + select_games).selectpicker("refresh");
-        
-        $("#" + select_tags).selectpicker("refresh");
-
-        $("#" + select_games).selectpicker('val', streamer_game_id); 
-
-        
-        var game_box_img = games[streamer_game_id].box_art_url;
-
-        const width = 285;
-        const height = 380;
-        const newUrl = game_box_img.replace(/\{width\}x\{height\}/, `${width}x${height}`);
-
-
-        var img_tag = document.getElementById("game_img");
-        img_tag.src = newUrl
 
         button_submt.disabled = false
 
     }
+
+    if (runned == false){
+
+
+        runned = true
+        // Obtém a lista JSON da URL
+        fetch('https://ggtec.github.io/list_games_tags_tw/games.json')
+        .then(response => response.json())
+        .then(data => {
+        // Obtém o seletor do seletor de opções
+        const selectpicker = document.getElementById('stream-game');
+        
+        $("#stream-game").empty();
+        $("#stream-game").selectpicker("refresh");
+
+        // Adiciona cada nome como uma opção no seletor de opções
+        Object.values(data).forEach(item => {
+            $("#stream-game").append('<option class="bg-dark" style="color: #fff;" value="'+ item.id +'">'+ item.name +'</option>');
+        });
+    
+        $("#stream-game").selectpicker("refresh");
+
+        title_body.hidden = false
+        loading_title.hidden = true
+
+        $("#stream-game").selectpicker('val', streamer_game_id);
+
+        var image = document.getElementById('game_img');
+        
+        var item_url = Object.values(data).find(item => item.id === streamer_game_id);
+        var width = 215;
+        var height = 300;
+        var url = item_url.box_art_url;
+        
+        
+
+        var newUrl = url.replace(/\{width\}x\{height\}/, `${width}x${height}`);
+
+        image.src = newUrl
+
+
+        // Adiciona um listener de evento para o seletor de opções
+        selectpicker.addEventListener('change', event => {
+            // Obtém o valor do seletor de opções selecionado
+            const selectedValue = event.target.value;
+
+            // Encontra o objeto JSON correspondente com base no nome selecionado
+            const selectedItem = Object.values(data).find(item => item.id === selectedValue);
+            // Obtém o seletor da imagem
+            const image = document.getElementById('game_img');
+            const game_inp = document.getElementById('stream-game-inp');
+
+            game_inp.value = selectedItem.name
+    
+            // Define o atributo src da imagem como o valor de box_art_url do objeto JSON selecionado
+            var width = 215;
+            var height = 300;
+            var url = selectedItem.box_art_url;
+            var newUrl = url.replace(/\{width\}x\{height\}/, `${width}x${height}`);
+    
+            image.src = newUrl
+        });
+        });
+    
+        // Obtém a lista JSON da URL
+        fetch('https://ggtec.github.io/list_games_tags_tw/tags.json')
+        .then(response_tags => response_tags.json())
+        .then(data_tags => {
+        // Obtém o seletor do seletor de opções
+        const selectpicker_tags = document.getElementById('stream-tags');
+            
+        $("#stream-tags").empty();
+        $("#stream-tags").selectpicker("refresh");
+
+        // Adiciona cada nome como uma opção no seletor de opções
+        Object.values(data_tags).forEach((value) => {
+            $("#stream-tags").append(`<option class="bg-dark" style="color: #fff;" data-desc="${value.description}" data-id="${value.id}" value="${value.name}">${value.name}</option>`);
+          });
+        
+    
+        $("#stream-tags").selectpicker("refresh");
+
+        // Adiciona um listener de evento para o seletor de opções
+        selectpicker_tags.addEventListener('change', event => {
+            // Obtém o valor do seletor de opções selecionado
+            const selectedValue_tags = event.target.value;
+            // Encontra o objeto JSON correspondente com base no nome selecionado
+            const selectedItem_tags = Object.values(data_tags).find(key => key.name === selectedValue_tags);
+    
+            var div_tags = document.getElementById("tags");
+            var spans = div_tags.querySelectorAll('p');
+            var txt = selectedItem_tags.name
+            var id_tag = selectedItem_tags.description
+            var finded = false;
+    
+            if(txt){
+    
+              for (var i = 0; i < spans.length; i++) { 
+    
+                  if (spans[i].textContent.trim() === txt) { 
+                    finded = true;
+                  }
+              }
+    
+              if (!finded) {
+    
+                  var span_tags = document.createElement("p")
+                  span_tags.innerHTML = txt.toLowerCase();
+                  span_tags.id = id_tag.toLowerCase();
+                  document.getElementById("tags").appendChild(span_tags);
+              }
+            }
+    
+        });
+        });
+    }
+    
 }
 
 jQuery($ => { // DOM ready and $ alias in scope.
-
-    $("#stream-game").on({
-        
-        change() {
-            
-            var selec_game = document.getElementById("stream-game").value;
-            var game_box_img = games[selec_game].box_art_url;
-
-            const width = 285;
-            const height = 380;
-            const newUrl = game_box_img.replace(/\{width\}x\{height\}/, `${width}x${height}`);
-
-
-            var img_tag = document.getElementById("game_img");
-            img_tag.src = newUrl
-        }
-    });
-    // TAGS BOX
-    $("#stream-tags").on({
-
-        change() {
-
-          var div_tags = document.getElementById("tags");
-          var spans = div_tags.querySelectorAll('p');
-          var txt = $(this).val();
-          var finded = false;
-
-          if(txt){
-
-            for (var i = 0; i < spans.length; i++) { 
-
-                if (spans[i].textContent.trim() === txt) { 
-                  finded = true;
-                }
-            }
-
-            if (!finded) {
-
-                var span_tags = document.createElement("p")
-                span_tags.innerHTML = txt.toLowerCase();
-                span_tags.id = txt.toLowerCase();
-                document.getElementById("tags").appendChild(span_tags);
-            }
-          }
-        }
-    });
 
     $("#tags").on("click", "p", function() {
       $(this).remove(); 
     });
     
-  });
+});
 
 function save_stream_info(){
 
     var stream_title = document.getElementById("stream-title").value;
     var stream_game = document.getElementById("stream-game").value;
+    var stream_game_name = document.getElementById('stream-game-inp').value;
     
     var seletor_not_discord = document.getElementById('enable-discord-not-stream');
     var seletor_not_discord_off  = document.getElementById('enable-discord-not-stream-off');
@@ -1245,7 +1283,8 @@ function save_stream_info(){
 
     data = {
         title : stream_title,
-        game : stream_game,
+        game : stream_game_name,
+        game_id : stream_game,
         tags : tags_list,
         discord : seletor_not_discord,
         offline : seletor_not_discord_off
@@ -1650,148 +1689,148 @@ async function updateProgressBar(startTime, endTime) {
 
 
 async function prediction_small() {
-    
-    while (true){
 
-        data = {
-            type_id : 'get',
-        }
+    data = {
+        type_id : 'get',
+    }
 
-        var formData = JSON.stringify(data);
-        var pred_info = await eel.prediction_py(formData)()
+    var formData = JSON.stringify(data);
+    var pred_info = await eel.prediction_py(formData)()
 
-        if (pred_info){
+    if (pred_info){
 
-            var pred_info_parse = JSON.parse(pred_info);
+        var pred_info_parse = JSON.parse(pred_info);
 
-            var status = pred_info_parse.status;
+        var status = pred_info_parse.status;
 
-            var title_current = document.getElementById('status-pred-small');
-            var bar = document.getElementById('progress-small');
+        var title_current = document.getElementById('status-pred-small');
+        var bar = document.getElementById('progress-small');
 
-            if (status == 'running') {
+        if (status == 'running') {
 
-                bar.hidden = false
+            bar.hidden = false
 
-                var time_start = pred_info_parse.start_time
-                var time_end = pred_info_parse.lock_time
+            var time_start = pred_info_parse.start_time
+            var time_end = pred_info_parse.lock_time
 
-                startTime = time_start.replace(/\.(\d{1,})/, '');
-                endTime = time_end.replace(/\.(\d{1,})/, '')
+            startTime = time_start.replace(/\.(\d{1,})/, '');
+            endTime = time_end.replace(/\.(\d{1,})/, '')
+        
+            startTime = new Date(startTime)
+            startTime = new Date(startTime).toUTCString();
+            startTime = Date.parse(startTime);
+        
+            endTime = new Date(endTime)
+            endTime = new Date(endTime).toUTCString();
+            endTime = Date.parse(endTime);
+
+            const now_gmt = new Date().getTime();
+            const now_utc = new Date(now_gmt).toUTCString();
+            const now = Date.parse(now_utc);  // Obtém o tempo atual em milissegundos
+            const totalTime = endTime - startTime; // Calcula o tempo total em milissegundos
+            const elapsedTime = now - startTime; // Calcula o tempo decorrido em milissegundos
+            const progress = elapsedTime / totalTime; // Calcula a porcentagem de progresso
             
-                startTime = new Date(startTime)
-                startTime = new Date(startTime).toUTCString();
-                startTime = Date.parse(startTime);
+            // Seleciona a barra de progresso e atualiza sua largura de acordo com o progresso
+            const progressBar = document.getElementById("progress-bar-small");
+            progressBar.style.width = `${(1 - progress) * 100}%`;
             
-                endTime = new Date(endTime)
-                endTime = new Date(endTime).toUTCString();
-                endTime = Date.parse(endTime);
+            title_current.innerHTML = "Palpite em andamento, recebendo votações."
 
-                const now_gmt = new Date().getTime();
-                const now_utc = new Date(now_gmt).toUTCString();
-                const now = Date.parse(now_utc);  // Obtém o tempo atual em milissegundos
-                const totalTime = endTime - startTime; // Calcula o tempo total em milissegundos
-                const elapsedTime = now - startTime; // Calcula o tempo decorrido em milissegundos
-                const progress = elapsedTime / totalTime; // Calcula a porcentagem de progresso
-                
-                // Seleciona a barra de progresso e atualiza sua largura de acordo com o progresso
-                const progressBar = document.getElementById("progress-bar-small");
-                progressBar.style.width = `${(1 - progress) * 100}%`;
-                
-                title_current.innerHTML = "Palpite em andamento, recebendo votações."
+        } else if (status == 'locked'){
 
-            } else if (status == 'locked'){
+            bar.hidden = true
 
-                bar.hidden = true
+            title_current.innerHTML = "Palpite aguardando seleção de resultado."
 
-                title_current.innerHTML = "Palpite aguardando seleção de resultado."
+        } else if (status == 'end'){
 
-            } else if (status == 'end'){
-
-                bar.hidden = true
-                
-                title_current.innerHTML = "Nenhum palpite em andamento."
-            }
+            bar.hidden = true
+            
+            title_current.innerHTML = "Nenhum palpite em andamento."
         }
-
-        await sleep(1000)
     }
 }
-
 
 async function poll_small() {
     
-    while (true){
+    data = {
+        type_id : 'get',
+    }
 
-        data = {
-            type_id : 'get',
+    var formData = JSON.stringify(data);
+    var poll_info = await eel.poll_py(formData)()
+
+    if (poll_info){
+
+        var poll_info_parse = JSON.parse(poll_info);
+
+        var status = poll_info_parse.status;
+
+        var poll_running_div = document.getElementById("poll-running");
+        var poll_start_div = document.getElementById("poll-start")
+        
+        var title_current = document.getElementById('status-poll-small');
+        var poll_bar_smal = document.getElementById('progress-poll-small');
+
+        if (status == 'started') {
+
+            poll_bar_smal.hidden = false
+
+            var time_start_poll = poll_info_parse.time_start
+            var time_end_poll = poll_info_parse.time_end
+
+            startTime_poll = time_start_poll.replace(/\.(\d{1,})/, '');
+            endTime_poll = time_end_poll.replace(/\.(\d{1,})/, '')
+        
+            startTime_poll = new Date(startTime_poll)
+            startTime_poll = new Date(startTime_poll).toUTCString();
+            startTime_poll = Date.parse(startTime_poll);
+        
+            endTime_poll = new Date(endTime_poll)
+            endTime_poll = new Date(endTime_poll).toUTCString();
+            endTime_poll = Date.parse(endTime_poll);
+
+            const now_gmt_poll = new Date().getTime();
+            const now_utc_poll = new Date(now_gmt_poll).toUTCString();
+            const now_poll = Date.parse(now_utc_poll);  // Obtém o tempo atual em milissegundos
+            const totalTime_poll = endTime_poll - startTime_poll; // Calcula o tempo total em milissegundos
+            const elapsedTime_poll = now_poll - startTime_poll; // Calcula o tempo decorrido em milissegundos
+            const progress_poll = elapsedTime_poll / totalTime_poll; // Calcula a porcentagem de progresso
+            
+            // Seleciona a barra de progresso e atualiza sua largura de acordo com o progresso
+            const progressBar_poll = document.getElementById("progress-bar-poll-small");
+            progressBar_poll.style.width = `${(1 - progress_poll) * 100}%`;
+            
+            title_current.innerHTML = "Votação em andamento, recebendo votos."
+
+        } else if (status == 'completed'){
+
+            poll_bar_smal.hidden = true
+            title_current.innerHTML = "Votação finalizada, clique para ver o resultado."
+
+        } else if (status == 'archived'){
+
+            poll_running_div.hidden = true
+            poll_start_div.hidden = false
+
+            poll_bar_smal.hidden = true
+            title_current.innerHTML = "Nenhuma votação em andamento."
         }
-
-        var formData = JSON.stringify(data);
-        var poll_info = await eel.poll_py(formData)()
-
-        if (poll_info){
-
-            var poll_info_parse = JSON.parse(poll_info);
-
-            var status = poll_info_parse.status;
-
-            var poll_running_div = document.getElementById("poll-running");
-            var poll_start_div = document.getElementById("poll-start")
-            
-            var title_current = document.getElementById('status-poll-small');
-            var poll_bar_smal = document.getElementById('progress-poll-small');
-
-            if (status == 'started') {
-
-                poll_bar_smal.hidden = false
-
-                var time_start_poll = poll_info_parse.time_start
-                var time_end_poll = poll_info_parse.time_end
-
-                startTime_poll = time_start_poll.replace(/\.(\d{1,})/, '');
-                endTime_poll = time_end_poll.replace(/\.(\d{1,})/, '')
-            
-                startTime_poll = new Date(startTime_poll)
-                startTime_poll = new Date(startTime_poll).toUTCString();
-                startTime_poll = Date.parse(startTime_poll);
-            
-                endTime_poll = new Date(endTime_poll)
-                endTime_poll = new Date(endTime_poll).toUTCString();
-                endTime_poll = Date.parse(endTime_poll);
-
-                const now_gmt_poll = new Date().getTime();
-                const now_utc_poll = new Date(now_gmt_poll).toUTCString();
-                const now_poll = Date.parse(now_utc_poll);  // Obtém o tempo atual em milissegundos
-                const totalTime_poll = endTime_poll - startTime_poll; // Calcula o tempo total em milissegundos
-                const elapsedTime_poll = now_poll - startTime_poll; // Calcula o tempo decorrido em milissegundos
-                const progress_poll = elapsedTime_poll / totalTime_poll; // Calcula a porcentagem de progresso
-                
-                // Seleciona a barra de progresso e atualiza sua largura de acordo com o progresso
-                const progressBar_poll = document.getElementById("progress-bar-poll-small");
-                progressBar_poll.style.width = `${(1 - progress_poll) * 100}%`;
-                
-                title_current.innerHTML = "Votação em andamento, recebendo votos."
-
-            } else if (status == 'completed'){
-
-                poll_bar_smal.hidden = true
-                title_current.innerHTML = "Votação finalizada, clique para ver o resultado."
-
-            } else if (status == 'archived'){
-
-                poll_running_div.hidden = true
-                poll_start_div.hidden = false
-
-                poll_bar_smal.hidden = true
-                title_current.innerHTML = "Nenhuma votação em andamento."
-            }
-        }
-
-        await sleep(1000)
     }
 }
 
+async function update_small(){
+
+    while (true){
+
+        poll_small()
+        prediction_small()
+
+        await sleep(1000)
+    }
+
+}
 
 function show_modal(modal_id){
 
@@ -2018,26 +2057,267 @@ async function goal() {
 
         data_goal = await eel.goal_py()()
 
-        var data_goal_parse = JSON.parse(data_goal);
+        if (data_goal){
 
-        var goal_status = document.getElementById('status-goal-small')
-        var goal_status_bar = document.getElementById('progress-goal-small-int')
+            var data_goal_parse = JSON.parse(data_goal);
 
-        var goal_name = ""
-
-        if (data_goal_parse.type == "subscription") {
-            goal_name = "Meta de inscrições"
-        } else if (data_goal_parse.type == "follow") {
-            goal_name = "Meta de seguidores"
-        }
+            var goal_follow_status = document.getElementById('status-goal-follows-small')
+            var goal_sub_status = document.getElementById('status-goal-subs-small')
     
-        goal_status.innerHTML = `${goal_name} : ${data_goal_parse.current_amount}/${data_goal_parse.target_amount}`
-        
-        var value = (data_goal_parse.current_amount / data_goal_parse.target_amount) * 100;
-        goal_status_bar.value = value;
-        goal_status_bar.style.width = `${(value)}%`;
+            var goal_follow_status_bar_value = document.getElementById('progress-goal-follows-small-int')
+            var goal_sub_status_bar_value = document.getElementById('progress-goal-subs-small-int')
+
+            var goal_follow_status_bar = document.getElementById('progress-goal-follows-small')
+            var goal_sub_status_bar = document.getElementById('progress-goal-subs-small')
+    
+            var follow_current = data_goal_parse.follow.current_amount
+            var follow_target = data_goal_parse.follow.target_amount
+    
+            var sub_current = data_goal_parse.subscription_count.current_amount
+            var sub_target = data_goal_parse.subscription_count.target_amount
+    
+            if (follow_target != 0){
+                
+                goal_follow_status_bar.hidden = false
+
+                goal_follow_status.innerHTML = `${follow_current}/${follow_target}`
+    
+                var value_follow = (follow_current / follow_target) * 100;
+                
+                goal_follow_status_bar_value.value = value_follow;
+                goal_follow_status_bar_value.style.width = `${(value_follow)}%`;
+    
+            } else {
+                goal_follow_status_bar.hidden = true
+            }
+            
+            if (sub_target != 0){
+
+                goal_sub_status_bar.hidden = false 
+
+                goal_sub_status.innerHTML = `${sub_current}/${sub_target}`
+    
+                var value_subs = (sub_current / sub_target) * 100;
+                
+                goal_sub_status_bar_value.value = value_subs;
+                goal_sub_status_bar_value.style.width = `${(value_subs)}%`;
+
+            } else {
+
+                goal_sub_status_bar.hidden = true
+            }
+        }
 
         await sleep(10000)
 
     }
+}
+
+function slider_font_events() {
+    slider = document.getElementById('slider-font-events');
+    output = document.getElementById('rangevalue_config_events');
+    $('.chat-message ').css("font-size", slider.value + "px");
+    output.innerHTML = slider.value
+};
+
+
+async function event_log_config(type_id){
+
+    var font_size_events = document.getElementById('slider-font-events');
+    var font_size_range = document.getElementById('rangevalue_config_events');
+    var show_time_events = document.getElementById('data-show-events');
+    var color_events = document.getElementById('color-events').value;
+    var show_redeem = document.getElementById('show-redeem');
+    var show_commands = document.getElementById('show-commands');
+    var show_events = document.getElementById('show-events');
+    var show_join = document.getElementById('show-join');
+    var show_leave = document.getElementById('show-leave');
+
+
+    if (type_id == 'save'){
+
+        show_time_events = show_time_events.checked ? 1 : 0;
+        show_join = show_join.checked ? 1 : 0;
+        show_leave = show_leave.checked ? 1 : 0;
+        show_events = show_events.checked ? 1 : 0;
+        show_commands = show_commands.checked ? 1 : 0;
+        show_redeem = show_redeem.checked ? 1 : 0;
+
+        data = {
+            data_show : show_time_events,
+            show_join : show_join,
+            show_leave : show_leave,
+            show_events : show_events,
+            show_commands : show_commands,
+            show_redeem : show_redeem,
+            font_size : font_size_events.value,
+            color_events : color_events
+        }
+
+        var formData = JSON.stringify(data);
+        eel.event_log(type_id,formData);
+
+    } else if (type_id == 'get'){
+
+        var event_data = await eel.event_log('get_config','null')()
+
+        if (event_data){
+
+            var event_data_parse = JSON.parse(event_data);
+
+            font_size_events.value = event_data_parse.font_size == 1 ? true : false;
+            show_time_events.checked = event_data_parse.show_time_events == 1 ? true : false;
+            show_redeem.checked = event_data_parse.show_redeem == 1 ? true : false;
+            show_commands.checked = event_data_parse.show_commands == 1 ? true : false;
+            show_events.checked = event_data_parse.show_events == 1 ? true : false; 
+            show_join.checked = event_data_parse.show_join == 1 ? true : false;
+            show_leave.checked = event_data_parse.show_leave == 1 ? true : false;
+
+            font_size_range.innerHTML = event_data_parse.font_size + 'px';
+
+            $("#color-events").selectpicker('val', event_data_parse.color_events);
+
+        }
+
+    }
+
+
+}
+
+async function show_error_log(type_id){
+
+    if (type_id == 'get-errorlog'){
+
+        $("#errorlog-modal").modal("show");
+
+        $('#errorlog-textarea').val('');
+
+        var errors_data = await eel.open_py('errolog','null')()
+    
+        if (errors_data){
+    
+            var textarea = document.getElementById('errorlog-textarea');
+    
+            $('#errorlog-textarea').val(errors_data);
+            
+            textarea.scrollTop = textarea.scrollHeight;
+        }
+
+    } else if (type_id == 'clear-errorlog'){
+
+        $("#errorlog-modal").modal("hide");
+        $('#errorlog-textarea').val('');
+
+        eel.open_py('errolog_clear','null')
+
+    }else if (type_id == 'get-debug'){
+
+        $("#debug-modal").modal("show");
+
+        $('#debug-textarea').val('');
+
+        var errors_data = await eel.open_py('log','null')()
+    
+        if (errors_data){
+    
+            var textarea = document.getElementById('debug-textarea');
+    
+            $('#debug-textarea').val(errors_data);
+            
+            textarea.scrollTop = textarea.scrollHeight;
+        }
+
+    } else if (type_id == 'clear-debug'){
+
+        $("#debug-modal").modal("hide");
+        $('#debug-textarea').val('');
+
+        eel.open_py('log_clear','null')
+    }
+
+}
+
+async function highlight_js(type_id){
+
+    var status_highlight = document.getElementById("status-highlight");
+    var font_size = document.getElementById("font-size-highlight");
+    var font_weight = document.getElementById("font-weight-highlight");
+    var color_message = document.getElementById("color-message-highlight");
+    var color_username = document.getElementById("color-username-highlight");
+    var duration = document.getElementById("duration-highlight");
+    var source_name = document.getElementById("source-highlight");
+    var time = document.getElementById("time-highlight");
+
+    if (type_id == 'get'){
+
+        get_highlight = await eel.highlight_py(type_id,'null')();
+
+        if (get_highlight){
+
+            var get_highlight_parse = JSON.parse(get_highlight);
+
+            status_highlight.checked = get_highlight_parse.status == 1 ? true : false;
+
+            $("#source-highlight").append('<option style="background: #000; color: #fff;" value="'+ get_highlight_parse.source_name +'">'+ get_highlight_parse.source_name +'</option>');
+                    
+            $("#source-highlight").selectpicker('val',get_highlight_parse.source_name)
+            $("#source-highlight").selectpicker("refresh");
+
+            time.value = get_highlight_parse.time;
+            font_size.value = get_highlight_parse.font_size;
+            font_weight.value = get_highlight_parse.font_weight;
+            color_message.value = get_highlight_parse.color_message;
+            color_username.value = get_highlight_parse.color_username;
+            duration.value = get_highlight_parse.duration;
+
+        }
+
+    } else if (type_id == 'save'){
+        
+        var status = status_highlight.checked ? 1 : 0;
+
+        data = {
+            status : status,
+            source_name : source_name.value,
+            time : time.value,
+            font_size : font_size.value,
+            font_weight : font_weight.value,
+            color_message : color_message.value,
+            color_username : color_username.value,
+            duration : duration.value
+        }
+
+        var formData = JSON.stringify(data);
+        eel.highlight_py(type_id,formData);
+    }
+
+}
+
+async function debug_status(type_id){
+
+    console.log(type_id)
+
+    var status_debug = document.getElementById("debug-status");
+
+    if (type_id == "debug-save"){
+
+        status_debug = status_debug.checked ? 1 : 0;
+        
+        console.log(status_debug)
+
+        eel.open_py(type_id,status_debug)
+
+    } else if (type_id == "debug-get"){
+
+        var get_debug = await eel.open_py(type_id,'null')();
+
+        if (get_debug){
+            
+            console.log(get_debug)
+
+            status_debug.checked = get_debug == 1 ? true : false;
+
+        }
+    }
+
 }

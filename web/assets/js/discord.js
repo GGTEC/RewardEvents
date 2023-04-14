@@ -31,6 +31,8 @@ async function discord_js(event,type_id) {
     } else if (type_id == 'select_edit'){
 
         var select = document.getElementById('discord_select_edit');
+        var discord_aliases_block = document.getElementById('discord_aliases_block');
+        var discord_aliases = document.getElementById('aliases-discord');
         var input_type_edit = document.getElementById('type_edit_discord');
 
         input_type_edit.value = select.value
@@ -56,6 +58,23 @@ async function discord_js(event,type_id) {
             webhook_title.value = data_discord_parse.embed_title;
             webhook_status.checked = data_discord_parse.status ? true : false;
         }
+
+        if (select.value == "clips_create"){
+            discord_aliases_block.hidden = false
+            discord_aliases.value = "{url}, {username}"
+        } else if (select.value == "clips_edit"){
+            discord_aliases_block.hidden = false
+            discord_aliases.value = "{url}, {username}"
+        } else if (select.value == "follow"){
+            discord_aliases_block.hidden = false
+            discord_aliases.value = "{username}"
+        } else if (select.value == "sub"){
+            discord_aliases_block.hidden = false
+            discord_aliases.value = "{username}"
+        } else {
+            discord_aliases_block.hidden = true
+        }
+
     }
 }
 

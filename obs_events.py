@@ -6,6 +6,7 @@ import os
 
 appdata_path = os.getenv('APPDATA')
 is_started = 0
+showing = 0
 
 def load_config():
     
@@ -16,23 +17,16 @@ def load_config():
     
 def test_obs_conn():
 
-    config_data = load_config()
+    try:
+        config_data = load_config()
 
-    if config_data['OBS_TEST_CON'] == 1:
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+        
+        return True
 
-        try:
-            
-            cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
-            
-            return True
-
-        except:
-            
-            return False
-
-    else:
-
-        return 'None'
+    except:
+        
+        return False
     
 def get_scenes():
 
@@ -65,6 +59,7 @@ def get_scenes():
 def get_sources():
 
     try:
+
         config_data = load_config()
         
         cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
@@ -140,7 +135,10 @@ def show_scene(scene_name, time_show, keep):
         
 def show_source(source_name, time_show, keep):
 
+    global showing
     try:
+        
+        showing = 1
 
         config_data = load_config()
         
@@ -155,6 +153,7 @@ def show_source(source_name, time_show, keep):
         if keep == 1:
 
             cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
+            showing = 0
 
         else:
 
@@ -162,6 +161,7 @@ def show_source(source_name, time_show, keep):
             time.sleep(int(time_show))
             cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
 
+            showing = 0
     except:
         
         pass

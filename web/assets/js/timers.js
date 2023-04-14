@@ -275,29 +275,3 @@ async function timer_js(event,type_id) {
 
     }
 }
-
-async function update_timer_small(){
-
-    while (true) {
-
-        var message_spam = document.getElementById('last_timer_text')
-        var list_messages = await eel.timer_py('get','null')();
-    
-        if (list_messages) {
-
-            var list_messages_parse = JSON.parse(list_messages); 
-
-            var last_key = list_messages_parse.last
-            
-
-            if (last_key != "0"){
-
-                var messages = list_messages_parse.messages
-                var last_message = messages[last_key]['message']
-                message_spam.innerHTML = last_message
-            }
-        }
-        await sleep(5000)
-    }
-    
-}

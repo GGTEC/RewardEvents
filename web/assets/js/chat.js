@@ -40,8 +40,14 @@ $(window).on("load",async function(){
                 buttom_addlist = document.createElement("button");
                 buttom_addlist.innerHTML = "<i class='fa-solid fa-plus'></i>"
                 buttom_addlist.classList.add("btn", "bt-submit", "btn-sm", "me-1");
-                buttom_addlist.setAttribute('onclick','eel.chat_config("'+item+'","list_add")');
-                buttom_addlist.setAttribute('title','Adicionar na lista para ser ignorado');
+                buttom_addlist.setAttribute('onclick','add_user_bot("'+item+'",this)');
+                buttom_addlist.setAttribute('title','Adicionar na lista para não enviar notificação ao entrar no chat');
+
+                buttom_addbot = document.createElement("button");
+                buttom_addbot.innerHTML = "<i class='fa-solid fa-robot'></i>"
+                buttom_addbot.classList.add("btn", "bt-submit", "btn-sm", "me-1");
+                buttom_addbot.setAttribute('onclick','add_bot_list("'+item+'",this)');
+                buttom_addbot.setAttribute('title','Adicionar na lista de bots, o usuário não aparecerá mais nesta lista');
                 
                 name_user = document.createElement("spam");
                 name_user.innerHTML = item
@@ -52,6 +58,7 @@ $(window).on("load",async function(){
                 div_buttom.appendChild(buttom_ban);
                 div_buttom.appendChild(buttom_timeout);
                 div_buttom.appendChild(buttom_addlist);
+                div_buttom.appendChild(buttom_addbot);
 
                 div_item.appendChild(div_name);
                 div_item.appendChild(div_buttom);
@@ -81,12 +88,6 @@ $(window).on("load",async function(){
                 buttom_timeout.setAttribute('onclick','eel.timeout_user("'+item+'","timeout")');
                 buttom_timeout.setAttribute('title','Aplicar timeout no usuário');
                 
-                buttom_addlist = document.createElement("button");
-                buttom_addlist.innerHTML = "<i class='fa-solid fa-plus'></i>"
-                buttom_addlist.classList.add("btn", "bt-submit", "btn-sm", "me-1");
-                buttom_addlist.setAttribute('onclick','eel.chat_config("'+item+'","list_add")');
-                buttom_addlist.setAttribute('title','Adicionar na lista para ser ignorado');
-                
                 name_user = document.createElement("spam");
                 name_user.innerHTML = item
                 name_user.classList.add("name-user-list");
@@ -95,7 +96,6 @@ $(window).on("load",async function(){
                 div_name.appendChild(name_user);
                 div_buttom.appendChild(buttom_ban);
                 div_buttom.appendChild(buttom_timeout);
-                div_buttom.appendChild(buttom_addlist);
 
                 div_item.appendChild(div_name);
                 div_item.appendChild(div_buttom);
@@ -109,6 +109,29 @@ $(window).on("load",async function(){
     }
 
 });
+
+
+function add_user_bot(name,element){
+
+    var parentnode = element.parentNode
+    var topdiv = parentnode.parentNode
+
+    eel.chat_config(name,'list_add')
+
+    topdiv.remove()
+
+}
+
+function add_bot_list(name,element){
+
+    var parentnode = element.parentNode
+    var topdiv = parentnode.parentNode
+
+    eel.chat_config(name,'list_bot_add')
+
+    topdiv.remove()
+
+}
 
 function collapse(div_id){
     div_el = document.getElementById(div_id);
@@ -236,6 +259,7 @@ function append_announce(message_data){
     div.id = 'chat-message-block'
     div.classList.add('chat-message', 'chat-block-color-announce');
     div.style.color = 'white' ;
+    div.style.borderBlockColor = color_message;
     div.style.borderLeftColor = color_message;
     div.style.fontSize = text_size + "px";
 
@@ -244,65 +268,6 @@ function append_announce(message_data){
 
     div_chat.scrollTop = div_chat.scrollHeight;
 }
-
-eel.expose(append_notice);
-function append_notice(message_data){
-
-    var div_chat = document.getElementById('chat-block');
-    var message_data_parse = JSON.parse(message_data);
-    
-    var message_rec = pass_message(message_data_parse.message)
-    var text_size = message_data_parse.font_size;
-    var color_get = message_data_parse.color;
-    var chat_data = message_data_parse.data_show;
-    var chat_time = message_data_parse.chat_time;
-    var type_data = message_data_parse.type_data;
-
-    if (type_data == 'passed'){
-
-        let date = new Date(chat_time);
-        let formattedDate = date.toLocaleDateString() + " " + date.toLocaleTimeString();
-        var time_chat = document.createElement("span");
-        time_chat.id = 'time_chat';
-        time_chat.setAttribute("data-time", chat_time);
-        time_chat.setAttribute("title", formattedDate);
-        time_chat.classList.add("message-time");
-        time_chat.innerHTML = 'Agora';
-
-    } else if (type_data == 'current'){
-        var time_chat = document.createElement("span");
-        time_chat.id = 'time_chat';
-        time_chat.classList.add("message-time-current");
-        time_chat.innerHTML = chat_time;
-    }
-
-    var message_span = document.createElement('span');
-    message_span.id = "message-chat";
-    message_span.style.color = color_get;
-    message_span.innerHTML = message_rec
-    
-    
-    message_div = document.createElement('div');
-    if (chat_data == 1){
-        message_div.appendChild(time_chat);
-    }
-
-    message_div.appendChild(message_span);
-    
-    
-    var div = document.createElement("div");
-
-    div.id = 'chat-message-block'
-    div.classList.add('chat-message', 'chat-block-color');
-    div.style.color = color_get ;
-    div.style.fontSize = text_size + "px";
-
-    div.appendChild(message_div);
-    div_chat.appendChild(div);
-
-    div_chat.scrollTop = div_chat.scrollHeight;
-}
-
 
 eel.expose(chat_config);
 async function chat_config(type_config){
@@ -316,13 +281,8 @@ async function chat_config(type_config){
     var chat_colors_fixed = document.getElementById('chat-colors-fixed');
     var chat_colors_block = document.getElementById('chat-colors-block');
     var select_color = document.getElementById('select-color').value;
-    var select_color_not_join = document.getElementById('select-color-join').value;
-    var select_color_not_leave = document.getElementById('select-color-leave').value;
-    var select_color_not = document.getElementById('select-color-geral').value;
     var chat_bageds_show = document.getElementById('chat-bageds-show');
     var chat_newline = document.getElementById('chat-newline');
-    var notfic_show_join = document.getElementById('notfic-show-join');
-    var notfic_show_leave = document.getElementById('notfic-show-leave');
     var notfic_play = document.getElementById('notfic-play');
     var file_notific = document.getElementById('file-select-notific');
     var notfic_show_greetings = document.getElementById('notfic-show-greetings');
@@ -341,8 +301,6 @@ async function chat_config(type_config){
         data_show = data_show.checked ? 1 : 0;
         chat_bageds_show = chat_bageds_show.checked ? 1 : 0;
         chat_newline = chat_newline.checked ? 1 : 0;
-        notfic_show_join = notfic_show_join.checked ? 1 : 0;
-        notfic_show_leave = notfic_show_leave.checked ? 1 : 0;
         notfic_play = notfic_play.checked ? 1 : 0;
         notfic_show_greetings = notfic_show_greetings.checked ? 1 : 0;
 
@@ -354,14 +312,9 @@ async function chat_config(type_config){
             type_data : type_data.value,
             time_format : time_format.value,
             color_apply : select_color,
-            color_not_join : select_color_not_join,
-            color_not_leave : select_color_not_leave,
-            color_not : select_color_not,
             font_size : slider_font.value,
             show_badges : chat_bageds_show,
             wrapp_message : chat_newline,
-            not_user_join : notfic_show_join,
-            not_user_leave : notfic_show_leave,
             not_user_sound : notfic_play,
             not_sound_path : file_notific.value,
             greetings_join : notfic_show_greetings,
@@ -386,8 +339,6 @@ async function chat_config(type_config){
             chat_colors_block.checked = chat_data_parse.block_color == 1 ? true : false;
             chat_bageds_show.checked = chat_data_parse.show_badges == 1 ? true : false;
             chat_newline.checked = chat_data_parse.wrapp_message == 1 ? true : false;
-            notfic_show_join.checked = chat_data_parse.not_user_join == 1 ? true : false;
-            notfic_show_leave.checked = chat_data_parse.not_user_leave == 1 ? true : false;
             notfic_show_greetings.checked = chat_data_parse.greetings_join == 1 ? true : false;
             notfic_play.checked = chat_data_parse.not_user_sound == 1 ? true : (chat_data_parse.not_user_sound == 0 ? false : notfic_play.checked);
 
@@ -399,11 +350,7 @@ async function chat_config(type_config){
             top_chatter.value = chat_data_parse.top_chatter;
             regular.value = chat_data_parse.regular;
 
-
             $("#select-color").selectpicker('val', chat_data_parse.color_apply);
-            $("#select-color-join").selectpicker('val', chat_data_parse.color_not_join);
-            $("#select-color-leave").selectpicker('val', chat_data_parse.color_not_leave);
-            $("#select-color-geral").selectpicker('val', chat_data_parse.color_not);
             $("#select-time-mode").selectpicker('val', chat_data_parse.type_data);
             
             file_notific.value = chat_data_parse.not_sound_path;
@@ -419,15 +366,35 @@ async function chat_config(type_config){
 
             $("#modal_list_chat").modal("show")
 
-            var tbody = document.getElementById('chat-list-body');
+            if ($.fn.DataTable.isDataTable("#list_chat")) {
+                $('#list_chat').DataTable().clear().draw();
+                $('#list_chat').DataTable().destroy();
+            }
 
-            tbody.innerHTML = "";
-        
-            Object.entries(chat_data_parse).forEach(([v,k]) => {
-        
-              tbody.innerHTML += '<tr><td>' + k + '</td></tr>';
-              
-            })
+            var table = $('#list_chat').DataTable( {
+                destroy: true,
+                scrollX: true,
+                paging: true,
+                ordering:  true,
+                retrieve : false,
+                processing: true,
+                responsive: false,
+                lengthMenu: [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, 'All'],
+                ],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.1/i18n/pt-BR.json'
+                },
+                columns: [
+                    { title: 'Usuário' },
+                ]
+            } );
+
+            chat_data_parse.forEach(function(user) {
+                table.row.add([user]).draw();
+            });
+
         }
 
     } else if (type_config == 'list_add'){
@@ -450,17 +417,37 @@ async function chat_config(type_config){
 
             var chat_data_parse = JSON.parse(chat_data);
 
+            console.log(chat_data_parse)
             $("#modal_list_chat").modal("show")
 
-            var tbody = document.getElementById('chat-list-body');
+            if ($.fn.DataTable.isDataTable("#list_chat")) {
+                $('#list_chat').DataTable().clear().draw();
+                $('#list_chat').DataTable().destroy();
+            }
 
-            tbody.innerHTML = "";
-        
-            Object.entries(chat_data_parse).forEach(([v,k]) => {
-        
-              tbody.innerHTML += '<tr><td>' + k + '</td></tr>';
-              
-            })
+            var table = $('#list_chat').DataTable( {
+                destroy: true,
+                scrollX: true,
+                paging: true,
+                ordering:  true,
+                retrieve : false,
+                processing: true,
+                responsive: false,
+                lengthMenu: [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, 'All'],
+                ],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.1/i18n/pt-BR.json'
+                },
+                columns: [
+                    { title: 'Usuário' },
+                ]
+            } );
+
+            chat_data_parse.forEach(function(user) {
+                table.row.add([user]).draw();
+            });
         }
 
     } else if (type_config == 'list_bot_add'){
@@ -478,7 +465,6 @@ async function chat_config(type_config){
     }
 
 }
-
 
 async function updateTimeDiff() {
 
@@ -547,16 +533,36 @@ function append_message(message_data){
         var badges = message_data_parse.badges
         var color_rec = message_data_parse.color
         var color_block = message_data_parse.color
+        var badges_data = (show_badges == 1) ? badges : '';
+        
 
+        var border_color = ""
+
+        var random_color =  choose(['Blue', 'Coral', 'DodgerBlue', 'SpringGreen', 'YellowGreen', 'Green', 'OrangeRed', 'Red', 'GoldenRod', 'HotPink', 'CadetBlue', 'SeaGreen', 'Chocolate', 'BlueViolet','Firebrick'])
+        
         if (apply_color == 1) {
-            var color_rec = (color_rec == null && fix_color == 1) ? select_color : choose(['Blue', 'Coral', 'DodgerBlue', 'SpringGreen', 'YellowGreen', 'Green', 'OrangeRed', 'Red', 'GoldenRod', 'HotPink', 'CadetBlue', 'SeaGreen', 'Chocolate', 'BlueViolet','Firebrick']);
-            } else {
-            var color_rec = "";
+            if (color_rec == null && fix_color == 1){
+                color_rec = select_color
+            } else if ((color_rec == null && fix_color == 0)){
+                color_rec = random_color
             }
-            
-            var border_color = (block_color == 1) ? ((color_block == "" && fix_color == 1) ? select_color : color_block) : '#4f016c';
-            
-            var badges_data = (show_badges == 1) ? badges : '';
+        } else {
+            color_rec = "white"
+        }
+
+        if (block_color == 1){
+            if (color_block == null ){
+                if (fix_color == 1){
+                    border_color = select_color
+                } else {
+                    border_color = random_color
+                }
+            } else {
+                border_color = color_block
+            }
+        } else {
+            border_color = '#4f016c'
+        }
         
         var div = document.createElement("div");
 
@@ -614,6 +620,8 @@ function append_message(message_data){
         span_username.innerHTML = user_rec + ' :';
         span_username.setAttribute('onclick','eel.open_py("user","'+user_rec+'")');
 
+        message_rec = twemoji.parse(message_rec);
+        
         var span_message = document.createElement("span");
         span_message.id = 'message-chat';
         span_message.innerHTML = message_rec;
@@ -647,8 +655,6 @@ function append_message(message_data){
 
     }
 
-        
-
 }
 
 function send_message_chat_js(event){
@@ -657,7 +663,7 @@ function send_message_chat_js(event){
   
     var message = document.getElementById('message-chat-send').value;
 
-    eel.send(message);
+    eel.send_chat(message);
   
     document.getElementById('message-chat-send').value = "";
   
@@ -669,6 +675,5 @@ function slider_font() {
     output = document.getElementById('rangevalue_config');
     $('.chat-message ').css("font-size", slider.value + "px");
     output.innerHTML = slider.value
-
 };
 

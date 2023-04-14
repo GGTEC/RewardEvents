@@ -1,25 +1,16 @@
-async function counter_js(fun_id,event) {
-    event.preventDefault();
-
+async function counter_js(type_id,event) {
+    
     var el_id = "redeem-select-counter";
     var counter_value = document.getElementById('counter-value-atual');
-    var command_applycounter_status = document.getElementById('command-applycounter-status');
-    var command_resetcounter_status = document.getElementById('command-resetcounter-status');
-    var command_checkcounter_status = document.getElementById('command-checkcounter-status');
-    
-    var response_status = document.getElementById('response-counter-status');
-    var response_counter = document.getElementById('counter-response');
 
-    var command_check_counter = document.getElementById('command-check-counter');
-    var command_check_delay = document.getElementById('command-check-delay');
-    var command_reset_counter = document.getElementById('command-reset-counter');
-    var command_reset_delay = document.getElementById('command-reset-delay');
-    var command_apply_counter = document.getElementById('command-apply-counter');
-    var command_apply_delay = document.getElementById('command-apply-delay');
 
-    if (fun_id == 'get_counter_config'){
+    if (type_id == 'get_counter_config'){
 
-        var counter_config = await eel.counter(fun_id,'none','none','none')();
+        var response_status = document.getElementById('response-counter-status');
+        var response_counter = document.getElementById('counter-response');
+        var response_set_counter = document.getElementById('counter-set-response');
+
+        var counter_config = await eel.counter(type_id,'none')();
 
         if (counter_config) {
             
@@ -45,91 +36,90 @@ async function counter_js(fun_id,event) {
             var counter_parse = JSON.parse(counter_config);
 
             counter_value.innerHTML = counter_parse.value_counter;
-
-            command_applycounter_status.checked = counter_parse.counter_status_apply == 1 ? true : false;
-            command_resetcounter_status.checked = counter_parse.counter_status_reset == 1 ? true : false;
-            command_checkcounter_status.checked = counter_parse.counter_status_check == 1 ? true : false;
             response_status.checked = counter_parse.response == 1 ? true : false;
 
             response_counter.value = counter_parse.response_chat
+            response_set_counter.value = counter_parse.response_set_chat
 
-            command_check_counter.value = counter_parse.counter_command_check;
-            command_check_delay.value = counter_parse.counter_delay_check;
-            command_reset_counter.value = counter_parse.counter_command_reset;
-            command_reset_delay.value = counter_parse.counter_delay_reset;
-            command_apply_counter.value = counter_parse.counter_command_set;
-            command_apply_delay.value = counter_parse.counter_delay_set;
-            
-            
 
             $("#" + el_id).selectpicker('val',counter_parse.redeem)
 
         }
 
-    } else if  (fun_id == 'save_counter_config') {
+    } else if (type_id == 'get_counter_commands') {
+
+        var command_counter_select = document.getElementById('command-counter-select');
+
+        var command_counter_status = document.getElementById('command-counter-status');
+        var command_counter_command = document.getElementById('command-counter-command');
+        var command_counter_delay = document.getElementById('command-counter-delay');
+        var command_counter_perm = document.getElementById('command-counter-perm');
+
+        var counter_command_edit = document.getElementById('command_counter_form');
+
+        var counter_command_data = await eel.counter(type_id,command_counter_select.value)();
+
+        if (counter_command_data){
+
+            var counter_parse = JSON.parse(counter_command_data);
+
+            counter_command_edit.hidden = false
+
+            command_counter_status.checked = counter_parse.status == 1 ? true : false;
+            command_counter_command.value = counter_parse.command
+            command_counter_delay.value = counter_parse.delay
+
+            $("#command-counter-perm").selectpicker('val',counter_parse.user_level)
+
+        }
+
+    } else if (type_id == 'save_counter_config') {
 
         var redeem_save = document.getElementById('redeem-select-counter').value;
         var response_status = document.getElementById('response-counter-status');
+        var response_counter = document.getElementById('counter-response');
+        var response_set_counter = document.getElementById('counter-set-response');
 
         response_status = response_status.checked ? 1 : 0
 
         data = {
             redeem : redeem_save,
             response : response_status,
-            response_chat : response_counter.value
+            response_chat : response_counter.value,
+            response_set_chat : response_set_counter.value
         }
 
         var formData = JSON.stringify(data);
-        eel.counter(fun_id,formData,'none','none')
+        eel.counter(type_id,formData)
 
-    } else if  (fun_id == 'save-counter-commands') {
+    } else if (type_id == 'save_counter_commands') {
 
-        var form_commands = document.querySelector('#counter-config-commands-form')
+        var command_counter_select = document.getElementById('command-counter-select');
 
-        if (form_commands.querySelector('#command-checkcounter-status').checked == true) {
-            counter_check_status = 1
-        } else {
-            counter_check_status = 0
-        }
+        var command_counter_status = document.getElementById('command-counter-status');
+        var command_counter_command = document.getElementById('command-counter-command');
+        var command_counter_delay = document.getElementById('command-counter-delay');
+        var command_counter_perm = document.getElementById('command-counter-perm');
 
-        if (form_commands.querySelector('#command-resetcounter-status').checked == true) {
-            counter_reset_status = 1
-        } else {
-            counter_reset_status = 0
-        }
-
-        if (form_commands.querySelector('#command-applycounter-status').checked == true) {
-            counter_apply_status = 1
-        } else {
-            counter_apply_status = 0
-        }
+        var command_status = command_counter_status.checked ? 1 : 0;
 
         data  = {
-            counter_command_check : form_commands.querySelector('#command-check-counter').value,
-            counter_check_delay : form_commands.querySelector('#command-check-delay').value,
-            counter_status_check : counter_check_status,
-            counter_command_reset : form_commands.querySelector('#command-reset-counter').value,
-            counter_reset_delay : form_commands.querySelector('#command-reset-delay').value,
-            counter_status_reset : counter_reset_status,
-            counter_command_apply : form_commands.querySelector('#command-apply-counter').value,
-            counter_apply_delay : form_commands.querySelector('#command-apply-delay').value,
-            counter_status_apply : counter_apply_status
-            
+            type_command: command_counter_select.value,
+            command: command_counter_command.value,
+            status: command_status,
+            delay: command_counter_delay.value,
+            user_level: command_counter_perm.value
         }
 
         var formData = JSON.stringify(data);
+        eel.counter(type_id,formData)
 
-        eel.counter(fun_id,'none',formData,'none')
-
-    } else if (fun_id == 'set-counter-value'){
+    } else if (type_id == 'set-counter-value'){
 
         var form_counter_value = document.querySelector('#counter-set-value');
         var counter_value = form_counter_value.querySelector('#counter-value');
 
-
-        eel.counter(fun_id,'none','none',counter_value.value)
-        
-        document.getElementById('counter-value-atual').innerHTML = counter_value.value
+        eel.counter(type_id,counter_value.value)
     }
     
 
@@ -137,6 +127,6 @@ async function counter_js(fun_id,event) {
 
 eel.expose(update_counter_value);
 function update_counter_value(value){
-    var counter_value = document.getElementById('counter-value-atual');
-    counter_value.innerHTML = value
+    var counter_value = document.getElementById('counter-value');
+    counter_value.value = value
 }

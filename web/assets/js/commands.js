@@ -6,14 +6,9 @@ function show_commands_div(div_id) {
         commands_fun('event','get_list');
     } else if (div_id == "edit-commands-div") {
         commands_fun('event','get_list');
-    } else if (div_id == "delay-commands-div") {
-        commands_fun('event','get_delay');
     } else if (div_id == "duel-commands-div"){
         commands_fun('event','get_duel');
-    } else if (div_id == "default-commands-div"){
-        commands_fun('event','get_default');
     }
-
     document.getElementById("commands-div").hidden = true;
     document.getElementById(div_id).hidden = false;
 }
@@ -26,32 +21,8 @@ function hide_commands_div(div_id, modal) {
 
 }
 
-function exibirFormulario(valor) {
-    const formularios = [
-      '#form-cmd-command',
-      '#form-dice-command',
-      '#form-random-command',
-      '#form-uptime-command',
-      '#form-followage-command',
-      '#form-game-command',
-      '#form-msgcount-command',
-      '#form-watchtime-command',
-      '#form-interaction_1-command',
-      '#form-interaction_2-command',
-      '#form-interaction_3-command',
-      '#form-interaction_4-command',
-      '#form-interaction_5-command'
-    ];
-  
-    for (const form of formularios) {
-      document.querySelector(form).hidden = true;
-    }
-  
-    document.querySelector(`#form-${valor}-command`).hidden = false;
-  }
-
 async function commands_fun(event,type_id){
-    
+
     if (type_id == 'create'){
         event.preventDefault();
 
@@ -296,803 +267,294 @@ async function commands_fun(event,type_id){
     
     } else if (type_id == 'get_default'){
 
-        var cmd_val = document.getElementById('command-cmd');
-        var cmd_status = document.getElementById('command-cmd-status');
-        var cmd_delay = document.getElementById('cmd-delay');
-        var cmd_respo = ""
-        var cmd_perm = document.getElementById('command-cmd-perm');
+        var cmd_val = document.getElementById('command-default-command');
+        var cmd_status = document.getElementById('command-default-status');
+        var cmd_delay = document.getElementById('command-default-delay');
+        var cmd_respo = document.getElementById('command-default-respo');
+        var cmd_perm = document.getElementById('command-default-perm');
+        var cmd_type = document.getElementById('command-default-type');
 
-        var dice_val = document.getElementById('command-dice');
-        var dice_status = document.getElementById('command-dice-status');
-        var dice_delay = document.getElementById('dice-delay');
-        var dice_respo = document.getElementById('command-dice-response');
-        var dice_perm = document.getElementById('command-dice-perm');
+        var cmd_aliases = document.getElementById('command-default-aliases');
 
-        var random_val = document.getElementById('command-random');
-        var random_status = document.getElementById('command-random-status');
-        var random_delay = document.getElementById('random-delay');
-        var random_respo = document.getElementById('command-random-response');
-        var random_perm = document.getElementById('command-random-perm');
+        var fomr_command_default = document.getElementById('form-command-default');
 
-        var uptime = document.getElementById('command-uptime');
-        var uptime_status = document.getElementById('command-uptime-status');
-        var uptime_delay = document.getElementById('uptime-delay');
-        var uptime_respo = document.getElementById('command-uptime-response');
-        var uptime_perm = document.getElementById('command-uptime-perm');
+        var select_editor = document.querySelector('#command-default-edit');
 
-        var game = document.getElementById('command-game');
-        var game_status = document.getElementById('command-game-status');
-        var game_delay = document.getElementById('game-delay');
-        var game_respo = document.getElementById('command-game-response');
-        var game_perm = document.getElementById('command-game-perm');
+        cmd_type.value = select_editor.value
 
-        var msgcount = document.getElementById('command-msgcount');
-        var msgcount_status = document.getElementById('command-msgcount-status');
-        var msgcount_delay = document.getElementById('msgcount-delay');
-        var msgcount_respo = document.getElementById('command-msgcount-response');
-        var msgcount_perm = document.getElementById('command-msgcount-perm');
-
-        var watchtime = document.getElementById('command-watchtime');
-        var watchtime_status = document.getElementById('command-watchtime-status');
-        var watchtime_delay = document.getElementById('watchtime-delay');
-        var watchtime_respo = document.getElementById('command-watchtime-response');
-        var watchtime_perm = document.getElementById('command-watchtime-perm');
-
-        var followage = document.getElementById('command-followage');
-        var followage_status = document.getElementById('command-followage-status');
-        var followage_delay = document.getElementById('followage-delay');
-        var followage_respo = document.getElementById('command-followage-response');
-        var followage_perm = document.getElementById('command-followage-perm');
-
-        var interaction_1_val = document.getElementById('command-interaction_1');
-        var interaction_1_status = document.getElementById('command-interaction_1-status');
-        var interaction_1_delay = document.getElementById('interaction_1-delay');
-        var interaction_1_respo = document.getElementById('command-interaction_1-response');
-        var interaction_1_perm = document.getElementById('command-interaction_1-perm');
-
-        var interaction_2_val = document.getElementById('command-interaction_2');
-        var interaction_2_status = document.getElementById('command-interaction_2-status');
-        var interaction_2_delay = document.getElementById('interaction_2-delay');
-        var interaction_2_respo = document.getElementById('command-interaction_2-response');
-        var interaction_2_perm = document.getElementById('command-interaction_2-perm');
-
-        var interaction_3_val = document.getElementById('command-interaction_3');
-        var interaction_3_status = document.getElementById('command-interaction_3-status');
-        var interaction_3_delay = document.getElementById('interaction_3-delay');
-        var interaction_3_respo = document.getElementById('command-interaction_3-response');
-        var interaction_3_perm = document.getElementById('command-interaction_3-perm');
-
-        var interaction_4_val = document.getElementById('command-interaction_4');
-        var interaction_4_status = document.getElementById('command-interaction_4-status');
-        var interaction_4_delay = document.getElementById('interaction_4-delay');
-        var interaction_4_respo = document.getElementById('command-interaction_4-response');
-        var interaction_4_perm = document.getElementById('command-interaction_4-perm');
-
-        var interaction_5_val = document.getElementById('command-interaction_5');
-        var interaction_5_status = document.getElementById('command-interaction_5-status');
-        var interaction_5_delay = document.getElementById('interaction_5-delay');
-        var interaction_5_respo = document.getElementById('command-interaction_5-response');
-        var interaction_5_perm = document.getElementById('command-interaction_5-perm');
-
-
-        var resp_default = await eel.commands_py(type_id,'null')();
+        var resp_default = await eel.commands_py(type_id,select_editor.value)();
 
         if (resp_default) {
 
+            fomr_command_default.hidden = false;
 
-            var resp_default_parse = JSON.parse(resp_default);
+            if (cmd_type.value == 'cmd'){
+                cmd_respo.setAttribute('readonly', 'true')
+            } else {
+                cmd_respo.removeAttribute('readonly')
+            }
 
-            if (resp_default_parse.cmd_status == 1){
-                cmd_status.checked = true;
-            } else if (resp_default_parse.cmd_status = 0){
-                cmd_status.checked = false;
+            if (cmd_type.value == 'emote'){
+                cmd_delay.setAttribute('min', '10')
+            } else {
+                cmd_respo.setAttribute('min','0')
             }
             
-            if (resp_default_parse.dice_status == 1){
-                dice_status.checked = true;
-            } else if (resp_default_parse.dice_status = 0){
-                dice_status.checked = false;
-            }
-            if (resp_default_parse.random_status == 1){
-                random_status = true;
-            } else if (resp_default_parse.random_status = 0){
-                random_status = false;
-            }
-            if (resp_default_parse.uptime_status == 1){
-                uptime_status = true;
-            } else if (resp_default_parse.uptime_status = 0){
-                uptime_status = false;
-            }
-            if (resp_default_parse.msgcount_status == 1){
-                msgcount_status = true;
-            } else if (resp_default_parse.msgcount_status = 0){
-                msgcount_status = false;
-            }
-            if (resp_default_parse.watchtime_status == 1){
-                watchtime_status = true;
-            } else if (resp_default_parse.watchtime_status = 0){
-                watchtime_status = false;
-            }
-            if (resp_default_parse.followage_status == 1){
-                followage_status = true;
-            } else if (resp_default_parse.followage_status = 0){
-                followage_status = false;
-            }
-            if (resp_default_parse.interaction_1_status == 1){
-                interaction_1_status = true;
-            } else if (resp_default_parse.interaction_1_status = 0){
-                interaction_1_status = false;
-            }
-            if (resp_default_parse.interaction_2_status == 1){
-                interaction_2_status = true;
-            } else if (resp_default_parse.interaction_2_status = 0){
-                interaction_2_status = false;
-            }
-            if (resp_default_parse.interaction_3_status == 1){
-                interaction_3_status = true;
-            } else if (resp_default_parse.interaction_3_status = 0){
-                interaction_3_status = false;
-            }
-            if (resp_default_parse.interaction_4_status == 1){
-                interaction_4_status = true;
-            } else if (resp_default_parse.interaction_4_status = 0){
-                interaction_4_status = false;
-            }
-            if (resp_default_parse.interaction_5_status == 1){
-                interaction_5_status = true;
-            } else if (resp_default_parse.interaction_5_status = 0){
-                interaction_5_status = false;
+            var resp_default_parse = JSON.parse(resp_default);
+
+            if (resp_default_parse.status == 1){
+                cmd_status.checked = true;
+            } else if (resp_default_parse.status = 0){
+                cmd_status.checked = false;
             }
 
-            cmd_val.value = resp_default_parse.cmd;
-            cmd_delay.value = resp_default_parse.cmd_delay;
-
-            dice_val.value = resp_default_parse.dice;
-            dice_delay.value = resp_default_parse.dice_delay;
-            dice_respo.value = resp_default_parse.dice_resp;
-
-            random_val.value = resp_default_parse.random;
-            random_delay.value = resp_default_parse.random_delay;
-            random_respo.value = resp_default_parse.random_resp;
-
-            uptime.value = resp_default_parse.uptime;
-            uptime_delay.value = resp_default_parse.uptime_delay;
-            uptime_respo.value = resp_default_parse.uptime_resp;
-
-            game.value = resp_default_parse.game;
-            game_delay.value = resp_default_parse.game_delay;
-            game_respo.value = resp_default_parse.game_resp;
-
-            msgcount.value = resp_default_parse.msgcount;
-            msgcount_delay.value = resp_default_parse.msgcount_delay;
-            msgcount_respo.value = resp_default_parse.msgcount_resp;
-
-            watchtime.value = resp_default_parse.watchtime;
-            watchtime_delay.value = resp_default_parse.watchtime_delay;
-            watchtime_respo.value = resp_default_parse.watchtime_resp;
-
-            followage.value = resp_default_parse.followage;
-            followage_delay.value = resp_default_parse.followage_delay;
-            followage_respo.value = resp_default_parse.followage_resp;
-
-            interaction_1_val.value = resp_default_parse.interaction_1;
-            interaction_1_delay.value = resp_default_parse.interaction_1_delay;
-            interaction_1_respo.value = resp_default_parse.interaction_1_resp;
-            interaction_2_val.value = resp_default_parse.interaction_2;
-            interaction_2_delay.value = resp_default_parse.interaction_2_delay;
-            interaction_2_respo.value = resp_default_parse.interaction_2_resp;
-            interaction_3_val.value = resp_default_parse.interaction_3;
-            interaction_3_delay.value = resp_default_parse.interaction_3_delay;
-            interaction_3_respo.value = resp_default_parse.interaction_3_resp;
-            interaction_4_val.value = resp_default_parse.interaction_4;
-            interaction_4_delay.value = resp_default_parse.interaction_4_delay;
-            interaction_4_respo.value = resp_default_parse.interaction_4_resp;
-            interaction_5_val.value = resp_default_parse.interaction_5;
-            interaction_5_delay.value = resp_default_parse.interaction_5_delay;
-            interaction_5_respo.value = resp_default_parse.interaction_5_resp;
-
-            $("#command-cmd-perm").selectpicker('val', resp_default_parse.cmd_perm)
-            $("#command-dice-perm").selectpicker('val', resp_default_parse.dice_perm)
-            $("#command-random-perm").selectpicker('val', resp_default_parse.random_perm)
-            $("#command-uptime-perm").selectpicker('val', resp_default_parse.uptime_perm)
-            $("#command-game-perm").selectpicker('val',resp_default_parse.game_perm)
-            $("#command-msgcount-perm").selectpicker('val',resp_default_parse.msgcount_perm)
-            $("#command-followage-perm").selectpicker('val',resp_default_parse.followage_perm)
-            $("#command-watchtime-perm").selectpicker('val',resp_default_parse.watchtime_perm)
+            cmd_val.value = resp_default_parse.command;
+            cmd_delay.value = resp_default_parse.delay;
+            cmd_respo.value = resp_default_parse.response;
 
 
-            $("#command-interaction_1-perm").selectpicker('val', resp_default_parse.interaction_1_perm)
-            $("#command-interaction_2-perm").selectpicker('val', resp_default_parse.interaction_2_perm)
-            $("#command-interaction_3-perm").selectpicker('val', resp_default_parse.interaction_3_perm)
-            $("#command-interaction_4-perm").selectpicker('val', resp_default_parse.interaction_4_perm)
-            $("#command-interaction_5-perm").selectpicker('val', resp_default_parse.interaction_5_perm)
+            if (cmd_type.value == "cmd"){
+                cmd_aliases.value = ""
+            } else if (cmd_type.value == "dice"){
+                cmd_aliases.value = "{username}[value]";
+            } else if (cmd_type.value == "random"){
+                cmd_aliases.value = "{username}[value]";
+            } else if (cmd_type.value == "uptime"){
+                cmd_aliases.value = "{username}{h}{m}";
+            } else if (cmd_type.value == "game"){
+                cmd_aliases.value = "{username}{game}";
+            } else if (cmd_type.value == "followage"){
+                cmd_aliases.value = "{username}{streamer}{d}{h}{m}";
+            } else if (cmd_type.value == "msgcount"){
+                cmd_aliases.value = "{username}{count}";
+            } else if (cmd_type.value == "watchtime"){
+                cmd_aliases.value = "{username}{streamer}{d}{h}{m}";
+            } else if (cmd_type.value == "accountage"){
+                cmd_aliases.value = "{username}{year}{month}{day}{hour}{minute}";
+            } else if (cmd_type.value == "interaction_1"){
+                cmd_aliases.value = "{user_1}{user_2}";
+            } else if (cmd_type.value == "interaction_2"){
+                cmd_aliases.value = "{user_1}{user_2}";
+            } else if (cmd_type.value == "interaction_3"){
+                cmd_aliases.value = "{user_1}{user_2}";
+            } else if (cmd_type.value == "interaction_4"){
+                cmd_aliases.value = "{user_1}{user_2}";
+            } else if (cmd_type.value == "interaction_5"){
+                cmd_aliases.value = "{user_1}{user_2}";
+            } else if (cmd_type.value == "setgame"){
+                cmd_aliases.value = "{username}{game_name}";
+            } else if (cmd_type.value == "title"){
+                cmd_aliases.value = "{username}{sufix}";
+            } else if (cmd_type.value == "emote"){
+                cmd_aliases.value = "";
+            }
+
+            $("#command-default-perm").selectpicker('val', resp_default_parse.user_level)
+
         }
 
 
     } else if (type_id == 'save_default'){
-        event.preventDefault();
 
-        var dice_val = document.getElementById('command-dice');
-        var dice_status = document.getElementById('command-dice-status');
-        var dice_delay = document.getElementById('dice-delay');
-        var dice_respo = document.getElementById('command-dice-response');
-        var dice_perm = document.getElementById('command-dice-perm');
+        var cmd_val = document.getElementById('command-default-command');
+        var cmd_status = document.getElementById('command-default-status');
+        var cmd_delay = document.getElementById('command-default-delay');
+        var cmd_respo = document.getElementById('command-default-respo');
+        var cmd_perm = document.getElementById('command-default-perm');
+        var cmd_type = document.getElementById('command-default-type');
 
-        var random_val = document.getElementById('command-random');
-        var random_status = document.getElementById('command-random-status');
-        var random_delay = document.getElementById('random-delay');
-        var random_respo = document.getElementById('command-random-response');
-        var random_perm = document.getElementById('command-random-perm');
-
-        var uptime = document.getElementById('command-uptime');
-        var uptime_status = document.getElementById('command-uptime-status');
-        var uptime_delay = document.getElementById('uptime-delay');
-        var uptime_respo = document.getElementById('command-uptime-response');
-        var uptime_perm = document.getElementById('command-uptime-perm');
-
-        var game = document.getElementById('command-game');
-        var game_status = document.getElementById('command-game-status');
-        var game_delay = document.getElementById('game-delay');
-        var game_respo = document.getElementById('command-game-response');
-        var game_perm = document.getElementById('command-game-perm');
-
-        var followage = document.getElementById('command-followage');
-        var followage_status = document.getElementById('command-followage-status');
-        var followage_delay = document.getElementById('followage-delay');
-        var followage_respo = document.getElementById('command-followage-response');
-        var followage_perm = document.getElementById('command-followage-perm');
-
-        var interaction_1_val = document.getElementById('command-interaction_1');
-        var interaction_1_status = document.getElementById('command-interaction_1-status');
-        var interaction_1_delay = document.getElementById('interaction_1-delay');
-        var interaction_1_respo = document.getElementById('command-interaction_1-response');
-        var interaction_1_perm = document.getElementById('command-interaction_1-perm');
-
-        var interaction_2_val = document.getElementById('command-interaction_2');
-        var interaction_2_status = document.getElementById('command-interaction_2-status');
-        var interaction_2_delay = document.getElementById('interaction_2-delay');
-        var interaction_2_respo = document.getElementById('command-interaction_2-response');
-        var interaction_2_perm = document.getElementById('command-interaction_2-perm');
-
-        var interaction_3_val = document.getElementById('command-interaction_3');
-        var interaction_3_status = document.getElementById('command-interaction_3-status');
-        var interaction_3_delay = document.getElementById('interaction_3-delay');
-        var interaction_3_respo = document.getElementById('command-interaction_3-response');
-        var interaction_3_perm = document.getElementById('command-interaction_3-perm');
-
-        var interaction_4_val = document.getElementById('command-interaction_4');
-        var interaction_4_status = document.getElementById('command-interaction_4-status');
-        var interaction_4_delay = document.getElementById('interaction_4-delay');
-        var interaction_4_respo = document.getElementById('command-interaction_4-response');
-        var interaction_4_perm = document.getElementById('command-interaction_4-perm');
-
-        var interaction_5_val = document.getElementById('command-interaction_5');
-        var interaction_5_status = document.getElementById('command-interaction_5-status');
-        var interaction_5_delay = document.getElementById('interaction_5-delay');
-        var interaction_5_respo = document.getElementById('command-interaction_5-response');
-        var interaction_5_perm = document.getElementById('command-interaction_5-perm');
-
-
-        if (dice_status.checked == true) {
-            dice_status = 1
-        } else {
-            dice_status = 0
-        }
-        if (random_status.checked == true){
-            random_status = 1
-        } else {
-            random_status = 0
-        }
-        if (uptime_status.checked == true){
-            uptime_status = 1
-        } else {
-            uptime_status = 0
-        }
-        if (game_status.checked == true){
-            game_status = 1
-        } else {
-            game_status = 0
-        }
-        if (followage_status.checked == true){
-            followage_status = 1
-        } else {
-            followage_status = 0
-        }
-        if (interaction_1_status.checked == true){
-            interaction_1_status = 1
-        } else {
-            interaction_1_status = 0
-        }
-        if (interaction_2_status.checked == true){
-            interaction_2_status = 1
-        } else {
-            interaction_2_status = 0
-        }
-        if (interaction_3_status.checked == true){
-            interaction_3_status = 1
-        } else {
-            interaction_3_status = 0
-        }        
-        if (interaction_3_status.checked == true){
-            interaction_3_status = 1
-        } else {
-            interaction_3_status = 0
-        }
-        if (interaction_4_status.checked == true){
-            interaction_4_status = 1
-        } else {
-            interaction_4_status = 0
-        }
-        if (interaction_5_status.checked == true){
-            interaction_5_status = 1
-        } else {
-            interaction_5_status = 0
-        }
-
+        cmd_status = cmd_status.checked ? 1 : 0
 
         data = {
-            dice : dice_val.value,
-            dice_status: dice_status,
-            dice_delay: dice_delay.value,
-            dice_respo : dice_respo.value,
-            dice_perm : dice_perm.value,
-            random : random_val.value,
-            random_status: random_status,
-            random_delay: random_delay.value,
-            random_respo : random_respo.value,
-            random_perm : random_perm.value,
-            uptime : uptime.value,
-            uptime_status: uptime_status,
-            uptime_delay: uptime_delay.value,
-            uptime_respo : uptime_respo.value,
-            uptime_perm : uptime_perm.value,
-            game : game.value,
-            game_status: game_status,
-            game_delay: game_delay.value,
-            game_respo : game_respo.value,
-            game_perm : game_perm.value,
-            followage : followage.value,
-            followage_status: followage_status,
-            followage_delay : followage_delay.value,
-            followage_respo : followage_respo.value,
-            followage_perm : followage_perm.value,
-            interaction_1 : interaction_1_val.value,
-            interaction_1_status : interaction_1_status,
-            interaction_1_delay : interaction_1_delay.value,
-            interaction_1_respo : interaction_1_respo.value,
-            interaction_1_perm : interaction_1_perm.value,
-            interaction_2 : interaction_2_val.value,
-            interaction_2_status: interaction_2_status,
-            interaction_2_delay: interaction_2_delay.value,
-            interaction_2_respo : interaction_2_respo.value,
-            interaction_2_perm : interaction_2_perm.value,
-            interaction_3 : interaction_3_val.value,
-            interaction_3_status: interaction_3_status,
-            interaction_3_delay : interaction_3_delay.value,
-            interaction_3_respo : interaction_3_respo.value,
-            interaction_3_perm : interaction_3_perm.value,
-            interaction_4 : interaction_4_val.value,
-            interaction_4_status: interaction_4_status,
-            interaction_4_delay : interaction_4_delay.value,
-            interaction_4_respo : interaction_4_respo.value,
-            interaction_4_perm : interaction_4_perm.value,
-            interaction_5 : interaction_5_val.value,
-            interaction_5_status : interaction_5_status,
-            interaction_5_delay : interaction_5_delay.value,
-            interaction_5_respo : interaction_5_respo.value,
-            interaction_5_perm : interaction_5_perm.value
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-    } else if (type_id == 'save_default-cmd'){
-        
-        event.preventDefault();
-
-        var cmd_val = document.getElementById('command-cmd');
-        var cmd_status = document.getElementById('command-cmd-status');
-        var cmd_delay = document.getElementById('cmd-delay');
-        var cmd_respo = "";
-        var cmd_perm = document.getElementById('command-cmd-perm');
-
-
-        if (cmd_status.checked == true) {
-            cmd_status = 1
-        } else {
-            cmd_status = 0
-        }
-
-        data = {
-            cmd : cmd_val.value,
-            cmd_status: cmd_status,
-            cmd_delay: cmd_delay.value,
-            cmd_respo : cmd_respo.value,
-            cmd_perm : cmd_perm.value,
+            default_type : cmd_type.value,
+            command : cmd_val.value,
+            status: cmd_status,
+            delay: cmd_delay.value,
+            response : cmd_respo.value,
+            perm : cmd_perm.value,
         }
 
         var formData = JSON.stringify(data);
         eel.commands_py(type_id,formData);
 
-    } else if (type_id == 'save_default-dice'){
-        
-        event.preventDefault();
+    } else if (type_id == 'command-list'){
 
-        var dice_val = document.getElementById('command-dice');
-        var dice_status = document.getElementById('command-dice-status');
-        var dice_delay = document.getElementById('dice-delay');
-        var dice_respo = document.getElementById('command-dice-response');
-        var dice_perm = document.getElementById('command-dice-perm');
+        $("#list-comands-modal").modal("show");
 
+        var command_list = await eel.get_command_list()()
 
-        if (dice_status.checked == true) {
-            dice_status = 1
-        } else {
-            dice_status = 0
+        if (command_list){
+
+            var command_list_parse = JSON.parse(command_list);
+
+            var command_list_redeem = command_list_parse.commands_redeem[0]
+            var command_list_simple = command_list_parse.commands_simple[0]
+            var command_list_default = command_list_parse.commands_default[0]
+            var command_list_counter = command_list_parse.commands_counter[0]
+            var command_list_giveaway = command_list_parse.commands_giveaway[0]
+            var command_list_player = command_list_parse.commands_player[0]
+
+            var dataTableData = [];
+
+            for (var key in command_list_redeem) {
+                if (command_list_redeem.hasOwnProperty(key)) {
+                  var rewardItem = command_list_redeem[key];
+                  dataTableData.push([
+                    key,
+                    "Recompensa",
+                    rewardItem.last_use == 0 ? "Nunca" : new Date(rewardItem.last_use * 1000).toLocaleString(),
+                    rewardItem.status == 1 ? "Sim" : "Não",
+                    rewardItem.delay,
+                    rewardItem.redeem,
+                    '',
+                    rewardItem.user_level
+                  ]);
+                }
+            }
+
+            for (var key in command_list_simple) {
+                if (command_list_simple.hasOwnProperty(key)) {
+                  var commandItem = command_list_simple[key];
+                  dataTableData.push([
+                    key,
+                    "Simples",
+                    commandItem.last_use == 0 ? "Nunca" : new Date(commandItem.last_use * 1000).toLocaleString(),
+                    commandItem.status == 1 ? "Sim" : "Não",
+                    commandItem.delay,
+                    '',
+                    commandItem.response,
+                    commandItem.user_level
+                  ]);
+                }
+              }
+
+            for (var key in command_list_default) {
+                if (command_list_default.hasOwnProperty(key)) {
+                    var defaultItem = command_list_default[key];
+                    dataTableData.push([
+                    defaultItem.command,
+                    `Padrão / ${key}`,
+                    defaultItem.last_use == 0 ? "Nunca" : new Date(defaultItem.last_use * 1000).toLocaleString(),
+                    defaultItem.status == 1 ? "Sim" : "Não",
+                    defaultItem.delay,
+                    '',
+                    defaultItem.response,
+                    defaultItem.user_level
+                    ]);
+                }
+            }
+
+            for (var key in command_list_counter) {
+                if (command_list_counter.hasOwnProperty(key)) {
+                    var counterItem = command_list_counter[key];
+                    dataTableData.push([
+                    counterItem.command,
+                    `Counter / ${key}`,
+                    counterItem.last_use == 0 ? "Nunca" : new Date(counterItem.last_use * 1000).toLocaleString(),
+                    counterItem.status == 1 ? "Sim" : "Não",
+                    counterItem.delay,
+                    '',
+                    '',
+                    'Mod'
+                    ]);
+                }
+            }
+
+            for (var key in command_list_giveaway) {
+                if (command_list_giveaway.hasOwnProperty(key)) {
+                    var giveawayItem = command_list_giveaway[key];
+                    dataTableData.push([
+                    giveawayItem.command,
+                    `Sorteio / ${key}`,
+                    giveawayItem.last_use == 0 ? "Nunca" : new Date(giveawayItem.last_use * 1000).toLocaleString(),
+                    giveawayItem.status == 1 ? "Sim" : "Não",
+                    giveawayItem.delay,
+                    '',
+                    '',
+                    'Mod'
+                    ]);
+                }
+            }
+
+            for (var key in command_list_player) {
+                if (key != "redeem"){
+                    if (command_list_player.hasOwnProperty(key)) {
+                        var playerItem = command_list_player[key];
+                        dataTableData.push([
+                        playerItem.command,
+                        `Player / ${key}`,
+                        playerItem.last_use == 0 ? "Nunca" : new Date(playerItem.last_use * 1000).toLocaleString(),
+                        playerItem.status == 1 ? "Sim" : "Não",
+                        playerItem.delay,
+                        '',
+                        '',
+                        defaultItem.user_level
+                        ]);
+                    }
+                }
+
+            }
+
+            if ($.fn.DataTable.isDataTable("#commandlist_table")) {
+                console.log('destroy')
+                $('#commandlist_table').DataTable().clear().draw();
+                $('#commandlist_table').DataTable().destroy();
+            }
+
+            var table = $('#commandlist_table').DataTable( {
+                destroy: true,
+                initComplete: function () {
+                    this.api()
+                        .columns()
+                        .every(function () {
+                            var that = this;
+         
+                            $('input', this.footer()).on('keyup change clear', function () {
+                                if (that.search() !== this.value) {
+                                    that.search(this.value).draw();
+                                }
+                            });
+                        });
+                },
+                scrollX: true,
+                paging: true,
+                ordering:  true,
+                retrieve : false,
+                processing: true,
+                responsive: false,
+                lengthMenu: [
+                    [10, 25, 50, -1],
+                    [10, 25, 50, 'All'],
+                ],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.1/i18n/pt-BR.json'
+                },
+                columns: [
+                    { title: 'Comando' },
+                    { title: 'Tipo' },
+                    { title: 'Último uso' },
+                    { title: 'Status' },
+                    { title: 'Delay' },
+                    { title: 'Recompensa' },
+                    {
+                        title: 'Resposta',
+                        render: function (data, type, row) {
+                          if (type === "display" && data.length > 20) {
+                            return '<span title="' + data + '">' + data.substring(0, 20) + '...</span>';
+                          } else {
+                            return data;
+                          }
+                        }
+                      },
+                    { title: 'Nível do usuário' }
+                ]
+            } );
+
+            // adicionar as linhas à tabela
+            for (var i = 0; i < dataTableData.length; i++) {
+                table.row.add(dataTableData[i]).draw();
+            }
+
         }
-
-
-        data = {
-            dice : dice_val.value,
-            dice_status: dice_status,
-            dice_delay: dice_delay.value,
-            dice_respo : dice_respo.value,
-            dice_perm : dice_perm.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-
-    } else if (type_id == 'save_default-random'){
-        
-        event.preventDefault();
-
-        var random_val = document.getElementById('command-random');
-        var random_status = document.getElementById('command-random-status');
-        var random_delay = document.getElementById('random-delay');
-        var random_respo = document.getElementById('command-random-response');
-        var random_perm = document.getElementById('command-random-perm');
-
-        
-        if (random_status.checked == true){
-            random_status = 1
-        } else {
-            random_status = 0
-        }
-
-        data = {
-            random : random_val.value,
-            random_status: random_status,
-            random_delay: random_delay.value,
-            random_respo : random_respo.value,
-            random_perm : random_perm.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-    } else if (type_id == 'save_default-uptime'){
-        
-        event.preventDefault();
-
-
-        var uptime = document.getElementById('command-uptime');
-        var uptime_status = document.getElementById('command-uptime-status');
-        var uptime_delay = document.getElementById('uptime-delay');
-        var uptime_respo = document.getElementById('command-uptime-response');
-        var uptime_perm = document.getElementById('command-uptime-perm');
-
-        
-        if (uptime_status.checked == true){
-            uptime_status = 1
-        } else {
-            uptime_status = 0
-        }
-
-
-        data = {
-            uptime : uptime.value,
-            uptime_status: uptime_status,
-            uptime_delay: uptime_delay.value,
-            uptime_respo : uptime_respo.value,
-            uptime_perm : uptime_perm.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-    } else if (type_id == 'save_default-game'){
-        
-        event.preventDefault();
-
-        var game = document.getElementById('command-game');
-        var game_status = document.getElementById('command-game-status');
-        var game_delay = document.getElementById('game-delay');
-        var game_respo = document.getElementById('command-game-response');
-        var game_perm = document.getElementById('command-game-perm');
-
-
-        if (game_status.checked == true){
-            game_status = 1
-        } else {
-            game_status = 0
-        }
-
-        data = {
-            game : game.value,
-            game_status: game_status,
-            game_delay: game_delay.value,
-            game_respo : game_respo.value,
-            game_perm : game_perm.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-    } else if (type_id == 'save_default-followage'){
-        
-        event.preventDefault();
-
-        var followage = document.getElementById('command-followage');
-        var followage_status = document.getElementById('command-followage-status');
-        var followage_delay = document.getElementById('followage-delay');
-        var followage_respo = document.getElementById('command-followage-response');
-        var followage_perm = document.getElementById('command-followage-perm');
-
-        if (followage_status.checked == true){
-            followage_status = 1
-        } else {
-            followage_status = 0
-        }
-
-
-        data = {
-            followage : followage.value,
-            followage_status: followage_status,
-            followage_delay : followage_delay.value,
-            followage_respo : followage_respo.value,
-            followage_perm : followage_perm.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-    } else if (type_id == 'save_default-msgcount'){
-        
-        event.preventDefault();
-
-        var msgcount = document.getElementById('command-msgcount');
-        var msgcount_status = document.getElementById('command-msgcount-status');
-        var msgcount_delay = document.getElementById('msgcount-delay');
-        var msgcount_respo = document.getElementById('command-msgcount-response');
-        var msgcount_perm = document.getElementById('command-msgcount-perm');
-
-        if (msgcount_status.checked == true){
-            msgcount_status = 1
-        } else {
-            msgcount_status = 0
-        }
-
-        data = {
-            msgcount : msgcount.value,
-            msgcount_status: msgcount_status,
-            msgcount_delay : msgcount_delay.value,
-            msgcount_respo : msgcount_respo.value,
-            msgcount_perm : msgcount_perm.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-
-    } else if (type_id == 'save_default-watchtime'){
-        
-        event.preventDefault();
-
-        var watchtime = document.getElementById('command-watchtime');
-        var watchtime_status = document.getElementById('command-watchtime-status');
-        var watchtime_delay = document.getElementById('watchtime-delay');
-        var watchtime_respo = document.getElementById('command-watchtime-response');
-        var watchtime_perm = document.getElementById('command-watchtime-perm');
-
-        if (watchtime_status.checked == true){
-            watchtime_status = 1
-        } else {
-            watchtime_status = 0
-        }
-
-        data = {
-            watchtime : watchtime.value,
-            watchtime_status: watchtime_status,
-            watchtime_delay : watchtime_delay.value,
-            watchtime_respo : watchtime_respo.value,
-            watchtime_perm : watchtime_perm.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-
-    } else if (type_id == 'save_default-interaction_1'){
-        
-        event.preventDefault();
-
-        var interaction_1_val = document.getElementById('command-interaction_1');
-        var interaction_1_status = document.getElementById('command-interaction_1-status');
-        var interaction_1_delay = document.getElementById('interaction_1-delay');
-        var interaction_1_respo = document.getElementById('command-interaction_1-response');
-        var interaction_1_perm = document.getElementById('command-interaction_1-perm');
-
-
-        if (interaction_1_status.checked == true){
-            interaction_1_status = 1
-        } else {
-            interaction_1_status = 0
-        }
-
-        data = {
-            dice : dice_val.value,
-            dice_status: dice_status,
-            dice_delay: dice_delay.value,
-            dice_respo : dice_respo.value,
-            dice_perm : dice_perm.value,
-            random : random_val.value,
-            random_status: random_status,
-            random_delay: random_delay.value,
-            random_respo : random_respo.value,
-            random_perm : random_perm.value,
-            uptime : uptime.value,
-            uptime_status: uptime_status,
-            uptime_delay: uptime_delay.value,
-            uptime_respo : uptime_respo.value,
-            uptime_perm : uptime_perm.value,
-            game : game.value,
-            game_status: game_status,
-            game_delay: game_delay.value,
-            game_respo : game_respo.value,
-            game_perm : game_perm.value,
-            followage : followage.value,
-            followage_status: followage_status,
-            followage_delay : followage_delay.value,
-            followage_respo : followage_respo.value,
-            followage_perm : followage_perm.value,
-            interaction_1 : interaction_1_val.value,
-            interaction_1_status : interaction_1_status,
-            interaction_1_delay : interaction_1_delay.value,
-            interaction_1_respo : interaction_1_respo.value,
-            interaction_1_perm : interaction_1_perm.value,
-            interaction_2 : interaction_2_val.value,
-            interaction_2_status: interaction_2_status,
-            interaction_2_delay: interaction_2_delay.value,
-            interaction_2_respo : interaction_2_respo.value,
-            interaction_2_perm : interaction_2_perm.value,
-            interaction_3 : interaction_3_val.value,
-            interaction_3_status: interaction_3_status,
-            interaction_3_delay : interaction_3_delay.value,
-            interaction_3_respo : interaction_3_respo.value,
-            interaction_3_perm : interaction_3_perm.value,
-            interaction_4 : interaction_4_val.value,
-            interaction_4_status: interaction_4_status,
-            interaction_4_delay : interaction_4_delay.value,
-            interaction_4_respo : interaction_4_respo.value,
-            interaction_4_perm : interaction_4_perm.value,
-            interaction_5 : interaction_5_val.value,
-            interaction_5_status : interaction_5_status,
-            interaction_5_delay : interaction_5_delay.value,
-            interaction_5_respo : interaction_5_respo.value,
-            interaction_5_perm : interaction_5_perm.value
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-    } else if (type_id == 'save_default-interaction_2'){
-        
-        event.preventDefault();
-
-        var interaction_2_val = document.getElementById('command-interaction_2');
-        var interaction_2_status = document.getElementById('command-interaction_2-status');
-        var interaction_2_delay = document.getElementById('interaction_2-delay');
-        var interaction_2_respo = document.getElementById('command-interaction_2-response');
-        var interaction_2_perm = document.getElementById('command-interaction_2-perm');
-
-        
-        if (interaction_2_status.checked == true){
-            interaction_2_status = 1
-        } else {
-            interaction_2_status = 0
-        }
-
-
-        data = {
-            interaction_2 : interaction_2_val.value,
-            interaction_2_status: interaction_2_status,
-            interaction_2_delay: interaction_2_delay.value,
-            interaction_2_respo : interaction_2_respo.value,
-            interaction_2_perm : interaction_2_perm.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-    } else if (type_id == 'save_default-interaction_3'){
-        
-        event.preventDefault();
-
-        var interaction_3_val = document.getElementById('command-interaction_3');
-        var interaction_3_status = document.getElementById('command-interaction_3-status');
-        var interaction_3_delay = document.getElementById('interaction_3-delay');
-        var interaction_3_respo = document.getElementById('command-interaction_3-response');
-        var interaction_3_perm = document.getElementById('command-interaction_3-perm');
-
-        if (interaction_3_status.checked == true){
-            interaction_3_status = 1
-        } else {
-            interaction_3_status = 0
-        }        
-
-
-        data = {
-            interaction_3 : interaction_3_val.value,
-            interaction_3_status: interaction_3_status,
-            interaction_3_delay : interaction_3_delay.value,
-            interaction_3_respo : interaction_3_respo.value,
-            interaction_3_perm : interaction_3_perm.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-    } else if (type_id == 'save_default-interaction_4'){
-        
-        event.preventDefault();
-
-        var interaction_4_val = document.getElementById('command-interaction_4');
-        var interaction_4_status = document.getElementById('command-interaction_4-status');
-        var interaction_4_delay = document.getElementById('interaction_4-delay');
-        var interaction_4_respo = document.getElementById('command-interaction_4-response');
-        var interaction_4_perm = document.getElementById('command-interaction_4-perm');
-
-        if (interaction_4_status.checked == true){
-            interaction_4_status = 1
-        } else {
-            interaction_4_status = 0
-        }
-
-
-
-        data = {
-            
-            interaction_4 : interaction_4_val.value,
-            interaction_4_status: interaction_4_status,
-            interaction_4_delay : interaction_4_delay.value,
-            interaction_4_respo : interaction_4_respo.value,
-            interaction_4_perm : interaction_4_perm.value,
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-    } else if (type_id == 'save_default-interaction_5'){
-        
-        event.preventDefault();
-
-        var interaction_5_val = document.getElementById('command-interaction_5');
-        var interaction_5_status = document.getElementById('command-interaction_5-status');
-        var interaction_5_delay = document.getElementById('interaction_5-delay');
-        var interaction_5_respo = document.getElementById('command-interaction_5-response');
-        var interaction_5_perm = document.getElementById('command-interaction_5-perm');
-
-        if (interaction_5_status.checked == true){
-            interaction_5_status = 1
-        } else {
-            interaction_5_status = 0
-        }
-
-
-        data = {
-            interaction_5 : interaction_5_val.value,
-            interaction_5_status : interaction_5_status,
-            interaction_5_delay : interaction_5_delay.value,
-            interaction_5_respo : interaction_5_respo.value,
-            interaction_5_perm : interaction_5_perm.value
-        }
-
-        var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
-        
-    } else if (type_id == 'select_edit'){
-
-        var select_editor = document.querySelector('#command-default-edit');
-        exibirFormulario(select_editor.value);
     }
 }

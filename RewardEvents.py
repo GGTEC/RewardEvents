@@ -1,4 +1,8 @@
+
 import sys,os,platform
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+
 import msvcrt
 import signal
 import subprocess
@@ -22,8 +26,10 @@ import keyboard
 import random
 import yt_dlp
 import datetime
+from dateutil import tz
 import pytz
 import re
+import emoji
 
 from bs4 import BeautifulSoup as bs
 
@@ -34,6 +40,7 @@ from pytube import Playlist, YouTube, Search
 from io import BytesIO
 from gtts import gTTS
 from tkinter import filedialog as fd
+import tkinter.messagebox as messagebox
 from requests.structures import CaseInsensitiveDict
 from random import randint
 
@@ -41,6 +48,9 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 
 from twitchAPI.twitch import Twitch, AuthScope, PredictionStatus, PollStatus
 from flask import Flask, request
+from waitress import serve
+import logging
+import difflib
 
 
 extDataDir = os.getcwd()
@@ -54,9 +64,35 @@ if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
 
 load_dotenv(dotenv_path=os.path.join(extDataDir, '.env'))
 
-clientid = os.getenv('CLIENTID')
 appdata_path = os.getenv('APPDATA')
 
+MAX_LOG_SIZE = 1024 * 1024 * 10  # 10 MB
+
+log_file = f'{appdata_path}/rewardevents/web/src/output.log'
+
+def clear_log_file(log_file_path):
+    if os.path.exists(log_file_path):
+        log_file_size = os.path.getsize(log_file_path)
+        if log_file_size > MAX_LOG_SIZE:
+            with open(log_file_path, 'r') as f:
+                lines = f.readlines()
+            with open(log_file_path, 'w') as f:
+                f.writelines(lines[-1000:]) 
+
+clear_log_file(log_file)
+
+def clear_chat_file(chat_file_path):
+    if os.path.exists(chat_file_path):
+        log_file_size = os.path.getsize(chat_file_path)
+        if log_file_size > MAX_LOG_SIZE:
+            with open(chat_file_path, 'r') as f:
+                lines = f.readlines()
+            with open(chat_file_path, 'w') as f:
+                f.writelines(lines[-1000:]) 
+
+clear_chat_file(f"{appdata_path}/rewardevents/web/src/chat_log.txt")
+
+logging.basicConfig(filename=log_file, level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 lock_file_path = os.path.join(f"{appdata_path}/rewardevents/web", 'my_program.lock')
 lock_file = None
 
@@ -78,13 +114,13 @@ except IOError:
     sys.exit(0)
 
 
-global caching, loaded_status, chat, window, twitch_api,bot_loaded
+clientid = os.getenv('CLIENTID')
 
 
-chat_active = False
+global caching, loaded_status, window, twitch_api
+
 caching = 0
 loaded_status = 0
-bot_loaded = 0
 
 authdata = auth.auth_data(f'{appdata_path}/rewardevents/web/src/auth/auth.json')
 
@@ -93,10 +129,15 @@ app = Flask(__name__)
 @app.route("/")
 def receive_url():
 
-    with open("web/auth_sucess.html", "r") as html:
-        soup = bs(html, 'html.parser')
-        
-    return soup.prettify('utf-8')
+    try:
+
+        with open(f"{extDataDir}/web/auth_sucess.html", "r") as html:
+            soup = bs(html, 'html.parser')
+            
+        return soup.prettify('utf-8')
+
+    except Exception as e:
+        utils.error_log(e)
 
 
 @eel.expose
@@ -111,65 +152,70 @@ def save_access_token(type_id: str, token: str) -> None:
         ValueError: If type_id is not one of the valid options.
     """
     # Define constants
-    CLIENT_ID = "your_client_id"
-    SCOPES = [
-        AuthScope.CHANNEL_MANAGE_PREDICTIONS,
-        AuthScope.CHANNEL_MANAGE_POLLS,
-        AuthScope.USER_READ_SUBSCRIPTIONS,
-        AuthScope.USER_READ_EMAIL,
-        AuthScope.CHANNEL_READ_SUBSCRIPTIONS,
-        AuthScope.MODERATION_READ,
-        AuthScope.CHANNEL_READ_REDEMPTIONS,
-        AuthScope.CLIPS_EDIT,
-        AuthScope.CHAT_EDIT,
-        AuthScope.CHAT_READ
-    ]
-    AUTH_FILE = f"{appdata_path}/rewardevents/web/src/auth/auth.json"
+    
+    try:
+        CLIENT_ID = clientid
+        SCOPES = [
+            AuthScope.CHANNEL_MANAGE_PREDICTIONS,
+            AuthScope.CHANNEL_MANAGE_POLLS,
+            AuthScope.USER_READ_SUBSCRIPTIONS,
+            AuthScope.USER_READ_EMAIL,
+            AuthScope.CHANNEL_READ_SUBSCRIPTIONS,
+            AuthScope.MODERATION_READ,
+            AuthScope.CHANNEL_READ_REDEMPTIONS,
+            AuthScope.CLIPS_EDIT,
+            AuthScope.CHAT_EDIT,
+            AuthScope.CHAT_READ
+        ]
+        AUTH_FILE = f"{appdata_path}/rewardevents/web/src/auth/auth.json"
 
-    # Load data from JSON file
-    with open(AUTH_FILE) as auth_file:
-        data = json.load(auth_file)
+        # Load data from JSON file
+        with open(AUTH_FILE) as auth_file:
+            data = json.load(auth_file)
 
-    # Create Twitch API object
-    twitch_api = Twitch(CLIENT_ID, authenticate_app=False)
-    twitch_api.auto_refresh_auth = False
+        # Create Twitch API object
+        twitch_api = Twitch(CLIENT_ID, authenticate_app=False)
+        twitch_api.auto_refresh_auth = False
 
-    # Set user authentication based on type_id
-    if type_id == "streamer":
-        username = data["USERNAME"]
-        twitch_api.set_user_authentication(token, SCOPES)
-        
-    elif type_id == "bot":
-        username = data["BOTUSERNAME"]
-        twitch_api.set_user_authentication(token, SCOPES)
+        # Set user authentication based on type_id
+        if type_id == "streamer":
+            username = data["USERNAME"]
+            twitch_api.set_user_authentication(token, SCOPES)
+            
+        elif type_id == "bot":
+            username = data["BOTUSERNAME"]
+            twitch_api.set_user_authentication(token, SCOPES)
 
-    elif type_id == "streamer_asbot":
-        username = data["USERNAME"]
-        twitch_api.set_user_authentication(token, SCOPES)
+        elif type_id == "streamer_asbot":
+            username = data["USERNAME"]
+            twitch_api.set_user_authentication(token, SCOPES)
 
-    else:
-        raise ValueError(f"Invalid type_id: {type_id}")
+        else:
+            raise ValueError(f"Invalid type_id: {type_id}")
 
-    # Get user id from Twitch API
-    user_id_resp = twitch_api.get_users(logins=[username])["data"][0]["id"]
+        # Get user id from Twitch API
+        user_id_resp = twitch_api.get_users(logins=[username])["data"][0]["id"]
 
-    # Update data based on type_id
-    if type_id == "streamer":
-        data["TOKEN"] = token
-        data["BROADCASTER_ID"] = user_id_resp
+        # Update data based on type_id
+        if type_id == "streamer":
+            data["TOKEN"] = token
+            data["BROADCASTER_ID"] = user_id_resp
 
-    elif type_id == "bot":
-        data["TOKENBOT"] = token
-        data["BOT_ID"] = user_id_resp
+        elif type_id == "bot":
+            data["TOKENBOT"] = token
+            data["BOT_ID"] = user_id_resp
 
-    elif type_id == "streamer_asbot":
-         data["TOKEN"] = token
-         data["BROADCASTER_ID"] = user_id_resp 
-         data["TOKENBOT"] = token
+        elif type_id == "streamer_asbot":
+            data["TOKEN"] = token
+            data["BROADCASTER_ID"] = user_id_resp 
+            data["TOKENBOT"] = token
 
-    # Save updated data to JSON file   
-    with open(AUTH_FILE, "w") as out_file:
-        json.dump(data, out_file, indent=6)
+        # Save updated data to JSON file   
+        with open(AUTH_FILE, "w") as out_file:
+            json.dump(data, out_file, indent=6)
+    
+    except Exception as e:
+        utils.error_log(e)
 
 
 @eel.expose
@@ -186,41 +232,48 @@ def start_auth_window(username,type_id):
         ValueError: If the type_id is not one of the valid options.
     """
 
-    with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json") as auth_file:
-        data = json.load(auth_file)
-    # Intern strings for efficiency
-    type_id = sys.intern(type_id)
-    if type_id == 'streamer':
-        data['USERNAME'] = username
-    elif type_id == 'bot':
-        data['BOTUSERNAME'] = username
-    elif type_id == 'streamer_asbot':
-        data['USERNAME'] = username
-        data['BOTUSERNAME'] = username
+    try:
 
-    # Write to file only once instead of multiple times
-    with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json", "w") as out_file:
-        json.dump(data, out_file, indent=6)
+        with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json") as auth_file:
+            data = json.load(auth_file)
+        # Intern strings for efficiency
+        type_id = sys.intern(type_id)
+        if type_id == 'streamer':
+            data['USERNAME'] = username
+        elif type_id == 'bot':
+            data['BOTUSERNAME'] = username
+        elif type_id == 'streamer_asbot':
+            data['USERNAME'] = username
+            data['BOTUSERNAME'] = username
 
-    with open(f'{appdata_path}/rewardevents/web/src/auth/scopes.json', 'r') as file:
-        scope_auth = json.load(file)
+        # Write to file only once instead of multiple times
+        with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json", "w") as out_file:
+            json.dump(data, out_file, indent=6)
 
-    redirect_uri = scope_auth['redirect_uri']
-    url = scope_auth['url']
-    response_type = scope_auth['response_type']
-    force_verify = scope_auth['force_verify']
+        with open(f'{appdata_path}/rewardevents/web/src/auth/scopes.json', 'r') as file:
+            scope_auth = json.load(file)
 
-    # Use generator expression instead of list comprehension for scope
-    scope_list = scope_auth['scopes']
+        redirect_uri = scope_auth['redirect']
+        url = scope_auth['url']
+        response_type = scope_auth['response_type']
+        force_verify = scope_auth['force_verify']
 
-    scope = '+'.join(scope for scope in scope_list)
+        # Use generator expression instead of list comprehension for scope
+        scope_list = scope_auth['scopes']
 
-    oauth_uri = f"{url}oauth2/authorize?response_type={response_type}&force_verify={force_verify}&client_id={clientid}&redirect_uri={redirect_uri}&scope={scope}"
-    webbrowser.open(oauth_uri)
+        scope = '+'.join(scope for scope in scope_list)
+
+        oauth_uri = f"{url}oauth2/authorize?response_type={response_type}&force_verify={force_verify}&client_id={clientid}&redirect_uri={redirect_uri}&scope={scope}"
+        webbrowser.open(oauth_uri,new=0, autoraise=True)
+
+    except Exception as e:
+        utils.error_log(e)
+
 
 
 @eel.expose
 def send_announcement(message,color):
+    
     """Exposes a python function to javascript and sends an announcement message to a Twitch chat.
 
     Args:
@@ -233,6 +286,7 @@ def send_announcement(message,color):
     Raises:
         requests.exceptions.RequestException: If the request failed for any reason.
     """
+
     url = f"https://api.twitch.tv/helix/chat/announcements?broadcaster_id={authdata.BROADCASTER_ID()}&moderator_id={authdata.BOT_ID()}"
     
     headers = {
@@ -240,6 +294,7 @@ def send_announcement(message,color):
         "Client-Id": clientid,
         "Content-Type": "application/json"
     }
+
     data = json.dumps({"message": message, "color": color})
 
     response = req.post(url, headers=headers, data=data.encode('utf-8'))
@@ -265,27 +320,23 @@ def send(message):
     
     if loaded_status == 1:
 
-        # Check if the message is an announcement command
         if message.startswith('/announce'):
-            # Get the color from the command or use primary as default
+
             color = message.split('/')[1].replace('announce', '') or 'primary'
-            # Get the actual message from the command
+
             announcement = message.split(color)[1]
-            # Send the announcement using the send_announcement function
+
             send_announcement(announcement, color)
 
         else:
             
-            # Send the message using the twitchio chat object
             chat.send(message)
             
-            # Load the chat configuration from a json file
             with open(f'{appdata_path}/rewardevents/web/src/config/chat_config.json','r',encoding='utf-8') as chat_file:
                 chat_data = json.load(chat_file)
 
             now = datetime.datetime.now()
             
-            # Format and show the time according to the configuration
             if chat_data['data-show'] == 1:
                 format = chat_data['time-format']
                 if chat_data['type-data'] == "passed":
@@ -296,38 +347,189 @@ def send(message):
                 chat_time = ''
                     
             
-            # Create a dictionary with the response data and configuration
             data_res = {
-                "response": 0,
-                "frist_message" : 0,
-                "appply_colors" : chat_data["appply-colors"],
-                "appply_no_colors" : chat_data["appply-no-colors"],
-                "color_apply" : chat_data["color-apply"],
-                "show_badges" : chat_data["show-badges"],
-                "wrapp_message" : chat_data["wrapp-message"],
-                "font_size" : chat_data["font-size"],
-                'chat_time' : f'{chat_time}',
                 'type': 'PRIVMSG',
-                "color": '',
+                "response": 0,
+                "color": '#4f016c',
                 "display_name": authdata.BOTUSERNAME(),
-                "user_name": authdata.BOTUSERNAME(),
                 "badges" : f'<img class="badges" src="https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/1" />', 
+                "emotes": "",    
+                "user_name": authdata.BOTUSERNAME(),
+                "user_replied" : '',
                 "mod": 1,
                 "vip": 0,
+                "regular": 0,
+                "top_chatter": 0,
                 "subscriber": 0,
-                "user_id": authdata.BROADCASTER_ID(),
+                "user_id": authdata.BOT_ID(),
+                "frist_message" : 0,
                 "message": message,
-                "user_replied" : '',
                 "message_replied" : '',
+                "message_no_url": message,
+                "appply_colors" : chat_data["appply-colors"],
+                "appply_no_colors" : chat_data["appply-no-colors"],
                 "data_show" : chat_data["data-show"],
+                'chat_time' : f'{chat_time}',
                 "type_data" : chat_data["type-data"],
+                "color_apply" : chat_data["color-apply"],
                 "block_color" : chat_data["block-color"],
-                
+                "font_size" : chat_data["font-size"],
+                "show_badges" : chat_data["show-badges"],
+                "wrapp_message" : chat_data["wrapp-message"],
              }
              
             message_data_dump = json.dumps(data_res, ensure_ascii=False)
             eel.append_message(message_data_dump)
-        
+
+
+@eel.expose
+def send_chat(message):
+    """Exposes a python function to javascript and sends a message to a Twitch chat.
+
+    Args:
+        message (str): The message to be sent.
+
+    Returns:
+        dict: A dictionary containing the response data and the chat configuration.
+
+    Raises:
+        FileNotFoundError: If the chat_config.json file is not found.
+        twitchio.errors.HTTPException: If the chat.send() method failed for any reason.
+    """
+    global chat
+    
+    if loaded_status == 1:
+
+        if message.startswith('/announce'):
+
+            color = message.split('/')[1].replace('announce', '') or 'primary'
+
+            announcement = message.split(color)[1]
+
+            send_announcement(announcement, color)
+
+        else:
+            
+            chat.send(message)
+            
+            with open(f'{appdata_path}/rewardevents/web/src/config/chat_config.json','r',encoding='utf-8') as chat_file:
+                chat_data = json.load(chat_file)
+
+            now = datetime.datetime.now()
+            
+            if chat_data['data-show'] == 1:
+                format = chat_data['time-format']
+                if chat_data['type-data'] == "passed":
+                    chat_time = now.strftime('%Y-%m-%dT%H:%M:%S')
+                elif chat_data['type-data'] == "current":
+                    chat_time = now.strftime(format)
+            else: 
+                chat_time = ''
+                    
+            
+            data_res = {
+                'type': 'PRIVMSG',
+                "response": 0,
+                "color": '#4f016c',
+                "display_name": authdata.BOTUSERNAME(),
+                "badges" : f'<img class="badges" src="https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/1" />', 
+                "emotes": "",    
+                "user_name": authdata.BOTUSERNAME(),
+                "user_replied" : '',
+                "mod": 1,
+                "vip": 0,
+                "regular": 0,
+                "top_chatter": 0,
+                "subscriber": 0,
+                "user_id": authdata.BOT_ID(),
+                "frist_message" : 0,
+                "message": message,
+                "message_replied" : '',
+                "message_no_url": message,
+                "appply_colors" : chat_data["appply-colors"],
+                "appply_no_colors" : chat_data["appply-no-colors"],
+                "data_show" : chat_data["data-show"],
+                'chat_time' : f'{chat_time}',
+                "type_data" : chat_data["type-data"],
+                "color_apply" : chat_data["color-apply"],
+                "block_color" : chat_data["block-color"],
+                "font_size" : chat_data["font-size"],
+                "show_badges" : chat_data["show-badges"],
+                "wrapp_message" : chat_data["wrapp-message"],
+             }
+             
+            message_data_dump = json.dumps(data_res, ensure_ascii=False)
+            eel.append_message(message_data_dump)
+            commands_module(data_res)
+
+
+def append_notice(data_receive):
+
+    type_id = data_receive['type']
+    message = data_receive['message']
+    user_input = data_receive['user_input']
+
+    with open(f"{appdata_path}/rewardevents/web/src/config/event_log.json", "r",encoding='utf-8') as event_log_file:
+        event_log_data = json.load(event_log_file)
+    
+    now = datetime.datetime.now()
+
+    data = {
+        "message" : message,
+        "user_input" : user_input,
+        "font_size" : event_log_data['font_size'],
+        "color" : event_log_data['color_events'],
+        "data_time" : now.strftime("%Y-%m-%d %H:%M:%S.%f"),
+        "data_show" : event_log_data["data_show"],
+        "type_event" : type_id,
+        "show_commands" : event_log_data["show_commands"],
+        "show_redeem" : event_log_data["show_redeem"],
+        "show_events" : event_log_data["show_events"], 
+        "show_join" : event_log_data["show_join"], 
+        "show_leave" : event_log_data["show_leave"], 
+    }
+
+    
+    event_log_data['event_list'].append(f"{now} | {type_id} | {message} | {user_input}")
+
+    with open(f"{appdata_path}/rewardevents/web/src/config/event_log.json", "w",encoding='utf-8') as event_log_file:
+        json.dump(event_log_data,event_log_file,indent=4,ensure_ascii=False)
+    
+
+    if type_id == 'command':
+
+        if event_log_data['show_commands'] == 1:
+
+            event_dump = json.dumps(data, ensure_ascii=False)
+            eel.append_notice(event_dump)
+
+    elif type_id == 'event':
+
+        if event_log_data['show_events'] == 1:
+
+            event_dump = json.dumps(data, ensure_ascii=False)
+            eel.append_notice(event_dump)
+
+    elif type_id == 'redeem' :
+        if event_log_data['show_redeem'] == 1:
+
+            event_dump = json.dumps(data, ensure_ascii=False)
+            eel.append_notice(event_dump)
+    
+    elif type_id == 'join' :
+
+        if event_log_data['show_join'] == 1:
+
+            event_dump = json.dumps(data, ensure_ascii=False)
+            eel.append_notice(event_dump)
+    
+    elif type_id == 'leave' :
+
+        if event_log_data['show_leave'] == 1:
+
+            event_dump = json.dumps(data, ensure_ascii=False)
+            eel.append_notice(event_dump)
+
 
 def send_discord_webhook(data):
     
@@ -886,30 +1088,84 @@ def get_auth_py(type_id):
 
 
 @eel.expose
-def log_data(data):
-    
-    with open(f'{appdata_path}/rewardevents/web/src/chat_log.txt','a',encoding='utf-8') as chat_log:
-        chat_log.write(f'{data} \n')
-     
-        
-@eel.expose
-def minimize():
-    window.minimize()
-
-
-@eel.expose
 def logout_auth():
-    data = {'USERNAME': '',
-            'BROADCASTER_ID': '',
-            'REFRESH_TOKEN': '',
-            'TOKENBOT':'',
-            'BOTUSERNAME': ''
-            }
+    data = {
+        'USERNAME': '',
+        'BOTUSERNAME': '',
+        'BROADCASTER_ID': '',
+        'BOT_ID' : '',
+        'TOKEN': '',
+        'TOKENBOT':'',
+    }
 
     with open(f"{appdata_path}/rewardevents/web/src/auth/auth.json", "w") as logout_file:
         json.dump(data, logout_file, indent=6)
 
-    close('normal')
+    close()
+
+
+@eel.expose
+def event_log(type_id,data_save):
+
+    if type_id == "get" :
+
+        with open(f"{appdata_path}/rewardevents/web/src/config/event_log.json", "r",encoding='utf-8') as event_log_file:
+            event_log_data = json.load(event_log_file)
+        
+        data = {
+            "messages" : event_log_data['event_list'],
+            "font_size" : event_log_data['font_size'],
+            "color" : event_log_data['color_events'],
+            "data_show" : event_log_data["data_show"],
+            "show_commands" : event_log_data["show_commands"],
+            "show_redeem" : event_log_data["show_redeem"],
+            "show_events" : event_log_data["show_events"], 
+            "show_join" : event_log_data["show_join"], 
+            "show_leave" : event_log_data["show_leave"], 
+        }
+
+        data_dump = json.dumps(data, ensure_ascii=False)
+
+        return data_dump
+    
+    elif type_id == "get_config" :
+
+        with open(f"{appdata_path}/rewardevents/web/src/config/event_log.json", "r",encoding='utf-8') as event_log_file:
+            event_log_data = json.load(event_log_file)
+
+        data = {
+            "font_size" : event_log_data['font_size'],
+            "color_events" : event_log_data['color_events'],
+            "show_time_events" : event_log_data["data_show"],
+            "show_commands" : event_log_data["show_commands"],
+            "show_redeem" : event_log_data["show_redeem"],
+            "show_events" : event_log_data["show_events"], 
+            "show_join" : event_log_data["show_join"], 
+            "show_leave" : event_log_data["show_leave"], 
+        }
+
+        data_dump = json.dumps(data, ensure_ascii=False)
+
+        return data_dump
+
+    elif type_id == "save" :
+
+        with open(f"{appdata_path}/rewardevents/web/src/config/event_log.json", "r",encoding='utf-8') as event_log_file:
+            event_log_data = json.load(event_log_file)
+
+        data_save = json.loads(data_save)
+
+        event_log_data['font_size'] = data_save['font_size']
+        event_log_data['color_events'] = data_save['color_events']
+        event_log_data['show_time_events'] = data_save['data_show']
+        event_log_data['show_commands'] = data_save['show_commands']
+        event_log_data['show_redeem'] = data_save['show_redeem']
+        event_log_data['show_events'] = data_save['show_events']
+        event_log_data['show_join'] = data_save['show_join']
+        event_log_data['show_leave'] = data_save['show_leave']
+
+        with open(f"{appdata_path}/rewardevents/web/src/config/event_log.json", "w",encoding='utf-8') as event_log_file:
+            json.dump(event_log_data,event_log_file,indent=4,ensure_ascii=False)
 
 
 @eel.expose
@@ -919,21 +1175,10 @@ def get_spec():
         
         try:
             
-            if loaded_status == 1 and bot_loaded == 1:
+            if loaded_status == 1:
                 
                 data_count = twitch_api.get_streams(user_login=[authdata.USERNAME()])
                 data_count_keys = data_count['data']
-
-                with open(f'{appdata_path}/rewardevents/web/src/config/timer.json', 'r', encoding='utf-8') as timer_data_file:
-                    timer_data = json.load(timer_data_file)
-
-                message_key = timer_data['LAST']
-                message_list = timer_data['MESSAGES']
-
-                if message_key in message_list.keys():
-                    last_timer = message_list[message_key]['message']
-                else:
-                    last_timer = 'Nenhuma mensagem enviada'
                     
                 if not data_count_keys:
 
@@ -941,7 +1186,6 @@ def get_spec():
                         'specs': 'Offline',
                         'time': 'Offline',
                         'follow': '',
-                        'last_timer': last_timer,
                     }
 
                     data_time_dump = json.dumps(data_time, ensure_ascii=False)
@@ -1047,22 +1291,20 @@ def get_redeem(type_id):
     if type_id == 'del' or type_id == "edit":
 
         list_titles = {"redeem": []}
-        path_file = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8')
-        path = json.load(path_file)
+        with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as path_file:
+            path = json.load(path_file)
 
         for key in path:
             list_titles["redeem"].append(key)
 
         list_titles_dump = json.dumps(list_titles, ensure_ascii=False)
 
-        path_file.close()
-
         return list_titles_dump
     
     else:
 
         list_titles = {"redeem": []}
-        
+
         with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as path_file:
             path = json.load(path_file)
 
@@ -1076,22 +1318,42 @@ def get_redeem(type_id):
 
         giveaway_redeem = path_giveaway['redeem']
 
+        with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'r', encoding='utf-8') as path_player_file:
+            path_player = json.load(path_player_file)
+
+        player_redeem = path_player['redeem']
+
+        with open(f'{appdata_path}/rewardevents/web/src/queue/config.json', 'r', encoding='utf-8') as path_queue_file:
+            queue_player = json.load(path_queue_file)
+
+        queue_redeem = queue_player['redeem']
+
         list_rewards = twitch_api.get_custom_reward(broadcaster_id=authdata.BROADCASTER_ID())
         
         for indx in list_rewards['data'][0:]:
             
             if type_id == 'counter': 
 
-                if indx['title'] not in path and indx['title'] != giveaway_redeem:
+                if indx['title'] not in path and indx['title'] not in [giveaway_redeem, queue_redeem, player_redeem]:
                     list_titles["redeem"].append(indx['title'])
                     
             elif type_id == 'giveaway':
                 
-                if indx['title'] not in path and indx['title'] != counter_redeem:
+                if indx['title'] not in path and indx['title'] not in [counter_redeem, queue_redeem, player_redeem]:
                     list_titles["redeem"].append(indx['title'])
+
+            elif type_id == 'player':
                 
+                if indx['title'] not in path and indx['title'] not in [giveaway_redeem, queue_redeem, counter_redeem]:
+                    list_titles["redeem"].append(indx['title'])
+
+            elif type_id == 'queue':
+                
+                if indx['title'] not in path and indx['title'] not in [giveaway_redeem, counter_redeem, player_redeem]:
+                    list_titles["redeem"].append(indx['title'])
+                         
             else:
-                if indx['title'] not in path and indx['title'] != giveaway_redeem and indx['title'] != counter_redeem:
+                if indx['title'] not in path and indx['title'] not in [giveaway_redeem, counter_redeem, player_redeem, queue_redeem]:
                     list_titles["redeem"].append(indx['title'])
                 
         list_titles_dump = json.dumps(list_titles, ensure_ascii=False)
@@ -1101,64 +1363,58 @@ def get_redeem(type_id):
 
 @eel.expose
 def get_edit_type_py(redeem_name):
-    with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as path_file:
-        path = json.load(path_file)
 
-    redeem_type = path[redeem_name]['type']
+    try:
 
-    return redeem_type
+        if redeem_name == 'Selecione':
+            eel.toast_notifc('Aguarde, ou selecione uma recompensa.') 
+            
+        else: 
 
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as path_file:
+                path = json.load(path_file)
 
-@eel.expose
-def select_file_py():
-    filetypes = (
-        ('audio files', '*.mp3'),
-        ('All files', '*.*')
-    )
+            redeem_type = path[redeem_name]['type']
 
-    root = tkinter.Tk()
-    root.withdraw()
-    root.wm_attributes('-topmost', 1)
+            return redeem_type
 
-    folder = fd.askopenfilename(
-        initialdir=f'{appdata_path}/rewardevents/web/src/files',
-        filetypes=filetypes)
-
-    return folder
+    except Exception as e:
+        utils.error_log(e)
 
 
 @eel.expose
-def select_file_video_py():
-    filetypes = (
-        ('video files', '*.mp4'),
-        ('gif files', '*.gif'),
-        ('All files', '*.*')
-    )
+def select_file_py(type_id):
+    
+    if type_id == 'audio':
+    
+        filetypes = (
+            ('audio files', '*.mp3'),
+            ('All files', '*.*')
+        )
 
-    root = tkinter.Tk()
-    root.withdraw()
-    root.wm_attributes('-topmost', 1)
+    elif type_id == 'video':
 
-    folder = fd.askopenfilename(
-        initialdir=f'{appdata_path}/rewardevents/web/src/files',
-        filetypes=filetypes)
-
-    return folder
+        filetypes = (
+            ('video files', '*.mp4'),
+            ('gif files', '*.gif'),
+            ('All files', '*.*')
+        )
 
 
-@eel.expose
-def select_file_image_py():
-    filetypes = (
+    elif type_id == 'image':
+
+        filetypes = (
         ('png files', '*.png'),
         ('gif files', '*.gif')
-    )
+        )
+
 
     root = tkinter.Tk()
     root.withdraw()
     root.wm_attributes('-topmost', 1)
 
     folder = fd.askopenfilename(
-        initialdir=f'{appdata_path}/rewardevents/web/src/files',
+        initialdir=f'{appdata_path}/rewardevents/web/src',
         filetypes=filetypes)
 
     return folder
@@ -1187,86 +1443,90 @@ def get_sources_obs():
 @eel.expose
 def get_stream_info_py():
     
-    resp_stream_info = twitch_api.get_channel_information(authdata.BROADCASTER_ID())
-    
-    title = resp_stream_info['data'][0]['title']
-    game = resp_stream_info['data'][0]['game_name']
-    game_id = resp_stream_info['data'][0]['game_id']
-    tag_list = resp_stream_info['data'][0]['tags']
-    
-    with open(f'{appdata_path}/rewardevents/web/src/games/games.json', 'r', encoding='utf-8') as file_games:
-        games_data = json.load(file_games)
-        
-    with open(f'{appdata_path}/rewardevents/web/src/games/tags.json', 'r', encoding='utf-8') as file_tags:
-        tags_data = json.load(file_tags)
-        
-    data = {
-        'game_name': game,
-        'game_id': game_id,
-        'title': title,
-        'tag': tag_list,
-        'game_list': games_data,
-        'tag_list': tags_data
-    }
-    
-    stream_info_dump = json.dumps(data, ensure_ascii=False)
+    try:
 
-    return stream_info_dump
+        resp_stream_info = twitch_api.get_channel_information(authdata.BROADCASTER_ID())
+        
+        title = resp_stream_info['data'][0]['title']
+        game = resp_stream_info['data'][0]['game_name']
+        game_id = resp_stream_info['data'][0]['game_id']
+        tag_list = resp_stream_info['data'][0]['tags']
+        
+        data = {
+            'game_name': game,
+            'game_id': game_id,
+            'title': title,
+            'tag': tag_list,
+        }
+        
+        stream_info_dump = json.dumps(data, ensure_ascii=False)
+
+        return stream_info_dump
+    
+    except Exception as e:
+
+        utils.error_log(e)
+        eel.toast_notifc('Erro ao obter informações da stream')  
 
 
 @eel.expose
 def save_stream_info_py(data):
     
-    data = json.loads(data)
-    
-    title = data['title']
-    game = data['game']
-    tags = data['tags']
-    send_discord = data['discord']
-    send_offline = data['offline']
-    
-    headers = {
-        'Authorization': f'Bearer {authdata.TOKEN()}',
-        'Client-Id': clientid,
-        'Content-Type': 'application/json',
-    }
-
-    params = {
-        'broadcaster_id': authdata.BROADCASTER_ID(),
-    }
-
-    json_data = {
-        'game_id': game,
-        'title': title,
-        'broadcaster_language': '',
-        'tags': tags,
-    }
-    
-    response = req.patch('https://api.twitch.tv/helix/channels', params=params, headers=headers, json=json_data)
-    
-    
-    with open(f'{appdata_path}/rewardevents/web/src/games/games_new.json', 'r',encoding='utf-8') as games_file:
-        games_data = json.load(games_file)
+    try:
         
-    game_dc = games_data[game]['name']
-    
-    data_discord = {
-        'type_id' : 'live_cat',
-        'title': title,
-        'tag' : game_dc,
-        'send_discord': send_discord,
-        'send_offline' : send_offline
-    }
-    
-    if send_offline == 1:
-        send_discord_webhook(data_discord)
-    
-    if response.status_code == 204:
-        eel.toast_notifc('success')
-    else:
-        eel.toast_notifc(f'error {response.json()}')
+        data = json.loads(data)
         
-    
+        title = data['title']
+        game = data['game']
+        game_id = data['game_id']
+        tags = data['tags']
+        send_discord = data['discord']
+        send_offline = data['offline']
+        
+        headers = {
+            'Authorization': f'Bearer {authdata.TOKEN()}',
+            'Client-Id': clientid,
+            'Content-Type': 'application/json',
+        }
+
+        params = {
+            'broadcaster_id': authdata.BROADCASTER_ID(),
+        }
+
+        json_data = {
+            'game_id': game_id,
+            'title': title,
+            'broadcaster_language': '',
+            'tags': tags,
+        }
+        
+        response = req.patch('https://api.twitch.tv/helix/channels', params=params, headers=headers, json=json_data)
+        
+        if response.status_code != 204:
+            eel.toast_notifc(f'Erro ao atualizar as informações da stream : {response.text}')  
+        
+        data_discord = {
+            'type_id' : 'live_cat',
+            'title': title,
+            'tag' : game,
+            'send_discord': send_discord,
+            'send_offline' : send_offline
+        }
+        
+        if send_offline == 1:
+            send_discord_webhook(data_discord)
+        
+        if response.status_code == 204:
+            eel.toast_notifc('success')
+        else:
+            eel.toast_notifc(f'error {response.json()}')
+            
+    except Exception as e:
+
+        utils.error_log(e)
+        eel.toast_notifc('error')  
+
+
 def create_command_redeem(data,type_id):
     
     if type_id == "create":
@@ -1322,6 +1582,41 @@ def create_command_redeem(data,type_id):
 
             with open(f'{appdata_path}/rewardevents/web/src/config/commands.json', 'w', encoding='utf-8') as command_file_write:
                 json.dump(command_data, command_file_write, indent=6, ensure_ascii=False)
+
+
+@eel.expose
+def get_command_list():
+        
+    with open(f'{appdata_path}/rewardevents/web/src/config/commands.json', "r", encoding='utf-8') as command_redeem_file:
+        command_redem_data = json.load(command_redeem_file)
+
+    with open(f'{appdata_path}/rewardevents/web/src/config/simple_commands.json', 'r', encoding='utf-8') as command_simple_file:
+        command_simple_data = json.load(command_simple_file)
+
+    with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
+       command_default_data = json.load(default_commands_file)
+
+    with open(f'{appdata_path}/rewardevents/web/src/counter/commands.json', "r", encoding='utf-8') as command_file_counter:
+        command_data_counter = json.load(command_file_counter)
+
+    with open(f'{appdata_path}/rewardevents/web/src/giveaway/commands.json', "r", encoding='utf-8') as command_file_giveaway:
+        command_data_giveaway = json.load(command_file_giveaway)
+
+    with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'r', encoding='utf-8') as command_file_player:
+        command_data_player = json.load(command_file_player)
+
+    data = {
+        'commands_redeem' : [command_redem_data],
+        'commands_simple' : [command_simple_data],
+        'commands_default' : [command_default_data],
+        'commands_counter' : [command_data_counter],
+        'commands_giveaway' : [command_data_giveaway],
+        'commands_player' : [command_data_player], 
+    }
+
+    command_list_dump = json.dumps(data, ensure_ascii=False)
+
+    return command_list_dump
 
 
 @eel.expose
@@ -1500,6 +1795,7 @@ def poll_py(data):
 
 @eel.expose
 def goal_py():
+
     with open(f'{appdata_path}/rewardevents/web/src/config/goal.json') as goal_file:
         goal_data = json.load(goal_file)
 
@@ -1865,44 +2161,60 @@ def create_action_save(data, type_id):
 
             old_data_write.close()
 
+        elif type_id == 'highlight':
+
+            command_value = data_receive['command_value']
+            redeem_value = data_receive['redeem_value']
+
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
+                new_data = json.load(old_data)
+
+            new_data[redeem_value] = {'type': 'highlight', 'command': command_value.lower(), }
+
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as old_data_write:
+                json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
+
+            if command_value != "":
+                create_command_redeem(data_receive,'create')
+
         elif type_id == 'delete':
 
             data = data_receive['redeem']
 
-            data_event_file = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8')
-            data_event = json.load(data_event_file)
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as data_event_file:
+                data_event = json.load(data_event_file)
 
             command = data_event[data]['command']
 
-            data_command_file = open(f'{appdata_path}/rewardevents/web/src/config/commands.json', 'r', encoding='utf-8')
-            data_command = json.load(data_command_file)
+            with open(f'{appdata_path}/rewardevents/web/src/config/commands.json', 'r', encoding='utf-8') as data_command_file:
+                data_command = json.load(data_command_file)
 
             if command in data_command.keys():
                 del data_command[command]
 
-                data_command_file.close()
+                with open(f'{appdata_path}/rewardevents/web/src/config/commands.json', 'w', encoding='utf-8') as command_data_write:
+                    json.dump(data_command, command_data_write, indent=6, ensure_ascii=False)
 
-                command_data_write = open(f'{appdata_path}/rewardevents/web/src/config/commands.json', 'w', encoding='utf-8')
-                json.dump(data_command, command_data_write, indent=6, ensure_ascii=False)
-                command_data_write.close()
-            else:
-                data_command_file.close()
 
             del data_event[data]
-            data_event_file.close()
 
-            event_data_write = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8')
-            json.dump(data_event, event_data_write, indent=6, ensure_ascii=False)
 
-            event_data_write.close()
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as event_data_write:
+                json.dump(data_event, event_data_write, indent=6, ensure_ascii=False)
 
-        eel.toast_notifc('success')
+        if type_id == "delete":
+            eel.toast_notifc('Ação excluida')
+        else: 
+            eel.toast_notifc('success')
 
     except Exception as e:
 
         utils.error_log(e)
 
-        eel.toast_notifc('error')
+        if type_id == "delete":
+            eel.toast_notifc('Ocorreu um erro ao excluir a ação')
+        else: 
+            eel.toast_notifc('error')
 
 
 @eel.expose
@@ -2131,306 +2443,44 @@ def commands_py(type_rec, data_receive):
             default_data_commands = json.load(default_commands_file)
             
             data = {
-                "cmd" : default_data_commands['cmd'],
-                "cmd_status" : default_data_commands['cmd_status'],
-                "cmd_delay" : default_data_commands['cmd_delay'],
-                "cmd_resp" : default_data_commands['cmd_response'],
-                "cmd_perm" : default_data_commands['cmd_perm'],
-                "dice" : default_data_commands['dice'],
-                "dice_status" : default_data_commands['dice_status'],
-                "dice_delay" : default_data_commands['dice_delay'],
-                "dice_resp" : default_data_commands['dice_response'],
-                "dice_perm" : default_data_commands['dice_perm'],
-                "random" : default_data_commands['random'],
-                "random_status" : default_data_commands['random_status'],
-                "random_delay" : default_data_commands['random_delay'],
-                "random_resp" : default_data_commands['random_response'],
-                "random_perm" : default_data_commands['random_perm'],
-                "uptime" : default_data_commands['uptime'],
-                "uptime_status" : default_data_commands['uptime_status'],
-                "uptime_delay" : default_data_commands['uptime_delay'],
-                "uptime_resp" : default_data_commands['uptime_response'],
-                "uptime_perm" : default_data_commands['uptime_perm'],
-                
-                "game" : default_data_commands['game'],
-                "game_status" : default_data_commands['game_status'],
-                "game_delay" : default_data_commands['game_delay'],
-                "game_resp" : default_data_commands['game_response'],
-                "game_perm" : default_data_commands['game_perm'],
-                
-                "followage" : default_data_commands['followage'],
-                "followage_status" : default_data_commands['followage_status'],
-                "followage_delay" : default_data_commands['followage_delay'],
-                "followage_resp" : default_data_commands['followage_response'],
-                "followage_perm" : default_data_commands['followage_perm'],
-                
-                "watchtime" : default_data_commands['watchtime'],
-                "watchtime_status" : default_data_commands['watchtime_status'],
-                "watchtime_delay" : default_data_commands['watchtime_delay'],
-                "watchtime_resp" : default_data_commands['watchtime_response'],
-                "watchtime_perm" : default_data_commands['watchtime_perm'],
-                
-                "msgcount" : default_data_commands['msgcount'],
-                "msgcount_status" : default_data_commands['msgcount_status'],
-                "msgcount_delay" : default_data_commands['msgcount_delay'],
-                "msgcount_resp" : default_data_commands['msgcount_response'],
-                "msgcount_perm" : default_data_commands['msgcount_perm'],
-                
-                "interaction_1" : default_data_commands['interaction_1'],
-                "interaction_1_status" : default_data_commands['interaction_1_status'],
-                "interaction_1_delay" : default_data_commands['interaction_1_delay'],
-                "interaction_1_resp" : default_data_commands['interaction_1_response'],
-                "interaction_1_perm" : default_data_commands['interaction_1_perm'],
-                "interaction_2" : default_data_commands['interaction_2'],
-                "interaction_2_status" : default_data_commands['interaction_2_status'],
-                "interaction_2_delay" : default_data_commands['interaction_2_delay'],
-                "interaction_2_resp" : default_data_commands['interaction_2_response'],
-                "interaction_2_perm" : default_data_commands['interaction_2_perm'],
-                "interaction_3" : default_data_commands['interaction_3'],
-                "interaction_3_status" : default_data_commands['interaction_3_status'],
-                "interaction_3_delay" : default_data_commands['interaction_3_delay'],
-                "interaction_3_resp" : default_data_commands['interaction_3_response'],
-                "interaction_3_perm" : default_data_commands['interaction_3_perm'],
-                "interaction_4" : default_data_commands['interaction_4'],
-                "interaction_4_status" : default_data_commands['interaction_4_status'],
-                "interaction_4_delay" : default_data_commands['interaction_4_delay'],
-                "interaction_4_resp" : default_data_commands['interaction_4_response'],
-                "interaction_4_perm" : default_data_commands['interaction_4_perm'],
-                "interaction_5" : default_data_commands['interaction_5'],
-                "interaction_5_status" : default_data_commands['interaction_5_status'],
-                "interaction_5_delay" : default_data_commands['interaction_5_delay'],
-                "interaction_5_resp" : default_data_commands['interaction_5_response'],
-                "interaction_5_perm" : default_data_commands['interaction_5_perm'],
+                "command": default_data_commands[data_receive]['command'],
+                "status": default_data_commands[data_receive]['status'],
+                "delay": default_data_commands[data_receive]['delay'],
+                "last_use": default_data_commands[data_receive]['last_use'],
+                "response": default_data_commands[data_receive]['response'],
+                "user_level": default_data_commands[data_receive]['user_level'],
             }
             
             default_return_data = json.dumps(data, ensure_ascii=False)
 
             return default_return_data           
     
-    elif type_rec == 'save_default-cmd':
-    
-        data = json.loads(data_receive)  
+    elif type_rec == 'save_default':
         
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
+        try:
 
-        default_data_commands["cmd"] = data['cmd']
-        default_data_commands["cmd_status"] = data['cmd_status']
-        default_data_commands["cmd_delay"] = data['cmd_delay']
-        default_data_commands["cmd_response"] = data['cmd_respo']
-        default_data_commands["cmd_perm"] = data['cmd_perm']
+            data = json.loads(data_receive)  
             
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
+            with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
+                default_data_commands = json.load(default_commands_file)
+
+
+            type_cmd = data["default_type"]
+
+            default_data_commands[type_cmd]["command"] = data['command']
+            default_data_commands[type_cmd]["status"] = data['status']
+            default_data_commands[type_cmd]["delay"] = data['delay']
+            default_data_commands[type_cmd]["response"] = data['response']
+            default_data_commands[type_cmd]["user_level"] = data['perm']
+                
+            with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
+                json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
+                
             eel.toast_notifc('Comando salvo')
 
-    elif type_rec == 'save_default-dice':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
+        except Exception as e:
+            utils.error_log(e)
 
-        default_data_commands["dice"] = data['dice']
-        default_data_commands["dice_status"] = data['dice_status']
-        default_data_commands["dice_delay"] = data['dice_delay']
-        default_data_commands["dice_response"] = data['dice_respo']
-        default_data_commands["dice_perm"] = data['dice_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
-
-    elif type_rec == 'save_default-random':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["random"] = data['random']
-        default_data_commands["random_status"] = data['random_status']
-        default_data_commands["random_delay"] = data['random_delay']
-        default_data_commands["random_response"] = data['random_respo']
-        default_data_commands["random_perm"] = data['random_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
-    elif type_rec == 'save_default-uptime':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["uptime"] = data['uptime']
-        default_data_commands["uptime_status"] = data['uptime_status']
-        default_data_commands["uptime_delay"] = data['uptime_delay']
-        default_data_commands["uptime_response"] = data['uptime_respo']
-        default_data_commands["uptime_perm"] = data['uptime_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
-    elif type_rec == 'save_default-game':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["game"] = data['game']
-        default_data_commands["game_status"] = data['game_status']
-        default_data_commands["game_delay"] = data['game_delay']
-        default_data_commands["game_response"] = data['game_respo']
-        default_data_commands["game_perm"] = data['game_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
-    elif type_rec == 'save_default-followage':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["followage"] = data['followage']
-        default_data_commands["followage_status"] = data['followage_status']
-        default_data_commands["followage_delay"] = data['followage_delay']
-        default_data_commands["followage_response"] = data['followage_respo']
-        default_data_commands["followage_perm"] = data['followage_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
-    elif type_rec == 'save_default-msgcount':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["msgcount"] = data['msgcount']
-        default_data_commands["msgcount_status"] = data['msgcount_status']
-        default_data_commands["msgcount_delay"] = data['msgcount_delay']
-        default_data_commands["msgcount_response"] = data['msgcount_respo']
-        default_data_commands["msgcount_perm"] = data['msgcount_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')     
-    elif type_rec == 'save_default-watchtime':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["watchtime"] = data['watchtime']
-        default_data_commands["watchtime_status"] = data['watchtime_status']
-        default_data_commands["watchtime_delay"] = data['watchtime_delay']
-        default_data_commands["watchtime_response"] = data['watchtime_respo']
-        default_data_commands["watchtime_perm"] = data['watchtime_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
-    elif type_rec == 'save_default-interaction_1':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["interaction_1"] = data['interaction_1']
-        default_data_commands["interaction_1_status"] = data['interaction_1_status']
-        default_data_commands["interaction_1_delay"] = data['interaction_1_delay']
-        default_data_commands["interaction_1_response"] = data['interaction_1_respo']
-        default_data_commands["interaction_1_perm"] = data['interaction_1_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
-    elif type_rec == 'save_default-interaction_2':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["interaction_2"] = data['interaction_2']
-        default_data_commands["interaction_2_status"] = data['interaction_2_status']
-        default_data_commands["interaction_2_delay"] = data['interaction_2_delay']
-        default_data_commands["interaction_2_response"] = data['interaction_2_respo']
-        default_data_commands["interaction_2_perm"] = data['interaction_2_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
-    elif type_rec == 'save_default-interaction_3':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["interaction_3"] = data['interaction_3']
-        default_data_commands["interaction_3_status"] = data['interaction_3_status']
-        default_data_commands["interaction_3_delay"] = data['interaction_3_delay']
-        default_data_commands["interaction_3_response"] = data['interaction_3_respo']
-        default_data_commands["interaction_3_perm"] = data['interaction_3_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
-    elif type_rec == 'save_default-interaction_4':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["interaction_4"] = data['interaction_4']
-        default_data_commands["interaction_4_status"] = data['interaction_4_status']
-        default_data_commands["interaction_4_delay"] = data['interaction_4_delay']
-        default_data_commands["interaction_4_response"] = data['interaction_4_respo']
-        default_data_commands["interaction_4_perm"] = data['interaction_4_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
-    elif type_rec == 'save_default-interaction_5':
-        
-        data = json.loads(data_receive)  
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'r',encoding='utf-8') as default_commands_file:
-            default_data_commands = json.load(default_commands_file)
-
-        default_data_commands["interaction_5"] = data['interaction_5']
-        default_data_commands["interaction_5_status"] = data['interaction_5_status']
-        default_data_commands["interaction_5_delay"] = data['interaction_5_delay']
-        default_data_commands["interaction_5_response"] = data['interaction_5_respo']
-        default_data_commands["interaction_5_perm"] = data['interaction_5_perm']
-            
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json' , 'w',encoding='utf-8') as default_commands_file:
-            json.dump(default_data_commands,default_commands_file,indent=6,ensure_ascii=False)
-            
-            eel.toast_notifc('Comando salvo')
- 
  
 @eel.expose
 def timer_py(type_id, data_receive):
@@ -2601,7 +2651,12 @@ def timer_py(type_id, data_receive):
             with open(f'{appdata_path}/rewardevents/web/src/config/commands_config.json', 'w', encoding="utf-8") as command_config_file_w:
                 json.dump(command_config_data, command_config_file_w, indent=6, ensure_ascii=False)
                 
-            eel.toast_notifc('success')
+            if data_receive == 1:
+
+                eel.toast_notifc('Timer ativado')
+            elif data_receive == 0:
+
+                eel.toast_notifc('Timer desativado')
                 
         except Exception as e:
 
@@ -2617,12 +2672,6 @@ def giveaway_py(type_id, data_receive):
             with open(f'{appdata_path}/rewardevents/web/src/giveaway/config.json', 'r', encoding='utf-8') as giveaway_file:
                 giveaway_data = json.load(giveaway_file)
                 
-            with open(f'{appdata_path}/rewardevents/web/src/giveaway/commands.json', 'r', encoding='utf-8') as giveaway_commands_file:
-                giveaway_commands_data = json.load(giveaway_commands_file)
-                
-            with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'r', encoding='utf-8') as giveaway_delay_file:
-                giveaway_delay_data = json.load(giveaway_delay_file)
-
             data = {
                 "giveaway_name": giveaway_data['name'],
                 "giveaway_level": giveaway_data['user_level'],
@@ -2630,21 +2679,28 @@ def giveaway_py(type_id, data_receive):
                 "giveaway_enable": giveaway_data['enable'],
                 "giveaway_redeem": giveaway_data['redeem'],
                 "giveaway_mult": giveaway_data['allow_mult_entry'],
-                "execute_giveaway": giveaway_commands_data['execute_giveaway'],
-                "execute_delay": giveaway_delay_data['execute_delay'],
-                "user_check_giveaway": giveaway_commands_data['check_name'],
-                "user_check_delay" :giveaway_delay_data['check_delay'],
-                "self_check_giveaway": giveaway_commands_data['check_self_name'],
-                "self_check_delay" : giveaway_delay_data['check_self_delay'],
-                "clear_giveaway": giveaway_commands_data['clear_giveaway'],
-                "clear_delay" : giveaway_delay_data['clear_delay'],
-                "add_user_giveaway": giveaway_commands_data['add_user'],
-                "add_user_delay": giveaway_delay_data['add_user_delay']
             }
 
             data_dump = json.dumps(data, ensure_ascii=False)
 
             return data_dump
+
+    elif type_id == 'get_commands':
+                    
+        with open(f'{appdata_path}/rewardevents/web/src/giveaway/commands.json', 'r', encoding='utf-8') as giveaway_commands_file:
+            giveaway_commands_data = json.load(giveaway_commands_file)
+
+        data = {
+            "command" : giveaway_commands_data[data_receive]["command"],
+            "status" : giveaway_commands_data[data_receive]["status"],
+            "delay": giveaway_commands_data[data_receive]["delay"],
+            "last_use" : giveaway_commands_data[data_receive]["last_use"],
+            "user_level" : giveaway_commands_data[data_receive]["user_level"],
+        }
+
+        counter_data_parse = json.dumps(data, ensure_ascii=False)
+
+        return counter_data_parse
 
     elif type_id == 'show_names':
         
@@ -2656,6 +2712,7 @@ def giveaway_py(type_id, data_receive):
         return data_dump
 
     elif type_id == 'save_config':
+
         try:
             data = json.loads(data_receive)
 
@@ -2719,28 +2776,21 @@ def giveaway_py(type_id, data_receive):
 
         try:
 
-            giveaway_data_new = {
-                "execute_giveaway": data['execute_giveaway'],
-                "clear_giveaway": data['clear_giveaway'],
-                "check_name": data['check_user_giveaway'],
-                "check_self_name": data['self_check_giveaway'],
-                "add_user": data['add_user_giveaway'],
+            with open(f'{appdata_path}/rewardevents/web/src/giveaway/commands.json', 'r', encoding='utf-8') as giveaway_commands_file:
+                giveaway_commands_data = json.load(giveaway_commands_file)
+
+            type_command = data['type_command']
+
+            giveaway_commands_data[type_command] = {
+                "command" : data['command'],
+                "status" :data['status'],
+                "delay" : data['delay'],
+                "last_use": giveaway_commands_data[type_command]['last_use'],
+                "user_level" : data['user_level']
             }
 
             with open(f'{appdata_path}/rewardevents/web/src/giveaway/commands.json', 'w', encoding="utf-8") as giveaway_commands_w:
-                json.dump(giveaway_data_new, giveaway_commands_w, indent=6, ensure_ascii=False)
-                
-            with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'r', encoding='utf-8') as giveaway_delay_file:
-                giveaway_delay_data = json.load(giveaway_delay_file)
-                
-                giveaway_delay_data['execute_delay'] = data['execute_delay']
-                giveaway_delay_data['clear_delay'] = data['clear_delay']
-                giveaway_delay_data['check_delay'] = data['check_user_delay']
-                giveaway_delay_data['check_self_delay'] = data['self_check_delay']
-                giveaway_delay_data['add_user_delay'] = data['add_user_delay']
-                
-            with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'w', encoding="utf-8") as giveaway_delay_w:
-                json.dump(giveaway_delay_data, giveaway_delay_w, indent=6, ensure_ascii=False)
+                json.dump(giveaway_commands_data, giveaway_commands_w, indent=6, ensure_ascii=False)
 
             eel.toast_notifc('success')
 
@@ -2855,6 +2905,15 @@ def giveaway_py(type_id, data_receive):
                             send(response_redus)
 
             else:
+
+                giveaway_perm = giveaway_config_data['user_level']
+                giveaway_mult_config = giveaway_config_data['allow_mult_entry']
+
+                aliases = {
+                    '{username}': str(new_name),
+                    '{perm}' : str(giveaway_perm)
+                }
+
                 response_give_load = utils.messages_file_load('giveaway_status_disabled')
 
                 response_redus = utils.replace_all(response_give_load, aliases)
@@ -2922,48 +2981,34 @@ def giveaway_py(type_id, data_receive):
   
   
 @eel.expose
-def counter(fun_id, redeem, commands, value):
+def counter(type_id, data_receive):
     
-    if fun_id == 'get_counter_config':
+    if type_id == 'get_counter_config':
         
         with open(f'{appdata_path}/rewardevents/web/src/counter/config.json', 'r', encoding='utf-8') as counter_file:
             counter_data = json.load(counter_file)
-            
-        with open(f'{appdata_path}/rewardevents/web/src/counter/delay.json', 'r', encoding='utf-8') as delay_counter_file:
-            delay_counter_data = json.load(delay_counter_file)
-            
-        with open(f'{appdata_path}/rewardevents/web/src/counter/commands.json', 'r', encoding='utf-8') as counter_commands_file:
-            counter_commands_data = json.load(counter_commands_file)
-
+                
         with open(f"{appdata_path}/rewardevents/web/src/counter/counter.txt", "r") as counter_file_r:
             counter_file_r.seek(0)
             counter_value_get = counter_file_r.read()
 
         response_chat = utils.messages_file_load('response_counter')
+        response_set_chat = utils.messages_file_load('response_set_counter')
 
         data = {
 
             "redeem": counter_data['redeem'],
             "response" : counter_data['response'],
             "response_chat" : response_chat,
-            "value_counter": counter_value_get,
-            "counter_command_reset": counter_commands_data['reset_counter'],
-            "counter_delay_reset" : delay_counter_data['reset'],
-            "counter_status_reset": delay_counter_data['reset_status'],
-            "counter_command_set": counter_commands_data['set_counter'],
-            "counter_delay_set" : delay_counter_data['set'],
-            "counter_status_apply": delay_counter_data['set_status'],
-            "counter_command_check": counter_commands_data['check_counter'],
-            "counter_delay_check" : delay_counter_data['check'],
-            "counter_status_check" : delay_counter_data['check_status'],
-            
+            "response_set_chat" : response_set_chat,
+            "value_counter": counter_value_get,   
         }
 
         counter_data_parse = json.dumps(data, ensure_ascii=False)
 
         return counter_data_parse
 
-    if fun_id == "save_counter_config":
+    elif type_id == "save_counter_config":
 
         try:
             with open(f'{appdata_path}/rewardevents/web/src/counter/config.json', 'r', encoding='utf-8') as counter_file:
@@ -2972,9 +3017,10 @@ def counter(fun_id, redeem, commands, value):
             with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
                 messages_data = json.load(messages_file)
             
-            data_save = json.loads(redeem)
+            data_save = json.loads(data_receive)
 
             messages_data['response_counter'] = data_save['response_chat']
+            messages_data['response_set_counter'] = data_save['response_set_chat']
 
             with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "w", encoding='utf-8') as messages_file:
                 json.dump(messages_data, messages_file, indent=6, ensure_ascii=False)
@@ -2983,45 +3029,37 @@ def counter(fun_id, redeem, commands, value):
             counter_data['response'] = data_save['response']
 
             with open(f'{appdata_path}/rewardevents/web/src/counter/config.json', 'w', encoding='utf-8') as counter_file_save:
-                json.dump(data_save, counter_file_save, indent=6, ensure_ascii=False)
+                json.dump(counter_data, counter_file_save, indent=6, ensure_ascii=False)
 
             eel.toast_notifc('success')
 
         except Exception as e:
 
             utils.error_log(e)
-
             eel.toast_notifc('error')
 
-    if fun_id == "save-counter-commands":
+    elif type_id == "save_counter_commands":
 
-        data_received = json.loads(commands)
+        data_received = json.loads(data_receive)
 
         try:
 
             with open(f'{appdata_path}/rewardevents/web/src/counter/commands.json', 'r', encoding='utf-8') as command_counter_file:
                 command_counter_data = json.load(command_counter_file)
-                
-            command_counter_data["reset_counter"] = data_received['counter_command_reset']
-            command_counter_data["set_counter"] = data_received['counter_command_apply']
-            command_counter_data["check_counter"] = data_received['counter_command_check']
             
+            type_command = data_received['type_command']
+
+            command_counter_data[type_command] = {
+                "command" : data_received['command'],
+                "status" :data_received['status'],
+                "delay" : data_received['delay'],
+                "last_use": command_counter_data[type_command]['last_use'],
+                "user_level" : data_received['user_level']
+            }
+
             with open(f'{appdata_path}/rewardevents/web/src/counter/commands.json', 'w', encoding='utf-8') as counter_file_save_commands:
                 json.dump(command_counter_data, counter_file_save_commands, indent=6, ensure_ascii=False)
             
-            
-            with open(f'{appdata_path}/rewardevents/web/src/counter/delay.json', 'r', encoding='utf-8') as delay_counter_file:
-                delay_counter_data = json.load(delay_counter_file)
-             
-            delay_counter_data['set'] = data_received['counter_apply_delay']
-            delay_counter_data['set_status'] = data_received['counter_status_apply']
-            delay_counter_data['reset'] = data_received['counter_reset_delay']   
-            delay_counter_data['reset_status'] = data_received['counter_status_reset']  
-            delay_counter_data['check'] = data_received['counter_check_delay']
-            delay_counter_data['check_status'] = data_received['counter_status_check']
-            
-            with open(f'{appdata_path}/rewardevents/web/src/counter/delay.json', 'w', encoding='utf-8') as delay_counter_file_w:
-                json.dump(delay_counter_data, delay_counter_file_w, indent=6, ensure_ascii=False)
 
             eel.toast_notifc('success')
 
@@ -3030,9 +3068,231 @@ def counter(fun_id, redeem, commands, value):
             utils.error_log(e)
             eel.toast_notifc('error')
 
-    if fun_id == "set-counter-value":
+    elif type_id == "get_counter_commands":
+    
+        try:
+            with open(f'{appdata_path}/rewardevents/web/src/counter/commands.json', 'r', encoding='utf-8') as counter_commands_file:
+                counter_commands_data = json.load(counter_commands_file)
+
+            data = {
+                "command" : counter_commands_data[data_receive]["command"],
+                "status" : counter_commands_data[data_receive]["status"],
+                "delay": counter_commands_data[data_receive]["delay"],
+                "last_use" : counter_commands_data[data_receive]["last_use"],
+                "user_level" : counter_commands_data[data_receive]["user_level"],
+            }
+
+            counter_data_parse = json.dumps(data, ensure_ascii=False)
+
+            return counter_data_parse
+
+        except Exception as e:
+
+            utils.error_log(e)
+            eel.toast_notifc('error')
+
+    elif type_id == "set-counter-value":
+
         with open(f"{appdata_path}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
-            counter_file_w.write(str(value))
+            counter_file_w.write(str(data_receive))
+
+        response_set = utils.messages_file_load('response_set_counter')
+        response_set_repl = response_set.replace('{value}', str(data_receive))
+
+        if utils.send_message("RESPONSE"):
+            send(response_set_repl)
+
+
+@eel.expose
+def queue(type_id, data_receive):
+
+    if type_id == 'get':
+
+        with open(f'{appdata_path}/rewardevents/web/src/queue/config.json', 'r', encoding='utf-8') as queue_config_file:
+            queue_config_data = json.load(queue_config_file)
+
+        with open(f'{appdata_path}/rewardevents/web/src/queue/queue.json', 'r', encoding='utf-8') as queue_file:
+            queue_data = json.load(queue_file)
+
+        response_chat = utils.messages_file_load('response_queue')
+        response_add_chat = utils.messages_file_load('response_add_queue')
+
+        data = {
+
+            "redeem": queue_config_data['redeem'],
+            "response" : queue_config_data['response'],
+            "response_chat" : response_chat,
+            "response_add_chat" : response_add_chat,
+            "queue": queue_data,   
+        }
+
+        queue_data_parse = json.dumps(data, ensure_ascii=False)
+        return queue_data_parse
+
+    elif type_id == 'save_config': 
+
+        try:
+            with open(f'{appdata_path}/rewardevents/web/src/queue/config.json', 'r', encoding='utf-8') as queue_config_file:
+                queue_config_data = json.load(queue_config_file)
+
+            with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
+                messages_data = json.load(messages_file)
+            
+            data_save = json.loads(data_receive)
+
+            messages_data['response_queue'] = data_save['response_chat']
+            messages_data['response_add_queue'] = data_save['response_add_chat']
+
+            with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "w", encoding='utf-8') as messages_file:
+                json.dump(messages_data, messages_file, indent=6, ensure_ascii=False)
+
+            queue_config_data['redeem'] = data_save['redeem']
+            queue_config_data['response'] = data_save['response']
+
+            with open(f'{appdata_path}/rewardevents/web/src/queue/config.json', 'w', encoding='utf-8') as queue_file_save:
+                json.dump(queue_config_data, queue_file_save, indent=6, ensure_ascii=False)
+
+            eel.toast_notifc('success')
+
+        except Exception as e:
+
+            utils.error_log(e)
+            eel.toast_notifc('error')
+
+    elif type_id == 'queue_add':
+
+        with open(f'{appdata_path}/rewardevents/web/src/queue/queue.json', 'r+', encoding='utf-8') as queue_file:
+            queue_data = json.load(queue_file)
+
+            if data_receive not in queue_data:
+
+                queue_data.append(data_receive)
+                
+                queue_file.seek(0)
+                json.dump(queue_data, queue_file, indent=6, ensure_ascii=False)
+                queue_file.truncate()  
+                
+                eel.toast_notifc('Nome adicionado')
+
+                aliases = {
+                    '{value}' : str(data_receive)
+                }
+
+                response = utils.messages_file_load('response_add_queue')
+                response_redus = utils.replace_all(str(response), aliases)
+
+                if utils.send_message("RESPONSE"):
+                    send(response_redus)
+
+                queue_data_parse = json.dumps(queue_data, ensure_ascii=False)
+                return queue_data_parse
+
+            else:
+                
+                eel.toast_notifc('O nome já está na lista') 
+
+                aliases = {
+                    '{value}' : str(data_receive)
+                }
+
+                response = utils.messages_file_load('response_namein_queue')
+                response_redus = utils.replace_all(str(response), aliases)
+
+                queue_data_parse = json.dumps(queue_data, ensure_ascii=False)
+                return queue_data_parse
+
+    elif type_id == 'queue_rem':
+
+        with open(f'{appdata_path}/rewardevents/web/src/queue/queue.json', 'r+', encoding='utf-8') as queue_file:
+            queue_data = json.load(queue_file)
+
+            if data_receive in queue_data:
+            
+                queue_data.remove(data_receive)
+            
+                queue_file.seek(0)
+                json.dump(queue_data, queue_file, indent=6, ensure_ascii=False)
+                queue_file.truncate()
+                
+                eel.toast_notifc('Nome removido')
+
+                aliases = {
+                    '{value}' : str(data_receive)
+                }
+
+                response = utils.messages_file_load('response_rem_queue')
+                response_redus = utils.replace_all(str(response), aliases) 
+
+                queue_data_parse = json.dumps(queue_data, ensure_ascii=False)
+                return queue_data_parse
+            
+            else:
+                
+                eel.toast_notifc('O nome não está na lista') 
+
+                aliases = {
+                    '{value}' : str(data_receive)
+                }
+
+                response = utils.messages_file_load('response_noname_queue')
+                response_redus = utils.replace_all(str(response), aliases) 
+
+                queue_data_parse = json.dumps(queue_data, ensure_ascii=False)
+                return queue_data_parse
+
+    elif type_id == 'get_commands':
+
+        try:
+
+            with open(f'{appdata_path}/rewardevents/web/src/queue/commands.json', 'r', encoding='utf-8') as command_queue_file:
+                command_queue_data = json.load(command_queue_file)
+
+            data = {
+                "command" : command_queue_data[data_receive]["command"],
+                "status" : command_queue_data[data_receive]["status"],
+                "delay": command_queue_data[data_receive]["delay"],
+                "last_use" : command_queue_data[data_receive]["last_use"],
+                "user_level" : command_queue_data[data_receive]["user_level"],
+            }
+
+            queue_data_parse = json.dumps(data, ensure_ascii=False)
+
+            return queue_data_parse
+
+        except Exception as e:
+
+            utils.error_log(e)
+            eel.toast_notifc('error')
+
+    elif type_id == 'save_commands':
+
+        data_received = json.loads(data_receive)
+
+        try:
+
+            with open(f'{appdata_path}/rewardevents/web/src/queue/commands.json', 'r', encoding='utf-8') as command_queue_file:
+                command_queue_data = json.load(command_queue_file)
+            
+            type_command = data_received['type_command']
+
+            command_queue_data[type_command] = {
+                "command" : data_received['command'],
+                "status" :data_received['status'],
+                "delay" : data_received['delay'],
+                "last_use": command_queue_data[type_command]['last_use'],
+                "user_level" : data_received['user_level']
+            }
+
+            with open(f'{appdata_path}/rewardevents/web/src/queue/commands.json', 'w', encoding='utf-8') as queue_file_save_commands:
+                json.dump(command_queue_data, queue_file_save_commands, indent=6, ensure_ascii=False)
+            
+
+            eel.toast_notifc('success')
+
+        except Exception as e:
+
+            utils.error_log(e)
+            eel.toast_notifc('error')
 
 
 @eel.expose
@@ -3047,7 +3307,6 @@ def obs_config_py(type_id,data_receive):
             "host": obs_conn_data['OBS_HOST'],
             "port": obs_conn_data['OBS_PORT'],
             "password": obs_conn_data['OBS_PASSWORD'],
-            "auto_conn": obs_conn_data['OBS_TEST_CON']
         }
 
         conm_data = json.dumps(data, ensure_ascii=False)
@@ -3063,10 +3322,13 @@ def obs_config_py(type_id,data_receive):
         data = {
             'html_events_active' : obs_not_data['HTML_EVENTS_ACTIVE'],
             'html_player_active': obs_not_data['HTML_PLAYER_ACTIVE'],
+            'html_emote_active': obs_not_data['HTML_EMOTE_ACTIVE'],
             'html_active': obs_not_data['HTML_ACTIVE'],
             'html_title': obs_not_data['HTML_TITLE'],
             'html_video': obs_not_data['HTML_VIDEO'],
             'html_events' : obs_not_data['HTML_EVENTS'],
+            'html_emote' : obs_not_data['HTML_EMOTE'],
+            'emote_px' : obs_not_data['EMOTE_PX'],
             'html_time': obs_not_data['HTML_TIME'],
             'html_events_time': obs_not_data['HTML_EVENTS_TIME'],
         }
@@ -3104,10 +3366,13 @@ def obs_config_py(type_id,data_receive):
             data_save = {
                 'HTML_EVENTS_ACTIVE' : data['not_event'],
                 'HTML_PLAYER_ACTIVE': data['not_music'],
+                'HTML_EMOTE_ACTIVE': data['not_emote'],
                 'HTML_ACTIVE': data['not_enabled'],
                 'HTML_TITLE': data['source_name'],
                 'HTML_VIDEO': data['video_source_name'],
                 'HTML_EVENTS' : data['event_source_name'],
+                'EMOTE_PX' : data['emote_px'],
+                'HTML_EMOTE' : data['emote_source_name'],
                 'HTML_TIME': int(data['time_showing_not']),
                 'HTML_EVENTS_TIME': int(data['time_showing_event_not']),
             }
@@ -3144,6 +3409,7 @@ def not_config_py(data_receive,type_id,type_not):
             'response': file_data['response'],
             'response_chat': file_data['response_chat'],
             'response_px': file_data['response_px'],
+
             'response_weight': file_data['response_weight'],
             'response_color': file_data['response_color'],
         }
@@ -3239,26 +3505,24 @@ def save_messages_config(data_receive):
 
     try:
 
-        old_message_file = open(f'{appdata_path}/rewardevents/web/src/config/commands_config.json', 'r', encoding="utf-8")
-        old_message_data = json.load(old_message_file)
+        with open(f'{appdata_path}/rewardevents/web/src/config/commands_config.json', 'r', encoding="utf-8") as commands_config:
+            message_data = json.load(commands_config)
 
-        old_message_file.close()
 
-        old_message_data['STATUS_TTS'] = status_tts
-        old_message_data['STATUS_COMMANDS'] = status_commands
-        old_message_data['STATUS_RESPONSE'] = status_response
-        old_message_data['STATUS_ERROR_TIME'] = status_delay
-        old_message_data['STATUS_CLIP'] = status_clip
-        old_message_data['STATUS_ERROR_USER'] = status_permission
-        old_message_data['STATUS_TIMER'] = status_timer
-        old_message_data['STATUS_BOT'] = status_message
-        old_message_data['STATUS_MUSIC'] = status_next
-        old_message_data['STATUS_MUSIC_CONFIRM'] = status_music
-        old_message_data['STATUS_MUSIC_ERROR'] = status_error_music
+        message_data['STATUS_TTS'] = status_tts
+        message_data['STATUS_COMMANDS'] = status_commands
+        message_data['STATUS_RESPONSE'] = status_response
+        message_data['STATUS_ERROR_TIME'] = status_delay
+        message_data['STATUS_CLIP'] = status_clip
+        message_data['STATUS_ERROR_USER'] = status_permission
+        message_data['STATUS_TIMER'] = status_timer
+        message_data['STATUS_BOT'] = status_message
+        message_data['STATUS_MUSIC'] = status_next
+        message_data['STATUS_MUSIC_CONFIRM'] = status_music
+        message_data['STATUS_MUSIC_ERROR'] = status_error_music
 
-        old_data_write = open(f'{appdata_path}/rewardevents/web/src/config/commands_config.json', 'w', encoding="utf-8")
-        json.dump(old_message_data, old_data_write, indent=6, ensure_ascii=False)
-        old_data_write.close()
+        with open(f'{appdata_path}/rewardevents/web/src/config/commands_config.json', 'w', encoding="utf-8") as commands_config_write:
+            json.dump(message_data, commands_config_write, indent=6, ensure_ascii=False)
 
         eel.toast_notifc('success')
 
@@ -3284,16 +3548,14 @@ def responses_config(fun_id, response_key, message):
 
         try:
 
-            responses_file = open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', 'r', encoding='utf-8')
-            responses_data = json.load(responses_file)
+            with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', 'r', encoding='utf-8') as responses_file:
+                responses_data = json.load(responses_file)
 
             responses_data[response_key] = message
 
-            responses_file.close()
-            responses_file_w = open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', 'w', encoding='utf-8')
-            json.dump(responses_data, responses_file_w, indent=6, ensure_ascii=False)
+            with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', 'w', encoding='utf-8') as responses_file_w:
+                json.dump(responses_data, responses_file_w, indent=6, ensure_ascii=False)
 
-            responses_file_w.close()
             eel.toast_notifc('success')
 
         except Exception as e:
@@ -3400,7 +3662,7 @@ def get_edit_data(redeen, type_action):
     with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as redeem_file:
         redeem_data = json.load(redeem_file)
 
-    if type_action == 'sound':
+    if type_action == 'audio':
 
         sound = redeem_data[redeen]['path']
         command = redeem_data[redeen]['command']
@@ -3763,6 +4025,33 @@ def get_edit_data(redeen, type_action):
 
         return redeem_data_dump
 
+    if type_action == 'highlight':
+
+        command = redeem_data[redeen]['command']
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/commands.json', "r", encoding='utf-8') as command_file:
+            command_data = json.load(command_file)
+
+        if command in command_data.keys():
+            command_level = command_data[command]['user_level']
+            command_status = command_data[command]['status']
+            delay = command_data[command]['delay']
+        else:
+            command_level = ''
+            command_status = ''
+            delay = ''
+
+        redeem_data_return = {
+            "command": command,
+            "command_status": command_status,
+            "delay": delay,
+            "user_level": command_level,
+        }
+
+        redeem_data_dump = json.dumps(redeem_data_return, ensure_ascii=False)
+
+        return redeem_data_dump
+
 
 @eel.expose
 def save_edit_redeen(data, redeem_type):
@@ -3914,8 +4203,8 @@ def save_edit_redeen(data, redeem_type):
             else:
                 send_message = 0
 
-            path_file = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8')
-            path_data = json.load(path_file)
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as path_file:
+                path_data = json.load(path_file)
 
             if old_redeem != redeem:
                 del path_data[old_redeem]
@@ -3925,15 +4214,14 @@ def save_edit_redeen(data, redeem_type):
                 'command': command,
                 'send_response': send_message,
                 'chat_response': chat_message,
-                'scene': scene_name,
+                'scene_name': scene_name,
                 'keep': keep,
                 'time': time
             }
 
-            path_file.close()
 
-            path_file_write = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8')
-            json.dump(path_data, path_file_write, indent=6, ensure_ascii=False)
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as path_file_write:
+                json.dump(path_data, path_file_write, indent=6, ensure_ascii=False)
 
             create_command_redeem(data_received,'edit')
 
@@ -4220,6 +4508,38 @@ def save_edit_redeen(data, redeem_type):
 
             eel.toast_notifc('error')
 
+    if redeem_type == 'highlight':
+
+        try:
+            old_redeem = data_received['old_redeem']
+            redeem = data_received['redeem']
+            command = data_received['command']
+            user_level = data_received['user_level']
+
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as path_file:
+                path_data = json.load(path_file)
+
+            if old_redeem != redeem:
+                del path_data[old_redeem]
+
+            path_data[redeem] = {
+                'type': "highlight",
+                'command': command,
+            }
+
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as path_file_write:
+                json.dump(path_data, path_file_write, indent=6, ensure_ascii=False)
+
+            create_command_redeem(data_received,'edit')
+
+            eel.toast_notifc('success')
+
+        except Exception as e:
+
+            utils.error_log(e)
+            eel.toast_notifc('error')
+
+
 @eel.expose
 def playlist_py(type_id,data):
     
@@ -4254,7 +4574,7 @@ def playlist_py(type_id,data):
 
                     video_title_short = textwrap.shorten(video_title, width=40, placeholder="...")
 
-                    eel.playlist_js('Adicionando, aguarde... ' + video_title_short, 'queue_add')
+                    eel.playlist_js(f"Adicionando, aguarde... {video_title_short}", 'queue_add')
 
                     with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8") as playlist_file:
                         playlist_data = json.load(playlist_file)
@@ -4265,21 +4585,18 @@ def playlist_py(type_id,data):
                         json.dump(playlist_data, playlist_file_write, indent=4, ensure_ascii=False)
 
                 except Exception as e:
-
                     utils.error_log(e)
 
             eel.playlist_js('None', 'queue_close')
 
         except Exception as e:
-
             utils.error_log(e)
 
     if type_id == "add":
 
         playlist_thread = threading.Thread(target=start_add, args=(data,), daemon=True)
         playlist_thread.start()
-
-    
+ 
     elif type_id == 'save':
 
         with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', 'r', encoding="utf-8") as playlist_stats_file:
@@ -4343,9 +4660,6 @@ def sr_config_py(type_id,data_receive):
         with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding='utf-8') as not_music_file:
             not_music_data = json.load(not_music_file)
         
-        with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'r', encoding='utf-8') as delay_music_file:
-            delay_music_data = json.load(delay_music_file)
-
         with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', 'r', encoding="utf-8") as status_music_file:
             status_music_data = json.load(status_music_file)
         
@@ -4354,31 +4668,36 @@ def sr_config_py(type_id,data_receive):
             "max_duration" : status_music_data['max_duration'],
             "redeem_music" : commands_music_data['redeem'],
             "not_status": not_music_data['HTML_PLAYER_ACTIVE'],
-            "cmd_request": commands_music_data['request'],
-            "cmd_request_status": delay_music_data['request-status'],
-            "cmd_request_delay" : delay_music_data['request-delay'],
-            "cmd_volume": commands_music_data['volume'],
-            "cmd_volume_status": delay_music_data['volume-status'],
-            "cmd_volume_delay" : delay_music_data['volume-delay'],
-            "cmd_skip": commands_music_data['skip'],
-            "cmd_skip_status": delay_music_data['skip-status'],
-            "cmd_skip_delay" : delay_music_data['skip-delay'],
-            "cmd_next": commands_music_data['next'],
-            "cmd_next_status": delay_music_data['next-status'],
-            "cmd_next_delay": delay_music_data['next-delay'],
-            "cmd_atual": commands_music_data['atual'],
-            "cmd_atual_status": delay_music_data['atual-status'],
-            "cmd_atual_delay": delay_music_data['atual-delay'],
-            "request_perm": commands_music_data['request-perm'],
-            "atual_perm": commands_music_data['atual-perm'],
-            "next_perm": commands_music_data['next-perm'],
-            "skip_perm": commands_music_data['skip-perm'],
-            "volume_perm": commands_music_data['volume-perm'],
         }
 
         music_dump = json.dumps(data, ensure_ascii=False)
 
         return music_dump
+    
+    if type_id == 'get_command':
+        
+        try:
+
+            with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'r', encoding='utf-8') as commands_music_file:
+                commands_music_data = json.load(commands_music_file)    
+            
+            
+            data = {
+                'command': commands_music_data[data_receive]['command'],
+                'status' : commands_music_data[data_receive]['status'],
+                'delay' : commands_music_data[data_receive]['delay'],
+                'last_use' : commands_music_data[data_receive]['last_use'],
+                'user_level' :commands_music_data[data_receive]['user_level'],
+            }
+
+            music_dump = json.dumps(data, ensure_ascii=False)
+
+            return music_dump
+        
+        except Exception as e:
+            
+            utils.error_log(e)
+            eel.toast_notifc('error')
     
     elif type_id == 'save':
         
@@ -4390,26 +4709,6 @@ def sr_config_py(type_id,data_receive):
             redeem = data['redeem_music_data']
             max_duration = data['max_duration']
             status_music = data['music_not_status_data']
-            command_request = data['command_request_data']
-            command_request_status = data['command_request_status']
-            command_request_perm = data['command_request_perm']
-            command_request_delay = data['command_request_delay']
-            command_volume = data['command_volume_data']
-            command_volume_status = data['command_volume_status']
-            command_volume_perm = data['command_volume_perm']
-            command_volume_delay = data['command_volume_delay']
-            command_skip = data['command_skip_data']
-            command_skip_status = data['command_skip_status']
-            command_skip_perm = data['command_skip_perm']
-            command_skip_delay = data['command_skip_delay']
-            command_next = data['command_next_data']
-            command_next_status = data['command_next_status']
-            command_next_perm = data['command_next_perm']
-            command_next_delay = data['command_next_delay']
-            command_atual = data['command_atual_data']
-            command_atual_status = data['command_atual_status']
-            command_atual_perm = data['command_atual_perm']
-            command_atual_delay = data['command_atual_delay']
 
             with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding="utf-8") as not_status_music_file:
                 not_status_music_data = json.load(not_status_music_file)
@@ -4418,46 +4717,15 @@ def sr_config_py(type_id,data_receive):
 
             with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'w', encoding="utf-8") as status_music_file_write:
                 json.dump(not_status_music_data, status_music_file_write, indent=6, ensure_ascii=False)
-                
-                
-            with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'r', encoding='utf-8') as delay_music_file:
-                delay_music_data = json.load(delay_music_file)
-                
-            delay_music_data['request-status'] = command_request_status
-            delay_music_data['volume-status'] = command_volume_status
-            delay_music_data['skip-status'] = command_skip_status
-            delay_music_data['next-status'] = command_next_status
-            delay_music_data['atual-status'] = command_atual_status
-            
-            delay_music_data['request-delay'] = command_request_delay
-            delay_music_data['volume-delay'] = command_volume_delay
-            delay_music_data['skip-delay'] = command_skip_delay
-            delay_music_data['next-delay'] = command_next_delay
-            delay_music_data['atual-delay'] = command_atual_delay
-            
-            with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                json.dump(delay_music_data, delay_music_file_w, indent=6, ensure_ascii=False)
-
 
             with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'r', encoding='utf-8') as commands_music_file:
-                commands_music_data = json.load(commands_music_file)
+                commands_music_data = json.load(commands_music_file)    
             
             commands_music_data['redeem'] = redeem
-            commands_music_data['request'] = command_request
-            commands_music_data['request-perm'] = command_request_perm
-            commands_music_data['volume'] = command_volume
-            commands_music_data['volume-perm'] = command_volume_perm
-            commands_music_data['skip'] = command_skip
-            commands_music_data['skip-perm'] = command_skip_perm
-            commands_music_data['next'] = command_next
-            commands_music_data['next-perm'] = command_next_perm
-            commands_music_data['atual'] = command_atual
-            commands_music_data['atual-perm'] = command_atual_perm
             
             with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'w', encoding='utf-8') as commands_music_file_w:
                 json.dump(commands_music_data, commands_music_file_w, indent=6, ensure_ascii=False)
-            
-        
+
 
             with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', 'r', encoding="utf-8") as status_music_file:
                 status_music_data = json.load(status_music_file)
@@ -4473,8 +4741,36 @@ def sr_config_py(type_id,data_receive):
         except Exception as e:
             
             utils.error_log(e)
-
             eel.toast_notifc('error')
+
+    elif type_id == 'save_command':
+
+        try:
+
+            data = json.loads(data_receive)
+
+            with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'r', encoding='utf-8') as commands_music_file:
+                commands_music_data = json.load(commands_music_file)    
+            
+            type_command = data['type_command']
+
+            commands_music_data[type_command] = {
+                'command': data['command'],
+                'status' : data['status'],
+                'delay' : data['delay'],
+                'last_use' : commands_music_data[type_command]['last_use'],
+                'user_level' : data['user_level'],
+            }
+            
+            with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'w', encoding='utf-8') as commands_music_file_w:
+                json.dump(commands_music_data, commands_music_file_w, indent=6, ensure_ascii=False)
+
+            eel.toast_notifc('Comando salvo')
+
+        except Exception as e:
+            
+            utils.error_log(e)
+            eel.toast_notifc('Ocorreu um erro ao salvar o comando')
 
     elif type_id == 'get-status':
         
@@ -4530,13 +4826,14 @@ def sr_config_py(type_id,data_receive):
 
 @eel.expose
 def update_check(type_id):
+    
     if type_id == 'check':
 
         response = req.get("https://api.github.com/repos/GGTEC/RewardEvents/releases/latest")
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'V5.0.0':
+        if version != 'V5.2.2':
 
             return 'true'
         else:
@@ -4601,45 +4898,54 @@ def timer():
         Modulo para mensagens automaticas.
     """
 
+    
     while True:
 
         try:
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/timer.json', 'r', encoding='utf-8') as timer_data_file:
-                timer_data = json.load(timer_data_file)
+            if 'chat' in globals():
 
-            timer_int = timer_data['TIME']
-            timer_max_int = timer_data['TIME_MAX']
+                if chat.Connected:
+                                
+                    with open(f'{appdata_path}/rewardevents/web/src/config/timer.json', 'r', encoding='utf-8') as timer_data_file:
+                        timer_data = json.load(timer_data_file)
 
-            next_timer = randint(timer_int, timer_max_int)
+                    timer_int = timer_data['TIME']
+                    timer_max_int = timer_data['TIME_MAX']
 
+                    next_timer = randint(timer_int, timer_max_int)
 
-            if bot_loaded:
-
-                
-                if utils.send_message('TIMER'):
-                    
-                    timer_message = timer_data['MESSAGES']
-                    last_key = timer_data['LAST']
-
-                    key_value = timer_message.keys()
-                    
-                    if bool(timer_message):
+                    if utils.send_message('TIMER'):
                         
-                        message_key = random.choice(list(key_value))
+                        timer_message = timer_data['MESSAGES']
+                        last_key = timer_data['LAST']
 
-                        if len(timer_message) > 1:
+                        key_value = timer_message.keys()
+                        
+                        if bool(timer_message):
                             
-                            if message_key == last_key:
+                            message_key = random.choice(list(key_value))
+
+                            if len(timer_message) > 1:
                                 
-                                time.sleep(1)
-                                
+                                if message_key == last_key:
+                                    
+                                    time.sleep(1)
+                                    
+                                else:
+
+                                    timer_data['LAST'] = message_key
+
+                                    with open(f'{appdata_path}/rewardevents/web/src/config/timer.json', 'w', encoding='utf-8') as update_last_file:
+                                        json.dump(timer_data, update_last_file, indent=4, ensure_ascii=False)
+
+                                    if timer_message[message_key]['type_timer'] == 0:
+                                        send(timer_message[message_key]['message'])
+                                    
+                                    elif timer_message[message_key]['type_timer'] == 1:
+                                        send_announcement(timer_message[message_key]['message'],timer_message[message_key]['color'])
+
+                                    time.sleep(next_timer)
                             else:
-
-                                timer_data['LAST'] = message_key
-
-                                with open(f'{appdata_path}/rewardevents/web/src/config/timer.json', 'w', encoding='utf-8') as update_last_file:
-                                    json.dump(timer_data, update_last_file, indent=4, ensure_ascii=False)
 
                                 if timer_message[message_key]['type_timer'] == 0:
                                     send(timer_message[message_key]['message'])
@@ -4648,23 +4954,14 @@ def timer():
                                     send_announcement(timer_message[message_key]['message'],timer_message[message_key]['color'])
 
                                 time.sleep(next_timer)
+
                         else:
-
-                            if timer_message[message_key]['type_timer'] == 0:
-                                send(timer_message[message_key]['message'])
                             
-                            elif timer_message[message_key]['type_timer'] == 1:
-                                send_announcement(timer_message[message_key]['message'],timer_message[message_key]['color'])
-
-                            time.sleep(next_timer)
+                            time.sleep(1)
 
                     else:
                         
-                        time.sleep(1)
-
-                else:
-                    
-                    time.sleep(10)
+                        time.sleep(10)
 
         except Exception as e:
             
@@ -4730,16 +5027,13 @@ def start_play(title, user_input, redem_by_user):
 
     def download_music(link):
 
-        music_dir_check = os.path.exists(f'{extDataDir}/web/src/player/cache/music.mp3')
-        music_mp4_check = os.path.exists(f'{extDataDir}/web/src/player/cache/music.mp4')
+        music_dir_check = os.path.exists(f'{extDataDir}/web/src/player/cache/music.webm')
 
         if music_dir_check:
-            os.remove(f'{extDataDir}/web/src/player/cache/music.mp3')
-
-        if music_mp4_check:
-            os.remove(f'{extDataDir}/web/src/player/cache/music.mp4')
+            os.remove(f'{extDataDir}/web/src/player/cache/music.webm')
 
         def my_hook(d):
+
             if d['status'] == 'finished':
                 eel.update_music_name('Download concluido','Em pós processamento')
             else:
@@ -4747,26 +5041,16 @@ def start_play(title, user_input, redem_by_user):
 
         try:
             
-            #ffmpeg_loc
-            #ffmpeg/ffmpeg.exe
             ydl_opts = {
                 'progress_hooks': [my_hook],
-                'final_ext': 'mp3',
+                'final_ext': 'webm',
                 'format': 'bestaudio',
                 'noplaylist': True,
                 'quiet': True,
                 'no_color': True,
                 'outtmpl': f'{extDataDir}/web/src/player/cache/music.%(ext)s',
-                'ffmpeg_location': ffmpeg_loc,
                 'force-write-archive': True,
                 'force-overwrites': True,
-                'keepvideo': False,
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'nopostoverwrites': False,
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '5'
-                }],
             }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -4803,7 +5087,14 @@ def start_play(title, user_input, redem_by_user):
 
             music_name_short = textwrap.shorten(media_name, width=13, placeholder="...")
 
-            utils.update_notif(music_name_short, redem_by_user, music_artist, 'music')
+            redeem_data = {
+                "redeem_name": '',
+                "redeem_user": redem_by_user,
+                "music" : music_name_short,
+                "artist" : music_artist,
+            }
+            
+            utils.update_notif(redeem_data, 'music')
 
             not_thread = threading.Thread(target=obs_events.notification_player, args=(), daemon=True)
             not_thread.start()
@@ -4821,7 +5112,7 @@ def start_play(title, user_input, redem_by_user):
             if utils.send_message("STATUS_MUSIC"):
                 send(message_replace)
 
-            eel.player('play', 'http://localhost:7000/src/player/cache/music.mp3', '1')
+            eel.player('play', 'http://localhost:7000/src/player/cache/music.webm', '1')
             eel.toast_notifc(f'Reproduzindo {music_name_short} - {music_artist}')
 
             caching = 0
@@ -4845,80 +5136,83 @@ def loopcheck():
 
     while True:
 
-        if loaded_status == 1 and bot_loaded == 1:
-            
-            with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', 'r', encoding="utf-8") as playlist_status_file:
-                playlist_execute_data = json.load(playlist_status_file)
-            playlist_execute_value = playlist_execute_data['STATUS']
-            playlist_execute = int(playlist_execute_value)
-
-            with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8") as playlist_file:
-                playlist_data = json.load(playlist_file)
-            check_have_playlist = any(playlist_data.keys())
-
-            with open(f'{appdata_path}/rewardevents/web/src/player/list_files/queue.json', "r", encoding="utf-8") as queue_file:
-                queue_data = json.load(queue_file)
+        try:
+            if loaded_status == 1 and chat.Connected == 1:
                 
-            check_have_queue = any(queue_data.keys())
+                with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', 'r', encoding="utf-8") as playlist_status_file:
+                    playlist_execute_data = json.load(playlist_status_file)
+                playlist_execute_value = playlist_execute_data['STATUS']
+                playlist_execute = int(playlist_execute_value)
 
-            playing = eel.player('playing', 'none', 'none')()
-            
-            if caching == 0 and playing == 'False':
+                with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8") as playlist_file:
+                    playlist_data = json.load(playlist_file)
+                check_have_playlist = any(playlist_data.keys())
+
+                with open(f'{appdata_path}/rewardevents/web/src/player/list_files/queue.json', "r", encoding="utf-8") as queue_file:
+                    queue_data = json.load(queue_file)
+                    
+                check_have_queue = any(queue_data.keys())
+
+                playing = eel.player('playing', 'none', 'none')()
                 
-                if check_have_queue:
+                if caching == 0 and playing == 'False':
+                    
+                    if check_have_queue:
 
-                    queue_keys = [int(x) for x in queue_data.keys()]
-                    music_data_key = str(min(queue_keys))
+                        queue_keys = [int(x) for x in queue_data.keys()]
+                        music_data_key = str(min(queue_keys))
 
-                    music = queue_data[music_data_key]['MUSIC']
-                    user = queue_data[music_data_key]['USER']
-                    title = queue_data[music_data_key]['MUSIC_NAME']
+                        music = queue_data[music_data_key]['MUSIC']
+                        user = queue_data[music_data_key]['USER']
+                        title = queue_data[music_data_key]['MUSIC_NAME']
 
-                    del queue_data[music_data_key]
+                        del queue_data[music_data_key]
 
-                    with open(f'{appdata_path}/rewardevents/web/src/player/list_files/queue.json', "w", encoding="utf-8") as queue_file_write:
-                        json.dump(queue_data, queue_file_write, indent=4)
-
-                    start_play(title, music, user)
-
-                    time.sleep(5)
-
-                elif check_have_playlist:
-
-                    if playlist_execute == 1:
-
-                        playlist_keys = [int(x) for x in playlist_data.keys()]
-                        music_data = str(min(playlist_keys))
-
-                        music = playlist_data[music_data]['MUSIC']
-                        user = playlist_data[music_data]['USER']
-                        title = playlist_data[music_data]['MUSIC_NAME']
-
-                        del playlist_data[music_data]
-
-
-                        with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "w", encoding="utf-8") as playlist_file_write:
-                            json.dump(playlist_data, playlist_file_write, indent=4)
+                        with open(f'{appdata_path}/rewardevents/web/src/player/list_files/queue.json', "w", encoding="utf-8") as queue_file_write:
+                            json.dump(queue_data, queue_file_write, indent=4)
 
                         start_play(title, music, user)
 
+                        time.sleep(5)
 
+                    elif check_have_playlist:
+
+                        if playlist_execute == 1:
+
+                            playlist_keys = [int(x) for x in playlist_data.keys()]
+                            music_data = str(min(playlist_keys))
+
+                            music = playlist_data[music_data]['MUSIC']
+                            user = playlist_data[music_data]['USER']
+                            title = playlist_data[music_data]['MUSIC_NAME']
+
+                            del playlist_data[music_data]
+
+
+                            with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "w", encoding="utf-8") as playlist_file_write:
+                                json.dump(playlist_data, playlist_file_write, indent=4)
+
+                            start_play(title, music, user)
+
+
+                        else:
+                            time.sleep(3)
                     else:
                         time.sleep(3)
+                        eel.update_music_name('Aguardando', 'Aguardando')
                 else:
+                    
+                    with open(f'{appdata_path}/rewardevents/web/src/player/list_files/currentsong.txt', "r", encoding="utf-8") as file_object:
+                        songname = file_object.read()
+                        
+                        music = songname.split('-')[0]
+                        artist = songname.split('-')[1]
+                        
+                        eel.update_music_name(music, artist)
+                        
                     time.sleep(3)
-                    eel.update_music_name('Aguardando', 'Aguardando')
-            else:
-                
-                with open(f'{appdata_path}/rewardevents/web/src/player/list_files/currentsong.txt', "r", encoding="utf-8") as file_object:
-                    songname = file_object.read()
-                    
-                    music = songname.split('-')[0]
-                    artist = songname.split('-')[1]
-                    
-                    eel.update_music_name(music, artist)
-                    
-                time.sleep(3)
+        except:
+            time.sleep(3)
 
 
 def process_redem_music(user_input, redem_by_user):
@@ -4984,6 +5278,7 @@ def process_redem_music(user_input, redem_by_user):
                         music_name_short = textwrap.shorten(music_name, width=13, placeholder="...")
 
                         aliases = {
+                            '{max_duration}' : str(max_duration),
                             '{username}': str(redem_by_user),
                             '{user_input}': str(user_input),
                             '{music}': str(music_name),
@@ -5128,26 +5423,40 @@ def receive_redeem(data_rewards, received_type):
         else:
             return "spec"
         
-    with open(f"{appdata_path}/rewardevents/web/src/counter/counter.txt", "r") as counter_file_r:
+    with open(f"{appdata_path}/rewardevents/web/src/counter/counter.txt", "r",  encoding='utf-8') as counter_file_r:
         counter_file_r.seek(0)
         digit = counter_file_r.read()
         counter_actual = int(digit)
 
-    with open(f'{appdata_path}/rewardevents/web/src/config/chat_config.json','r',encoding='utf-8') as chat_file:
-        chat_data = json.load(chat_file)
-    
-    
-    now = datetime.datetime.now()
-    format = chat_data['time-format']
-    
-    if chat_data['data-show'] == 1:
-        if chat_data['type-data'] == "passed":
-            chat_time = now.strftime('%Y-%m-%dT%H:%M:%S')
-        elif chat_data['type-data'] == "current":
-            chat_time = now.strftime(format)
-    else: 
-        chat_time = ''
-            
+    with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as path_file:
+        path = json.load(path_file)
+
+    with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'r',  encoding='utf-8') as player_file:
+        player_data = json.load(player_file)
+
+    with open(f'{appdata_path}/rewardevents/web/src/giveaway/config.json', 'r', encoding='utf-8') as giveaway_path_file:
+        giveaway_path = json.load(giveaway_path_file)
+
+    with open(f'{appdata_path}/rewardevents/web/src/giveaway/commands.json', 'r', encoding='utf-8') as giveaway_command_file:
+        giveaway_commands = json.load(giveaway_command_file)
+
+    with open(f'{appdata_path}/rewardevents/web/src/counter/config.json','r',encoding='utf-8') as counter_file:
+        counter_data = json.load(counter_file)
+
+    with open(f'{appdata_path}/rewardevents/web/src/queue/config.json','r',encoding='utf-8') as queue_file:
+        queue_data = json.load(queue_file)
+
+    with open(f'{appdata_path}/rewardevents/web/src/queue/commands.json','r',encoding='utf-8') as queue_command_file:
+        queue_command_data = json.load(queue_command_file)
+
+    counter_redeem = counter_data['redeem']
+    giveaway_redeem = giveaway_path['redeem']
+    command_giveaway = giveaway_commands['add_user']['command']
+    player_reward = player_data['redeem']
+    command_player = player_data['request']['command']
+    queue_redeem = queue_data['redeem']
+    command_queue = queue_command_data['add_queue']['command']
+
     redeem_reward_name = '0'
     redeem_by_user = '0'
     user_input = '0'
@@ -5155,11 +5464,6 @@ def receive_redeem(data_rewards, received_type):
     user_id_command = '0'
     command_receive = '0'
     prefix = '0'
-
-    with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json') as player_file:
-        player_data = json.load(player_file)
-
-    player_reward = player_data['redeem']
 
     if received_type == 'redeem':
 
@@ -5209,18 +5513,6 @@ def receive_redeem(data_rewards, received_type):
         with open(f'{appdata_path}/rewardevents/web/src/Request.png', 'wb') as image_redeem:
             image_redeem.write(img_redeem_data)
             
-        data = {
-            "message" : f"Usuário {redeem_by_user} resgatou {redeem_reward_name}",
-            "font_size" : chat_data['font-size'],
-            "color" : chat_data['color-not'],
-            "data_show" : chat_data["data-show"],
-            "chat_time" : chat_time,
-            "type_data" : chat_data["type-data"],
-        }
-        
-        chat_data_dump = json.dumps(data, ensure_ascii=False)
-        eel.append_notice(chat_data_dump)
-
     elif received_type == 'command':
         
         redeem_reward_name = data_rewards['REDEEM']
@@ -5232,14 +5524,19 @@ def receive_redeem(data_rewards, received_type):
         command_receive = data_rewards['COMMAND']
         prefix = data_rewards['PREFIX']
 
-    redeem_data_js = {
+    redeem_data = {
         "redeem_name": redeem_reward_name,
-        "redeem_user": redeem_by_user
+        "redeem_user": redeem_by_user,
+        "music" : "",
+        "artist" : "",
     }
 
-    aliases = {
+    redeem_data_parse = json.dumps(redeem_data, ensure_ascii=False)
+    eel.update_div_redeem(redeem_data_parse)
 
+    aliases = {
         '{username}': str(redeem_by_user),
+        '{reward}' : str(redeem_reward_name),
         '{command}': str(command_receive),
         '{prefix}': str(prefix),
         '{user_level}': str(user_level),
@@ -5248,27 +5545,11 @@ def receive_redeem(data_rewards, received_type):
         '{counter}': str(counter_actual)
     }
 
-    redeem_data_js_parse = json.dumps(redeem_data_js, ensure_ascii=False)
 
-    eel.update_div_redeem(redeem_data_js_parse)
+    if utils.update_notif(redeem_data, 'redeem'):
 
-    utils.update_notif(redeem_reward_name, redeem_by_user, 'None', 'redeem')
-
-    not_thread_1 = threading.Thread(target=obs_events.notification, args=(), daemon=True)
-    not_thread_1.start()
-
-    with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as path_file:
-        path = json.load(path_file)
-
-    with open(f'{appdata_path}/rewardevents/web/src/giveaway/config.json', 'r', encoding='utf-8') as giveaway_path_file:
-        giveaway_path = json.load(giveaway_path_file)
-
-    giveaway_redeem = giveaway_path['redeem']
-    
-    with open(f'{appdata_path}/rewardevents/web/src/counter/config.json','r',encoding='utf-8') as counter_file:
-        counter_data = json.load(counter_file)
-        
-    counter_redeem = counter_data['redeem']
+        not_thread_1 = threading.Thread(target=obs_events.notification, args=(), daemon=True)
+        not_thread_1.start()
 
     def play_sound():
 
@@ -5625,6 +5906,94 @@ def receive_redeem(data_rewards, received_type):
         }
         giveaway_py('add_user', data)
 
+    def add_queue():
+
+        send_response_value = queue_data['response']
+
+        with open(f'{appdata_path}/rewardevents/web/src/queue/queue.json', 'r+', encoding='utf-8') as queue_file:
+            queue_data = json.load(queue_file)
+
+            if redeem_by_user not in queue_data:
+
+                queue_data.append(redeem_by_user)
+                
+                queue_file.seek(0)
+                json.dump(queue_data, queue_file, indent=6, ensure_ascii=False)
+                queue_file.truncate()  
+                
+                eel.toast_notifc('Nome adicionado')
+
+                
+                if send_response_value:
+
+                    chat_response = utils.messages_file_load('response_queue')
+
+                    aliases = {
+                        '{username}' : str(redeem_by_user)
+                    }
+
+                    response_redus = utils.replace_all(chat_response, aliases)
+
+                    if utils.send_message("RESPONSE"):
+                        send(response_redus)
+
+            else:
+                
+                eel.toast_notifc('O nome já está na lista') 
+
+                if send_response_value:
+
+                    chat_response = utils.messages_file_load('response_namein_queue')
+
+                    aliases = {
+                        '{value}' : str(redeem_by_user)
+                    }
+
+                    response_redus = utils.replace_all(chat_response, aliases)
+
+                    if utils.send_message("RESPONSE"):
+                        send(response_redus)
+
+    def highlight():
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/highlight.json','r',encoding='utf-8') as file_highlight:
+            data_highlight = json.load(file_highlight)
+        
+        status = data_highlight['status']
+        color_message = data_highlight['color_message']
+        color_username = data_highlight['color_username']
+        size = data_highlight['font-size']
+        weight = data_highlight['font-weight']
+        duration = data_highlight['duration']
+
+        source = data_highlight['source']
+        time = data_highlight['time']
+
+        if status == 1:
+
+            if user_input != None:
+
+                data = {
+                    "username" : redeem_by_user,
+                    "user_input" : user_input,
+                    "color_message" : color_message,
+                    "color_username" : color_username,
+                    "size" : size,
+                    "weight" : weight,
+                    "duration" : duration
+                }
+
+                if utils.update_highlight(data):
+                    obs_events.show_source(source, time, 0)
+
+            else:
+                
+                chat_response = utils.messages_file_load('command_value')
+                response_redus = utils.replace_all(chat_response, aliases)
+                if utils.send_message("RESPONSE"):
+                    send(response_redus)
+                    
+          
     eventos = {
 
         'sound': play_sound,
@@ -5637,10 +6006,24 @@ def receive_redeem(data_rewards, received_type):
         'clip': clip,
         'tts': play_tts,
         'counter': add_counter,
-        'giveaway': add_giveaway
+        'giveaway': add_giveaway,
+        'queue' : add_queue,
+        'highlight' : highlight
     }
 
-    if authdata.TOKEN() and authdata.TOKENBOT():
+    if received_type == 'redeem':
+
+        message = utils.messages_file_load('event_redeem')
+        message = utils.replace_all(str(message), aliases)
+
+        data_append = {
+            "type" : "redeem",
+            "message" : message,
+            "user_input" : user_input,
+        }
+
+        append_notice(data_append)
+    
         if redeem_reward_name in path.keys():
             redeem_type = path[redeem_reward_name]['type']
             if redeem_type in eventos:
@@ -5648,13 +6031,11 @@ def receive_redeem(data_rewards, received_type):
         elif redeem_reward_name == giveaway_redeem:
             add_giveaway()
         elif redeem_reward_name == player_reward:
-
             status_music = sr_config_py('get-status','null')
             
             if status_music == 1:
 
-                music_process_thread = threading.Thread(target=process_redem_music, args=(user_input, redeem_by_user,),
-                                                        daemon=True)
+                music_process_thread = threading.Thread(target=process_redem_music, args=(user_input, redeem_by_user,), daemon=True)
                 music_process_thread.start()
                 
             else:
@@ -5665,24 +6046,163 @@ def receive_redeem(data_rewards, received_type):
                     send(message_replace_response)
         elif redeem_reward_name == counter_redeem:
             add_counter()
+        elif redeem_reward_name == queue_redeem:
+            add_queue()
+
+    if received_type == 'command':
+
+        if redeem_reward_name in path.keys():
+            redeem_type = path[redeem_reward_name]['type']
+            if redeem_type in eventos:
+                eventos[redeem_type]()
+        if command_receive == command_player:
+
+            status_music = sr_config_py('get-status','null')
+            
+            if status_music == 1:
+
+                music_process_thread = threading.Thread(target=process_redem_music, args=(user_input, redeem_by_user,), daemon=True)
+                music_process_thread.start()
+                
+            else:
+
+                aliases_commands = {'{username}': str(redeem_by_user)}
+                message_replace_response = utils.replace_all(utils.messages_file_load('music_disabled'), aliases_commands)
+
+                if utils.send_message("RESPONSE"):
+                    send(message_replace_response)
+        if command_receive == command_queue:
+            add_queue()
+        if command_receive == command_giveaway:
+            add_giveaway()
+
+
+@eel.expose
+def highlight_py(type_id,data):
+
+    if type_id == 'get':
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/highlight.json','r',encoding='utf-8') as file_highlight:
+            data_highlight = json.load(file_highlight)
+
+        status = data_highlight['status']
+        color_message = data_highlight['color_message']
+        color_username = data_highlight['color_username']
+        size = data_highlight['font-size']
+        weight = data_highlight['font-weight']
+        duration = data_highlight['duration']
+        source_name = data_highlight['source']
+        time = data_highlight['time']
+
+
+        data = {
+            'status' : status,
+            'source_name' : source_name,
+            'time' : time,
+            'color_message' : color_message,
+            'color_username' : color_username,
+            'font_size' : size,
+            'font_weight' : weight,
+            'duration' : duration,
+            
+        }
+
+        data_dump = json.dumps(data, ensure_ascii=False)
+
+        return data_dump
+    
+
+    elif type_id == 'save':
+
+        data_received = json.loads(data)
+
+        try:
+            with open(f'{appdata_path}/rewardevents/web/src/config/highlight.json','r',encoding='utf-8') as file_highlight:
+                data_highlight = json.load(file_highlight)
+
+            data_highlight['status'] = data_received['status']
+            data_highlight['source'] = data_received['source_name']
+            data_highlight['time'] = data_received['time']
+            data_highlight['color_message'] = data_received['color_message']
+            data_highlight['color_username'] = data_received['color_username']
+            data_highlight['font-size'] = data_received['font_size']
+            data_highlight['font-weight'] = data_received['font_weight']
+            data_highlight['durationt'] = data_received['duration']
+
+            with open(f'{appdata_path}/rewardevents/web/src/config/highlight.json','w',encoding='utf-8') as file_highlight:
+                json.dump(data_highlight,file_highlight,indent=4,ensure_ascii=False)
+
+            eel.toast_notifc('Salvo!')  
+
+        except Exception as e:
+
+            utils.error_log(e)
+            eel.toast_notifc('error')  
 
 
 @eel.expose
 def open_py(type_id,link_profile):
-
+ 
     if type_id == "user":
         webbrowser.open('https://www.twitch.tv/'+link_profile, new=0, autoraise=True)
+
+    if type_id == "link":
+        webbrowser.open(link_profile, new=0, autoraise=True)
 
     elif type_id == "appdata":
 
         try:
             subprocess.Popen(f'explorer "{appdata_path}\\rewardevents\\web"')
         except subprocess.CalledProcessError as e:
-            print(f"Erro ao chamar subprocesso: {e}")
+            utils.error_log(e)
+            eel.toast_notifc('Ocorreu um erro.')
 
     elif type_id == "errolog":
+
         arquivo = f'{appdata_path}/rewardevents/web/src/error_log.txt'
-        os.system('notepad.exe ' + arquivo)
+
+        with open(arquivo, 'r', encoding='utf-8') as error_file:
+            error_data = error_file.read()
+
+        return error_data
+
+    elif type_id == "errolog_clear":
+
+        arquivo = f'{appdata_path}/rewardevents/web/src/error_log.txt'
+        
+        with open(arquivo, 'w', encoding='utf-8') as error_file:
+            error_file.write('')
+
+        eel.toast_notifc('Relatório de erros limpo')
+    
+    elif type_id == "log":
+
+        try:
+            arquivo = f'{appdata_path}/rewardevents/web/src/output.log'
+
+            with open(arquivo, 'r') as debug_file:
+                debug_data = debug_file.read()
+
+            return debug_data
+        
+        except Exception as e:
+
+            utils.error_log(e)
+            eel.toast_notifc('Ocorreu um erro.')
+    
+    elif type_id == "log_clear":
+        
+        try:
+            arquivo = f'{appdata_path}/rewardevents/web/src/output.log'
+
+            with open(arquivo, 'w', encoding='utf-8') as debug_file:
+                debug_file.write('')
+
+            eel.toast_notifc('Relatório de debug limpo')
+        
+        except Exception as e:
+            utils.error_log(e)
+            eel.toast_notifc('Ocorreu um erro.')
 
     elif type_id == "discord":
         webbrowser.open('https://discord.io/ggtec', new=0, autoraise=True)
@@ -5690,7 +6210,66 @@ def open_py(type_id,link_profile):
     elif type_id == "wiki":
         webbrowser.open('https://ggtec.netlify.app', new=0, autoraise=True)
 
+    elif type_id == "debug-get":
 
+        with open(f"{appdata_path}/rewardevents/web/src/auth/scopes.json", "r", encoding="utf-8") as debug_file:
+            debug_data = json.load(debug_file)
+
+            debug_status = debug_data['debug']
+
+        return debug_status
+    
+    elif type_id == "debug-save":
+
+        with open(f"{appdata_path}/rewardevents/web/src/auth/scopes.json", "r", encoding="utf-8") as debug_file:
+            debug_data = json.load(debug_file)
+
+            debug_data['debug'] = link_profile
+        
+        with open(f"{appdata_path}/rewardevents/web/src/auth/scopes.json", "w", encoding="utf-8") as debug_file:
+            json.dump(debug_data,debug_file,indent=4,ensure_ascii=False)
+
+        if link_profile == 1: 
+            eel.toast_notifc(f'Configuração salva, reinicie o programa para iniciar no modo Debug Visual...')
+        elif link_profile == 0: 
+            eel.toast_notifc(f'Configuração salva, reinicie o programa para sair do modo Debug Visual...')
+
+    elif type_id == "dir_event":
+
+        try:
+            subprocess.Popen(f'explorer "{appdata_path}\\rewardevents\\web\\src\\html\\event"')
+            eel.toast_notifc('Abrindo diretório.')
+        except subprocess.CalledProcessError as e:
+            utils.error_log(e)
+            eel.toast_notifc('Ocorreu um erro.')
+    
+    elif type_id == "dir_not":
+
+        try:
+            subprocess.Popen(f'explorer "{appdata_path}\\rewardevents\\web\\src\\html\\notification"')
+            eel.toast_notifc('Abrindo diretório.')
+        except subprocess.CalledProcessError as e:
+            utils.error_log(e)
+            eel.toast_notifc('Ocorreu um erro.')
+
+    elif type_id == "dir_video":
+
+        try:
+            subprocess.Popen(f'explorer "{appdata_path}\\rewardevents\\web\\src\\html\\video"')
+            eel.toast_notifc('Abrindo diretório.')
+        except subprocess.CalledProcessError as e:
+            utils.error_log(e)
+            eel.toast_notifc('Ocorreu um erro.')
+
+    elif type_id == "dir_emote":
+
+        try:
+            subprocess.Popen(f'explorer "{appdata_path}\\rewardevents\\web\\src\\html\\emote"')
+            eel.toast_notifc('Abrindo diretório.')
+        except subprocess.CalledProcessError as e:
+            utils.error_log(e)
+            eel.toast_notifc('Ocorreu um erro.')
+    
 @eel.expose
 def send_not_fun(data: dict) -> None:
 
@@ -5776,6 +6355,7 @@ def send_not_fun(data: dict) -> None:
         else :
             
             data_not = {
+                "type_id" : type_id,
                 "username" : data['username'],
                 "message" : data['message_html'],
                 "duration" : not_config_data['HTML_EVENTS_TIME'],
@@ -5819,14 +6399,9 @@ def chat_config(data_save,type_config):
             chat_data["time-format"] = data_received["time_format"]
             chat_data["color-apply"] = data_received["color_apply"]
             chat_data["block-color"] = data_received["chat_colors_block"]
-            chat_data["color-not"] = data_received["color_not"]
-            chat_data["color-not-join"] = data_received["color_not_join"]
-            chat_data["color-not-leave"] = data_received["color_not_leave"]
             chat_data["font-size"] = data_received["font_size"]
             chat_data["show-badges"] = data_received["show_badges"]
             chat_data["wrapp-message"] = data_received["wrapp_message"]
-            chat_data["not-user-join"] = data_received["not_user_join"]
-            chat_data["not-user-leave"] = data_received["not_user_leave"]
             chat_data["not-user-sound"] = data_received["not_user_sound"]
             chat_data["not-sound-path"] = data_received["not_sound_path"]
             chat_data["send-greetings"] = data_received["greetings_join"]
@@ -5853,14 +6428,9 @@ def chat_config(data_save,type_config):
                 "time_format" : chat_data["time-format"],
                 "type_data" : chat_data["type-data"],
                 "data_show" : chat_data["data-show"],
-                "color_not" : chat_data["color-not"],
-                "color_not_join" : chat_data["color-not-join"],
-                "color_not_leave" : chat_data["color-not-leave"],
                 "font_size" : chat_data["font-size"],
                 "show_badges" : chat_data["show-badges"],
                 "wrapp_message" : chat_data["wrapp-message"],
-                "not_user_join" : chat_data["not-user-join"],
-                "not_user_leave" : chat_data["not-user-leave"],
                 "not_user_sound" : chat_data["not-user-sound"],
                 "not_sound_path" : chat_data["not-sound-path"],
                 "greetings_join" : chat_data["send-greetings"],
@@ -5878,13 +6448,14 @@ def chat_config(data_save,type_config):
         with open(f'{appdata_path}/rewardevents/web/src/config/chat_config.json', 'r+', encoding='utf-8') as chat_file:
             chat_data = json.load(chat_file)
             
-            chat_data["user_not_display"].append(data_save)
-            
-            chat_file.seek(0)
-            json.dump(chat_data, chat_file, indent=6, ensure_ascii=False)
-            chat_file.truncate()  
-            
-            eel.toast_notifc('Nome adicionado')
+            if data_save not in chat_data["user_not_display"]:
+                chat_data["user_not_display"].append(data_save)
+                
+                chat_file.seek(0)
+                json.dump(chat_data, chat_file, indent=6, ensure_ascii=False)
+                chat_file.truncate()  
+                
+                eel.toast_notifc('Nome adicionado')
             
     elif type_config == 'list_get':
 
@@ -5900,7 +6471,7 @@ def chat_config(data_save,type_config):
         with open(f'{appdata_path}/rewardevents/web/src/config/chat_config.json', 'r+', encoding='utf-8') as chat_file:
             chat_data = json.load(chat_file)
             
-            if data_save in chat_data:
+            if data_save in chat_data["user_not_display"]:
             
                 chat_data["user_not_display"].remove(data_save)
             
@@ -5916,16 +6487,35 @@ def chat_config(data_save,type_config):
 
     elif type_config == 'list_bot_add':
         
+        with open(f'{appdata_path}/rewardevents/web/src/user_info/users_sess_join.json','r',encoding='utf-8') as users_sess_join_file:
+            users_sess_join_data = json.load(users_sess_join_file)
+    
+        with open(f'{appdata_path}/rewardevents/web/src/user_info/users_joined.json','r',encoding='utf-8') as userjoin_data_file:
+            userjoin_data_load = json.load(userjoin_data_file)
+
+        if data_save in userjoin_data_load['spec']:
+            userjoin_data_load['spec'].remove(data_save)
+
+        if data_save in users_sess_join_data['spec']:
+            users_sess_join_data['spec'].remove(data_save)
+
         with open(f'{appdata_path}/rewardevents/web/src/user_info/bot_list_add.json', 'r+', encoding='utf-8') as bot_file:
-            
             bot_data = json.load(bot_file)
             
-            bot_data.append(data_save)
+            if data_save not in bot_data:
+                bot_data.append(data_save)
+                
+                bot_file.seek(0)
+                json.dump(bot_data, bot_file, indent=6, ensure_ascii=False)
+                bot_file.truncate()  
             
-            bot_file.seek(0)
-            json.dump(bot_data, bot_file, indent=6, ensure_ascii=False)
-            bot_file.truncate()  
+
+        with open(f'{appdata_path}/rewardevents/web/src/user_info/users_joined.json','w',encoding='utf-8') as userjoin_data_file:
+            json.dump(userjoin_data_load,userjoin_data_file,indent=6,ensure_ascii=False)
             
+        with open(f'{appdata_path}/rewardevents/web/src/user_info/users_sess_join.json','w',encoding='utf-8') as user_join_sess_file_w:
+            json.dump(users_sess_join_data,user_join_sess_file_w,indent=6,ensure_ascii=False)
+
         with open(f'{appdata_path}/rewardevents/web/src/user_info/users_database.json','r',encoding='utf-8') as user_data_file:
             user_data_load = json.load(user_data_file)
                         
@@ -6047,7 +6637,8 @@ def userdata_py(type_id,username):
  
       
 def commands_module(data) -> None:
-    
+
+
     def send_error_level(user,user_level, command):
 
         message_error_level_load = utils.messages_file_load('error_user_level')
@@ -6082,6 +6673,17 @@ def commands_module(data) -> None:
         else:
             return "spec"
 
+    def compare_strings(s1, s2):
+
+        if len(s1) > len(s2):
+
+            return False
+        for i in range(len(s1)):
+            if s1[i] != s2[i]:
+
+                return False
+        return True
+    
     message_sender = data['display_name']
     message_sender_id = data['user_id']
     
@@ -6104,6 +6706,7 @@ def commands_module(data) -> None:
         perms_list.append('top_chatter')
     
     message_text = data['message_no_url']
+    emotes = data['emotes']
 
     user = message_sender
     user_id_command = message_sender_id
@@ -6113,7 +6716,6 @@ def commands_module(data) -> None:
     else:
         user_type = check_user_level(perms_list)
     
-
     with open(f'{appdata_path}/rewardevents/web/src/config/commands.json', "r", encoding='utf-8') as command_file:
         command_data = json.load(command_file)
         
@@ -6138,20 +6740,28 @@ def commands_module(data) -> None:
     with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'r', encoding='utf-8') as command_file_default:
         command_data_default = json.load(command_file_default)
     
+    with open(f'{appdata_path}/rewardevents/web/src/queue/commands.json', "r", encoding='utf-8') as command_file_queue:
+        command_data_queue = json.load(command_file_queue)
+
     command_string = message_text
     command_lower = command_string.lower()
+
+    if len(command_string.split()) > 1:
+        split_command = command_string.split(maxsplit=1)
+        command ,sufix = split_command
+
+    else:
+        sufix = None
+    
     command = command_lower.split()[0].strip()
+
     prefix = command[0]
 
-    result_giveaway_check = {key: val for key, val in command_data_giveaway.items() if val.startswith(command)}
-
-    result_counter_check = {key: val for key, val in command_data_counter.items() if val.startswith(command)}
-
-    result_player_check = {key: val for key, val in command_data_player.items() if val.startswith(command)}
-    
     result_duel_check = command.startswith(command_data_duel['command'])
 
     status_commands = command_data_prefix['STATUS_COMMANDS']
+
+    random_value = randint(0,100)
 
     aliases = {
         '{username}': str(user),
@@ -6159,13 +6769,13 @@ def commands_module(data) -> None:
         '{prefix}': str(prefix),
         '{user_level}': str(user_type),
         '{user_id}': str(user_id_command),
+        '{sufix}': str(sufix),
+        '{random}' : str(random_value),
     }
 
     if status_commands == 1:
         
         if command in command_data.keys():
-
-            eel.last_command(command)
 
             status = command_data[command]['status']
             user_level = command_data[command]['user_level']
@@ -6181,18 +6791,8 @@ def commands_module(data) -> None:
                     if status == 1:
                     
                         redeem = command_data[command]['redeem']
-                        user_input = command_lower.split(command)
-                        
-                        if len(user_input) > 1 and user_input[1] != "":
-                            
-                            user_input = command_lower.split(command)[1]
 
-                        else:
-                            
-                            user_input = ""
-
-
-                        data_rewards = {'USERNAME': user, 'REDEEM': redeem, 'USER_INPUT': user_input, 'USER_LEVEL': user_type,
+                        data_rewards = {'USERNAME': user, 'REDEEM': redeem, 'USER_INPUT': sufix, 'USER_LEVEL': user_type,
                                         'USER_ID': user_id_command, 'COMMAND': command, 'PREFIX': prefix}
 
                         received_type = 'command'
@@ -6201,6 +6801,18 @@ def commands_module(data) -> None:
                         
                         with open(f'{appdata_path}/rewardevents/web/src/config/commands.json', 'w', encoding='utf-8') as commands_save_delay:
                             json.dump(command_data, commands_save_delay, indent=6,ensure_ascii=False)
+
+                        
+                        message_event = utils.messages_file_load('event_command')
+                        message_event = utils.replace_all(str(message_event), aliases)
+
+                        data_append = {
+                            "type" : "command",
+                            "message" : message_event,
+                            "user_input" : sufix,
+                        }
+                        
+                        append_notice(data_append)
 
                         receive_thread = threading.Thread(target=receive_redeem, args=(data_rewards, received_type,),
                                                         daemon=True)
@@ -6220,7 +6832,16 @@ def commands_module(data) -> None:
 
         elif command in command_data_simple.keys():
 
-            eel.last_command(command)
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
 
             with open(f"{appdata_path}/rewardevents/web/src/counter/counter.txt", "r") as counter_file_r:
                 counter_file_r.seek(0)
@@ -6244,12 +6865,13 @@ def commands_module(data) -> None:
                     '{user_id}': str(user_id_command),
                     '{counter}': str(counter),
                     '{counts}' : str(counts),
+                    '{sufix}': str(sufix),
+                    '{random}' : str(random_value),
                 }
 
                 if status == 1:
                     
                     response_redus = utils.replace_all(str(response), aliases)
-
                     message_delay, check_time, current = utils.check_delay(delay,last_use)
 
                     if check_time:
@@ -6275,130 +6897,158 @@ def commands_module(data) -> None:
 
                 send_error_level(user,str(user_level), str(command))
 
-        elif command in result_counter_check.values():
+        elif compare_strings(command,command_data_counter['reset_counter']['command']):
 
-            eel.last_command(command)
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
             
-            with open(f'{appdata_path}/rewardevents/web/src/counter/delay.json', 'r', encoding='utf-8') as delay_counter_file:
-                delay_counter_data = json.load(delay_counter_file)
+            append_notice(data_append)
+            
+            status = command_data_counter['reset_counter']['status']
+            user_level = command_data_counter['reset_counter']['user_level']
+            delay = command_data_counter['reset_counter']['delay']
+            last_use = command_data_counter['reset_counter']['last_use']
+            
+            if status == 1:
 
-            if 'reset_counter' in result_counter_check.keys():
-                
-                status = delay_counter_data['reset_status']
-                
-                if status == 1:
-                    if check_perm(user_type, 'mod'):
+                if check_perm(user_type,user_level):
 
-                        delay = delay_counter_data['reset']
-                        last_use = delay_counter_data['reset_last']
-                        
-                        message_delay, check_time, current = utils.check_delay(delay,last_use)
-                        
-                        if check_time:
-
-                            with open(f"{appdata_path}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
-                                counter_file_w.write('0')
-
-                            response_reset = utils.messages_file_load('response_reset_counter')
-                            if utils.send_message("RESPONSE"):
-                                send(response_reset)
-                                
-                            delay_counter_data['reset_last'] = current
-                            
-                            with open(f'{appdata_path}/rewardevents/web/src/counter/delay.json', 'w', encoding='utf-8') as delay_counter_file_w:
-                                json.dump(delay_counter_data, delay_counter_file_w, indent=6, ensure_ascii=False)
-
-                        else:
-
-                            if utils.send_message("ERROR_TIME"):
-                                send(message_delay_global)
-                    else:
-                        send_error_level(user,'mod', str(command))
-                
-                else:
-                    if utils.send_message("RESPONSE"):
-                        send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
-                        
-            elif 'set_counter' in result_counter_check.keys():
-
-                status = delay_counter_data['set_status']
-                
-                if status == 1:
                     
-                    if check_perm(user_type, 'mod'):
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+                    
+                    if check_time:
 
-                        delay = delay_counter_data['set']
-                        last_use = delay_counter_data['set_last']
-                        
-                        message_delay, check_time, current = utils.check_delay(delay,last_use)
-                        
-                        prefix_counter = command_data_counter['set_counter']
+                        with open(f"{appdata_path}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
+                            counter_file_w.write('0')
 
-                        if check_time:
+                        response_reset = utils.messages_file_load('response_reset_counter')
+                        if utils.send_message("RESPONSE"):
+                            send(response_reset)
                             
-                            user_input = command_string.split(prefix_counter.lower())
+                        command_data_counter['reset_counter']['last_use'] = current
+                        
+                        with open(f'{appdata_path}/rewardevents/web/src/counter/commands.json', "w", encoding='utf-8') as counter_file:
+                            json.dump(command_data_counter, counter_file, indent=6, ensure_ascii=False)
 
-                            if len(user_input) > 1 and user_input[1] != "":
-                                
-                                user_input = user_input[1]
-                                
-                                if user_input.strip().isdigit():
+                    else:
 
-                                    with open(f"{appdata_path}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
-                                        counter_file_w.write(str(user_input))
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay_global)
+                else:
+                    send_error_level(user,user_level, str(command))
+            
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
 
-                                    response_set = utils.messages_file_load('response_counter')
-                                    response_set_repl = response_set.replace('{value}', user_input)
+        elif compare_strings(command,command_data_counter['set_counter']['command']):
 
-                                    if utils.send_message("RESPONSE"):
-                                        send(response_set_repl)
-                                        
-                                    delay_counter_data['set_last'] = current
-                                
-                                    with open(f'{appdata_path}/rewardevents/web/src/counter/delay.json', 'w', encoding='utf-8') as delay_counter_file_w:
-                                        json.dump(delay_counter_data, delay_counter_file_w, indent=6, ensure_ascii=False)
-                                    
-                                else:
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
 
-                                    response_not_digit = utils.messages_file_load('response_not_digit_counter')
-                                    if utils.send_message("RESPONSE"):
-                                        send(response_not_digit.replace('{username}', user))
-                                        
-                                    delay_counter_data['set_last'] = current
-                                
-                                    with open(f'{appdata_path}/rewardevents/web/src/counter/delay.json', 'w', encoding='utf-8') as delay_counter_file_w:
-                                        json.dump(delay_counter_data, delay_counter_file_w, indent=6, ensure_ascii=False)
-                                    
-                            else:
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+        
+            status = command_data_counter['set_counter']['status']
+            user_level = command_data_counter['set_counter']['user_level']
+            delay = command_data_counter['set_counter']['delay']
+            last_use = command_data_counter['set_counter']['last_use']
+            
+            if status == 1:
+                
+                if check_perm(user_type,user_level):
 
-                                response_null_counter = utils.messages_file_load('response_null_set_counter')
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+                    prefix_counter = command_data_counter['set_counter']['command']
+
+                    if check_time:
+                        
+                        user_input = command_string.split(prefix_counter.lower())
+
+                        if len(user_input) > 1 and user_input[1] != "":
+                            
+                            user_input = user_input[1]
+                            
+                            if user_input.strip().isdigit():
+
+                                with open(f"{appdata_path}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
+                                    counter_file_w.write(str(user_input))
+
+                                response_set = utils.messages_file_load('response_set_counter')
+                                response_set_repl = response_set.replace('{value}', user_input)
 
                                 if utils.send_message("RESPONSE"):
-                                    send(response_null_counter.replace('{username}', user))
+                                    send(response_set_repl)
                                     
-                                delay_counter_data['set_last'] = current
+                                command_data_counter['set_counter']['last_use'] = current
                             
-                                with open(f'{appdata_path}/rewardevents/web/src/counter/delay.json', 'w', encoding='utf-8') as delay_counter_file_w:
-                                    json.dump(delay_counter_data, delay_counter_file_w, indent=6, ensure_ascii=False)
+                            else:
+
+                                response_not_digit = utils.messages_file_load('response_not_digit_counter')
+                                if utils.send_message("RESPONSE"):
+                                    send(response_not_digit.replace('{username}', user))
                                     
+                                command_data_counter['set_counter']['last_use'] = current
+                            
+
+                            with open(f'{appdata_path}/rewardevents/web/src/counter/commands.json', "w", encoding='utf-8') as counter_file:
+                                json.dump(command_data_counter, counter_file, indent=6, ensure_ascii=False)
+                                
                         else:
 
-                            if utils.send_message("ERROR_TIME"):
-                                send(message_delay_global)
-                    else:
-                        send_error_level(user,'mod', str(command))
-                else:
-                    if utils.send_message("RESPONSE"):
-                        send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                            response_null_counter = utils.messages_file_load('response_null_set_counter')
+
+                            if utils.send_message("RESPONSE"):
+                                send(response_null_counter.replace('{username}', user))
+                                
+                            command_data_counter['set_counter']['last_use'] = current
                         
-            elif 'check_counter' in result_counter_check.keys():
+                            with open(f'{appdata_path}/rewardevents/web/src/counter/commands.json', "r", encoding='utf-8') as counter_file:
+                                json.dump(command_data_counter, counter_file, indent=6, ensure_ascii=False)
+                                
+                    else:
+
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay_global)
                 
-                status = delay_counter_data['check_status']
-                
-                if status == 1:
-                    
-                    delay = delay_counter_data['check']
-                    last_use = delay_counter_data['check_last']
+                else:
+                    send_error_level(user,user_level, str(command))
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                 
+        elif compare_strings(command,command_data_counter['check_counter']['command']):
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+        
+            status = command_data_counter['check_counter']['status']
+            user_level = command_data_counter['check_counter']['user_level']
+            delay = command_data_counter['check_counter']['delay']
+            last_use = command_data_counter['check_counter']['last_use']
+            
+            if status == 1:
+
+                if check_perm(user_type,user_level):
                     
                     message_delay, check_time, current = utils.check_delay(delay,last_use)
 
@@ -6414,34 +7064,45 @@ def commands_module(data) -> None:
                         if utils.send_message("RESPONSE"):
                             send(response_check_repl)
                             
-                                
-                        delay_counter_data['check_last'] = current
+                        command_data_counter['check_counter']['last_use'] = current
                     
-                        with open(f'{appdata_path}/rewardevents/web/src/counter/delay.json', 'w', encoding='utf-8') as delay_counter_file_w:
-                            json.dump(delay_counter_data, delay_counter_file_w, indent=6, ensure_ascii=False)   
-                            
+                        with open(f'{appdata_path}/rewardevents/web/src/counter/commands.json', "w", encoding='utf-8') as counter_file:
+                            json.dump(command_data_counter, counter_file, indent=6, ensure_ascii=False)
 
                     else:
+
                         if utils.send_message("ERROR_TIME"):
                             send(message_delay_global)
-                
+
                 else:
-                    
-                    if utils.send_message("RESPONSE"):
-                        send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
-                    
-        elif command in result_giveaway_check.values():
-            with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'r', encoding='utf-8') as delay_giveaway_file:
-                delay_giveaway_data = json.load(delay_giveaway_file)
+                    send_error_level(user,user_level, str(command))
+            
+            else:
                 
-            eel.last_command(command)
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
 
-            if 'execute_giveaway' in result_giveaway_check.keys():
-                
-                if check_perm(user_type, 'mod'):
+        elif compare_strings(command,command_data_giveaway['execute_giveaway']['command']):
 
-                    delay = delay_giveaway_data['execute_delay']
-                    last_use = delay_giveaway_data['execute_last_use']
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            status = command_data_giveaway['execute_giveaway']['status']
+            user_level = command_data_giveaway['execute_giveaway']['user_level']
+            delay = command_data_giveaway['execute_giveaway']['delay']
+            last_use = command_data_giveaway['execute_giveaway']['last_use']
+
+            if status:
+
+                if check_perm(user_type, user_level):
                     
                     message_delay_global, check_time_global, current = utils.check_delay(delay,last_use)
 
@@ -6449,25 +7110,45 @@ def commands_module(data) -> None:
 
                         giveaway_py('execute','null')
                         
-                        delay_giveaway_data['execute_last_use'] = current
+                        command_data_giveaway['execute_giveaway']['last_use'] = current
                         
-                        with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'w', encoding="utf-8") as giveaway_delay_w:
-                            json.dump(delay_giveaway_data, giveaway_delay_w, indent=6, ensure_ascii=False)
+                        with open(f'{appdata_path}/rewardevents/web/src/giveaway/commands.json', 'w', encoding='utf-8') as giveaway_file:
+                            json.dump(command_data_giveaway, giveaway_file, indent=6, ensure_ascii=False)  
 
                     else:
+
                         if utils.send_message("ERROR_TIME"):
                             send(message_delay_global)
-
+                
                 else:
+                    send_error_level(user,user_level, str(command))
 
-                    send_error_level(user,'mod', str(command))
+            else:
+                
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
 
-            elif 'clear_giveaway' in result_giveaway_check.keys():
+        elif compare_strings(command,command_data_giveaway['clear_giveaway']['command']):
 
-                if check_perm(user_type, 'mod'):
-                    
-                    delay = delay_giveaway_data['clear_delay']
-                    last_use = delay_giveaway_data['clear_last_use']
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            status = command_data_giveaway['clear_giveaway']['status']
+            delay = command_data_giveaway['clear_giveaway']['delay']
+            last_use = command_data_giveaway['clear_giveaway']['last_use']
+            user_level = command_data_giveaway['clear_giveaway']['user_level']
+
+            if status:
+
+                if check_perm(user_type, user_level):
                     
                     message_delay_global, check_time_global, current = utils.check_delay(delay,last_use)
 
@@ -6475,44 +7156,62 @@ def commands_module(data) -> None:
 
                         reset_data = []
 
-                        giveaway_reset_file = open(f'{appdata_path}/rewardevents/web/src/giveaway/names.json', 'w', encoding="utf-8")
-                        json.dump(reset_data, giveaway_reset_file, indent=6, ensure_ascii=False)
-                        giveaway_reset_file.close()
+                        with open(f'{appdata_path}/rewardevents/web/src/giveaway/names.json', 'w', encoding="utf-8") as giveaway_reset_file:
+                            json.dump(reset_data, giveaway_reset_file, indent=6, ensure_ascii=False)
 
                         message_clear = utils.messages_file_load('giveaway_clear')
 
                         if utils.send_message("RESPONSE"):
                             send(message_clear)
                             
-                        delay_giveaway_data['clear_last_use'] = current
+                        command_data_giveaway['clear_giveaway']['last_use'] = current
                         
-                        with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'w', encoding="utf-8") as giveaway_delay_w:
-                            json.dump(delay_giveaway_data, giveaway_delay_w, indent=6, ensure_ascii=False)
+                        with open(f'{appdata_path}/rewardevents/web/src/giveaway/commands.json', 'w', encoding='utf-8') as giveaway_file:
+                            json.dump(command_data_giveaway, giveaway_file, indent=6, ensure_ascii=False)  
 
                     else:
 
                         if utils.send_message("ERROR_TIME"):
                             send(message_delay_global)
+                
                 else:
-                    send_error_level(user,'mod', str(command))
 
-                pass
+                    send_error_level(user, user_level, str(command))
+            else:
+                
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+ 
+        elif compare_strings(command,command_data_giveaway['check_name']['command']):
 
-            elif 'check_name' in result_giveaway_check.keys():
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
 
-                if check_perm(user_type, 'mod'):
-                    
-                    delay = delay_giveaway_data['check_delay']
-                    last_use = delay_giveaway_data['check_last_use']
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            status = command_data_giveaway['check_name']['status']
+            delay = command_data_giveaway['check_name']['delay']
+            last_use = command_data_giveaway['check_name']['last_use']
+            user_level = command_data_giveaway['clear_giveaway']['user_level']
+
+            if status:
+
+                if check_perm(user_type, user_level):
                     
                     message_delay_global, check_time_global, current = utils.check_delay(delay,last_use)
 
                     if check_time_global:
                         
-                        user_input = command_string.split(command_data_giveaway['check_name'])
+                        user_input = command_string.split(command_data_giveaway['check_name']['command'])
 
-                        giveaway_name_file = open(f'{appdata_path}/rewardevents/web/src/giveaway/names.json', 'r', encoding='utf-8')
-                        giveaway_name_data = json.load(giveaway_name_file)
+                        with open(f'{appdata_path}/rewardevents/web/src/giveaway/names.json', 'r', encoding='utf-8') as giveaway_name_file:
+                            giveaway_name_data = json.load(giveaway_name_file)
 
                         if len(user_input) > 1 and user_input[1] != "":
                             
@@ -6524,33 +7223,22 @@ def commands_module(data) -> None:
 
                                 if utils.send_message("RESPONSE"):
                                     send(message_check_user.replace('{username}', user_input))
-                                    
-                                delay_giveaway_data['check_last_use'] = current
-                        
-                                with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'w', encoding="utf-8") as giveaway_delay_w:
-                                    json.dump(delay_giveaway_data, giveaway_delay_w, indent=6, ensure_ascii=False)
-
                             else:
 
                                 message_check_no_user_load = utils.messages_file_load('response_no_user_giveaway')
 
                                 if utils.send_message("RESPONSE"):
                                     send(message_check_no_user_load.replace('{username}', user_input))
-                                    
-                                delay_giveaway_data['check_last_use'] = current
-                        
-                                with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'w', encoding="utf-8") as giveaway_delay_w:
-                                    json.dump(delay_giveaway_data, giveaway_delay_w, indent=6, ensure_ascii=False)
-                        else:
+                        else:          
                             
                             message_check_error = utils.messages_file_load('response_check_error_giveaway')
                             if utils.send_message("RESPONSE"):
                                 send(message_check_error.replace('{username}',user ))
-                            
-                            delay_giveaway_data['check_last_use'] = current
-                    
-                            with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'w', encoding="utf-8") as giveaway_delay_w:
-                                json.dump(delay_giveaway_data, giveaway_delay_w, indent=6, ensure_ascii=False)
+
+                        giveaway_name_data['check_name']['last_use'] = current
+                
+                        with open(f'{appdata_path}/rewardevents/web/src/giveaway/commands.json', 'w', encoding='utf-8') as giveaway_file:
+                            json.dump(command_data_giveaway, giveaway_file, indent=6, ensure_ascii=False)  
                             
                     else:
 
@@ -6558,14 +7246,35 @@ def commands_module(data) -> None:
                             send(message_delay_global)
 
                 else:
-                    send_error_level(user,'mod', str(command))
 
-            elif 'add_user' in result_giveaway_check.keys():
+                    send_error_level(user, user_level, str(command))
+            
+            else:
+                
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
 
-                if check_perm(user_type, 'mod'):
-                    
-                    delay = delay_giveaway_data['add_user_delay']
-                    last_use = delay_giveaway_data['add_user_last_use']
+        elif compare_strings(command,command_data_giveaway['add_user']['command']):
+        
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+            
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            status = command_data_giveaway['add_user']['status']
+            delay = command_data_giveaway['add_user']['delay']
+            last_use = command_data_giveaway['add_user']['last_use']
+            user_level = command_data_giveaway['add_user']['user_level']
+
+            if status:
+
+                if check_perm(user_type, user_level):
                     
                     message_delay_global, check_time_global, current = utils.check_delay(delay,last_use)
 
@@ -6582,12 +7291,8 @@ def commands_module(data) -> None:
                                 'new_name': user_input.strip(),
                                 'user_level' : 'mod'
                             }
+
                             giveaway_py('add_user',data)
-                            
-                            delay_giveaway_data['add_user_last_use'] = current
-                    
-                            with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'w', encoding="utf-8") as giveaway_delay_w:
-                                json.dump(delay_giveaway_data, giveaway_delay_w, indent=6, ensure_ascii=False)
                             
                         else:
                             
@@ -6595,168 +7300,180 @@ def commands_module(data) -> None:
                             if utils.send_message("RESPONSE"):
                                 send(message_add_user_error.replace('{username}',user ))
                                 
-                            delay_giveaway_data['add_user_last_use'] = current
-                    
-                            with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'w', encoding="utf-8") as giveaway_delay_w:
-                                json.dump(delay_giveaway_data, giveaway_delay_w, indent=6, ensure_ascii=False)
+                        command_data_giveaway['add_user']['last_use'] = current
+                
+                        with open(f'{appdata_path}/rewardevents/web/src/giveaway/commands.json', 'w', encoding='utf-8') as giveaway_file:
+                            json.dump(command_data_giveaway, giveaway_file, indent=6, ensure_ascii=False)  
                     else:
 
                         if utils.send_message("ERROR_TIME"):
                             send(message_delay_global)
 
                 else:
-                    send_error_level(user,'mod', str(command))
+                    send_error_level(user, user_level, str(command))
 
-            elif 'check_self_name' in result_giveaway_check.keys():
-
-                delay = delay_giveaway_data['check_self_delay']
-                last_use = delay_giveaway_data['check_self_last_use']
+            else:
                 
-                message_delay_global, check_time_global, current = utils.check_delay(delay,last_use)
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
 
-                if check_time_global:
+        elif compare_strings(command,command_data_giveaway['check_self_name']['command']):
+        
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
 
-                    giveaway_name_file = open(f'{appdata_path}/rewardevents/web/src/giveaway/names.json', 'r', encoding='utf-8')
-                    giveaway_name_data = json.load(giveaway_name_file)
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+            
+            status = command_data_giveaway['add_user']['status']
+            delay = command_data_giveaway['check_self_name']['delay']
+            last_use = command_data_giveaway['check_self_name']['last_use']
+            user_level = command_data_giveaway['add_user']['user_level']
 
+            if status:
 
-                    if user in giveaway_name_data:
+                if check_perm(user_type, user_level):
 
-                        message_check_user_load = utils.messages_file_load('response_user_giveaway')
-                        message_check_user = message_check_user_load.replace('{username}', str(user))
+                    message_delay_global, check_time_global, current = utils.check_delay(delay,last_use)
+                        
+                    if check_time_global:
 
-                        if utils.send_message("RESPONSE"):
-                            send(message_check_user)
-                            
-                        delay_giveaway_data['check_self_last_use'] = current
+                        with open(f'{appdata_path}/rewardevents/web/src/giveaway/names.json', 'r', encoding='utf-8') as giveaway_name_file:
+                            giveaway_name_data = json.load(giveaway_name_file)
+
+                        if user in giveaway_name_data:
+
+                            message_check_user_load = utils.messages_file_load('response_user_giveaway')
+                            message_check_user = message_check_user_load.replace('{username}', str(user))
+
+                            if utils.send_message("RESPONSE"):
+                                send(message_check_user)
+
+                        else:
+
+                            message_no_user_giveaway_load = utils.messages_file_load('response_no_user_giveaway')
+                            message_no_user_giveaway = message_no_user_giveaway_load.replace('{username}', user)
+
+                            if utils.send_message("RESPONSE"):
+                                send(message_no_user_giveaway)
+                                
+                        command_data_giveaway['check_self_name']['last_use']
                 
                         with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'w', encoding="utf-8") as giveaway_delay_w:
-                            json.dump(delay_giveaway_data, giveaway_delay_w, indent=6, ensure_ascii=False)
+                            json.dump(giveaway_name_data, giveaway_delay_w, indent=6, ensure_ascii=False)
 
                     else:
 
-                        message_no_user_giveaway_load = utils.messages_file_load('response_no_user_giveaway')
-                        message_no_user_giveaway = message_no_user_giveaway_load.replace('{username}', user)
-
-                        if utils.send_message("RESPONSE"):
-                            send(message_no_user_giveaway)
-                            
-                        delay_giveaway_data['check_self_last_use'] = current
-                
-                        with open(f'{appdata_path}/rewardevents/web/src/giveaway/delay.json', 'w', encoding="utf-8") as giveaway_delay_w:
-                            json.dump(delay_giveaway_data, giveaway_delay_w, indent=6, ensure_ascii=False)
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay_global)
 
                 else:
+                    send_error_level(user, user_level, str(command))
 
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay_global)
+            else:
+                
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                    
+        elif compare_strings(command,command_data_player['volume']['command']):
 
-        elif command in result_player_check.values():
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
             
-            with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'r', encoding='utf-8') as delay_file_player:
-                delay_data_player = json.load(delay_file_player)
-        
-            if 'volume' in result_player_check.keys():
-                
-                delay = delay_data_player['volume-delay']
-                last_use = delay_data_player['volume-last']
-                status = delay_data_player['volume-status']
-                
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
+            append_notice(data_append)
 
-                user_level = command_data_player['volume-perm']
-                
+            delay = command_data_player['volume']['delay']
+            last_use = command_data_player['volume']['last_use']
+            status = command_data_player['volume']['status']
+            user_level = command_data_player['volume']['user_level']
+            
+            if status == 1:
+
                 if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
 
                     if check_time:
 
-                        if status == 1:
+                        prefix_volume = command_data_player['volume']['command']
+                        volume_value_command = command_lower.split(prefix_volume.lower())
+
+                        if len(volume_value_command) > 1 and volume_value_command[1] != "":
+                                    
+                            volume_value_command = volume_value_command[1]
                             
-                            prefix_volume = command_data_player['volume']
-                            volume_value_command = command_lower.split(prefix_volume.lower())
+                            if volume_value_command.strip().isdigit():
 
-                            if len(volume_value_command) > 1 and volume_value_command[1] != "":
-                                        
-                                volume_value_command = volume_value_command[1]
-                                
-                                if volume_value_command.strip().isdigit():
+                                volume_value_int = int(volume_value_command)
 
-                                    volume_value_int = int(volume_value_command)
+                                if volume_value_int in range(0, 101):
 
-                                    if volume_value_int in range(0, 101):
+                                    volume_value = volume_value_int / 100
+                                    
+                                    eel.player('volume', 'none', volume_value)
 
-                                        volume_value = volume_value_int / 100
-                                        
-                                        eel.player('volume', 'none', volume_value)
+                                    aliases_commands = {
+                                        '{username}': str(user),
+                                        '{volume}': str(volume_value_int)
+                                    }
 
-                                        aliases_commands = {
-                                            '{username}': str(user),
-                                            '{volume}': str(volume_value_int)
-                                        }
+                                    message_replace_response = utils.replace_all(utils.messages_file_load('command_volume_confirm'),aliases_commands)
 
-                                        message_replace_response = utils.replace_all(utils.messages_file_load('command_volume_confirm'),aliases_commands)
-
-                                        if utils.send_message("RESPONSE"):
-                                            send(message_replace_response)
-                                            
-                                        delay_data_player['volume-last'] = current
-                                
-                                        with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                            json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
-
-                                    else:
-
-                                        aliases_commands = {
-                                            '{username}': user,
-                                            '{volume}': str(volume_value_int)
-                                        }
-
-                                        message_replace_response = utils.replace_all(utils.messages_file_load('command_volume_error'),aliases_commands)
-
-                                        if utils.send_message("RESPONSE"):
-                                            send(message_replace_response)
-                                            
-                                        delay_data_player['volume-last'] = current
-                                
-                                        with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                            json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
+                                    if utils.send_message("RESPONSE"):
+                                        send(message_replace_response)
 
                                 else:
 
-                                    if utils.send_message("RESPONSE"):
-                                        send(utils.messages_file_load('command_volume_number'))
-                                        
-                                        
-                                    delay_data_player['volume-last'] = current
-                            
-                                    with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                        json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
-                            
-                            else:
-                                
-                                volume_atual = eel.player('get_volume', 'none', 'none')()
-                                
-                                aliases_commands = {
-                                        '{username}': str(user),
-                                        '{volume}': str(volume_atual)
+                                    aliases_commands = {
+                                        '{username}': user,
+                                        '{volume}': str(volume_value_int)
                                     }
 
-                                message_replace_response = utils.replace_all(utils.messages_file_load('command_volume_response'), aliases_commands)
+                                    message_replace_response = utils.replace_all(utils.messages_file_load('command_volume_error'),aliases_commands)
+
+                                    if utils.send_message("RESPONSE"):
+                                        send(message_replace_response)
+
+                            else:
 
                                 if utils.send_message("RESPONSE"):
-                                    send(message_replace_response)
-                                
-                                delay_data_player['volume-last'] = current
-                                
-                                with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                    json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
+                                    send(utils.messages_file_load('command_volume_number'))
                                         
-                                        
-                            
+                            command_data_player['volume']['last_use'] = current
+                    
+                            with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'w', encoding='utf-8') as command_file_player:
+                                json.dump(command_data_player, command_file_player, indent=6, ensure_ascii=False)
+                        
                         else:
                             
+                            volume_atual = eel.player('get_volume', 'none', 'none')()
+                            
+                            aliases_commands = {
+                                    '{username}': str(user),
+                                    '{volume}': str(volume_atual)
+                                }
+
+                            message_replace_response = utils.replace_all(utils.messages_file_load('command_volume_response'), aliases_commands)
+
                             if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                                send(message_replace_response)
+                            
+                            command_data_player['volume']['last_use'] = current
+                    
+                            with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'w', encoding='utf-8') as command_file_player:
+                                json.dump(command_data_player, command_file_player, indent=6, ensure_ascii=False)
+
                     else:
                         
                         if utils.send_message("ERROR_TIME"):
@@ -6764,68 +7481,93 @@ def commands_module(data) -> None:
 
                 else:
                     send_error_level(user,user_level, str(command))
-              
-            elif 'skip' in result_player_check.keys():
 
-                delay = delay_data_player['skip-delay']
-                last_use = delay_data_player['skip-last']
-                status = delay_data_player['skip-status']
+            else:
                 
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+              
+        elif compare_strings(command,command_data_player['skip']['command']):
 
-                user_level = command_data_player['skip-perm']
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_player['skip']['delay']
+            last_use = command_data_player['skip']['last_use']
+            status = command_data_player['skip']['status']
+            user_level = command_data_player['skip']['user_level']
+            
+            if status:
                 
                 if check_perm(user_type, user_level):
 
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
                     if check_time:
-
-                        if status == 1:
                             
-                            eel.player('stop', 'none', 'none')
+                        eel.player('stop', 'none', 'none')
 
-                            aliases_commands = {
-                                '{username}': str(user),
-                            }
-                            message_replace_response = utils.replace_all(utils.messages_file_load('command_skip_confirm'),
-                                                                aliases_commands)
+                        aliases_commands = {
+                            '{username}': str(user),
+                        }
+                        message_replace_response = utils.replace_all(utils.messages_file_load('command_skip_confirm'),
+                                                            aliases_commands)
 
-                            if utils.send_message("RESPONSE"):
-                                send(message_replace_response)
-                                
-                            delay_data_player['skip-last'] = current
+                        if utils.send_message("RESPONSE"):
+                            send(message_replace_response)
                             
-                            with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
-                        else:
-                            if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                        command_data_player['skip']['last_use'] = current
+                
+                        with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'w', encoding='utf-8') as command_file_player:
+                            json.dump(command_data_player, command_file_player, indent=6, ensure_ascii=False)
 
                     else:
 
                         if utils.send_message("ERROR_TIME"):
                             send(message_delay)
-
                 else:
 
                     send_error_level(user,user_level, str(command))
 
-            elif 'request' in result_player_check.keys():
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
 
-                delay = delay_data_player['request-delay']
-                last_use = delay_data_player['request-last']
-                status = delay_data_player['request-status']
-                
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
+        elif compare_strings(command,command_data_player['request']['command']):
 
-                user_level = command_data_player['request-perm']
-                
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_player['request']['delay']
+            last_use = command_data_player['request']['last_use']
+            status = command_data_player['request']['status']
+            user_level = command_data_player['request']['user_level']
+            
+            message_delay, check_time, current = utils.check_delay(delay,last_use)
+            
+            if status:
+
                 if check_perm(user_type, user_level):
 
                     if check_time:
-
-                        if status == 1:
                             
-                            prefix_sr = command_data_player['request']
+                            prefix_sr = command_data_player['request']['command']
                             user_input = command_string.split(prefix_sr)
 
                             if len(user_input) > 1 and user_input[1] != "":
@@ -6834,20 +7576,20 @@ def commands_module(data) -> None:
 
                                 player_reward = command_data_player['redeem']
 
+
+
                                 data_rewards = {'USERNAME': user, 'REDEEM': player_reward, 'USER_INPUT': user_input,
                                                 'USER_LEVEL': user_type, 'USER_ID': user_id_command, 'COMMAND': command,
                                                 'PREFIX': prefix}
 
                                 received_type = 'command'
 
-                                receive_thread = threading.Thread(target=receive_redeem,
-                                                                args=(data_rewards, received_type,), daemon=True)
+                                receive_thread = threading.Thread(target=receive_redeem, args=(data_rewards, received_type,), daemon=True)
                                 receive_thread.start()
                                 
-                                delay_data_player['request-last'] = current
-                            
-                                with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                    json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
+                                command_data_player['request']['last_use'] = current
+                                with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'w', encoding='utf-8') as command_file_player:
+                                    json.dump(command_data_player, command_file_player, indent=6, ensure_ascii=False)
 
                             else:
 
@@ -6858,14 +7600,10 @@ def commands_module(data) -> None:
                                 if utils.send_message("RESPONSE"):
                                     send(message_replace_response)
                                 
-                                delay_data_player['request-last'] = current
-                            
-                                with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                    json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
-
-                        else:
-                            if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                                command_data_player['request']['last_use'] = current
+                        
+                                with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'w', encoding='utf-8') as command_file_player:
+                                    json.dump(command_data_player, command_file_player, indent=6, ensure_ascii=False)
                     else:
 
                         if utils.send_message("ERROR_TIME"):
@@ -6873,149 +7611,177 @@ def commands_module(data) -> None:
                 else:
                     send_error_level(user,user_level, str(command))
 
-            elif 'atual' in result_player_check.keys():
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
 
-                delay = delay_data_player['atual-delay']
-                last_use = delay_data_player['atual-last']
-                status = delay_data_player['atual-status']
-                
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
+        elif compare_strings(command,command_data_player['atual']['command']):
 
-                user_level = command_data_player['atual-perm']
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_player['atual']['delay']
+            last_use = command_data_player['atual']['last_use']
+            status = command_data_player['atual']['status']
+            user_level = command_data_player['atual']['user_level']
+            
+            message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+            if status == 1:
                 
                 if check_perm(user_type, user_level):
 
                     if check_time:
-
-                        if status == 1:
                             
-                            f = open(f'{appdata_path}/rewardevents/web/src/player/list_files/currentsong.txt', 'r+', encoding="utf-8")
-                            current_song = f.read()
+                        f = open(f'{appdata_path}/rewardevents/web/src/player/list_files/currentsong.txt', 'r+', encoding="utf-8")
+                        current_song = f.read()
 
-                            aliases_commands = {'{username}': str(user), '{music}': str(current_song)}
-                            message_replace_response = utils.replace_all(utils.messages_file_load('command_current_confirm'),
-                                                                aliases_commands)
-                            if utils.send_message("RESPONSE"):
-                                send(message_replace_response)
-                                
-                            delay_data_player['atual-last'] = current
+                        aliases_commands = {'{username}': str(user), '{music}': str(current_song)}
+                        message_replace_response = utils.replace_all(utils.messages_file_load('command_current_confirm'),
+                                                            aliases_commands)
+                        if utils.send_message("RESPONSE"):
+                            send(message_replace_response)
                             
-                            with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
+                        command_data_player['atual']['last_use'] = current
+                
+                        with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'w', encoding='utf-8') as command_file_player:
+                            json.dump(command_data_player, command_file_player, indent=6, ensure_ascii=False)
 
-                        else:
-                            if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     else:
                         if utils.send_message("ERROR_TIME"):
                             send(message_delay)
                 else:
                     send_error_level(user,user_level, str(command))
 
-            elif 'next' in result_player_check.keys():
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
 
-                delay = delay_data_player['next-delay']
-                last_use = delay_data_player['next-last']
-                status = delay_data_player['next-status']
-                
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
+        elif compare_strings(command,command_data_player['next']['command']):
 
-                user_level = command_data_player['next-perm']
-                
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_player['next']['delay']
+            last_use = command_data_player['next']['last_use']
+            status = command_data_player['next']['status']
+            user_level = command_data_player['next']['user_level']
+            
+            message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+            if status == 1:
+
                 if check_perm(user_type, user_level):
 
                     if check_time:
-
-                        if status == 1:
                             
-                            with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8") as playlist_file:
-                                playlist_data = json.load(playlist_file)
+                        with open(f'{appdata_path}/rewardevents/web/src/player/list_files/playlist.json', "r", encoding="utf-8") as playlist_file:
+                            playlist_data = json.load(playlist_file)
 
-                            with open(f'{appdata_path}/rewardevents/web/src/player/list_files/queue.json', "r", encoding="utf-8") as queue_file:
-                                queue_data = json.load(queue_file)
+                        with open(f'{appdata_path}/rewardevents/web/src/player/list_files/queue.json', "r", encoding="utf-8") as queue_file:
+                            queue_data = json.load(queue_file)
 
-                            check_playlist = any(playlist_data.keys())
-                            check_queue = any(queue_data.keys())
+                        check_playlist = any(playlist_data.keys())
+                        check_queue = any(queue_data.keys())
 
-                            if check_queue:
+                        if check_queue:
 
-                                queue_keys = [int(x) for x in queue_data.keys()]
-                                min_key_queue = min(queue_keys)
-                                min_key_queue_str = str(min_key_queue)
+                            queue_keys = [int(x) for x in queue_data.keys()]
+                            min_key_queue = min(queue_keys)
+                            min_key_queue_str = str(min_key_queue)
 
-                                next_song = queue_data[min_key_queue_str]['MUSIC_NAME']
-                                resquest_by = queue_data[min_key_queue_str]['USER']
+                            next_song = queue_data[min_key_queue_str]['MUSIC_NAME']
+                            resquest_by = queue_data[min_key_queue_str]['USER']
 
-                                aliases_commands = {
-                                    '{username}': str(user),
-                                    '{music}': str(next_song),
-                                    '{request_by}': str(resquest_by)
-                                }
+                            aliases_commands = {
+                                '{username}': str(user),
+                                '{music}': str(next_song),
+                                '{request_by}': str(resquest_by)
+                            }
 
-                                response_replace = utils.replace_all(utils.messages_file_load('command_next_confirm'), aliases_commands)
+                            response_replace = utils.replace_all(utils.messages_file_load('command_next_confirm'), aliases_commands)
 
-                                if utils.send_message("RESPONSE"):
-                                    send(response_replace)
-                                    
-                                delay_data_player['next-last'] = current
+                            if utils.send_message("RESPONSE"):
+                                send(response_replace)
                                 
-                                with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                    json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
 
-                            elif check_playlist:
+                        elif check_playlist:
 
-                                playlist_keys = [int(x) for x in playlist_data.keys()]
-                                min_key_playlist = min(playlist_keys)
-                                min_key_playlist_str = str(min_key_playlist)
+                            playlist_keys = [int(x) for x in playlist_data.keys()]
+                            min_key_playlist = min(playlist_keys)
+                            min_key_playlist_str = str(min_key_playlist)
 
-                                next_song = playlist_data[min_key_playlist_str]['MUSIC_NAME']
-                                resquest_by = playlist_data[min_key_playlist_str]['USER']
+                            next_song = playlist_data[min_key_playlist_str]['MUSIC_NAME']
+                            resquest_by = playlist_data[min_key_playlist_str]['USER']
 
-                                aliases_commands = {
-                                    '{username}': str(user),
-                                    '{music}': str(next_song),
-                                    '{request_by}': str(resquest_by)
-                                }
+                            aliases_commands = {
+                                '{username}': str(user),
+                                '{music}': str(next_song),
+                                '{request_by}': str(resquest_by)
+                            }
 
-                                response_replace = utils.replace_all(utils.messages_file_load('command_next_confirm'), aliases_commands)
+                            response_replace = utils.replace_all(utils.messages_file_load('command_next_confirm'), aliases_commands)
 
-                                if utils.send_message("RESPONSE"):
-                                    send(response_replace)
-                                
-                                
-                                delay_data_player['next-last'] = current
-                                
-                                with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                    json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
-
-                            else:
-
-                                aliases_commands = {
-                                    '{username}': str(user),
-                                }
-
-                                response_replace = utils.replace_all(utils.messages_file_load('command_next_no_music'), aliases_commands)
-
-                                if utils.send_message("RESPONSE"):
-                                    send(response_replace)
-                                    
-                                delay_data_player['next-last'] = current
-                                
-                                with open(f'{appdata_path}/rewardevents/web/src/player/config/delay.json', 'w', encoding='utf-8') as delay_music_file_w:
-                                    json.dump(delay_data_player, delay_music_file_w, indent=6, ensure_ascii=False)
+                            if utils.send_message("RESPONSE"):
+                                send(response_replace)
 
                         else:
+
+                            aliases_commands = {
+                                '{username}': str(user),
+                            }
+
+                            response_replace = utils.replace_all(utils.messages_file_load('command_next_no_music'), aliases_commands)
+
                             if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                                send(response_replace)
+                                
+                        command_data_player['next']['last_use'] = current
+                
+                        with open(f'{appdata_path}/rewardevents/web/src/player/config/commands.json', 'w', encoding='utf-8') as command_file_player:
+                            json.dump(command_data_player, command_file_player, indent=6, ensure_ascii=False)
+
+
                     else:
                         if utils.send_message("ERROR_TIME"):
                             send(message_delay)
 
                 else:
                     send_error_level(user,user_level, str(command))
+
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
 
         elif result_duel_check:
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
             
+            append_notice(data_append)
+
             user_level = command_data_duel['user_level']
             
             if check_perm(user_type, user_level):
@@ -7143,7 +7909,6 @@ def commands_module(data) -> None:
                             
                         if duel_data['accept'] == 0:
                             count = count + 1
-                            print(count)
                             time.sleep(1)
                             
                         elif duel_data['accept'] == 1:
@@ -7312,666 +8077,1254 @@ def commands_module(data) -> None:
             else:
                 send_error_level(user,user_level, str(command))  
 
-        elif command.startswith(command_data_default['cmd']):
+        elif compare_strings(command,command_data_default['cmd']['command']):
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
 
             with open(f'{appdata_path}/rewardevents/web/src/config/simple_commands.json', 'r', encoding='utf-8') as data_command_file:
                 data_command = json.load(data_command_file)
         
-            delay = command_data_default['cmd_delay']
-            last_use = command_data_default['cmd_last']
-            status = command_data_default['cmd_status']
+            delay = command_data_default['cmd']['delay']
+            last_use = command_data_default['cmd']['last_use']
+            status = command_data_default['cmd']['status']
+            user_level = command_data_default['cmd']['user_level']
 
             if status == 1:
 
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
+                if check_perm(user_type, user_level):
 
-                if check_time:      
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
 
-                    if len(command_lower.split()) >= 2:
+                    if check_time:      
 
-                        padrao = r'\((?:[^()]*|\([^()]*\))*\)' 
-                        matches = re.findall(padrao, command_string)
+                        if len(command_lower.split()) >= 2:
 
-                        values = [match[1:-1] for match in matches]
-                         
-                        type_cmd = command_lower.split()[1]
+                            padrao = r'\((?:[^()]*|\([^()]*\))*\)' 
+                            matches = re.findall(padrao, command_string)
 
-                        if type_cmd == "add":
+                            values = [match[1:-1] for match in matches]
 
-                            cmd = values[0]
-                            response = values[1]
+                            type_cmd = command_lower.split()[1]
 
-                            data = {
-                                "new_command" : cmd,
-                                "new_message" : response,
-                                "new_delay" : 0,
-                                "new_user_level" : "spec",
-                            }
+                            if type_cmd == "add":
 
-                            data = json.dumps(data)
+                                if len(values) > 1:
 
-                            if cmd not in data_command:
+                                    cmd = values[0]
+                                    response = values[1]
 
-                                commands_py("create",data)
+                                    data = {
+                                        "new_command" : cmd,
+                                        "new_message" : response,
+                                        "new_delay" : 0,
+                                        "new_user_level" : "spec",
+                                    }
 
-                                if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_created'),{'{username}' : user}))  
+                                    data = json.dumps(data)
+
+                                    if cmd not in data_command:
+
+                                        commands_py("create",data)
+
+                                        if utils.send_message("RESPONSE"):
+                                            send(utils.replace_all(utils.messages_file_load('cmd_created'),{'{username}' : user}))  
+                                            
+                                    else:
+                                        
+                                        if utils.send_message("RESPONSE"):
+                                            send(utils.replace_all(utils.messages_file_load('cmd_exists'),{'{username}' : user}))  
+
+                                                        
+                                else:
+
+                                    if utils.send_message("RESPONSE"):
+                                        send(utils.replace_all(utils.messages_file_load('cmd_use'),{'{username}' : user})) 
+                            
+                            elif type_cmd == "edit":
+
+                                if len(values) > 1:
+
+                                    cmd = values[0]
+                                    response = values[1]
+
+                                    if cmd in data_command:
+
+                                        new_delay = data_command[cmd]['delay']
+                                        new_user_level = data_command[cmd]['user_level']
+                                        new_used_times = data_command[cmd]['counts']
+
+                                        data = {
+                                            "old_command" : cmd,
+                                            "edit_command" : cmd,
+                                            "status_command" : 1,
+                                            "edit_message" : response,
+                                            "edit_delay" : new_delay,
+                                            "edit_user_level" : new_user_level,
+                                            "edit_used_times" : new_used_times
+                                        }
+
+                                        data = json.dumps(data)
+
+                                        commands_py("edit",data)
+
+                                        if utils.send_message("RESPONSE"):
+                                            send(utils.replace_all(utils.messages_file_load('cmd_edited'),{'{username}' : user}))  
                                     
-                            else:
-                                if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_exists'),{'{username}' : user}))  
-                        
-                        if type_cmd == "edit":
+                                    else:
 
-                            cmd = values[0]
-                            response = values[1]
+                                        if utils.send_message("RESPONSE"):
+                                            send(utils.replace_all(utils.messages_file_load('cmd_not_exists'),{'{username}' : user})) 
 
-                            if cmd in data_command:
+                                else:
 
-                                new_delay = data_command[cmd]['delay']
-                                new_user_level = data_command[cmd]['user_level']
-                                new_used_times = data_command[cmd]['counts']
+                                    if utils.send_message("RESPONSE"):
+                                        send(utils.replace_all(utils.messages_file_load('cmd_use'),{'{username}' : user})) 
 
-                                data = {
-                                    "old_command" : cmd,
-                                    "edit_command" : cmd,
-                                    "status_command" : 1,
-                                    "edit_message" : response,
-                                    "edit_delay" : new_delay,
-                                    "edit_user_level" : new_user_level,
-                                    "edit_used_times" : new_used_times
-                                }
+                            elif type_cmd == "remove":
 
-                                data = json.dumps(data)
+                                if len(values) > 0:
 
-                                commands_py("edit",data)
+                                    cmd = values[0]
 
-                                if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_edited'),{'{username}' : user}))  
-                            
-                            else:
+                                    if cmd in data_command:
+                                        
+                                        commands_py("delete",cmd)
 
-                                if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_not_exists'),{'{username}' : user})) 
+                                        if utils.send_message("RESPONSE"):
+                                            send(utils.replace_all(utils.messages_file_load('cmd_removed'),{'{username}' : user}))  
+                                    
+                                    else:
+                                        
+                                        if utils.send_message("RESPONSE"):
+                                            send(utils.replace_all(utils.messages_file_load('cmd_not_exists'),{'{username}' : user})) 
 
-                        if type_cmd == "remove":
+                                else:
 
-                            cmd = values[0]
+                                    if utils.send_message("RESPONSE"):
+                                        send(utils.replace_all(utils.messages_file_load('cmd_use'),{'{username}' : user})) 
 
-                            if cmd in data_command:
-                                
-                                commands_py("delete",cmd)
+                            elif type_cmd != "add" or type_cmd != "edit" or type_cmd != "remove":
 
                                 if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_removed'),{'{username}' : user}))  
-                            
-                            else:
-                                if utils.send_message("RESPONSE"):
-                                    send(utils.replace_all(utils.messages_file_load('cmd_not_exists'),{'{username}' : user})) 
+                                    send(utils.replace_all(utils.messages_file_load('cmd_use'),{'{username}' : user})) 
+
 
                         else:
 
                             if utils.send_message("RESPONSE"):
                                 send(utils.replace_all(utils.messages_file_load('cmd_use'),{'{username}' : user})) 
+
+
+                        command_data_default['cmd']['last_use'] = current
+                        
+                        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                            json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
+                            
                     else:
 
-                        if utils.send_message("RESPONSE"):
-                            send(utils.replace_all(utils.messages_file_load('cmd_use'),{'{username}' : user})) 
-
-
-                    command_data_default['create_last'] = current
-                    
-                    with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
-                        json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
-                        
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
                 else:
-
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
+                    send_error_level(user,user_level, str(command))
             else:
 
                 if utils.send_message("RESPONSE"):
                     send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))    
 
-        elif command.startswith(command_data_default['dice']):
+        elif compare_strings(command,command_data_default['dice']['command']):
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
             
-            delay = command_data_default['dice_delay']
-            last_use = command_data_default['dice_last']
-            status = command_data_default['dice_status']
+            append_notice(data_append)
+
+            delay = command_data_default['dice']['delay']
+            last_use = command_data_default['dice']['last_use']
+            status = command_data_default['dice']['status']
+            user_level = command_data_default['dice']['user_level']
             
             if status == 1:
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
 
-                if check_time:
-                    
-                    result = randint(1,6)
-                    
-                    aliases = {
-                        "{value}" : str(result)
-                    }
-                    
-                    command_data_default['dice_last'] = current
-                    
-                    with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
-                        json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
-                    
-                    message_replaced = utils.replace_all(command_data_default['dice_response'], aliases)
-                    if utils.send_message("RESPONSE"):
-                        send(message_replaced)
-                        
-                else:
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
-            else:
-                if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                if check_perm(user_type, user_level):
                 
-        elif command.startswith(command_data_default['random']):
-            
-            delay = command_data_default['random_delay']
-            last_use = command_data_default['random_last']
-            status = command_data_default['random_status']
-            
-            if status == 1:
-                
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
-                
-                if check_time:
-                    
-                    value = command_lower.split(command_data_default['random'].lower())[1]
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
 
-                    if value != '' and value.strip().isnumeric():
+                    if check_time:
                         
-                        result = randint(0,int(value))
+                        result = randint(1,6)
                         
                         aliases = {
                             "{value}" : str(result)
                         }
                         
-                        command_data_default['random_last'] = current
-                    
+                        command_data_default['dice']['last_use'] = current
+                        
                         with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
                             json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
                         
-                        message_replaced = utils.replace_all(command_data_default['random_response'], aliases)
+                        message_replaced = utils.replace_all(command_data_default['dice']['response'], aliases)
                         if utils.send_message("RESPONSE"):
                             send(message_replaced)
-                    
+                            
                     else:
-                        
-                        message_replaced = utils.replace_all(utils.messages_file_load('command_value'), aliases)
-                        if utils.send_message("RESPONSE"):
-                            send(message_replaced)
-                        
-
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+                
                 else:
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
+                    send_error_level(user,user_level, str(command))
+
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                
+        elif compare_strings(command,command_data_default['random']['command']):
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_default['random']['delay']
+            last_use = command_data_default['random']['last_use']
+            status = command_data_default['random']['status']
+            user_level = command_data_default['random']['user_level']
+            
+            if status == 1:
+                
+                if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+                    
+                    if check_time:
+                        
+                        value = command_lower.split(command_data_default['random'].lower())[1]
+
+                        if value != '' and value.strip().isnumeric():
+                            
+                            result = randint(0,int(value))
+                            
+                            aliases = {
+                                "{value}" : str(result)
+                            }
+                            
+                            command_data_default['random']['last_use'] = current
+                        
+                            with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                                json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
+                            
+                            message_replaced = utils.replace_all(command_data_default['random']['response'], aliases)
+                            if utils.send_message("RESPONSE"):
+                                send(message_replaced)
+                        
+                        else:
+                            
+                            message_replaced = utils.replace_all(utils.messages_file_load('command_value'), aliases)
+                            if utils.send_message("RESPONSE"):
+                                send(message_replaced)
+                            
+
+                    else:
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+                
+                else:
+                    send_error_level(user,user_level, str(command))
+
             else:
                 if utils.send_message("RESPONSE"):
                     send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     
-        elif command.startswith(command_data_default['game']):
+        elif compare_strings(command,command_data_default['game']['command']):
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
             
-            delay = command_data_default['game_delay']
-            last_use = command_data_default['game_last']
-            status = command_data_default['game_status']
+            append_notice(data_append)
+
+            delay = command_data_default['game']['delay']
+            last_use = command_data_default['game']['last_use']
+            status = command_data_default['game']['status']
+            user_level = command_data_default['game']['user_level']
             
             if status == 1:
                 
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
+                if check_perm(user_type, user_level):
 
-                if check_time:
-                    result_data = twitch_api.get_streams(first=1,user_login=authdata.USERNAME())
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                    if check_time:
+
+                        result_data = twitch_api.get_streams(first=1,user_login=authdata.USERNAME())
+                        
+                        if result_data['data']:
+                            
+                            game_name = result_data['data'][0]['game_name']
+                            
+                            aliases = {
+                                "{game}" : str(game_name)
+                            }
+                            
+                            message_replaced = utils.replace_all(command_data_default['game']['response'], aliases)
+                            if utils.send_message("RESPONSE"):
+                                send(message_replaced)
+                                
+                        command_data_default['game']['last_use'] = current
                     
-                    if result_data['data']:
-                        
-                        game_name = result_data['data'][0]['game_name']
-                        
-                        aliases = {
-                            "{game}" : str(game_name)
-                        }
-                        
-                        message_replaced = utils.replace_all(command_data_default['game_response'], aliases)
-                        if utils.send_message("RESPONSE"):
-                            send(message_replaced)
-                            
-                    command_data_default['game_last'] = current
+                        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                            json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
+                                
+                    else:
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
                 
-                    with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
-                        json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
-                            
                 else:
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
-            
+                    send_error_level(user,user_level, str(command))
             else:
                 if utils.send_message("RESPONSE"):
                     send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases)) 
                                
-        elif command.startswith(command_data_default['uptime']):  
+        elif compare_strings(command,command_data_default['uptime']['command']):  
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
             
-            delay = command_data_default['uptime_delay']
-            last_use = command_data_default['uptime_last']
-            status = command_data_default['uptime_status']
+            append_notice(data_append)
+
+            delay = command_data_default['uptime']['delay']
+            last_use = command_data_default['uptime']['last_use']
+            status = command_data_default['uptime']['status']
+            user_level = command_data_default['uptime']['user_level']
             
             if status == 1:
-                
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
 
-                if check_time:
+                if check_perm(user_type, user_level):
                     
-                    result_data = twitch_api.get_streams(first=1,user_login=authdata.USERNAME())
-                    
-                    if result_data['data']:
-                        
-                        started = result_data['data'][0]['started_at']
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
 
-                        time_in_live = utils.calculate_time(started)
+                    if check_time:
                         
-                        hours = time_in_live['hours']
-                        minutes = time_in_live['minutes']
+                        result_data = twitch_api.get_streams(first=1,user_login=authdata.USERNAME())
                         
-                        aliases = {
-                            "{username}" : str(user),
-                            "{h}" : str(hours),
-                            "{m}" : str(minutes)
-                        }
-                        
-                        message_replaced = utils.replace_all(command_data_default['uptime_response'], aliases)
-                        if utils.send_message("RESPONSE"):    
-                            send(message_replaced)
+                        if result_data['data']:
                             
-                    command_data_default['uptime_last'] = current
-                
-                    with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
-                        json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
-                else:
+                            started = result_data['data'][0]['started_at']
+
+                            time_in_live = utils.calculate_time(started)
+                            
+                            hours = time_in_live['hours']
+                            minutes = time_in_live['minutes']
+                            
+                            aliases = {
+                                "{username}" : str(user),
+                                "{h}" : str(hours),
+                                "{m}" : str(minutes)
+                            }
+                            
+                            message_replaced = utils.replace_all(command_data_default['uptime']['response'], aliases)
+                            if utils.send_message("RESPONSE"):    
+                                send(message_replaced)
+                                
+                        command_data_default['uptime']['last_use'] = current
                     
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
+                        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                            json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
+                    else:
                         
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+                
+                else:
+                    send_error_level(user,user_level, str(command))
+
             else:
                 if utils.send_message("RESPONSE"):
                     send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
                     
-        elif command.startswith(command_data_default['followage']):  
+        elif compare_strings(command,command_data_default['followage']['command']):  
             
-            delay = command_data_default['followage_delay']
-            last_use = command_data_default['followage_last']
-            status = command_data_default['followage_status']
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
             
-            if status == 1:      
+            append_notice(data_append)
+
+            delay = command_data_default['followage']['delay']
+            last_use = command_data_default['followage']['last_use']
+            status = command_data_default['followage']['status']
+            user_level = command_data_default['followage']['user_level']
+            
+            if status:      
+
+                if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                    if check_time:
+                        
+                        if user != authdata.USERNAME():   
+                            
+                            user_info = twitch_api.get_users_follows(first=1,from_id=user_id_command,to_id=authdata.BROADCASTER_ID())
+                            
+                            if user_info['total'] == 1:
+                            
+                                data_folloed = user_info['data'][0]['followed_at']
+
+                                utc_now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                utc_date = datetime.datetime.fromisoformat(data_folloed).replace(tzinfo=pytz.utc)
+
+                                gmt_minus_3_now = utc_now.astimezone(pytz.timezone("Etc/GMT+3"))
+                                gmt_minus_3_date = utc_date.astimezone(pytz.timezone("Etc/GMT+3"))
+
+                                difference = gmt_minus_3_now - gmt_minus_3_date
+                                
+                                days = difference.days
+                                hours = difference.seconds//3600
+                                minutes = (difference.seconds//60)%60
+                                sec = difference.seconds%60
+                                
+                                aliases = {
+                                    "{username}" : user,
+                                    "{streamer}" : authdata.USERNAME(),
+                                    "{d}" : str(days),
+                                    "{h}" : str(hours),
+                                    "{m}" : str(minutes),
+                                    "{s}" : str(sec)
+                                }
+                                
+                                message = utils.replace_all(command_data_default['followage']['response'],aliases)
+                                if utils.send_message('RESPONSE'):
+                                    send(message)
+                                    
+                                command_data_default['followage']['last_use'] = current
+                            
+                                with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                                    json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
+                                    
+                            else:
+                                aliases = {
+                                    "{username}" : user,
+                                    "{streamer}" : authdata.USERNAME(),
+                                }
+                                
+                                if utils.send_message("RESPONSE"):
+                                    send(utils.replace_all(utils.messages_file_load('followage_no_follow'),aliases))
+                        else:
+                            
+                            if utils.send_message("RESPONSE"):
+                                send(utils.messages_file_load('followage_error_streamer'))
+
+                    else:
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+                
+                else:
+                    send_error_level(user,user_level, str(command))
+
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                   
+        elif compare_strings(command,command_data_default['accountage']['command']):  
+            
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_default['accountage']['delay']
+            last_use = command_data_default['accountage']['last_use']
+            status = command_data_default['accountage']['status']
+            user_level = command_data_default['accountage']['user_level']
+            
+            if status:   
+
+                if check_perm(user_type, user_level):
                       
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
 
-                if check_time:
-                    
-                    if user != authdata.USERNAME():   
-                        
-                        user_info = twitch_api.get_users_follows(first=1,from_id=user_id_command,to_id=authdata.BROADCASTER_ID())
-                        
-                        if user_info['total'] == 1:
-                        
-                            data_folloed = user_info['data'][0]['followed_at']
+                    if check_time:
 
-                            utc_now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                            utc_date = datetime.datetime.fromisoformat(data_folloed).replace(tzinfo=pytz.utc)
+                        if sufix != None:
 
-                            gmt_minus_3_now = utc_now.astimezone(pytz.timezone("Etc/GMT+3"))
-                            gmt_minus_3_date = utc_date.astimezone(pytz.timezone("Etc/GMT+3"))
+                            user_data = twitch_api.get_users(logins=[sufix.lower()])
+                        else:
+                            user_data = twitch_api.get_users(logins=[user.lower()])
 
-                            difference = gmt_minus_3_now - gmt_minus_3_date
-                            
-                            days = difference.days
-                            hours = difference.seconds//3600
-                            minutes = (difference.seconds//60)%60
-                            sec = difference.seconds%60
-                            
+                        if user_data['data'] != []:
+
+                            created_at = user_data['data'][0]['created_at']
+
+                            data = datetime.datetime.strptime(created_at, '%Y-%m-%dT%H:%M:%SZ')
+                            today = datetime.datetime.now()
+
+                            diff = today - data
+                            year = diff.days // 365
+                            month = (diff.days % 365) // 30
+                            day = (diff.days % 365) % 30
+                            hour = diff.seconds // 3600
+                            minute = (diff.seconds % 3600) // 60
+
+                            message_pre = utils.replace_all(command_data_default['accountage']['response'],aliases)
+
                             aliases = {
-                                "{username}" : user,
-                                "{streamer}" : authdata.USERNAME(),
-                                "{d}" : str(days),
-                                "{h}" : str(hours),
-                                "{m}" : str(minutes),
-                                "{s}" : str(sec)
+                                '{day}' : str(day),
+                                '{month}' : str(month),
+                                '{year}' : str(year),
+                                '{hour}' : str(hour),
+                                '{minute}' : str(minute)
                             }
-                            
-                            message = utils.replace_all(command_data_default['followage_response'],aliases)
+
+                            message = utils.replace_all(message_pre,aliases)
                             if utils.send_message('RESPONSE'):
                                 send(message)
+
+                            command_data_default['accountage']['last_use'] = current
+                        
+                            with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                                json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
+
+                        else:
+
+                            message = utils.replace_all(utils.messages_file_load('user_not_found'),aliases)
+                            if utils.send_message('RESPONSE'):
+                                send(message)
+                    else:
+                        
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+                
+                else:
+                    send_error_level(user,user_level, str(command))
+
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+        
+        elif compare_strings(command,command_data_default['msgcount']['command']):  
+            
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_default['msgcount']['delay']
+            last_use = command_data_default['msgcount']['last_use']
+            status = command_data_default['msgcount']['status']
+            
+            if status:      
+
+                if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                    if check_time:
+                        
+                        with open(f'{appdata_path}/rewardevents/web/src/user_info/users_database.json','r',encoding='utf-8') as user_data_file:
+                            user_data_load = json.load(user_data_file)
+
+                            if user in user_data_load:
                                 
-                            command_data_default['followage_last'] = current
+                                msgcount = user_data_load[user]['chat_freq']
+                                
+                                aliases = {
+                                    '{username}' : user,
+                                    '{count}' : str(msgcount)
+                                }
+                                
+                                message = utils.replace_all(command_data_default['msgcount']['response'],aliases)
+                                if utils.send_message('RESPONSE'):
+                                    send(message)
+
+                            command_data_default['msgcount']['last_use'] = current
+                        
+                            with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                                json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
+                        
+                    else:
+                        
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+                else:
+                    send_error_level(user,user_level, str(command))
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+        
+        elif compare_strings(command,command_data_default['watchtime']['command']):  
+            
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_default['watchtime']['delay']
+            last_use = command_data_default['watchtime']['last_use']
+            status = command_data_default['watchtime']['status']
+            user_level = command_data_default['watchtime']['user_level']
+            
+            if status:      
+
+                if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                    if check_time:
+                        
+                        with open(f'{appdata_path}/rewardevents/web/src/user_info/users_database.json','r',encoding='utf-8') as user_data_file:
+                            user_data_load = json.load(user_data_file)
+                            
+                        if user in user_data_load:
+                            
+                            watchtime = user_data_load[user]['time_w']
+                            
+                            delta = datetime.timedelta(minutes=watchtime)
+                            dias = delta.days
+                            horas = delta.seconds // 3600
+                            minutos = (delta.seconds % 3600) // 60
+                            segundos = delta.seconds % 60
+                            
+                            aliases = {
+                                '{d}' : str(dias),
+                                '{h}' : str(horas),
+                                '{m}' : str(minutos),
+                                '{s}' : str(segundos),
+                                '{streamer}' : authdata.USERNAME(),
+                                '{username}' : str(user)
+                            }
+                            
+                            message = utils.replace_all(command_data_default['watchtime']['response'],aliases)
+                            if utils.send_message('RESPONSE'):
+                                send(message)
+
+                            command_data_default['watchtime']['last_use'] = current
+                        
+                            with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                                json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
+
+                    else:
+                        
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+
+                else:
+                    send_error_level(user,user_level, str(command))
+
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+
+        elif compare_strings(command,command_data_default['title']['command']):  
+            
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_default['title']['delay']
+            last_use = command_data_default['title']['last_use']
+            status = command_data_default['title']['status']
+            user_level = command_data_default['title']['user_level']
+            response_sucess = command_data_default['title']['response']
+            
+            if status:      
+                      
+                if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                    if check_time:
+
+                        if sufix != "":
+                            
+                            headers = {
+                                'Authorization': f'Bearer {authdata.TOKEN()}',
+                                'Client-Id': clientid,
+                                'Content-Type': 'application/json',
+                            }
+
+                            params = {
+                                'broadcaster_id': authdata.BROADCASTER_ID(),
+                            }
+
+                            json_data = {
+                                'title': sufix
+                            }
+                            
+                            response = req.patch('https://api.twitch.tv/helix/channels', params=params, headers=headers, json=json_data)
+                            
+                            aliases = {
+                                '{username}': str(user),
+                                '{command}': str(command),
+                                '{prefix}': str(prefix),
+                                '{user_level}': str(user_type),
+                                '{user_id}': str(user_id_command),
+                                '{sufix}': str(user_input),
+                                '{random}' : str(random_value),
+                                '{error}' : str(f"{response.text}")
+                            }
+
+                            if response.status_code != 204:
+                                send(utils.replace_all(utils.messages_file_load('update_stream_error'),aliases))
+                            else:
+                                send(utils.replace_all(response_sucess,aliases))
+                        
+                            command_data_default['title']['last_use'] = current
+                        
+                            with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                                json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
+
+                        else:
+                            if utils.send_message("RESPONSE"):
+                                send(utils.replace_all(utils.messages_file_load('command_sufix'),aliases))
+
+                    else:
+                        
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+
+                else:
+                    send_error_level(user,user_level, str(command))
+                
+            else:
+
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+
+        elif compare_strings(command,command_data_default['setgame']['command']):
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_default['setgame']['delay']
+            last_use = command_data_default['setgame']['last_use']
+            status = command_data_default['setgame']['status']
+            user_level = command_data_default['setgame']['user_level']
+            response_sucess = command_data_default['setgame']['response']
+
+            if status:      
+
+                if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                    if check_time:
+                    
+                        if sufix != "":
+
+                            with open(f'{appdata_path}/rewardevents/web/src/games/games.json', 'r', encoding='utf-8') as data_games_file:
+                               data_games = json.load(data_games_file)
+                            
+                            games_names = [jogo["name"] for jogo in data_games.values()]
+                            best_matches = difflib.get_close_matches(sufix, games_names, n=1, cutoff=0.8)
+
+                            if len(best_matches) > 0:
+                                
+                                game_id = [chave for chave, valor in data_games.items() if valor["name"] == best_matches[0]][0]
+
+                                headers = {
+                                    'Authorization': f'Bearer {authdata.TOKEN()}',
+                                    'Client-Id': clientid,
+                                    'Content-Type': 'application/json',
+                                }
+
+                                params = {
+                                    'broadcaster_id': authdata.BROADCASTER_ID(),
+                                }
+
+                                json_data = {
+                                    'game_id': str(game_id)
+                                }
+                                
+                                response = req.patch('https://api.twitch.tv/helix/channels', params=params, headers=headers, json=json_data)
+                                
+                                aliases = {
+                                    '{username}': str(user),
+                                    '{command}': str(command),
+                                    '{prefix}': str(prefix),
+                                    '{user_level}': str(user_type),
+                                    '{user_id}': str(user_id_command),
+                                    '{sufix}': str(sufix),
+                                    '{random}' : str(random_value),
+                                    '{error}' : str(f"{response.text}"),
+                                    '{game_name}' : str(best_matches[0])
+                                }
+
+                                if response.status_code != 204:
+                                    send(utils.replace_all(utils.messages_file_load('update_game_error'),aliases))
+                                else:
+                                    send(utils.replace_all(response_sucess,aliases))
+
+                            else:
+                                send(utils.replace_all(utils.messages_file_load('update_game_notfound'),aliases))
+
+
+                            command_data_default['setgame']['last_use'] = current
                         
                             with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
                                 json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
                                 
                         else:
-                            aliases = {
-                                "{username}" : user,
-                                "{streamer}" : authdata.USERNAME(),
-                            }
-                            
                             if utils.send_message("RESPONSE"):
-                                send(utils.replace_all(utils.messages_file_load('followage_no_follow'),aliases))
+                                send(utils.replace_all(utils.messages_file_load('command_sufix'),aliases))
+
                     else:
                         
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+
+                else:
+                    send_error_level(user,user_level, str(command))
+
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+
+        elif compare_strings(command,command_data_queue['check_queue']['command']):
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_queue['check_queue']['delay']
+            last_use = command_data_queue['check_queue']['last_use']
+            status = command_data_queue['check_queue']['status']
+            user_level = command_data_queue['check_queue']['user_level']
+
+            response = utils.messages_file_load('response_get_queue')
+
+            if status:      
+
+                if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                    if check_time:
+                        
+                        response_redus = utils.replace_all(str(response), aliases)
+
                         if utils.send_message("RESPONSE"):
-                            send(utils.messages_file_load('followage_error_streamer'))
+                            send(response_redus)
+
+                        command_data_queue['check_queue']['last_use'] = current
+                        
+                        with open(f'{appdata_path}/rewardevents/web/src/queue/commands.json', 'w', encoding='utf-8') as command_queue_file:
+                            json.dump(command_data_queue, command_queue_file, indent=6, ensure_ascii=False)
+
+                    else:
+                        
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
 
                 else:
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
-            
+                    send_error_level(user,user_level, str(command))
+
             else:
                 if utils.send_message("RESPONSE"):
                     send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
-                   
-        elif command.startswith(command_data_default['msgcount']):  
-            
-            delay = command_data_default['msgcount_delay']
-            last_use = command_data_default['msgcount_last']
-            status = command_data_default['msgcount_status']
-            
-            if status == 1:      
-                      
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
 
-                if check_time:
+        elif compare_strings(command,command_data_queue['rem_queue']['command']):
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_queue['rem_queue']['delay']
+            last_use = command_data_queue['rem_queue']['last_use']
+            status = command_data_queue['rem_queue']['status']
+            user_level = command_data_queue['rem_queue']['user_level']
+
+            if status:      
+
+                if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                    if check_time:
                     
-                    with open(f'{appdata_path}/rewardevents/web/src/user_info/users_database.json','r',encoding='utf-8') as user_data_file:
-                        user_data_load = json.load(user_data_file)
+                        if sufix != "":
 
-                        if user in user_data_load:
-                            
-                            msgcount = user_data_load[user]['chat_freq']
-                            
-                            aliases = {
-                                '{username}' : user,
-                                '{count}' : str(msgcount)
-                            }
-                            
-                            message = utils.replace_all(command_data_default['msgcount_response'],aliases)
-                            if utils.send_message('RESPONSE'):
-                                send(message)
-                    
-                else:
-                    
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
-            
-            else:
-                if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
-        
-        elif command.startswith(command_data_default['watchtime']):  
-            
-            delay = command_data_default['watchtime_delay']
-            last_use = command_data_default['watchtime_last']
-            status = command_data_default['watchtime_status']
-            
-            if status == 1:      
-                      
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
+                            with open(f'{appdata_path}/rewardevents/web/src/queue/queue.json', 'r+', encoding='utf-8') as queue_file:
+                                queue_data = json.load(queue_file)
 
-                if check_time:
-                    
-                    with open(f'{appdata_path}/rewardevents/web/src/user_info/users_database.json','r',encoding='utf-8') as user_data_file:
-                        user_data_load = json.load(user_data_file)
-                        
-                    if user in user_data_load:
-                        
-                        watchtime = user_data_load[user]['time_w']
-                        
-                        delta = datetime.timedelta(minutes=watchtime)
-                        dias = delta.days
-                        horas = delta.seconds // 3600
-                        minutos = (delta.seconds % 3600) // 60
-                        segundos = delta.seconds % 60
-                        
-                        aliases = {
-                            '{d}' : str(dias),
-                            '{h}' : str(horas),
-                            '{m}' : str(minutos),
-                            '{s}' : str(segundos),
-                            '{streamer}' : authdata.USERNAME(),
-                            '{username}' : str(user)
-                        }
-                        
-                        message = utils.replace_all(command_data_default['watchtime_response'],aliases)
-                        if utils.send_message('RESPONSE'):
-                            send(message)
-
-                else:
-                    
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
-            
-            else:
-                if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
-                                                  
-        elif command.startswith(command_data_default['interaction_1']):
-
-            delay = command_data_default['interaction_1_delay']
-            last_use = command_data_default['interaction_1_last']
-            status = command_data_default['interaction_1_status']
-            
-            if status == 1:     
-                         
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
-
-                if check_time:
+                                if sufix in queue_data:
                                 
-                    value = command_lower.split(command_data_default['interaction_1'].lower())
-                    
-                    if len(value) > 1 and value[1] != "":
-                        
-                        value = value[1]
-                        
-                        aliases = {
-                            "{user_1}" : user,
-                            "{user_2}" : str(value)
-                        }
-                        
-                        message_replaced = utils.replace_all(command_data_default['interaction_1_response'], aliases)
-                        if utils.send_message("RESPONSE"):
-                            send(message_replaced)
-                    else:
-                        
-                        message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
-                        if utils.send_message("RESPONSE"):
-                            send(message_replaced)
-                            
-                    command_data_default['interaction_1_last'] = current
-                
-                    with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
-                        json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
-                    
-                else:
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
-            else:
-                if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
-                    
-        elif command.startswith(command_data_default['interaction_2']):
-
-            delay = command_data_default['interaction_2_delay']
-            last_use = command_data_default['interaction_2_last']
-            status = command_data_default['interaction_2_status']
-            
-            if status == 1:     
-            
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
-
-                if check_time:
-                    
-                    value = command_lower.split(command_data_default['interaction_2'].lower())
-                    
-                    if len(value) > 1 and value[1] != "":
-                        
-                        value = value[1]
-                        
-                        aliases = {
-                            "{user_1}" : user,
-                            "{user_2}" : str(value)
-                        }
-                        
-                        message_replaced = utils.replace_all(command_data_default['interaction_2_response'], aliases)
-                        if utils.send_message("RESPONSE"):    
-                            send(message_replaced)
-                    
-                    else:
-                        
-                        message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
-                        if utils.send_message("RESPONSE"):
-                            send(message_replaced)
-                            
-                    command_data_default['interaction_2_last'] = current
-                
-                    with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
-                        json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
-
-                else:
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
-            
-            else:
-                if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
-                    
-        elif command.startswith(command_data_default['interaction_3']):
-
-            delay = command_data_default['interaction_3_delay']
-            last_use = command_data_default['interaction_3_last']
-            status = command_data_default['interaction_3_status']
-            
-            if status == 1:              
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
-
-                if check_time:
+                                    queue_data.remove(sufix)
+                                
+                                    queue_file.seek(0)
+                                    json.dump(queue_data, queue_file, indent=6, ensure_ascii=False)
+                                    queue_file.truncate()
                                     
-                    value = command_lower.split(command_data_default['interaction_3'].lower())
-                    
-                    if len(value) > 1 and value[1] != "":
-                        
-                        value = value[1]
-                        
-                        aliases = {
-                            "{user_1}" : user,
-                            "{user_2}" : str(value)
-                        }
-                        
-                        message_replaced = utils.replace_all(command_data_default['interaction_3_response'], aliases)
-                        if utils.send_message("RESPONSE"):    
-                            send(message_replaced)
-                    
-                    else:
-                        
-                        message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
-                        if utils.send_message("RESPONSE"):
-                            send(message_replaced)
-                            
-                    command_data_default['interaction_3_last'] = current
-                
-                    with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
-                        json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
-                            
-                else:
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
-            
-            else:
-                if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
-                    
-        elif command.startswith(command_data_default['interaction_4']):
+                                    eel.toast_notifc('Nome removido') 
 
-            delay = command_data_default['interaction_4_delay']
-            last_use = command_data_default['interaction_4_last']
-            status = command_data_default['interaction_4_status']
-            
-            if status == 1:     
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
-                if check_time:    
-                                
-                    value = command_lower.split(command_data_default['interaction_4'].lower())
-                    
-                    if len(value) > 1 and value[1] != "":
-                        
-                        value = value[1]
-                        
-                        aliases = {
-                            "{user_1}" : user,
-                            "{user_2}" : str(value)
-                        }
-                        
-                        message_replaced = utils.replace_all(command_data_default['interaction_4_response'], aliases)
-                        if utils.send_message("RESPONSE"):
-                            send(message_replaced)
-                    
-                    else:
-                        
-                        message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
-                        if utils.send_message("RESPONSE"):
-                            send(message_replaced)
-                    
-                            
-                else:
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)
-            
-            else:
-                if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
-                    
-        elif command.startswith(command_data_default['interaction_5']):
-            
-            delay = command_data_default['interaction_5_delay']
-            last_use = command_data_default['interaction_5_last']
-            status = command_data_default['interaction_5_status']
-            
-            if status == 1:     
-                message_delay, check_time, current = utils.check_delay(delay,last_use)
-
-                if check_time:   
+                                    aliases = {
+                                        '{username}': str(user),
+                                        '{command}': str(command),
+                                        '{prefix}': str(prefix),
+                                        '{user_level}': str(user_type),
+                                        '{user_id}': str(user_id_command),
+                                        '{sufix}': str(sufix),
+                                        '{random}' : str(random_value),
+                                        '{value}' :str(sufix),
+                                    }
                                     
-                    value = command_lower.split(command_data_default['interaction_2'].lower())
+                                    response = utils.messages_file_load('response_rem_queue')
+
+                                else:
+                                    
+                                    eel.toast_notifc('O nome não está na lista') 
+
+                                    aliases = {
+                                        '{username}': str(user),
+                                        '{command}': str(command),
+                                        '{prefix}': str(prefix),
+                                        '{user_level}': str(user_type),
+                                        '{user_id}': str(user_id_command),
+                                        '{sufix}': str(sufix),
+                                        '{random}' : str(random_value),
+                                        '{value}' :str(sufix),
+                                    }
+
+                                    response = utils.messages_file_load('response_noname_queue')
+
+
+                            command_data_queue['rem_queue']['last_use'] = current
                     
-                    if len(value) > 1 and value[1] != "":
-                        
-                        value = value[1]
-                        
-                        aliases = {
-                            "{user_1}" : user,
-                            "{user_2}" : str(value)
-                        }
-                        
-                        message_replaced = utils.replace_all(command_data_default['interaction_5_response'], aliases)
-                        if utils.send_message("RESPONSE"):
-                            send(message_replaced)
-                    
+                            with open(f'{appdata_path}/rewardevents/web/src/queue/commands.json', 'w', encoding='utf-8') as command_queue_file:
+                                json.dump(command_data_queue, command_queue_file, indent=6, ensure_ascii=False)
+
+ 
+                        else:
+
+                            if utils.send_message("RESPONSE"):
+                                send(utils.replace_all(utils.messages_file_load('command_sufix'),aliases))
+
                     else:
                         
-                        
-                        message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
-                        if utils.send_message("RESPONSE"):
-                            send(message_replaced)
-                            
-                    command_data_default['interaction_5_last'] = current
-                
-                    with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
-                        json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
-                            
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+
                 else:
-                    if utils.send_message("ERROR_TIME"):
-                        send(message_delay)                
+                    send_error_level(user,user_level, str(command))
 
             else:
                 if utils.send_message("RESPONSE"):
-                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))        
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+
+        elif compare_strings(command,command_data_queue['add_queue']['command']):
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_queue['add_queue']['delay']
+            last_use = command_data_queue['add_queue']['last_use']
+            status = command_data_queue['add_queue']['status']
+            user_level = command_data_queue['add_queue']['user_level']
+
+            if status:      
+
+                if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                    if check_time:
+                    
+                        if sufix != "":
+
+                            with open(f'{appdata_path}/rewardevents/web/src/queue/queue.json', 'r+', encoding='utf-8') as queue_file:
+                                queue_data = json.load(queue_file)
+
+                                if sufix not in queue_data:
+
+                                    queue_data.append(sufix)
+                                    
+                                    queue_file.seek(0)
+                                    json.dump(queue_data, queue_file, indent=6, ensure_ascii=False)
+                                    queue_file.truncate()  
+                                    
+                                    eel.toast_notifc('Nome adicionado')
+
+                                    aliases = {
+                                        '{username}': str(user),
+                                        '{command}': str(command),
+                                        '{prefix}': str(prefix),
+                                        '{user_level}': str(user_type),
+                                        '{user_id}': str(user_id_command),
+                                        '{sufix}': str(sufix),
+                                        '{random}' : str(random_value),
+                                        '{value}' :str(sufix),
+                                    }
+                                    
+                                    response = utils.messages_file_load('response_add_queue')
+
+                                else:
+                                    
+                                    eel.toast_notifc('O nome já está na lista') 
+
+
+                                    aliases = {
+                                        '{username}': str(user),
+                                        '{command}': str(command),
+                                        '{prefix}': str(prefix),
+                                        '{user_level}': str(user_type),
+                                        '{user_id}': str(user_id_command),
+                                        '{sufix}': str(sufix),
+                                        '{random}' : str(random_value),
+                                        '{value}' :str(sufix),
+                                    }
+                                    
+                                    response = utils.messages_file_load('response_namein_queue')
+
+
+                            command_data_queue['add_queue']['last_use'] = current
+                    
+                            with open(f'{appdata_path}/rewardevents/web/src/queue/commands.json', 'w', encoding='utf-8') as command_queue_file:
+                                json.dump(command_data_queue, command_queue_file, indent=6, ensure_ascii=False)
+
+                        else:
+
+                            if utils.send_message("RESPONSE"):
+                                send(utils.replace_all(utils.messages_file_load('command_sufix'),aliases))
+
+                    else:
+                        
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+
+                else:
+                    send_error_level(user,user_level, str(command))
+
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+
+        elif compare_strings(command,command_data_default['emote']['command']):
+
+            message_event = utils.messages_file_load('event_command')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "command",
+                "message" : message_event,
+                "user_input" : sufix,
+            }
+            
+            append_notice(data_append)
+
+            delay = command_data_queue['emote']['delay']
+            last_use = command_data_queue['emote']['last_use']
+            status = command_data_queue['emote']['status']
+            user_level = command_data_queue['emote']['user_level']
+
+            if status:      
+
+                if check_perm(user_type, user_level):
+
+                    message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                    if check_time:
+                    
+                        if emotes != []:
+
+                            with open(f'{appdata_path}/rewardevents/web/src/queue/queue.json', 'r+', encoding='utf-8') as queue_file:
+                                queue_data = json.load(queue_file)
+
+
+                            emote_thread = threading.Thread(target=emote_rain, args=(emotes,), daemon=True)
+                            emote_thread.start()
+
+                            response = command_data_queue['emote']['response']
+                            if utils.send_message("RESPONSE"):
+                                send(utils.replace_all(response,aliases))
+
+
+                            command_data_queue['emote']['last_use'] = current
+                    
+                            with open(f'{appdata_path}/rewardevents/web/src/queue/commands.json', 'w', encoding='utf-8') as command_queue_file:
+                                json.dump(command_data_queue, command_queue_file, indent=6, ensure_ascii=False)
+
+                        else:
+
+                            if utils.send_message("RESPONSE"):
+                                send(utils.replace_all(utils.messages_file_load('command_sufix'),aliases))
+
+                    else:
+                        
+                        if utils.send_message("ERROR_TIME"):
+                            send(message_delay)
+
+                else:
+                    send_error_level(user,user_level, str(command))
+
+            else:
+                if utils.send_message("RESPONSE"):
+                    send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+
+        else:
+
+            interaction_list = [
+                "interaction_1",
+                "interaction_2",
+                "interaction_3",
+                "interaction_4",
+                "interaction_5"
+            ]
+
+            for item in interaction_list:
+
+                if compare_strings(command,command_data_default[item]['command']):
+
+                    message_event = utils.messages_file_load('event_command')
+                    message_event = utils.replace_all(str(message_event), aliases)
+
+                    data_append = {
+                        "type" : "command",
+                        "message" : message_event,
+                        "user_input" : sufix,
+                    }
+            
+                    append_notice(data_append)
+
+                    delay = command_data_default[item]['delay']
+                    last_use = command_data_default[item]['last_use']
+                    status = command_data_default[item]['status']
+                    user_level = command_data_default[item]['user_level']
+                    
+                    if status:  
+
+                        if check_perm(user_type, user_level):
+
+                            message_delay, check_time, current = utils.check_delay(delay,last_use)
+
+                            if check_time:
+                                            
+                                value = command_lower.split(command_data_default[item]['command'].lower())
                                 
+                                if len(value) > 1 and value[1] != "":
+                                    
+                                    value = value[1]
+                                    
+                                    aliases = {
+                                        "{user_1}" : user,
+                                        "{user_2}" : str(value)
+                                    }
+                                    
+                                    message_replaced = utils.replace_all(command_data_default[item]['response'], aliases)
+                                    if utils.send_message("RESPONSE"):
+                                        send(message_replaced)
+                                else:
+                                    
+                                    message_replaced = utils.replace_all(utils.messages_file_load('command_string'), aliases)
+                                    if utils.send_message("RESPONSE"):
+                                        send(message_replaced)
+                                        
+                                command_data_default[item]['last_use'] = current
+                            
+                                with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                                    json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
+                                
+                            else:
+                                if utils.send_message("ERROR_TIME"):
+                                    send(message_delay)
+                        
+                        else:
+                            send_error_level(user,user_level, str(command))
+
+                    else:
+                        if utils.send_message("RESPONSE"):
+                            send(utils.replace_all(utils.messages_file_load('command_disabled'),aliases))
+                                                
     else:
 
         message_command_disabled = utils.messages_file_load('commands_disabled')
@@ -8008,260 +9361,298 @@ def timeout_user(user,type_id):
         eel.toast_notifc('Ação executada')
     else:
         eel.toast_notifc('Ocorreu um erro')
-        
+
+
+def emote_rain(emotes):
+    
+    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding='utf-8') as obs_not_file:
+        obs_not_data = json.load(obs_not_file)
+
+    if obs_not_data['HTML_EMOTE_ACTIVE'] == 1:
+        while True:
+            if obs_events.showing == 0:
+                if utils.update_emote(emotes):
+                    html = obs_not_data['HTML_EMOTE']
+                    obs_events.show_source(html, 10, 0)
+                    break
+                else:
+                    time.sleep(1)
+    else:
+        if utils.send_message("RESPONSE"):
+            send(utils.messages_file_load('emote_disabled'))
+
         
 def parse_to_dict(message):
 
-    sub = 0
-    mod = 0
-    vip = 0
-    color = ''
-    badges = ''
-    badge_info = ''
-    emotes_parsed = ''
-    display_name = ''
-    user_name = ''
-    sub_count = 0
-    user_replied = ''
-    message_replied = ''
-    response = 0
-    user_id = ''
-
-    def find_between( s, first, last ):
-
-        try:
-            start = s.index( first ) + len( first )
-            end = s.index( last, start )
-            return s[start:end]
-        
-        except ValueError:
-            
-            return False
-
-    def parse_bages_info(badge_info):
-
-        badges = badge_info.split(',')
-        badge_info_dict = {}
+    try:
+        sub = 0
+        mod = 0
+        vip = 0
+        color = ''
+        badges = ''
+        badge_info = ''
+        emotes_parsed = ''
+        display_name = ''
+        user_name = ''
         sub_count = 0
+        user_replied = ''
+        message_replied = ''
+        response = 0
+        user_id = ''
+        emote_html_list = []
 
-        for badge in badges:
-            badge_name = badge.split('/')[0]
-            badge_id = badge.split('/')[1]
+        def find_between( s, first, last ):
+                
+            try:
 
-            badge_info_dict[badge_name] = badge_id
-            if badge_name == 'subscriber':
-                sub_count = badge_id
+                start = s.index( first ) + len( first )
+                end = s.index( last, start )
+                return s[start:end]
+            
+            except Exception as e:
+                utils.error_log(e)
+                return False
 
-        return badge_info_dict , sub_count
+        def parse_bages_info(badge_info):
 
-    def parse_bages(badges):
+            badges = badge_info.split(',')
+            badge_info_dict = {}
+            sub_count = 0
 
-        badges = badges.split(',')
-        badge_dict = {}
-
-        for badge in badges:
-            if badge != '':
+            for badge in badges:
                 badge_name = badge.split('/')[0]
                 badge_id = badge.split('/')[1]
 
-                badge_dict[badge_name] =  badge_id
+                badge_info_dict[badge_name] = badge_id
+                if badge_name == 'subscriber':
+                    sub_count = badge_id
 
-        return badge_dict
+            return badge_info_dict , sub_count
 
-    def parse_emotes(emotes):
-        
-        emotes = emotes.split('/')
+        def parse_bages(badges):
 
-        emote_dict = {}
+            badges = badges.split(',')
+            badge_dict = {}
 
-        for emote in emotes:
-            emote_id = emote.split(':')[0]
-            emotes_pos = emote.split(':')[1].split(',')
+            for badge in badges:
+                if badge != '':
+                    badge_name = badge.split('/')[0]
+                    badge_id = badge.split('/')[1]
 
-            emote_dict[emote_id] = []
+                    badge_dict[badge_name] =  badge_id
 
-            for pos in emotes_pos:
+            return badge_dict
 
-                pos_dict = {}
-                pos1 = pos.split('-')[0]
-                pos2 = pos.split('-')[1]
-
-                pos_dict = {
-                    'startPosition' : pos1,
-                    'endPosition' : pos2
-                }
-
-                emote_dict[emote_id].append(pos_dict)
-
-        
-        return emote_dict
-
-    def parse_emotes_message(emote,parameters):
-
-        emotes = {}
-
-        for emote_id, emote_info in emote["emotes"].items():
-
-            for emote in emote_info:
-
-                start_position = int(emote["startPosition"])
-                end_position = int(emote["endPosition"]) + 1
-                emotes[start_position] = (end_position, emote_id)
-
-        output = ""
-        position = 0
-
-        while position < len(parameters):
-
-            if position in emotes:
-
-                end_position, emote_id = emotes[position]
-                emote_html = "<img src='https://static-cdn.jtvnw.net/emoticons/v1/{}/1.0'/>".format(emote_id)
-                output += emote_html
-                position = end_position
-
-            else:
-                
-                output += parameters[position]
-                position += 1
-
-        return output
-    
-    def parse_bages_message(badges):
-
-        tags = {"badges" : badges}
-
-        with open(f'{appdata_path}/rewardevents/web/src/badges/badges_channel.json', 'r',encoding='utf-8') as channel_badge_file:
-            channel_badges = json.load(channel_badge_file)
-        with open(f'{appdata_path}/rewardevents/web/src/badges/badges_global.json', 'r',encoding='utf-8') as global_badge_file:
-            global_badges = json.load(global_badge_file)
-
-        badges = tags["badges"]
-
-        badge_resp_list = ''
-
-        for badge in badges:
+        def parse_emotes(emotes):
             
-            badge_id = badges[badge]
+            emotes = emotes.split('/')
 
-            if badge not in channel_badges["badge_sets"]:
+            emote_dict = {}
 
-                result = f'<img data-toggle="tooltip" data-bs-placement="left" title="{badge}-{badge_id}" class="badges" src="{global_badges["badge_sets"][badge]["versions"][badge_id]["image_url_1x"]}" />'
+            for emote in emotes:
+                emote_id = emote.split(':')[0]
+                emotes_pos = emote.split(':')[1].split(',')
 
-                badge_resp_list += result
+                emote_dict[emote_id] = []
 
+                for pos in emotes_pos:
+
+                    pos_dict = {}
+                    pos1 = pos.split('-')[0]
+                    pos2 = pos.split('-')[1]
+
+                    pos_dict = {
+                        'startPosition' : pos1,
+                        'endPosition' : pos2
+                    }
+
+                    emote_dict[emote_id].append(pos_dict)
+
+            
+            return emote_dict
+
+        def parse_emotes_message(emote,parameters):
+
+            emotes = {}
+
+            for emote_id, emote_info in emote["emotes"].items():
+
+                for emote in emote_info:
+
+                    start_position = int(emote["startPosition"])
+                    end_position = int(emote["endPosition"]) + 1
+                    emotes[start_position] = (end_position, emote_id)
+
+            output = ""
+            position = 0
+
+            while position < len(parameters):
+
+                if position in emotes:
+
+                    end_position, emote_id = emotes[position]
+                    emote_html = "<img class='emoji drop' src='https://static-cdn.jtvnw.net/emoticons/v1/{}/1.0'/>".format(emote_id)
+                    emote_html_list.append(emote_html)
+                    output += emote_html
+                    position = end_position
+                    
+                else:
+                    
+                    output += parameters[position]
+                    position += 1
+
+            return output,emote_html_list
+        
+        def parse_bages_message(badges):
+
+            tags = {"badges" : badges}
+
+            with open(f'{appdata_path}/rewardevents/web/src/badges/badges_channel.json', 'r',encoding='utf-8') as channel_badge_file:
+                channel_badges = json.load(channel_badge_file)
+            with open(f'{appdata_path}/rewardevents/web/src/badges/badges_global.json', 'r',encoding='utf-8') as global_badge_file:
+                global_badges = json.load(global_badge_file)
+
+            badges = tags["badges"]
+
+            badge_resp_list = ''
+
+            for badge in badges:
+                
+                badge_id = badges[badge]
+
+                if badge not in channel_badges["badge_sets"]:
+
+                    result = f'<img data-toggle="tooltip" data-bs-placement="left" title="{badge}-{badge_id}" class="badges" src="{global_badges["badge_sets"][badge]["versions"][badge_id]["image_url_1x"]}" />'
+
+                    badge_resp_list += result
+
+                else:
+
+                    result = f'<img data-toggle="tooltip" data-bs-placement="left" title="{badge}-{badge_id}" class="badges" src="{channel_badges["badge_sets"][badge]["versions"][badge_id]["image_url_1x"]}" />'
+
+                    badge_resp_list += result
+
+            return badge_resp_list
+        
+        message_split = message.split(f'PRIVMSG #{authdata.USERNAME()} :')
+        
+        parameters = message_split[1]
+        parameters = emoji.demojize(parameters)
+
+        message = message_split[0]
+        
+        parameters_no_url = parameters
+        url_regex = r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?"
+        url_match = re.search(url_regex, parameters)
+
+        if "color=" in message:
+            color = find_between( message, 'color=', ';' )
+    
+        if '@badge-info=' in message:
+
+            badge_info_find = find_between( message, '@badge-info=', ';' )
+
+            if not badge_info_find == '':
+                badge_info ,sub_count = parse_bages_info(badge_info_find)
             else:
+                badge_info = ''
+                sub_count = 0
 
-                result = f'<img data-toggle="tooltip" data-bs-placement="left" title="{badge}-{badge_id}" class="badges" src="{channel_badges["badge_sets"][badge]["versions"][badge_id]["image_url_1x"]}" />'
-
-                badge_resp_list += result
-
-        return badge_resp_list
-
-    message_split = message.split(f'PRIVMSG #{authdata.USERNAME()} :')
+        if "user-id=" in message:
+            user_id = find_between( message, 'user-id=', ';' )
     
-    parameters = message_split[1]
-    message = message_split[0]
-    
-    parameters_no_url = parameters
-    url_regex = r"(http|ftp|https)://([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])?"
-    url_match = re.search(url_regex, parameters)
+        if 'emotes=' in message:
+            
+            emotes_find = find_between( message, 'emotes=', ';' )
 
-    if "color=" in message:
-        color = find_between( message, 'color=', ';' )
-  
-    if '@badge-info=' in message:
+            if not emotes_find == '':
 
-        badge_info_find = find_between( message, '@badge-info=', ';' )
+                emotes_parsed = parse_emotes(emotes_find)
 
-        if not badge_info_find == '':
-            badge_info ,sub_count = parse_bages_info(badge_info_find)
-        else:
-            badge_info = ''
-            sub_count = 0
+                emotes_dict = {'emotes': emotes_parsed}
 
-    if "user-id=" in message:
-        user_id = find_between( message, 'user-id=', ';' )
-  
-    if 'emotes=' in message:
+                parameters,emote_html_list = parse_emotes_message(emotes_dict,parameters)
+
+        if 'badges=' in message:
+            badges_find = find_between( message, 'badges=', ';' )
+
+            if not badges_find == '':
+                badges = parse_bages(badges_find)
+                if 'subscriber' in badges:
+                    sub = 1
+
+                badges = parse_bages_message(badges)
+            
+        if 'display-name=' in message:
+            display_name = find_between( message, 'display-name=', ';' )
+            user_name = display_name.lower()
+
+        if 'vip=1' in message:
+            vip = 1
+            
+        if 'mod=1' in message:
+            mod = 1
+            
+        if 'subscriber=1' in message:
+            sub = 1
         
-        emotes_find = find_between( message, 'emotes=', ';' )
-
-        if not emotes_find == '':
-            emotes_parsed = parse_emotes(emotes_find)
-            emotes_dict = {'emotes': emotes_parsed}
-
-            parameters = parse_emotes_message(emotes_dict,parameters)
-
-    if 'badges=' in message:
-        badges_find = find_between( message, 'badges=', ';' )
+        if 'reply-parent-display-name' in message:
+            
+            user_replied = utils.find_between( message, 'reply-parent-display-name=', ';')
+            message_replied = re.sub(r"\\s", " ", utils.find_between( message, 'reply-parent-msg-body=', ';'))
+            response = 1
         
-        if not badges_find == '':
-            badges = parse_bages(badges_find)
-            if 'subscriber' in badges:
-                sub = 1
-
-            badges = parse_bages_message(badges)
+        if url_match:
+            
+            link_par = " '"+ url_match.group(0)+ "'"
+            type_part = "'link'"
+            link_html = f'<span class="link-style" onclick="eel.open_py({type_part},{link_par})" href="{url_match.group(0)}">{url_match.group(0)}</span>'
+            parameters = parameters.replace(url_match.group(0), link_html)
         
-    if 'display-name=' in message:
-        display_name = find_between( message, 'display-name=', ';' )
-        user_name = display_name.lower()
-
-    if 'vip=1' in message:
-        vip = 1
+        frist_message = utils.find_between( message, 'first-msg=', ';')
         
-    if 'mod=1' in message:
-        mod = 1
+        data = {
+            "parameters" : parameters,
+            "parameters_no_url"  : parameters_no_url,
+            "frist_message" : frist_message,
+            "message_replied" : message_replied,
+            "display_name"  : display_name,
+            "user_name"  : user_name,
+            "user_replied" : user_replied,
+            "response": response,
+            "user_id"  : user_id,
+            "color"  : color,
+            "badges"  : badges,
+            "emote_list" : emote_html_list,
+            "badge_info"  : badge_info,
+            "vip"  : vip,
+            "mod"  : mod,
+            "sub"  : sub,
+            "sub_count"  : sub_count,
+        }
         
-    if 'subscriber=1' in message:
-        sub = 1
-    
-    if 'reply-parent-display-name' in message:
+        result = namedtuple('result', data.keys())(*data.values())
         
-        user_replied = utils.find_between( message, 'reply-parent-display-name=', ';')
-        message_replied = re.sub(r"\\s", " ", utils.find_between( message, 'reply-parent-msg-body=', ';'))
-        response = 1
+        return result
     
-    if url_match:
-        
-        link_par = " '"+ url_match.group(0)+ "'"
-        link_html = f'<span class="link-style" onclick="eel.open_link_chat({link_par})" href="{url_match.group(0)}">{url_match.group(0)}</span>'
-        parameters = parameters.replace(url_match.group(0), link_html)
-    
-    
-    frist_message = utils.find_between( message, 'first-msg=', ';')
-     
-    data = {
-        "parameters" : parameters,
-        "parameters_no_url"  : parameters_no_url,
-        "frist_message" : frist_message,
-        "message_replied" : message_replied,
-        "display_name"  : display_name,
-        "user_name"  : user_name,
-        "user_replied" : user_replied,
-        "response": response,
-        "user_id"  : user_id,
-        "color"  : color,
-        "badges"  : badges,
-        "badge_info"  : badge_info,
-        "vip"  : vip,
-        "mod"  : mod,
-        "sub"  : sub,
-        "sub_count"  : sub_count,
-    }
-    
-    result = namedtuple('result', data.keys())(*data.values())
-    
-    return result
+    except Exception as e:
+        utils.error_log(e)
 
 
 @eel.expose
 def command_fallback(message: str) -> None:
+
     """
     
      Processa a mensagem recebida da twitch via IRC e transforma em dicionarios de acordo com o tipo de mensagem enviada.
 
     """
+
+
+    if "REERRORCONNCHAT" in message:
+        error = message.split('|')[1]
+        eel.toast_notifc(error)
+
     id_message = utils.find_between( message, ';id=', ';' ),
 
     if id_message[0] == '00000':
@@ -8276,6 +9667,9 @@ def command_fallback(message: str) -> None:
     
     if "Login authentication failed" in message:
         eel.toast_notifc('Erro de autenticação, é recomendado fazer o login novamente ou reiniciar o programa, se o erro persistir contate o suporte.')
+    
+    with open(f"{appdata_path}/rewardevents/web/src/config/event_log.json", "r",encoding='utf-8') as event_log_file:
+        event_log_data = json.load(event_log_file)
         
     with open(f'{appdata_path}/rewardevents/web/src/config/chat_config.json','r',encoding='utf-8') as chat_file:
         chat_data = json.load(chat_file)
@@ -8283,10 +9677,6 @@ def command_fallback(message: str) -> None:
     with open(f'{appdata_path}/rewardevents/web/src/user_info/users_sess_join.json','r',encoding='utf-8') as users_sess_join_file:
         users_sess_join_data = json.load(users_sess_join_file)
     
-    with open(f'{appdata_path}/rewardevents/web/src/chat_log.txt','a',encoding='utf-8') as chat_log:
-        if 'PRIVMSG' in message_data or 'USERNOTICE' in message_data:
-            chat_log.write(f'{message} \n')
-
     with open(f'{appdata_path}/rewardevents/web/src/user_info/bot_list.json','r',encoding='utf-8') as bots_file:
         bot_list = json.load(bots_file)
     
@@ -8591,7 +9981,7 @@ def command_fallback(message: str) -> None:
                                 
                         eel.append_announce(chat_data_dump)          
                     
-            if 'PRIVMSG' in message_data:
+            if 'PRIVMSG' in message_data and not "custom-reward-id" in message_data:
                     
                 parse_res = parse_to_dict(message)
 
@@ -8614,18 +10004,19 @@ def command_fallback(message: str) -> None:
                     'last_join' : last_join,
                     'time_w': 0
                 }
-                
+
                 add_user_join(data_database)
                 add_user_database(data_database)
                     
                 response_userdata = userdata_py('load',parse_res.user_name) 
-
+                
                 data_res = {
                     'type': 'PRIVMSG',
                     "response" : parse_res.response,
                     "color": response_userdata.color,
                     "display_name": response_userdata.display_name,
                     "badges" : response_userdata.badges,
+                    "emotes" : parse_res.emote_list,
                     "user_name": parse_res.user_name,
                     "user_replied" : parse_res.user_replied,
                     "mod": response_userdata.mod,
@@ -8709,21 +10100,24 @@ def command_fallback(message: str) -> None:
                             with open(f'{appdata_path}/rewardevents/web/src/user_info/users_database.json','w',encoding='utf-8') as user_data_file_w:
                                 json.dump(user_data_load,user_data_file_w,indent=6,ensure_ascii=False)
                 
-                    if chat_data['not-user-join'] == 1:
+                    if event_log_data['show_join'] == 1:
                         
                         if user_join not in chat_data['user_not_display']:    
                             
-                            data = {
-                                "message" : f"Usuário {user_join} entrou no chat",
-                                "font_size" : chat_data['font-size'],
-                                "color" : chat_data['color-not-join'],
-                                "data_show" : chat_data["data-show"],
-                                "chat_time" : chat_time,
-                                "type_data" : chat_data["type-data"],
+                            aliases = {
+                                '{username}' : user_join
                             }
                             
-                            chat_data_dump = json.dumps(data, ensure_ascii=False)
-                            eel.append_notice(chat_data_dump)
+                            message_event = utils.messages_file_load('event_join')
+                            message_event = utils.replace_all(str(message_event), aliases)
+
+                            data_append = {
+                                "type" : "join",
+                                "message" : message_event,
+                                "user_input" : '',
+                            }
+                            
+                            append_notice(data_append)
                                                                
             if '.twitch.tv 353' in message and not 'PRIVMSG' in message: 
                 
@@ -8801,22 +10195,25 @@ def command_fallback(message: str) -> None:
                         
                         users_sess_join_data['spec'].remove(user_part)
                         
-                        if chat_data['not-user-leave'] == 1:
+                        if event_log_data['show_leave'] == 1:
                     
                             if user_part not in chat_data['user_not_display']:    
                                     
-                                    data = {
-                                        "message" : f"Usuário {user_part} saiu do chat",
-                                        "font_size" : chat_data['font-size'],
-                                        "color" : chat_data['color-not-leave'],
-                                        "data_show" : chat_data["data-show"],
-                                        "chat_time" : chat_time,
-                                        "type_data" : chat_data["type-data"],
-                                    }
-                                    
-                                    chat_data_dump = json.dumps(data, ensure_ascii=False)
-                                    
-                                    eel.append_notice(chat_data_dump)
+                                aliases = {
+                                    '{username}' : user_part
+                                }
+                                
+                                message_event = utils.messages_file_load('event_leave')
+                                message_event = utils.replace_all(str(message_event), aliases)
+
+                                data_append = {
+                                "type" : "join",
+                                "message" : message_event,
+                                "user_input" : '',
+                                }
+                                
+                                append_notice(data_append)
+
                 else:
                     
                     if user_part in users_sess_join_data['bot']:
@@ -8851,6 +10248,42 @@ def command_fallback(message: str) -> None:
  
    
 def close():
+
+    try:
+
+        authdata = auth.auth_data(f'{appdata_path}/rewardevents/web/src/auth/auth.json')
+
+        url = "https://api.twitch.tv/helix/eventsub/subscriptions"
+
+        headers = CaseInsensitiveDict()
+        headers["Authorization"] = "Bearer " + authdata.TOKEN()
+        headers["Client-Id"] = clientid
+
+        resp = req.get(url, headers=headers)
+
+        respo_dic = resp.json()
+
+        for item in respo_dic["data"]:
+
+            url = f"https://api.twitch.tv/helix/eventsub/subscriptions?id={item['id']}"
+
+            headers = CaseInsensitiveDict()
+            headers["Authorization"] = "Bearer " + authdata.TOKEN()
+            headers["Client-Id"] = clientid
+
+            req.delete(url, headers=headers)
+
+    except Exception as e:
+
+        print(type(e).__name__)
+        if type(e).__name__ ==  "ConnectionAbortedError":
+
+            ask = messagebox.showerror("Erro", "Erro de conexão, verifique a conexão com a internet e tente novamente.")
+            if ask == 'ok':
+                sys.exit(0)
+        else:
+            utils.error_log(e)
+
     
     with open(f'{appdata_path}/rewardevents/web/src/config/chat_config.json','r',encoding='utf-8') as chat_data_file:
         chat_data = json.load(chat_data_file)
@@ -9033,21 +10466,6 @@ def on_message(ws, message):
                 'follow_date' : follow_date
             }
             
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/chat_config.json','r',encoding='utf-8') as chat_file:
-                chat_data = json.load(chat_file)
-
-            now = datetime.datetime.now()
-            format = chat_data['time-format']
-
-            if chat_data['data-show'] == 1:
-                if chat_data['type-data'] == "passed":
-                    chat_time = now.strftime('%Y-%m-%dT%H:%M:%S')
-                elif chat_data['type-data'] == "current":
-                    chat_time = now.strftime(format)
-            else: 
-                chat_time = ''
-        
 
             with open(f"{appdata_path}/rewardevents/web/src/config/follow.json", "r", encoding='utf-8') as file:
                 follow_data = json.load(file)
@@ -9064,24 +10482,22 @@ def on_message(ws, message):
                     with open(f'{appdata_path}/rewardevents/web/src/config/follow.json', 'w', encoding='utf-8') as file_follows:
                         json.dump(follow_data,file_follows,ensure_ascii=False,indent=4)
                         
-                    data_time = {
-                        'follow': follow_name,
+                    
+                    aliases = {
+                        '{username}' : follow_name
                     }
+                    
+                    message_event = utils.messages_file_load('event_follow')
+                    message_event = utils.replace_all(str(message_event), aliases)
 
-                    data_time_dump = json.dumps(data_time, ensure_ascii=False)
-                    eel.receive_follow_info(data_time_dump)
-                    
-                    data_not = {
-                        "message" : f"Usuário {follow_name} seguiu o Canal!!",
-                        "font_size" : chat_data['font-size'],
-                        "color" : chat_data['color-not'],
-                        "data_show" : chat_data["data-show"],
-                        "chat_time" : chat_time,
-                        "type_data" : chat_data["type-data"],
+
+                    data_append = {
+                        "type" : "event",
+                        "message" : message_event,
+                        "user_input" : '',
                     }
                     
-                    notific_dump = json.dumps(data_not, ensure_ascii=False)
-                    eel.append_notice(notific_dump)
+                    append_notice(data_append)
                     
                     with open(f"{appdata_path}/rewardevents/web/src/config/event_not.json", "r", encoding='utf-8') as message_file:
                         message_data = json.load(message_file)
@@ -9117,29 +10533,26 @@ def on_message(ws, message):
                 with open(f'{appdata_path}/rewardevents/web/src/config/follow.json', 'w', encoding='utf-8') as file_follows:
                     json.dump(follow_data,file_follows,ensure_ascii=False,indent=4)
                     
-                data_time = {
-                    'follow': follow_name,
+                
+                aliases = {
+                    '{username}' : follow_name
                 }
+                
+                message_event = utils.messages_file_load('event_follow')
+                message_event = utils.replace_all(str(message_event), aliases)
 
-                data_time_dump = json.dumps(data_time, ensure_ascii=False)
-                eel.receive_follow_info(data_time_dump)
-                    
-                data_not = {
-                    "message" : f"Usuário {follow_name} seguiu o Canal!!",
-                    "font_size" : chat_data['font-size'],
-                    "color" : chat_data['color-not'],
-                    "data_show" : chat_data["data-show"],
-                    "chat_time" : chat_time,
-                    "type_data" : chat_data["type-data"],
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
                 }
-
-                notific_dump = json.dumps(data_not, ensure_ascii=False)
-                eel.append_notice(notific_dump)
+                
+                append_notice(data_append)
                 
                 data = {
                     'type' : 'follow',
                     'username' : '',
-                    'message' : data_not['message']
+                    'message' : message_event
                 }
                 
                 with open(f"{appdata_path}/rewardevents/web/src/config/event_not.json", "r", encoding='utf-8') as message_file:
@@ -9158,7 +10571,6 @@ def on_message(ws, message):
                 
                 
                 send_announcement(message_chat,'purple')   
-                
                 send_discord_webhook(data_send)
 
 
@@ -9217,6 +10629,16 @@ def on_message(ws, message):
             }
             
             send_discord_webhook(data)
+
+            message_event = utils.messages_file_load('event_live_cat')
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append)
             
         elif subscription_type == 'stream.online':  
                 
@@ -9230,6 +10652,16 @@ def on_message(ws, message):
             }
             
             send_discord_webhook(data)
+
+            message_event = utils.messages_file_load('event_live_start')
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append)
             
         elif subscription_type == 'stream.offline':  
                 
@@ -9243,7 +10675,16 @@ def on_message(ws, message):
             }
             
             send_discord_webhook(data)
-                    
+
+            message_event = utils.messages_file_load('event_live_end')
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append)
+                             
         elif subscription_type == 'channel.subscribe':  
                 
             event = data['payload']['event']
@@ -9254,14 +10695,40 @@ def on_message(ws, message):
                 'type' : 'sub',
                 'username' : user_name,
             }
+
+            aliases = {
+                '{username}' : user_name
+            }
             
-            print(f"Evento Sub em dev - {event}")
+            message_event = utils.messages_file_load('event_sub')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append)
 
         elif subscription_type == 'channel.subscription.gift':  
                 
             event = data['payload']['event']
 
-            print(f"Evento Subgift em dev - {event}")
+            aliases = {
+                '{username}' : event['user_name']
+            }
+            
+            message_event = utils.messages_file_load('event_giftsub')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append)
                       
         elif subscription_type == 'channel.subscription.end':  
                 
@@ -9270,7 +10737,20 @@ def on_message(ws, message):
             user_name = event['user_name']
             tier = event['tier']
             
-            print(f"Sub Acabou - {event}")
+            aliases = {
+                '{username}' : event['user_name']
+            }
+            
+            message_event = utils.messages_file_load('event_subend')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append)
                 
         elif subscription_type == 'channel.subscription.message':  
                 
@@ -9395,6 +10875,17 @@ def on_message(ws, message):
 
             send_not_fun(data) 
             
+            message_event = utils.messages_file_load('event_resub')
+            message_event = utils.replace_all(str(message_event), aliases_chat)
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append)
+            
         elif subscription_type == 'channel.raid':  
                 
             event = data['payload']['event']
@@ -9418,14 +10909,27 @@ def on_message(ws, message):
             
             data = {
                 'type_id' : 'raid',
+                'type' : 'raid',
                 'username' : username,
                 'message_html' : response,
                 'message' : response_chat
             }  
             
             send_announcement(response_chat,'purple')
-            send_not_fun(data)   
-                            
+            send_not_fun(data) 
+
+            
+            message_event = utils.messages_file_load('event_raid')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append)  
+                        
         elif subscription_type == 'channel.cheer':  
                 
             event = data['payload']['event']
@@ -9464,8 +10968,20 @@ def on_message(ws, message):
             }   
 
             response = utils.replace_all(response,aliases) 
-            response_chat = utils.replace_all(response_chat,aliases) 
+            response_chat = utils.replace_all(response_chat,aliases)
+
             
+            message_event = utils.messages_file_load('event_cheer')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append) 
+        
             data = {
                 'type_id' : 'bits',
                 'type' : type_not,
@@ -9485,10 +11001,46 @@ def on_message(ws, message):
             user_name = event['user_name']
             moderator_user_name = event['moderator_user_name']
             reason = event['reason']
-            banned_at = event['ends_at']
+            banned_at = event['banned_at']
+            ends_at = event['ends_at']
             is_permanent = event['is_permanent']
+
+            if is_permanent:
+
+                aliases = {
+                    '{reason}' : reason,
+                    '{moderator}' : moderator_user_name,
+                    '{username}' : user_name
+                }   
+                                
+                message_event = utils.messages_file_load('event_ban')
+ 
+                
+            else:
+
+                banned_at = datetime.datetime.fromisoformat(banned_at)
+                ends_at = datetime.datetime.fromisoformat(ends_at)
+
+                intervalo = ends_at - banned_at
+
+                message_event = utils.messages_file_load('event_timeout')
+
+                aliases = {
+                    '{reason}' : reason,
+                    '{username}' : user_name,
+                    '{moderator}' : moderator_user_name,
+                    '{seconds}' : str(int(intervalo.total_seconds())),
+                }  
             
-            print(f"Evento ban em dev - {event}")
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append) 
             
         elif subscription_type == 'channel.unban':  
             
@@ -9497,7 +11049,22 @@ def on_message(ws, message):
             user_name = event['user_name']
             moderator_user_name = event['moderator_user_name']
             
-            print(f"Evento Unban em dev - {event}")
+
+            aliases = {
+                '{moderator}' : moderator_user_name,
+                '{username}' : user_name
+            }   
+                            
+            message_event = utils.messages_file_load('event_unban')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append) 
             
         elif subscription_type == 'channel.poll.begin':  
             
@@ -9552,6 +11119,21 @@ def on_message(ws, message):
 
             
             send_discord_webhook(data)
+
+            aliases = {
+                '{title}' : title
+            }   
+                            
+            message_event = utils.messages_file_load('event_pool_start')
+            message_event = utils.replace_all(str(message_event), aliases)
+
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append) 
             
         elif subscription_type == 'channel.poll.progress':  
             
@@ -9653,6 +11235,21 @@ def on_message(ws, message):
                 json.dump(poll_data,poll_filedump,indent=4,ensure_ascii=False)
             
             send_discord_webhook(data)
+
+            aliases = {
+                '{title}' : title
+            }   
+                            
+            message_event = utils.messages_file_load('event_pool_end')
+            message_event = utils.replace_all(str(message_event), aliases)
+            
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append) 
             
         elif subscription_type == 'channel.prediction.begin':  
             
@@ -9696,7 +11293,20 @@ def on_message(ws, message):
 
             send_discord_webhook(data)
 
-            eel.toast_notifc('Um palpite foi iniciado')
+            aliases = {
+                '{title}' : title
+            }   
+                            
+            message_event = utils.messages_file_load('event_prediction_start')
+            message_event = utils.replace_all(str(message_event), aliases)
+            
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append) 
             
         elif subscription_type == 'channel.prediction.progress':  
             
@@ -9777,7 +11387,22 @@ def on_message(ws, message):
             
             send_discord_webhook(data)
             
-            eel.toast_notifc('O palpite foi encerrado.')
+            
+
+            aliases = {
+                '{title}' : title
+            }   
+                            
+            message_event = utils.messages_file_load('event_prediction_end')
+            message_event = utils.replace_all(str(message_event), aliases)
+            
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append) 
             
         elif subscription_type == 'channel.goal.begin':  
                 
@@ -9788,8 +11413,11 @@ def on_message(ws, message):
             current_amount = event['current_amount']
             target_amount = event['target_amount']
             started_at = event['started_at']
-            
-            data = {
+
+            if goal_type == "subscription":
+                goal_type = 'subscription_count'
+
+            data[goal_type] = {
                 "type" : goal_type,
                 "description" : description,
                 "current_amount" : current_amount,
@@ -9799,7 +11427,28 @@ def on_message(ws, message):
 
             with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"w", encoding="utf-8" ) as goal_file:
                 json.dump(data,goal_file,indent=4,ensure_ascii=False)
-               
+            
+            if goal_type == "subscription_count":
+                goal_type = 'Inscrições'
+
+            elif goal_type == "follow":
+                goal_type = 'Seguidores'
+
+            aliases = {
+                '{type}' : goal_type
+            }   
+                            
+            message_event = utils.messages_file_load('event_goal_begin')
+            message_event = utils.replace_all(str(message_event), aliases)
+            
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append) 
+
         elif subscription_type == 'channel.goal.progress':  
                 
             event = data['payload']['event']
@@ -9809,6 +11458,9 @@ def on_message(ws, message):
             current_amount = event['current_amount']
             target_amount = event['target_amount']
             started_at = event['started_at']
+
+            if goal_type == "subscription":
+                goal_type = 'subscription_count'
 
             data = {
                 "type" : goal_type,
@@ -9832,6 +11484,8 @@ def on_message(ws, message):
             started_at = event['started_at']
             ended_at = event['ended_at']
             
+            if goal_type == "subscription":
+                goal_type = 'subscription_count'
 
             data = {
                 "type" : goal_type,
@@ -9841,9 +11495,30 @@ def on_message(ws, message):
                 "started_at" : started_at
             }
 
-
+            
             with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"w", encoding="utf-8" ) as goal_file:
                 json.dump(data,goal_file,indent=4,ensure_ascii=False)
+
+            if goal_type == "subscription_count":
+                goal_type = 'Inscrições'
+
+            elif goal_type == "follow":
+                goal_type = 'Seguidores'
+
+            aliases = {
+                '{type}' : goal_type
+            }   
+                            
+            message_event = utils.messages_file_load('event_goal_end')
+            message_event = utils.replace_all(str(message_event), aliases)
+            
+            data_append = {
+                "type" : "event",
+                "message" : message_event,
+                "user_input" : '',
+            }
+            
+            append_notice(data_append) 
 
         else:
             
@@ -9851,8 +11526,6 @@ def on_message(ws, message):
        
     elif message_type == 'session_keepalive':
         pass
-    else:
-        print(message_type)
 
 
 def on_resize(width, height):
@@ -9866,21 +11539,23 @@ def on_resize(width, height):
 def start_websocket():
     
     def on_error(ws, message_error):
-        utils.error_log(message_error)
+
+        if message_error == "[Errno 11001] getaddrinfo failed":
+            
+            ask = messagebox.showerror("Erro", "Erro de conexão, verifique a conexão com a internet e tente novamente.")
+            if ask == 'ok':
+                sys.exit(0)
+            else:
+                utils.error_log(message_error)
         
     def on_close(ws, close_status_code, close_msg):
-        print(f"{close_status_code} - {close_msg}")
         time.sleep(5)  # Aguarda 5 segundos antes de tentar se reconectar
         ws.run_forever()
 
-    def on_open(ws):
-        print("Conectado!")
-
-    ws = websocket.WebSocketApp("wss://eventsub-beta.wss.twitch.tv/ws",
+    ws = websocket.WebSocketApp("wss://eventsub.wss.twitch.tv/ws",
                                 on_message=on_message,
                                 on_error=on_error,
-                                on_close=on_close,
-                                on_open=on_open)
+                                on_close=on_close)
     ws.run_forever()
     
 
@@ -9891,56 +11566,73 @@ def webview_start_app(app_mode):
 
     if app_mode == "normal":
 
-        window = webview.create_window("RewardEvents", extDataDir + "/web/loading.html", width=1200, height=680, min_size=(1200, 680))
+        window = webview.create_window("RewardEvents", f"{extDataDir}/web/loading.html", width=1200, height=680, min_size=(1200, 680))
 
         window.events.closed += close
         window.events.resized += on_resize
+
+        with open(f"{appdata_path}/rewardevents/web/src/auth/scopes.json", "r", encoding="utf-8") as debug_file:
+            debug_data = json.load(debug_file)
+
+            debug_status = debug_data['debug']
+
+            if debug_status == 0:
+                debug_status = False
+            elif debug_status == 1:
+                debug_status = True
         
-        webview.start(storage_path=extDataDir,private_mode=False,debug=False,http_server=False)
+        webview.start(storage_path=extDataDir,private_mode=True,debug=debug_status,http_server=False,gui='edgechromium')
         
     elif app_mode == "auth":
 
         window = webview.create_window("RewardEvents auth", "http://localhost:7000/auth.html", width=1200, height=680, min_size=(1200, 680))
         window.events.resized += on_resize
+
+        with open(f"{appdata_path}/rewardevents/web/src/auth/scopes.json", "r", encoding="utf-8") as debug_file:
+            debug_data = json.load(debug_file)
+
+            debug_status = debug_data['debug']
+
+            if debug_status == 0:
+                debug_status = False
+            elif debug_status == 1:
+                debug_status = True
         
-        webview.start(storage_path=extDataDir,private_mode=False,debug=True,http_server=False)
+        webview.start(storage_path=extDataDir,private_mode=False,debug=debug_status,http_server=False)
 
     elif app_mode == "chat":
         
         window_chat = webview.create_window('RewardEvents Chat', '')
         window_chat.load_url('http://localhost:7000/chat.html')
+    
+    elif app_mode == "events":
+        
+        window_chat = webview.create_window('RewardEvents Eventos', '')
+        window_chat.load_url('http://localhost:7000/events.html')
 
 
 def bot():
-    
-    global bot_loaded, chat
+
+    global chat
+
+    with open(f"{appdata_path}/rewardevents/web/src/config/event_log.json", "r",encoding='utf-8') as event_log_file:
+        event_log_data = json.load(event_log_file)
+
+        event_list = event_log_data['event_list']
+        if len(event_list) > 100:
+            event_list = event_list[-100:]
+            event_log_data['event_list'] = event_list
+
+    with open(f"{appdata_path}/rewardevents/web/src/config/event_log.json", "w",encoding='utf-8') as event_log_file_w:
+        json.dump(event_log_data,event_log_file_w,indent=4,ensure_ascii=False)
 
     while True:
         
         if loaded_status == 1:
 
-            eel.toast_notifc('Conectando bot ao chat')
+            eel.toast_notifc('Conectando ao chat')
             chat = TwitchBot(callback=command_fallback,TOKEN=authdata.TOKENBOT(), USERNAME=authdata.BOTUSERNAME(),CHANNEL=authdata.USERNAME())
-            
-            while True:
-                
-                try:
-                    chat.connect()
-                except ConnectionResetError:
-                    eel.toast_notifc('Erro de conexão, tentando novamente em 10 segundos | COD = SOCK1')
-                    time.sleep(10)
-                    
-                if chat.Connected == True:
-                    bot_loaded = 1
-                    eel.toast_notifc('Bot conectado')
-                    
-                    break
-                else:
-                    eel.toast_notifc('Erro de conexão, tentando novamente em 10 segundos | COD = AUTHCRED')
-                    time.sleep(10)
-                    
-            chat.run()
-            break
+            chat.connect()
             
         else:
             
@@ -9951,9 +11643,6 @@ def start_app(start_mode):
 
     if start_mode == "normal":
 
-        with open(f"{appdata_path}/rewardevents/web/src/chat_log.txt", "w") as file:
-            file.truncate(0)
-        
         user_data_sess_load = {}
         with open(f'{appdata_path}/rewardevents/web/src/user_info/users_database_sess.json','w',encoding='utf-8') as user_data_sess_file_w:
             json.dump(user_data_sess_load,user_data_sess_file_w,indent=6,ensure_ascii=False)
@@ -9968,15 +11657,9 @@ def start_app(start_mode):
                         
         pygame.init()
         pygame.mixer.init()
-        
-        loopcheck_thread = threading.Thread(target=loopcheck, args=(), daemon=True)
-        loopcheck_thread.start()
-    
-        timer_thread = threading.Thread(target=timer, args=(), daemon=True)
-        timer_thread.start()
 
-        check_bot_thread = threading.Thread(target=bot, args=(), daemon=True)
-        check_bot_thread.start()
+        start_bot_thread = threading.Thread(target=bot, args=(), daemon=True)
+        start_bot_thread.start()
 
         download_badges()
         get_users_info('save', 'null')
@@ -9986,6 +11669,12 @@ def start_app(start_mode):
         
         get_spec_thread = threading.Thread(target=get_spec, args=(), daemon=True)
         get_spec_thread.start()
+
+        loopcheck_thread = threading.Thread(target=loopcheck, args=(), daemon=True)
+        loopcheck_thread.start()
+    
+        timer_thread = threading.Thread(target=timer, args=(), daemon=True)
+        timer_thread.start()
         
         websocket_thread = threading.Thread(target=start_websocket, args=(), daemon=True)
         websocket_thread.start()
@@ -9994,10 +11683,13 @@ def start_app(start_mode):
 
     elif start_mode == "auth":
 
+        def start_server():
+            serve(app, host="0.0.0.0", port=5555)
+    
         eel_thread = threading.Thread(target=eel_start, args=('auth',), daemon=True)
         eel_thread.start()
-        
-        flask_thread = threading.Thread(target=app.run, args=('localhost',5555,), daemon=True)
+
+        flask_thread = threading.Thread(target=start_server, args=(), daemon=True)
         flask_thread.start()
 
         webview_start_app('auth')
@@ -10057,10 +11749,16 @@ def start_auth_pub():
             start_app('normal')
 
         except Exception as e:
-            
-            if e != 'invalid access token':
-                utils.error_log(e)
-                start_app('auth')
+                
+                if type(e).__name__ ==  "ConnectionError":
+
+                    ask = messagebox.showerror("Erro", "Erro de conexão, verifique a conexão com a internet e tente novamente.")
+                    if ask == 'ok':
+                        sys.exit(0)
+                else:
+                    
+                    utils.error_log(e)
+                    start_app('auth')
                 
     else:
         start_app('auth')

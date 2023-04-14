@@ -20,10 +20,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" />
     <script type="text/javascript" src="/eel.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet" />
+    <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
 </head>
 <body>
     <div class="chat-col-new">
-        <div class="bg-dark nav nav-tabs flex-column flex-sm-row top-tab" id="nav-tab" role="tablist">
+        <div class="bg-dark nav nav-tabs flex-column flex-sm-row top-tab" id="nav-tab" role="tablist" style="height: 40px;">
             <button class="nav-link flex-sm-fill text-sm-center active" id="nav-chat-tab"
                 data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab"
                 aria-controls="nav-chat" aria-selected="true">Chat</button>
@@ -44,17 +45,44 @@
                     </form>
                 </div>
             </div>
-            <div class="tab-pane purple-border-block" id="nav-users" role="tabpanel"
-                aria-labelledby="nav-users-tab">
+            <div class="tab-pane purple-border-block" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab">
                 <div class="users-chat-list" id="users-chat-list">
-                    <div class="collapsible" onclick="collapse('div_users')"> <h5>Spectadores</h5>
-                        <div id="div_users" hidden="false">
-
+                    <div class="collapsible">
+                        <div class="d-flex justify-content-between box-collapse-list">
+                            <div>
+                                <h5>Espectadores</h5>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-sm bt-submit" onclick="collapse('div_users')">
+                                    <i class="fa-solid fa-square-caret-down fa-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="div_users" class="mt-1">
+                            <div class="d-flex justify-content-between">
+                                <div class="m-1">
+                                    <span class="name-user-list">Carregando, aguarde.</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div  class="collapsible" onclick="collapse('div_bots')"> <h5>Bots</h5>
-                        <div id="div_bots" hidden="true">
-                            
+                    <div class="collapsible mt-1">
+                        <div class="d-flex justify-content-between box-collapse-list">
+                            <div>
+                                <h5>Bots</h5>
+                                </div>
+                            <div>
+                                <button type="button" class="btn btn-sm bt-submit" onclick="collapse('div_bots')">
+                                    <i class="fa-solid fa-square-caret-down fa-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="div_bots" class="mt-1" hidden>
+                            <div class="d-flex justify-content-between">
+                                <div class="m-1">
+                                    <span class="name-user-list">Carregando, aguarde.</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

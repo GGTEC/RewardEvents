@@ -1,4 +1,5 @@
 async function giveaway_js(event,type_id) {
+    
     if (type_id == 'get_config') {
 
         var giveaway_name_inp = document.getElementById("giveaway-name");
@@ -7,19 +8,7 @@ async function giveaway_js(event,type_id) {
         var giveaway_enable = document.getElementById('giveaway-enable');
         var giveaway_mult = document.getElementById('giveaway-mult');
 
-        var execute_giveaway = document.getElementById("command-execute-giveaway");
-        var execute_delay = document.getElementById("command-execute-delay");
-        var check_user_giveaway = document.getElementById("command-check-user-giveaway");
-        var check_user_delay = document.getElementById("command-check-user-delay");
-        var clear_giveaway = document.getElementById("command-clear-giveaway");
-        var clear_delay = document.getElementById("command-clear-delay");
-        var add_user_giveaway = document.getElementById('command-add-user-giveaway');
-        var add_user_delay = document.getElementById('command-add-user-delay');
-        var self_check_giveaway = document.getElementById('command-self-check-giveaway');
-        var self_check_delay = document.getElementById('command-self-check-delay');
-
         var el_id = "redeem-select-giveaway";
-
     
         var giveaway_info = await eel.giveaway_py(type_id,'null')();
     
@@ -74,17 +63,32 @@ async function giveaway_js(event,type_id) {
             giveaway_name_inp.value = giveaway_info_parse.giveaway_name;
             giveaway_user_level.value = giveaway_info_parse.giveaway_level;
 
-            execute_giveaway.value = giveaway_info_parse.execute_giveaway;
-            execute_delay.value = giveaway_info_parse.execute_delay;
-            check_user_giveaway.value = giveaway_info_parse.user_check_giveaway;
-            check_user_delay.value = giveaway_info_parse.user_check_delay;
-            clear_giveaway.value = giveaway_info_parse.clear_giveaway;
-            clear_delay.value = giveaway_info_parse.clear_delay;
-            add_user_giveaway.value = giveaway_info_parse.add_user_giveaway;
-            add_user_delay.value = giveaway_info_parse.add_user_delay;
-            self_check_giveaway.value = giveaway_info_parse.self_check_giveaway;
-            self_check_delay.value = giveaway_info_parse.self_check_delay;
-    
+        }
+
+    } else if (type_id == 'get_commands') {
+        
+        var command_giveaway_select = document.getElementById('command-giveaway-select');
+
+        var command_giveaway_status = document.getElementById('command-giveaway-status');
+        var command_giveaway_command = document.getElementById('command-giveaway-command');
+        var command_giveaway_delay = document.getElementById('command-giveaway-delay');
+
+        var giveaway_command_edit = document.getElementById('command_giveaway_form');
+
+        var giveaway_command_data = await eel.giveaway_py(type_id,command_giveaway_select.value)();
+
+        if (giveaway_command_data){
+
+            var giveaway_parse = JSON.parse(giveaway_command_data);
+
+            giveaway_command_edit.hidden = false
+
+            command_giveaway_status.checked = giveaway_parse.status == 1 ? true : false;
+            command_giveaway_command.value = giveaway_parse.command
+            command_giveaway_delay.value = giveaway_parse.delay
+
+            $("#command-giveaway-perm").selectpicker('val',giveaway_parse.user_level)
+
         }
 
     } else if (type_id == 'show_names'){
@@ -152,26 +156,24 @@ async function giveaway_js(event,type_id) {
 
 
     } else if (type_id == 'save_commands'){
-        event.preventDefault();
 
-        var form = document.querySelector("#giveaway-config-commands-form");
-    
-        data = {
-            
-            execute_giveaway: form.querySelector("#command-execute-giveaway").value,
-            execute_delay : form.querySelector("#command-execute-delay").value,
-            self_check_giveaway: form.querySelector("#command-self-check-giveaway").value,
-            self_check_delay: form.querySelector("#command-self-check-delay").value,
-            check_user_giveaway: form.querySelector("#command-check-user-giveaway").value,
-            check_user_delay: form.querySelector("#command-check-user-delay").value,
-            clear_giveaway: form.querySelector("#command-clear-giveaway").value,
-            clear_delay: form.querySelector("#command-clear-delay").value,
-            add_user_giveaway: form.querySelector("#command-add-user-giveaway").value,
-            add_user_delay: form.querySelector("#command-add-user-delay").value
+        var command_giveaway_select = document.getElementById('command-giveaway-select');
+
+        var command_giveaway_status = document.getElementById('command-giveaway-status');
+        var command_giveaway_command = document.getElementById('command-giveaway-command');
+        var command_giveaway_delay = document.getElementById('command-giveaway-delay');
+        var command_giveaway_perm = document.getElementById('command-giveaway-perm');
+
+        var command_status = command_giveaway_status.checked ? 1 : 0;
+
+        data  = {
+            type_command: command_giveaway_select.value,
+            command: command_giveaway_command.value,
+            status: command_status,
+            delay: command_giveaway_delay.value,
+            user_level: command_giveaway_perm.value
         }
 
-        console.log(data)
-    
         var formData = JSON.stringify(data);
         eel.giveaway_py(type_id,formData);
 

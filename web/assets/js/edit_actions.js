@@ -15,8 +15,11 @@ async function get_redeem_edit(el_id) {
             $("#" + el_id).selectpicker("refresh");
 
         }
+
+        
     
-    return true
+        return true
+
     }
 }
 
@@ -85,6 +88,29 @@ function get_key_mode_edit() {
     }
 }
 
+
+function show_edit_redeem_div(div_id){
+    const divs_redem_edit = [ 
+        "#edit-audio-div",
+        "#edit-tts-div",
+        "#edit-scene-div",
+        "#edit-video-div",
+        "#edit-response-div",
+        "#edit-filter-div",
+        "#edit-source-div",
+        "#edit-keypress-div",
+        "#edit-clip-div",
+    ]
+
+    for (const item of divs_redem_edit) {
+        document.querySelector(item).hidden = true;
+      }
+    
+      document.querySelector(`#edit-${div_id}-div`).hidden = false;
+}
+
+
+
 async function get_edit_type(){
 
     var select_edit = document.getElementById('action-edit-select');
@@ -93,18 +119,15 @@ async function get_edit_type(){
 
     if (type){
 
+        
         if (type == 'sound'){
+            type = 'audio'
+        }
+        console.log(type)
 
-            document.getElementById("edit-audio-div").hidden = false;
-            document.getElementById("edit-video-div").hidden = true;
-            document.getElementById("edit-tts-div").hidden = true;
-            document.getElementById("edit-scene-div").hidden = true;
-            document.getElementById("edit-response-div").hidden = true;
-            document.getElementById("edit-filter-div").hidden = true;
-            document.getElementById("edit-source-div").hidden = true;
-            document.getElementById("edit-keypress-div").hidden = true;
-            document.getElementById("edit-clip-div").hidden = true;
+        show_edit_redeem_div(type)
 
+        if (type == 'audio'){
             
             var sound_data = await eel.get_edit_data(edit_redeem_name,type)()
 
@@ -127,6 +150,8 @@ async function get_edit_type(){
                     var audio_volume = form_sound.querySelector('#audio-volume-edit');
     
                     $("#redeem-select-audio-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
+                    
+                    $("#redeem-select-audio-edit").selectpicker('val',edit_redeem_name)
                     $("#redeem-select-audio-edit").selectpicker("refresh");
 
 
@@ -151,17 +176,6 @@ async function get_edit_type(){
 
         } else if (type == 'video'){
 
-            document.getElementById("edit-video-div").hidden = false;
-            document.getElementById("edit-audio-div").hidden = true;
-            document.getElementById("edit-tts-div").hidden = true;
-            document.getElementById("edit-scene-div").hidden = true;
-            document.getElementById("edit-response-div").hidden = true;
-            document.getElementById("edit-filter-div").hidden = true;
-            document.getElementById("edit-source-div").hidden = true;
-            document.getElementById("edit-keypress-div").hidden = true;
-            document.getElementById("edit-clip-div").hidden = true;
-
-            
             var video_data = await eel.get_edit_data(edit_redeem_name,type)()
 
             if (video_data) {
@@ -183,6 +197,8 @@ async function get_edit_type(){
                     var time_showing_video = form_video.querySelector('#time-showing-video-edit');
     
                     $("#redeem-select-video-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
+                    
+                    $("#redeem-select-video-edit").selectpicker('val',edit_redeem_name)
                     $("#redeem-select-video-edit").selectpicker("refresh");
 
                     if (data_video_parse.command_status == 1){
@@ -204,17 +220,6 @@ async function get_edit_type(){
             }
         } else if (type == 'tts'){
 
-            document.getElementById("edit-audio-div").hidden = true;
-            document.getElementById("edit-video-div").hidden = true;
-            document.getElementById("edit-tts-div").hidden = false;
-            document.getElementById("edit-scene-div").hidden = true;
-            document.getElementById("edit-response-div").hidden = true;
-            document.getElementById("edit-filter-div").hidden = true;
-            document.getElementById("edit-source-div").hidden = true;
-            document.getElementById("edit-keypress-div").hidden = true;
-            document.getElementById("edit-clip-div").hidden = true;
-
-
             var tts_data = await eel.get_edit_data(edit_redeem_name,type)()
 
             if (tts_data) {
@@ -234,6 +239,8 @@ async function get_edit_type(){
                     var characters = form_tts.querySelector('#characters-tts-edit');
     
                     $("#redeem-select-tts-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
+                    
+                    $("#redeem-select-tts-edit").selectpicker('val',edit_redeem_name)
                     $("#redeem-select-tts-edit").selectpicker("refresh");
 
 
@@ -258,17 +265,6 @@ async function get_edit_type(){
 
         } else if (type == 'scene'){
 
-            document.getElementById("edit-audio-div").hidden = true;
-            document.getElementById("edit-video-div").hidden = true;
-            document.getElementById("edit-tts-div").hidden = true;
-            document.getElementById("edit-scene-div").hidden = false;
-            document.getElementById("edit-response-div").hidden = true;
-            document.getElementById("edit-filter-div").hidden = true;
-            document.getElementById("edit-source-div").hidden = true;
-            document.getElementById("edit-keypress-div").hidden = true;
-            document.getElementById("edit-clip-div").hidden = true;
-
-
             var scene_data = await eel.get_edit_data(edit_redeem_name,type)()
 
             if (scene_data) {
@@ -282,7 +278,8 @@ async function get_edit_type(){
                     var data_scene_parse = JSON.parse(scene_data);
                     var form_scene = document.querySelector('#scene-edit-form');
                     var command_scene = form_scene.querySelector('#command-text-scene-edit');
-                    var command_scene_status = command_scene.querySelector('#command-scene-status');
+                    var old_command_scene = form_scene.querySelector('#old-scene-command');
+                    var command_scene_status = form_scene.querySelector('#command-scene-status');
                     var chat_message = form_scene.querySelector('#chat-message-scene-edit');
                     var command_delay = form_scene.querySelector('#command-scene-delay');
                     var scene_name = form_scene.querySelector('#scene-name-edit');
@@ -290,6 +287,8 @@ async function get_edit_type(){
                     var time = form_scene.querySelector('#time-to-return-scene-edit');
     
                     $("#redeem-select-scene-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
+                    
+                    $("#redeem-select-scene-edit").selectpicker('val',edit_redeem_name)
                     $("#redeem-select-scene-edit").selectpicker("refresh");
 
                     if (data_scene_parse.keep == 1){
@@ -303,25 +302,21 @@ async function get_edit_type(){
                     }
 
                     select.value = edit_redeem_name;
+                    old_command_scene.value = data_scene_parse.command;
                     command_scene.value = data_scene_parse.command;
                     command_delay.value = data_scene_parse.delay;
                     chat_message.value = data_scene_parse.response;
                     time.value = data_scene_parse.time;
+
+
+                    $("#scene-name-edit").selectpicker('val',data_scene_parse.scene_name)
+                    $("#scene-name-edit").selectpicker("refresh");
+                    
                     $("select").selectpicker("refresh");
                 }  
             }
 
         } else if (type == 'response'){
-
-            document.getElementById("edit-audio-div").hidden = true;
-            document.getElementById("edit-video-div").hidden = true;
-            document.getElementById("edit-tts-div").hidden = true;
-            document.getElementById("edit-scene-div").hidden = true;
-            document.getElementById("edit-response-div").hidden = false;
-            document.getElementById("edit-filter-div").hidden = true;
-            document.getElementById("edit-source-div").hidden = true;
-            document.getElementById("edit-keypress-div").hidden = true;
-            document.getElementById("edit-clip-div").hidden = true;
 
             var response_data = await eel.get_edit_data(edit_redeem_name,type)()
 
@@ -342,6 +337,8 @@ async function get_edit_type(){
                     var command_delay = form_response.querySelector('#command-response-delay');
     
                     $("#redeem-select-response-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
+                    
+                    $("#redeem-select-response-edit").selectpicker('val',edit_redeem_name)
                     $("#redeem-select-response-edit").selectpicker("refresh");
 
                     select.value = edit_redeem_name;
@@ -356,24 +353,16 @@ async function get_edit_type(){
 
                     command_delay.value = data_response_parse.delay;
                     chat_message.value = data_response_parse.response;
+
+
                     $("select").selectpicker("refresh");
                 }  
             }
 
         } else if (type == 'filter'){
 
-            document.getElementById("edit-audio-div").hidden = true;
-            document.getElementById("edit-video-div").hidden = true;
-            document.getElementById("edit-tts-div").hidden = true;
-            document.getElementById("edit-scene-div").hidden = true;
-            document.getElementById("edit-response-div").hidden = true;
-            document.getElementById("edit-filter-div").hidden = false;
-            document.getElementById("edit-source-div").hidden = true;
-            document.getElementById("edit-keypress-div").hidden = true;
-            document.getElementById("edit-clip-div").hidden = true;
-
             var filter_data = await eel.get_edit_data(edit_redeem_name,type)()
-            console.log('AAA')
+
             if (filter_data) {
 
                 var return_true = await get_redeem_edit('redeem-select-filter-edit')
@@ -395,6 +384,8 @@ async function get_edit_type(){
                     var time = form_filter.querySelector('#time-filter-edit');
     
                     $("#redeem-select-filter-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
+                    
+                    $("#redeem-select-filter-edit").selectpicker('val',edit_redeem_name)
                     $("#redeem-select-filter-edit").selectpicker("refresh");
 
                     if (data_filter_parse.keep == 1){
@@ -420,17 +411,6 @@ async function get_edit_type(){
 
         } else if (type == 'source'){
 
-            document.getElementById("edit-audio-div").hidden = true;
-            document.getElementById("edit-video-div").hidden = true;
-            document.getElementById("edit-tts-div").hidden = true;
-            document.getElementById("edit-scene-div").hidden = true;
-            document.getElementById("edit-response-div").hidden = true;
-            document.getElementById("edit-filter-div").hidden = true;
-            document.getElementById("edit-source-div").hidden = false;
-            document.getElementById("edit-keypress-div").hidden = true;
-            document.getElementById("edit-clip-div").hidden = true;
-
-
             var source_data = await eel.get_edit_data(edit_redeem_name,type)()
 
             if (source_data) {
@@ -453,6 +433,8 @@ async function get_edit_type(){
                     var time = form_source.querySelector('#time-source-edit');
     
                     $("#redeem-select-source-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
+                    
+                    $("#redeem-select-source-edit").selectpicker('val',edit_redeem_name)
                     $("#redeem-select-source-edit").selectpicker("refresh");
 
                     if (data_source_parse.keep == 1){
@@ -478,16 +460,6 @@ async function get_edit_type(){
             }
 
         } else if (type == 'keypress'){
-
-            document.getElementById("edit-audio-div").hidden = true;
-            document.getElementById("edit-video-div").hidden = true;
-            document.getElementById("edit-tts-div").hidden = true;
-            document.getElementById("edit-scene-div").hidden = true;
-            document.getElementById("edit-response-div").hidden = true;
-            document.getElementById("edit-filter-div").hidden = true;
-            document.getElementById("edit-source-div").hidden = true;
-            document.getElementById("edit-keypress-div").hidden = false;
-            document.getElementById("edit-clip-div").hidden = true;
 
             var keypress_data = await eel.get_edit_data(edit_redeem_name,type)()
 
@@ -517,7 +489,10 @@ async function get_edit_type(){
                     var key4_inp = form_keypress.querySelector('#key-4-edit');
     
                     $("#redeem-select-keypress-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
-                    
+                    $("#redeem-select-keypress-edit").selectpicker('val',edit_redeem_name)
+                    $("#redeem-select-keypress-edit").selectpicker("refresh");
+
+
                     select.value = edit_redeem_name;
                     old_command_keypress.value = data_keypress_parse.command;
                     command_keypress.value = data_keypress_parse.command;
@@ -561,16 +536,6 @@ async function get_edit_type(){
 
         } else if (type == 'clip'){
 
-            document.getElementById("edit-audio-div").hidden = true;
-            document.getElementById("edit-video-div").hidden = true;
-            document.getElementById("edit-tts-div").hidden = true;
-            document.getElementById("edit-scene-div").hidden = true;
-            document.getElementById("edit-response-div").hidden = true;
-            document.getElementById("edit-filter-div").hidden = true;
-            document.getElementById("edit-source-div").hidden = true;
-            document.getElementById("edit-keypress-div").hidden = true;
-            document.getElementById("edit-clip-div").hidden = false;
-
             var clip_data = await eel.get_edit_data(edit_redeem_name,type)()
 
             if (clip_data) {
@@ -589,6 +554,8 @@ async function get_edit_type(){
                     var command_delay = form_clip.querySelector('#command-clip-delay');
     
                     $("#redeem-select-clip-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
+                    
+                    $("#redeem-select-clip-edit").selectpicker('val',edit_redeem_name)
                     $("#redeem-select-clip-edit").selectpicker("refresh");
 
                     select.value = edit_redeem_name;
@@ -602,6 +569,43 @@ async function get_edit_type(){
                     }
 
                     command_delay.value = data_clip_parse.delay;
+                }  
+            }
+        } else if (type == 'highlight'){
+
+            var highlight_data = await eel.get_edit_data(edit_redeem_name,type)()
+
+            if (highlight_data) {
+
+                var return_true = await get_redeem_edit('redeem-select-highlight-edit')
+
+                if(return_true){
+
+                    var select = document.getElementById('redeem-select-highlight-edit');
+    
+                    var data_highlight_parse = JSON.parse(highlight_data);
+                    var form_highlight = document.querySelector('#highlight-edit-form');
+                    var old_command_highlight = form_highlight.querySelector('#old-highlight-command');
+                    var command_highlight = form_highlight.querySelector('#command-text-highlight-edit');
+                    var command_highlight_status = form_highlight.querySelector('#command-highlight-status');
+                    var command_delay = form_highlight.querySelector('#command-highlight-delay');
+    
+                    $("#redeem-select-highlight-edit").append('<option style="background: #000; color: #fff;" value="'+ edit_redeem_name +'">'+ edit_redeem_name +'</option>');
+                    
+                    $("#redeem-select-highlight-edit").selectpicker('val',edit_redeem_name)
+                    $("#redeem-select-highlight-edit").selectpicker("refresh");
+
+                    select.value = edit_redeem_name;
+                    old_command_highlight.value = data_highlight_parse.command;
+                    command_highlight.value = data_highlight_parse.command;
+
+                    if (data_highlight_parse.command_status == 1){
+                        command_highlight_status.checked = true;
+                    } else if (data_highlight_parse.command_status == 0){
+                        command_highlight_status.checked = false;
+                    }
+
+                    command_delay.value = data_highlight_parse.delay;
                 }  
             }
         }

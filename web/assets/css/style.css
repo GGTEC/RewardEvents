@@ -102,7 +102,7 @@ span {
 ::-webkit-scrollbar-thumb:active { background: #754b99;}
 ::-webkit-scrollbar-corner { background: #594270; }
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: transparent;
 }
 
 .navbar-brand {
@@ -304,6 +304,12 @@ option {
   background: transparent;
 }
 
+#slider-font-events {
+  width: 100%;
+  height: 20px;
+  background: transparent;
+}
+
 
 .none-flex {
   flex-wrap: nowrap !important;
@@ -339,6 +345,8 @@ input[type=range]::-webkit-slider-runnable-track  {
 
 input[type="range"]:hover ~ #rangevalue_config ,
 input[type="range"]:active ~ #rangevalue_config,
+input[type="range"]:hover ~ #rangevalue_config_events ,
+input[type="range"]:active ~ #rangevalue_config_events,
 input[type="range"]:hover ~ #rangevalue_sub,
 input[type="range"]:active ~ #rangevalue_sub,
 input[type="range"]:hover ~ #rangevalue_resub,
@@ -352,7 +360,7 @@ input[type="range"]:active ~ #rangevalue_raid {
   top: -75px;
 }
 
-#rangevalue_config, #rangevalue_sub,#rangevalue_resub,#rangevalue_giftsub,#rangevalue_raid {
+#rangevalue_config, #rangevalue_config_events, #rangevalue_sub,#rangevalue_resub,#rangevalue_giftsub,#rangevalue_raid {
   font-size: 13px;
   text-align: center;
   display: block;
@@ -394,6 +402,19 @@ input::-webkit-inner-spin-button {
   width: 100%;
 }
 
+.h-scroll-events {
+  display: flex;
+  flex-direction: column;
+  position:inherit;
+  overflow-y: auto;
+  height: 200px;
+}
+
+
+.h-scroll-events::-webkit-scrollbar {
+  display: none;
+}
+
 .h-scroll-terms {
   height: 40vh; /* %-height of the viewport */
   padding-top: 5%;
@@ -405,10 +426,6 @@ input::-webkit-inner-spin-button {
 
 .custom-border-modal {
   border: solid #754b99 2px !important;
-}
-
-.toast {
-  z-index: 7000;
 }
 
 .toast-body {
@@ -476,15 +493,22 @@ input::-webkit-inner-spin-button {
   border:  solid #4f016c 2px;
   background-color: #000000;
 }
-.out-redeem{
+.out-redeem {
+  position:inherit;
+  overflow-y: scroll;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: stretch;
 }
 
+.out-redeem::-webkit-scrollbar {
+  display: none;
+}
+
 .redeem-block {
   margin-top: 1vh;
-  padding: 4%;
   border:  solid #4f016c 2px;
 }
 
@@ -538,6 +562,11 @@ input::-webkit-inner-spin-button {
   margin-right: 3px !important;
 }
 
+.event-time-current {
+  color: rgb(175, 174, 174);
+  margin-right: 3px !important;
+}
+
 .link-style {
   cursor: pointer;
   color: #7cc8eb !important;
@@ -562,10 +591,12 @@ input::-webkit-inner-spin-button {
   overflow-y: scroll !important;
   max-height: 79vh;
   height: 79vh;
-  padding: 2% !important;
+  padding: 1% !important;
+  user-select: text;
 }
 
 .name-user-list:hover {
+  user-select: text;
   cursor: pointer;
   text-decoration: underline;
 }
@@ -580,8 +611,31 @@ input::-webkit-inner-spin-button {
   overflow-wrap: anywhere;
   user-select: text;
   font-size: 18px;
-  
 }
+
+.event-message {
+  padding: 1%;
+  margin: 1%;
+  color: white;
+  padding-right: 15px;
+  height: auto;
+  border:  solid #4f016c 3px;
+  overflow-wrap: anywhere;
+  user-select: text;
+  font-size: 18px;
+}
+
+.event-message {
+  padding: 1%;
+  margin-top: 1%;
+  color: #754b99;
+  height: auto;
+  border:  solid #4f016c 1px;
+  overflow-wrap: anywhere;
+  user-select: text;
+  font-size: 18px;
+}
+
 
 .chat-block-color {
   animation: colorC 1.5s normal;
@@ -590,6 +644,10 @@ input::-webkit-inner-spin-button {
 .chat-block-color-announce {
   border-left: 10px solid #A42495;
   animation: colorC 1.5s normal;
+}
+
+.events-sub-color {
+  color: #a3a3a3;
 }
 
 @keyframes colorC {  
@@ -681,11 +739,13 @@ table td {
 }
 
 #block-list-body td{
+  user-select: text;
   width: 100vw;
   color: #fff;
 }
 
 #chat-list-body td {
+  user-select: text;
   width: 100vw;
   color: #fff;
 }
@@ -696,6 +756,13 @@ table td {
 }
 
 #list_chat td {
+  user-select: text;
+  width: 100%;
+  color: #fff;
+}
+
+#list_chat tr {
+  user-select: text;
   width: 100vw;
   color: #fff;
 }
@@ -798,7 +865,7 @@ hr {
   outline: none;
 }
 
-.collapsible h5 {
+.box-collapse-list {
   background-color: #5f0181;
   padding: 5px;
 }
@@ -955,6 +1022,32 @@ hr {
   margin-left: 2px;
 }
 
+#commandlist_table_filter input {
+  background-color: #000;
+}
+
+#commandlist_table_length select {
+  background-color: #000;
+  color: #Fff;
+}
+
+#queuelist_table_filter input {
+  background-color: #000;
+}
+
+#queuelist_table_length select {
+  background-color: #000;
+  color: #Fff;
+}
+
+#list_chat_filter input {
+  background-color: #000;
+}
+
+#list_chat_length select {
+  background-color: #000;
+  color: #Fff;
+}
 
 .page-link {
   color: white;
@@ -1110,7 +1203,10 @@ hr {
   height: 5px;
 }
 
-#progress-goal-small {
+#progress-goal-follows-small {
+  height: 5px;
+}
+#progress-goal-subs-small {
   height: 5px;
 }
 
@@ -1138,3 +1234,72 @@ hr {
 
 
 /* ----------------- carrossel ----------------- */
+
+/* ----------------- toggler ----------------- */
+
+.top-toggler {
+  height: 35px;
+  border-bottom: #754b99 1px solid;
+  cursor: pointer;
+}
+
+/* ----------------- carrossel ----------------- */
+
+/* ----------------- loader ----------------- */
+.lds-ellipsis {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+  }
+  .lds-ellipsis div {
+  position: absolute;
+  top: 33px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+  }
+  .lds-ellipsis div:nth-child(1) {
+  left: 8px;
+  animation: lds-ellipsis1 0.6s infinite;
+  }
+  .lds-ellipsis div:nth-child(2) {
+  left: 8px;
+  animation: lds-ellipsis2 0.6s infinite;
+  }
+  .lds-ellipsis div:nth-child(3) {
+  left: 32px;
+  animation: lds-ellipsis2 0.6s infinite;
+  }
+  .lds-ellipsis div:nth-child(4) {
+  left: 56px;
+  animation: lds-ellipsis3 0.6s infinite;
+  }
+  @keyframes lds-ellipsis1 {
+  0% {
+      transform: scale(0);
+  }
+  100% {
+      transform: scale(1);
+  }
+  }
+  @keyframes lds-ellipsis3 {
+  0% {
+      transform: scale(1);
+  }
+  100% {
+      transform: scale(0);
+  }
+  }
+  @keyframes lds-ellipsis2 {
+  0% {
+      transform: translate(0, 0);
+  }
+  100% {
+      transform: translate(24px, 0);
+  }
+  }
+
+  /* ----------------- loader ----------------- */

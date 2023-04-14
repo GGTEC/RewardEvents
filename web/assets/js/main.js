@@ -1,10 +1,11 @@
-$(document).ready(function () {
+$(document).ready(async function () {
 
   eel.loaded()();
   updateTimeDiff()
+  event_log_js('div-events')
+  event_updatetime()
   prediction_small()
   poll_small()
-  update_timer_small()
   goal()
   $('[data-toggle="tooltip"]').tooltip();
   $("input, select, textarea").attr("autocomplete", "off");
@@ -32,6 +33,11 @@ $(document).ready(function () {
     pageDots: false,
     setGallerySize: false
   });
+
+  var disclosure = await eel.disclosure_py('get','null')();
+  if (disclosure){
+      document.getElementById('message-disclosure-send').value = disclosure
+  }
   
 
 });
@@ -39,6 +45,34 @@ $(document).ready(function () {
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+eel.expose(receive_live_info)
+function receive_live_info(data){
+
+    const spec_data = JSON.parse(data);
+
+    document.getElementById('text-counter').innerText = " " + spec_data.specs;
+    document.getElementById('time-in-live').innerText = spec_data.time;
+
+    if (spec_data.specs != 'Offline'){
+        document.getElementById('live-dot').style.color = 'red';
+    }
+}
+
+eel.profile_info()(async function(data_auth){
+
+    const data_profile = JSON.parse(data_auth);
+
+    var profile_image = document.getElementById("profile_image");
+    var profile_image_new = profile_image.src;
+    profile_image.src = profile_image_new; 
+
+    document.getElementById('email').innerText = data_profile.email;;
+    document.getElementById('user_id').innerText = data_profile.user_id;
+    document.getElementById('ex_name').innerText = data_profile.display_name;
+    document.getElementById('login_name').innerText = data_profile.login_name;
+    
+})
 
 async function create_clip() {
   var buttom_clip = document.getElementById('create-clip');
@@ -149,16 +183,6 @@ async function disclosure(event,type_id){
   }
 }
 
-eel.expose(last_command);
-function last_command(command){
-
-  var command_text = document.getElementById('last_command_text');
-
-  command_text.innerHTML = command
-
-}
-
-
 eel.expose(update_modal);
 async function update_modal(type_id){
 
@@ -229,3 +253,153 @@ function update_div_redeem(data_redeem) {
     name_redeem.innerText = data_redem_parse.redeem_name
     user_redeem.innerText = data_redem_parse.redeem_user
 }
+
+
+async function getFolder(id,type_id) {
+  var dosya_path = await eel.select_file_py(type_id)();
+  if (dosya_path) {
+      document.getElementById(id).value = dosya_path;
+      if (id == 'file-select-notific'){
+          chat_config('save')
+      }
+  }
+}
+
+var redeem_icon =  document.querySelector('#redeem-icon-toggler');
+var collpase_redeem = document.getElementById('colapse-redeem')
+
+collpase_redeem.addEventListener('hidden.bs.collapse', function () {
+  redeem_icon.innerHTML = "<i class='fa-solid fa-square-caret-down'></i>"
+})
+
+collpase_redeem.addEventListener('shown.bs.collapse', function () {
+  redeem_icon.innerHTML = "<i class='fa-solid fa-square-caret-up'></i>"
+})
+
+var utils_icon =  document.querySelector('#utils-icon-toggler');
+var collpase_utils = document.getElementById('colapse-utils')
+
+collpase_utils.addEventListener('hidden.bs.collapse', function () {
+  utils_icon.innerHTML = "<i class='fa-solid fa-square-caret-down'></i>"
+})
+
+collpase_utils.addEventListener('shown.bs.collapse', function () {
+  utils_icon.innerHTML = "<i class='fa-solid fa-square-caret-up'></i>"
+})
+
+
+var carroucel_icon =  document.querySelector('#carroucel-icon-toggler');
+var collpase_carroucel = document.getElementById('colapse-carroucel')
+
+collpase_utils.addEventListener('hidden.bs.collapse', function () {
+  carroucel_icon.innerHTML = "<i class='fa-solid fa-square-caret-down'></i>"
+})
+
+collpase_utils.addEventListener('shown.bs.collapse', function () {
+  carroucel_icon.innerHTML = "<i class='fa-solid fa-square-caret-up'></i>"
+})
+
+
+const div_events_scroll = document.getElementById("div-events");
+
+const itensPorPagina = 10;
+let paginaAtual = 1;
+
+div_events_scroll.addEventListener("scroll",async function() {
+
+  if (div_events_scroll.scrollTop + div_events_scroll.clientHeight >= div_events_scroll.scrollHeight) {
+
+    var list_messages = await eel.event_log('get', 'null')();
+
+    if (list_messages) {
+
+      var list_messages_parse = JSON.parse(list_messages);
+      var lista = list_messages_parse.messages
+
+      lista.reverse()
+      // usuário rolou para baixo até o final da div
+      const startIndex = paginaAtual * itensPorPagina;
+      const endIndex = startIndex + itensPorPagina;
+      const items = lista.slice(startIndex, endIndex);
+
+      // adicione os itens na div
+      for (let i = 0; i < items.length; i++) {
+
+        var part = items[i].split(" | ");
+  
+        var dateString = part[0];
+  
+        var date = new Date(dateString);
+        var now = new Date();
+  
+        var difftimeMs = now.getTime() - date.getTime();
+        var difftimes = difftimeMs / 1000;
+  
+        var days = Math.floor(difftimes / 86400);
+        var hours = Math.floor((difftimes % 86400) / 3600);
+        var minutes = Math.floor((difftimes % 3600) / 60);
+  
+        var chat_time = '';
+  
+        if (days > 0) {
+          chat_time += days + 'd';
+        } else if (hours > 1){
+          chat_time += hours + 'h';
+        } else if (minutes >= 1){
+          chat_time += minutes + 'm ';
+        } else {
+          chat_time += 'agora';
+        }
+  
+        var message_rec = part[2];
+        var type_message = part[1];
+  
+        var color_get = list_messages_parse.color;
+        var chat_data = list_messages_parse.data_show;
+        var show_commands = list_messages_parse.show_commands;
+        var show_events = list_messages_parse.show_events;
+        var show_join = list_messages_parse.show_join;
+        var show_leave = list_messages_parse.show_leave;
+        var show_redeem = list_messages_parse.show_redeem;
+
+        var time_chat = document.createElement("span");
+        time_chat.setAttribute('data-passed',dateString)
+        time_chat.classList.add("event-time-current");
+        time_chat.innerHTML = chat_time;
+
+        var message_span = document.createElement('span');
+        message_span.id = "message-chat";
+        message_span.style.color = color_get;
+        message_span.innerHTML = message_rec
+        
+        
+        message_div = document.createElement('div');
+        if (chat_data == 1){
+            message_div.appendChild(time_chat);
+        }
+  
+        message_div.appendChild(message_span);
+  
+        var div_event = document.createElement("div");
+  
+        div_event.id = 'recent-message-block'
+        div_event.classList.add('chat-message','event-message');
+        div_event.style.fontSize = "16px";
+  
+        div_event.appendChild(message_div);
+        
+        if ((type_message === "command" && show_commands === 1) ||
+        (type_message === "redeem" && show_redeem === 1) ||
+        (type_message === "event" && show_events === 1) ||
+        (type_message === "join" && show_join === 1) ||
+        (type_message === "leave" && show_leave === 1)) {
+          div_events_scroll.appendChild(div_event);
+        }
+        
+      }
+      // atualize a página atual
+      paginaAtual++;
+    }
+    
+  }
+});

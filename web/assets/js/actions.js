@@ -1,21 +1,3 @@
-
-async function getFolder(id) {
-    var dosya_path = await eel.select_file_py()();
-    if (dosya_path) {
-        document.getElementById(id).value = dosya_path;
-        if (id == 'file-select-notific'){
-            chat_config('save')
-        }
-    }
-}
-
-async function getFolder_video(id){
-    var dosya_path = await eel.select_file_video_py()();
-    if (dosya_path) {
-        document.getElementById(id).value = dosya_path;
-    }
-}
-
 function removeOptions(selectElement) {
 
     $("#" + selectElement).empty();
@@ -23,9 +5,7 @@ function removeOptions(selectElement) {
 
 }
 
-async function get_redeem_js(el_id, btn_id, type_get) {
-
-    var btn_el = document.getElementById(btn_id);
+async function get_redeem_js(el_id, type_get) {
 
     if (type_get == 'del' || type_get == 'edit'){
 
@@ -33,10 +13,6 @@ async function get_redeem_js(el_id, btn_id, type_get) {
 
         if (list_redem) {
             
-            if (btn_el == 'submit-del'){
-                btn_el.removeAttribute("disabled");
-            } 
-
             removeOptions(el_id)
     
             var list_redem_parse = JSON.parse(list_redem);
@@ -47,7 +23,6 @@ async function get_redeem_js(el_id, btn_id, type_get) {
                 $("#" + el_id).append('<option class="bg-dark" style="color: #fff;" value="'+ optn +'">'+ optn +'</option>');
                 $("#" + el_id).selectpicker("refresh");
             }
-
         }
 
     } else {
@@ -56,8 +31,6 @@ async function get_redeem_js(el_id, btn_id, type_get) {
 
         if (list_redem) {
             
-            btn_el.removeAttribute("disabled");
-
             removeOptions(el_id)
 
             var list_redem_parse = JSON.parse(list_redem);
@@ -82,40 +55,36 @@ async function get_redeem_js(el_id, btn_id, type_get) {
 
 }
 
-function show_div(div_id, select_redeem, btn_id) {
+function show_div(div_id, select_redeem) {
 
     if (div_id == 'del-div'){
 
-        get_redeem_js(select_redeem, btn_id,'del');
+        get_redeem_js(select_redeem,'del');
 
         document.getElementById("create-redeem").hidden = true;
         document.getElementById(div_id).hidden = false;
 
     } else if (div_id == 'edit-div') {
 
-        get_redeem_js(select_redeem, btn_id,'edit');
+        get_redeem_js(select_redeem,'edit');
 
         document.getElementById("create-redeem").hidden = true;
         document.getElementById(div_id).hidden = false;
 
     } else {
 
-        get_redeem_js(select_redeem, btn_id,'null');
+        get_redeem_js(select_redeem,'null');
 
         document.getElementById("create-redeem").hidden = true;
         document.getElementById(div_id).hidden = false;
     }
 }
 
-function hide_create(div_id_hide, select_redeem, form, btn_id) {
+function hide_create(div_id_hide) {
     
-    var btn_submit_el = document.getElementById(btn_id);
-    btn_submit_el.setAttribute("disabled", "");
-
-    removeOptions(select_redeem);
-    $("#sucess-" + form).modal("hide");
     document.getElementById("create-redeem").hidden = false;
     document.getElementById(div_id_hide).hidden = true;
+
 }
 
 function get_key_mode() {
@@ -178,8 +147,8 @@ function get_key_mode() {
     }
 }
 
+
 function create_action(event,type_id){
-    
     event.preventDefault();
 
     if (type_id == 'audio'){
@@ -373,6 +342,17 @@ function create_action(event,type_id){
             user_level_value: form.querySelector('#user-level-clip').value,
         };
 
+    } else if (type_id == 'highlight') {
+        
+        var form = document.querySelector("#highlight-create");
+
+        data = {
+            redeem_value: form.querySelector('#redeem-select-highlight').value,
+            command_value: form.querySelector('#command-text-highlight').value,
+            command_delay: form.querySelector("#command-delay-highlight").value,
+            user_level_value: form.querySelector('#user-level-highlight').value,
+        };
+
     } else if (type_id == 'delete') {
         event.preventDefault();
 
@@ -383,11 +363,13 @@ function create_action(event,type_id){
         }
 
         removeOptions("action-del-select");
-        get_redeem_js("action-del-select", "submit-del","del");
+        get_redeem_js("action-del-select","del");
     }
 
     var formData = JSON.stringify(data);
     eel.create_action_save(formData,type_id);
+
+    $(`#${type_id}-create`)[0].reset();
 
 }
 
@@ -398,6 +380,7 @@ async function get_scenes(id) {
     var list_scenes = await eel.update_scene_obs()();
 
     if (list_scenes) {
+
         var list_scenes_parse = JSON.parse(list_scenes);
 
         for (var i = 0; i < list_scenes_parse.scenes.length; i++) {
@@ -405,6 +388,7 @@ async function get_scenes(id) {
 
             $("#" + id).append('<option style="background: #000; color: #fff;" value="'+ optn +'">'+ optn +'</option>');
             $("#" + id).selectpicker("refresh");
+
         }
     }
 }

@@ -114,7 +114,7 @@ function player(event_type,music_src,volume){
       sources: [
         {
           src: music_src + '?noCache=' + Math.floor(Math.random() * 1000000),
-          type: 'audio/mp3',
+          type: 'audio/webm',
         },
       ],
 
