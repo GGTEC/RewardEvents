@@ -1,7 +1,7 @@
 async function counter_js(type_id,event) {
     
     var el_id = "redeem-select-counter";
-    var counter_value = document.getElementById('counter-value-atual');
+    var counter_value = document.getElementById('counter-value');
 
 
     if (type_id == 'get_counter_config'){
@@ -10,17 +10,19 @@ async function counter_js(type_id,event) {
         var response_counter = document.getElementById('counter-response');
         var response_set_counter = document.getElementById('counter-set-response');
 
-        var counter_config = await eel.counter(type_id,'none')();
+        var counter_parse = await window.pywebview.api.counter(type_id,'none');
 
-        if (counter_config) {
+        if (counter_parse) {
             
-            var list_redem = await eel.get_redeem('counter')();
+            counter_parse = JSON.parse(counter_parse)
 
-            if (list_redem) {
+            var list_redem_parse = await window.pywebview.api.get_redeem('counter');
+
+            if (list_redem_parse) {
+
+                list_redem_parse = JSON.parse(list_redem_parse)
 
                 $("#" + el_id).empty();
-
-                var list_redem_parse = JSON.parse(list_redem);
 
                 $("#" + el_id).append('<option class="bg-dark" style="color: #fff;" value="None">Sem recompensa</option>');
                 $("#" + el_id).selectpicker("refresh");
@@ -33,9 +35,7 @@ async function counter_js(type_id,event) {
                 }
             }
 
-            var counter_parse = JSON.parse(counter_config);
-
-            counter_value.innerHTML = counter_parse.value_counter;
+            counter_value.value = counter_parse.value_counter;
             response_status.checked = counter_parse.response == 1 ? true : false;
 
             response_counter.value = counter_parse.response_chat
@@ -57,11 +57,9 @@ async function counter_js(type_id,event) {
 
         var counter_command_edit = document.getElementById('command_counter_form');
 
-        var counter_command_data = await eel.counter(type_id,command_counter_select.value)();
+        var counter_parse = await window.pywebview.api.counter(type_id,command_counter_select.value);
 
-        if (counter_command_data){
-
-            var counter_parse = JSON.parse(counter_command_data);
+        if (counter_parse){
 
             counter_command_edit.hidden = false
 
@@ -90,7 +88,7 @@ async function counter_js(type_id,event) {
         }
 
         var formData = JSON.stringify(data);
-        eel.counter(type_id,formData)
+        window.pywebview.api.counter(type_id,formData)
 
     } else if (type_id == 'save_counter_commands') {
 
@@ -112,20 +110,19 @@ async function counter_js(type_id,event) {
         }
 
         var formData = JSON.stringify(data);
-        eel.counter(type_id,formData)
+        window.pywebview.api.counter(type_id,formData)
 
     } else if (type_id == 'set-counter-value'){
 
         var form_counter_value = document.querySelector('#counter-set-value');
         var counter_value = form_counter_value.querySelector('#counter-value');
 
-        eel.counter(type_id,counter_value.value)
+        window.pywebview.api.counter(type_id,counter_value.value)
     }
     
 
 }
 
-eel.expose(update_counter_value);
 function update_counter_value(value){
     var counter_value = document.getElementById('counter-value');
     counter_value.value = value

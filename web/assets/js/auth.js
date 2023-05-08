@@ -29,20 +29,20 @@ function send_auth_info(event, fomrid) {
             div_user_auth.hidden = true;
             div_streamer_bot_token.hidden = false;
 
-            eel.start_auth_window(user_name, 'streamer_asbot');
+            window.pywebview.api.start_auth_window(user_name, 'streamer_asbot');
 
         } else {
 
             div_user_auth.hidden = true;
             div_user_token.hidden = false;
-            eel.start_auth_window(user_name, 'streamer');
+            window.pywebview.api.start_auth_window(user_name, 'streamer');
         }
 
     } else if (fomrid == 'submit-user-token') {
 
         var token = streamer_token.value;
         
-        eel.save_access_token('streamer',token)
+        window.pywebview.api.save_access_token('streamer',token)
 
         div_user_token.hidden = true;
         div_bot_auth.hidden = false;
@@ -50,7 +50,7 @@ function send_auth_info(event, fomrid) {
     } else if (fomrid == 'submit-user-bot-token') {
 
         var token = input_streamer_bot_username.value;
-        eel.save_access_token('streamer_asbot',token)
+        window.pywebview.api.save_access_token('streamer_asbot',token)
 
         div_streamer_bot_token.hidden = true;
         sucess_div.hidden = false;
@@ -59,8 +59,7 @@ function send_auth_info(event, fomrid) {
 
         var user_name = input_bot_username.value;
 
-        console.log(user_name)
-        eel.start_auth_window(user_name, 'bot');
+        window.pywebview.api.start_auth_window(user_name, 'bot');
 
         div_bot_auth.hidden = true;
         div_bot_token.hidden = false;
@@ -68,7 +67,7 @@ function send_auth_info(event, fomrid) {
     } else if (fomrid == 'submit-bot-token') {
 
         var token = bot_token.value;
-        eel.save_access_token('bot',token)
+        window.pywebview.api.save_access_token('bot',token)
 
         div_bot_token.hidden = true;
         sucess_div.hidden = false;

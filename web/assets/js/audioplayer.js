@@ -1,10 +1,9 @@
-eel.expose(update_image);
+
 function update_image(){
     var player_img = document.getElementById('song-img');
     player_img.style.backgroundImage = `linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7483368347338936) 89%, rgba(0,0,0,1) 100%),url('/src/player/images/album.png?noCache=` + Math.floor(Math.random() * 1000000)+")";
 }
-  
-eel.expose(update_music_name);
+
 function update_music_name(name,artist){
 
 
@@ -19,9 +18,7 @@ function update_music_name(name,artist){
 const player_id = new Plyr('#player', {
   settings: ['']
 });
-  
 
-eel.expose(playlist_js);
 async function playlist_js(event,type_id){
 
     if (type_id == "add"){
@@ -31,7 +28,7 @@ async function playlist_js(event,type_id){
       var form_playlist = document.querySelector('#playlist-add-form');
       var playlist_url = form_playlist.querySelector('#playlist-url').value;
     
-      eel.playlist_py('add',playlist_url)
+      window.pywebview.api.playlist_py('add',playlist_url)
 
     } else if (type_id == "save"){
 
@@ -41,13 +38,13 @@ async function playlist_js(event,type_id){
   
       value = switch_value_playlist.checked ? 1 : 0;
       
-      eel.playlist_py('save',value)
+      window.pywebview.api.playlist_py('save',value)
 
     } else if (type_id == "get"){
 
       var switch_value = document.getElementById('playlist-switch');
   
-      var status = await eel.playlist_py('get','null')()
+      var status = await window.pywebview.api.playlist_py('get','null')
     
       if (status){
 
@@ -59,18 +56,17 @@ async function playlist_js(event,type_id){
       
     } else if (type_id == "clear"){
 
-      eel.playlist_py("clear","null")
+      window.pywebview.api.playlist_py("clear","null")
 
       $("#playlist-mod").modal("hide");
 
     } else if (type_id == "queue"){
   
-      var list = await eel.playlist_py('queue',"null")();
+      var list_parse = await window.pywebview.api.playlist_py('queue',"null");
     
-      if (list){
-    
-        list_parse = JSON.parse(list);
-    
+      if (list_parse){
+        
+        list_parse = JSON.parse(list_parse)
         var tbody = document.getElementById('list-body');
     
         tbody.innerHTML = '';
@@ -100,9 +96,7 @@ async function playlist_js(event,type_id){
     }
 
 }
-  
-  
-eel.expose(player);
+
 function player(event_type,music_src,volume){
 
   if(event_type == 'play'){

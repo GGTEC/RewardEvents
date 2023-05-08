@@ -1,4 +1,4 @@
-eel.expose(timer_js);
+
 async function timer_js(event,type_id) {
 
     if (type_id == "get" ){
@@ -16,7 +16,7 @@ async function timer_js(event,type_id) {
         var timer_inp_delay_min = document.getElementById("timer-delay-min");
         var timer_inp_delay_max = document.getElementById("timer-delay-max");
     
-        var list_messages = await eel.timer_py(type_id,'null')();
+        var list_messages = await window.pywebview.api.timer_py(type_id,'null');
     
         if (list_messages) {
             
@@ -52,7 +52,7 @@ async function timer_js(event,type_id) {
         var timer_edit_inp = document.getElementById("timer-edit-message");
         var timer_type = document.getElementById("message-type-edit");
     
-        var message_edit_to = await eel.timer_py(type_id,timer_select_edit_value)();
+        var message_edit_to = await window.pywebview.api.timer_py(type_id,timer_select_edit_value);
         
         if (message_edit_to){
 
@@ -104,7 +104,7 @@ async function timer_js(event,type_id) {
     
         var formData = JSON.stringify(data);
     
-        eel.timer_py(type_id,formData);
+        window.pywebview.api.timer_py(type_id,formData);
 
         $("#timer-ger-internal").fadeIn(500);
         
@@ -134,12 +134,12 @@ async function timer_js(event,type_id) {
     
         var formData = JSON.stringify(data);
     
-        eel.timer_py(type_id,formData);
+        window.pywebview.api.timer_py(type_id,formData);
 
         $("#timer-select-edit").empty();
         $("#timer-select-del").empty();
         
-        var list_messages = await eel.timer_py('get','null')();
+        var list_messages = await window.pywebview.api.timer_py('get','null');
 
         if (list_messages) {
     
@@ -180,16 +180,14 @@ async function timer_js(event,type_id) {
 
         var timer_select_del_value = document.getElementById("timer-select-del").value;
     
-        eel.timer_py(type_id,timer_select_del_value);
+        window.pywebview.api.timer_py(type_id,timer_select_del_value);
 
         $("#timer-select-edit").empty();
         $("#timer-select-del").empty();
 
-        var list_messages = await eel.timer_py('get','null')();
+        var list_messages_parse = await window.pywebview.api.timer_py('get','null');
 
-        if (list_messages) {
-    
-            var list_messages_parse = JSON.parse(list_messages);
+        if (list_messages_parse) {
                 
             data = list_messages_parse.messages;
     
@@ -230,16 +228,16 @@ async function timer_js(event,type_id) {
     
         var formData = JSON.stringify(data);
     
-        eel.timer_py(type_id, formData);
+        window.pywebview.api.timer_py(type_id, formData);
 
     } else if (type_id == "status") {
 
         var check_seletor = document.getElementById('timer-enable');
 
         if (check_seletor.checked == true){
-            eel.timer_py(type_id,1)
+            window.pywebview.api.timer_py(type_id,1)
         } else if (check_seletor.checked == false) {
-            eel.timer_py(type_id,0)
+            window.pywebview.api.timer_py(type_id,0)
         }
 
     } else if (type_id == "hide") {

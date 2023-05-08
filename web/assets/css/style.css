@@ -47,7 +47,7 @@ h1, h2, h3, h4, h5{
   width: 10px; 
   height: 10px; 
   background: #594270; 
-  position:absolute; 
+  position: absolute; 
   right: 0; bottom: 0; 
   cursor: se-resize; 
 }
@@ -105,16 +105,6 @@ span {
   background: transparent;
 }
 
-.navbar-brand {
-  font-size: 25px !important;
-  font-weight: 100;
-}
-
-.navbar-brand img {
-  width: 10%;
-
-}
-
 .container {
   color: white;
   position: relative;
@@ -128,22 +118,32 @@ span {
 
 .center-content{
   position: relative;
-  width: 100%;
   max-height: 100vh !important;
   margin-left: 0% !important;
 }
 
 .bottom-info {
   position: relative;
-  width: 98%;
-  margin-left: 1%;
+  width: 100%;
+  height: 10%;
   background-color: #000; 
   padding: 1%;
-  border: #4f016c 2px solid;
+  border-top: #4f016c 1px solid;
+  bottom: 0;
 }
 
+.button_resize {
+  border: #4f016c 1px solid;
+  transition: 0.55s;  
+}
 
-.nav-pills button{
+.button_resize:hover {
+  background-color: #754b99 !important;
+  transform: scale(1.10);
+  border: #4f016c 1px solid;
+}
+
+.nav button{
   color: rgb(177, 175, 175);
   font-size: 16px !important;
   text-align: left !important;
@@ -151,25 +151,35 @@ span {
   transition: 0.3s;
 }
 
-.nav-pills button:hover{
-  color: #754b99;
+.nav button:hover{
+  color: #fff;
 }
 
-.nav-pills .active {
-  background-color: #754b99!important;
+.nav .active {
+  color: #fff;
+  background-color: #754b99 !important;
 }
-
 
 .nav-link:hover{
+  color: #fff;
   background-color:#525252 !important;
 }
 
-.nav-link .fa{
-  transition:all 1s;
+.nav-link.active{
+  color: #fff;
 }
 
-.nav-link:hover .fa{
-  transform:rotate(360deg);
+.internal-top {
+  display: flex;
+  justify-content: space-between !important;
+  height: 7%;
+  padding: 1%;
+  background-color:#000 !important;
+}
+
+.internal-top span {
+  align-self: center;
+  font-size: 120%;
 }
 
 .internal-block {
@@ -181,68 +191,66 @@ span {
   margin-top: 5%;
   position:relative;
   padding: 5%;
+  box-shadow: 6px 14px 19px 0 rgb(0 0 0 / 60%);
+  background-color:#754b9905;
+  backdrop-filter: blur( 16.5px );
+  border-radius: 20px;
 }
 
 .bt-update {
   color: white;
   background-color: #000 !important;
-  border: #754b99 2px solid !important;
+  border: #754b99 1px solid !important;
   transition: 0.15s !important;
 }
 
 .bt-update:hover {
   color: white;
   background-color: #754b99 !important;
-  border: #754b99 2px solid !important;
 }
 
 .bt-submit {
-  border: solid #6f0196 2px !important;
+  border: solid #6f0196 1px !important;
   color: white !important;
   background-color: #000 !important;
 }
 
 .bt-submit:hover {
-  outline: #6f0196;
   background-color: #6f0196 !important;
 }
 
 .bt-modal {
-  border: solid #754b99 2px !important;
+  border: solid #754b99 1px !important;
   color: white !important;
   background-color: black !important;
 }
 
 .bt-modal:hover {
-  outline: #6f0196;
   background-color: #754b99 !important;
 }
 
 .bt-form {
-  border: solid #754b99 2px !important;
+  border: solid #754b99 1px !important;
   color: white !important;
   background-color: black !important;
 }
 
 .bt-form:hover {
   background-color: #754b99 !important;
-  outline: #6f0196;
 }
 
 .sidebar .item {
   background-color: transparent;
-  border-top: 2px solid #4f016c;
-  border-bottom: 2px solid #4f016c;
-  padding: 5px;
+  border: none;
+  padding-left: 0%;
   text-decoration: none;
-  -webkit-transition: all .15s ease-in-out;
   transition: all .15s ease-in-out;
 }
 
 .sidebar .item:hover {
-  box-shadow: 0 0 10px 0 #710d95 inset;
-  border-top: 3px solid #710d95;
-  border-bottom: 3px solid #710d95;
+  background-color: #754b99 !important;
+  transform: scaleX(1.1);
+  transform-origin: left;
 }
 
 .clip-button {
@@ -252,7 +260,7 @@ span {
 }
 
 .clip-button:hover {
-  border: rgb(131, 131, 131) solid 2px;
+  border: rgb(131, 131, 131) solid 1px;
 }
 
 .specs-div {
@@ -396,20 +404,30 @@ input::-webkit-inner-spin-button {
 
 .h-scroll {
   display: flex;
-  height: 92vh; /* %-height of the viewport */
-  position:inherit;
+  height: 93vh; /* %-height of the viewport */
+  position: inherit;
   overflow-y: scroll;
   width: 100%;
 }
+
+.h-scroll-chat {
+  display: flex;
+  position: inherit;
+  overflow-y: scroll;
+}
+
 
 .h-scroll-events {
   display: flex;
   flex-direction: column;
   position:inherit;
   overflow-y: auto;
-  height: 200px;
+  height: 100%;
 }
 
+.div-events {
+  height: 200px;
+}
 
 .h-scroll-events::-webkit-scrollbar {
   display: none;
@@ -425,7 +443,7 @@ input::-webkit-inner-spin-button {
 }
 
 .custom-border-modal {
-  border: solid #754b99 2px !important;
+  border: solid #754b99 1px !important;
 }
 
 .toast-body {
@@ -490,9 +508,10 @@ input::-webkit-inner-spin-button {
 }
 
 .purple-border-block {
-  border:  solid #4f016c 2px;
+  border:  solid #4f016c 1px;
   background-color: #000000;
 }
+
 .out-redeem {
   position:inherit;
   overflow-y: scroll;
@@ -509,43 +528,70 @@ input::-webkit-inner-spin-button {
 
 .redeem-block {
   margin-top: 1vh;
-  border:  solid #4f016c 2px;
+  box-shadow: 6px 14px 19px 0 rgb(0 0 0 / 60%);
+  background-color:#754b9905;
+  backdrop-filter: blur( 16.5px );
+  border-radius: 10px;
+  border:  solid #4f016c 1px;
 }
 
 .redeem-block-bt {
   color: #fff;
-  padding: auto;
-  width: 75%;
   margin: 1% !important;
-  font-size: 20px;
-  border:  solid #4f016c 1px;
-  transition: 0.15s  !important;
-  color: white
+  transition: 0.55s  !important;
+  box-shadow: 6px 14px 19px 0 rgb(0 0 0 / 60%);
+  background-color:#754b9905;
+  backdrop-filter: blur( 16.5px );
+  border-radius: 20px;
 }
+
+
 
 .redeem-block-bt:hover{
   color: white;
   background-color: #754b99 !important;
+  transform: scale(1.10);
 }
 
+.redeem-block-bt p{
+  margin-top: 50%;
+  font-size: auto;
+}
+
+.redeem-block-bt i{
+  margin-top: 50%;
+  font-size: 5em;
+}
 
 .chat-col {
   height: 100%;
+  width:50%;
+}
+
+.events-col {
+  border: none;
+  padding-right: 0%;
+  height: 100%;
+  width:50%;
+  margin-right: 0px !important;
+}
+
+.ui-resizable-handle:hover {
+  background: #754b99;
 }
 
 .chat-col .nav-link {
-  color: #fff;
-  padding: 2px !important;  
-  border: solid #4f016c 2px !important;
+  color: #fff; 
+  border: solid #4f016c 1px !important;
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
+  padding: 0%;
 }
-
 
 .chat-col .nav-link.active {
-  color: #fff;
-  background-color: #524267 !important;
+  color: #fff; 
 }
+
 
 .chat-col .nav-tabs{
   border-bottom: none !important;
@@ -579,20 +625,41 @@ input::-webkit-inner-spin-button {
   grid-template-rows: 1fr auto;
 }
 
-.chat-block {
-  overflow-y: scroll !important;
-}
-
 .form-chat {
   width: 100%;
 }
 
+.inp-chat {
+  width: 80%;
+  border-left: none;
+  border-right: none; 
+  border-bottom: none;
+}
+
 .users-chat-list{
+  position: relative;
   overflow-y: scroll !important;
-  max-height: 79vh;
-  height: 79vh;
-  padding: 1% !important;
   user-select: text;
+}
+
+.users-chat-list::-webkit-scrollbar {
+  display: none;
+}
+
+#div_users_side{
+  flex-wrap: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#div_bots_side{
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .name-user-list:hover {
@@ -611,18 +678,12 @@ input::-webkit-inner-spin-button {
   overflow-wrap: anywhere;
   user-select: text;
   font-size: 18px;
+  transition: 0.55s;
 }
 
-.event-message {
-  padding: 1%;
-  margin: 1%;
-  color: white;
-  padding-right: 15px;
-  height: auto;
-  border:  solid #4f016c 3px;
-  overflow-wrap: anywhere;
-  user-select: text;
-  font-size: 18px;
+.chat-message:hover {
+  background-color: #754b99 !important;
+  transform: scale(1.01);
 }
 
 .event-message {
@@ -634,8 +695,13 @@ input::-webkit-inner-spin-button {
   overflow-wrap: anywhere;
   user-select: text;
   font-size: 18px;
+  transition: 0.55s;
 }
 
+.event-message:hover {
+  background-color: #754b99 !important;
+  transform: scale(1.01);
+}
 
 .chat-block-color {
   animation: colorC 1.5s normal;
@@ -647,7 +713,7 @@ input::-webkit-inner-spin-button {
 }
 
 .events-sub-color {
-  color: #a3a3a3;
+  color: #b3b3b3;
 }
 
 @keyframes colorC {  
@@ -730,6 +796,11 @@ table td {
   white-space: nowrap;
 }
 
+
+.dataTables_scrollHeadInner,.dataTables_scrollHeadInner table,.dataTables_scrollFootInner,.dataTables_scrollFootInner table{
+  width: 100% !important;
+}
+
 .color_icon {
   width: 16px;
   height:16px;
@@ -793,6 +864,9 @@ table td {
   height: 100%;
 }
 
+.tab-pane {
+  height: 100vh;}
+
 
 .message-duel-edit {
   animation: visible 1s;   
@@ -807,43 +881,6 @@ table td {
   }
  }
 
-
- .lds-ring {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-.lds-ring div {
-  box-sizing: border-box;
-  display: block;
-  position: absolute;
-  width: 64px;
-  height: 64px;
-  margin: 8px;
-  border: 8px solid #fff;
-  border-radius: 50%;
-  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  border-color: #fff transparent transparent transparent;
-}
-.lds-ring div:nth-child(1) {
-  animation-delay: -0.45s;
-}
-.lds-ring div:nth-child(2) {
-  animation-delay: -0.3s;
-}
-.lds-ring div:nth-child(3) {
-  animation-delay: -0.15s;
-}
-@keyframes lds-ring {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 hr:not([size]){
   height: 5px;
 }
@@ -856,24 +893,14 @@ hr {
   background-color: #5f0181 !important;
 }
 
-
-.collapsible {
-  color: white;
-  cursor: pointer;
-  border: none;
-  text-align: left;
-  outline: none;
-}
-
 .box-collapse-list {
   background-color: #5f0181;
-  padding: 5px;
 }
 
-.collapsible h5:hover {
+
+.name-users-list:hover {
   background-color: #4f016c;
 }
-
 
 .container-player {
   height: 70vh;
@@ -959,7 +986,7 @@ hr {
   border-radius: 50%;
   cursor: pointer;
   transition: all .2s ease-in-out;
-  border: #754b99 2px solid;
+  border: #754b99 1px solid;
   margin: 1%;
   width: 48px;
   height: 48px;
@@ -980,7 +1007,7 @@ hr {
   border-radius: 50%;
   cursor: pointer;
   transition: all .2s ease-in-out;
-  border: #754b99 2px solid;
+  border: #754b99 1px solid;
   margin: 1%;
   width: 48px;
   height: 48px;
@@ -1052,7 +1079,7 @@ hr {
 .page-link {
   color: white;
   background-color: #000 !important;
-  border: #754b99 2px solid !important;
+  border: #754b99 1px solid !important;
   transition: 0.15s !important;
 }
 
@@ -1064,64 +1091,8 @@ hr {
 .page-item.active .page-link {
   color: white !important;
   background-color: #754b99 !important;
-  border: #754b99 2px solid !important;
+  border: #754b99 1px solid !important;
 }
-
-.lds-ellipsis {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
-  }
-  .lds-ellipsis div {
-  position: absolute;
-  top: 33px;
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: #fff;
-  animation-timing-function: cubic-bezier(0, 1, 1, 0);
-  }
-  .lds-ellipsis div:nth-child(1) {
-  left: 8px;
-  animation: lds-ellipsis1 0.6s infinite;
-  }
-  .lds-ellipsis div:nth-child(2) {
-  left: 8px;
-  animation: lds-ellipsis2 0.6s infinite;
-  }
-  .lds-ellipsis div:nth-child(3) {
-  left: 32px;
-  animation: lds-ellipsis2 0.6s infinite;
-  }
-  .lds-ellipsis div:nth-child(4) {
-  left: 56px;
-  animation: lds-ellipsis3 0.6s infinite;
-  }
-  @keyframes lds-ellipsis1 {
-  0% {
-      transform: scale(0);
-  }
-  100% {
-      transform: scale(1);
-  }
-  }
-  @keyframes lds-ellipsis3 {
-  0% {
-      transform: scale(1);
-  }
-  100% {
-      transform: scale(0);
-  }
-  }
-  @keyframes lds-ellipsis2 {
-  0% {
-      transform: translate(0, 0);
-  }
-  100% {
-      transform: translate(24px, 0);
-  }
-  }
 
 #tags > p{
   cursor:pointer;
@@ -1243,7 +1214,8 @@ hr {
   cursor: pointer;
 }
 
-/* ----------------- carrossel ----------------- */
+/* ----------------- toggler ----------------- */
+
 
 /* ----------------- loader ----------------- */
 .lds-ellipsis {
@@ -1303,3 +1275,262 @@ hr {
   }
 
   /* ----------------- loader ----------------- */
+
+
+  /*--------------------   navbar togller    -----------------*/
+
+
+#sidebarMenu {
+  padding: 0%;
+  background-color: #000 !important;
+}
+
+#sidebarMenu button {
+  width: 100%;
+}
+
+#sidebarMenu i {
+  width: 100%;
+  font-size: 20px;
+}
+
+.sidebarMenu button{
+  color: rgb(177, 175, 175);
+  font-size: 16px !important;
+  text-align: left !important;
+  border-radius: 0% !important;
+  transition: 0.3s;
+}
+
+.sidebarMenu button:hover{
+  color: #fff;
+}
+
+.sidebarMenu .active {
+  color: #fff;
+  background-color: #754b99 !important;
+  border: none;
+}
+
+#sidebarMenu-hidden {
+  position: absolute;
+  top: 0;
+  left: -250px;
+  width: 250px;
+  height: 100%;
+  transition: transform 0.5s ease-in-out;
+  padding: 0%;
+  background-color:#754b9905;
+  backdrop-filter: blur( 16.5px );
+  border-radius: 20px;
+  z-index: 1;
+}
+
+#sidebarMenu-hidden button {
+  width: 100%;
+}
+
+#sidebarMenu-hidden i {
+  font-size: 20px;
+}
+
+.sidebarMenu-show {
+  transition: 0.55s  !important;
+  box-shadow: 6px 14px 19px 0 rgb(0 0 0 / 60%);
+  background-color:#754b9905;
+  backdrop-filter: blur( 16.5px );
+  border-radius: 20px;
+  transform: translateX(250px);
+}
+
+
+@keyframes fadeIn {
+  0% {opacity: 0;}
+  100% {
+    opacity: 1;
+  }
+} 
+
+
+@media only screen 
+and (min-width : 1100px) {
+  #sidebarMenu {
+    width: 4.7%;
+    transition: width 0.5s ease;
+  }
+
+  .expand-main {
+    width: 95.3% !important;
+    transition: width 0.5s ease;
+  }
+}
+
+@media only screen 
+and (min-width : 1300px) {
+
+  #sidebarMenu {
+    width: 4%;
+    transition: width 0.5s ease;
+  }
+
+  .expand-main {
+    width: 96% !important;
+    transition: width 0.5s ease;
+  }
+}
+
+@media only screen 
+and (min-width : 1500px) {
+  #sidebarMenu {
+    width: 3.5%;
+    transition: width 0.5s ease;
+  }
+
+  .expand-main {
+    width: 96.5% !important;
+    transition: width 0.5s ease;
+  }
+}
+
+
+@media only screen 
+and (min-width : 1700px) {
+  #sidebarMenu {
+    width: 3%;
+    transition: width 0.5s ease;
+  }
+
+  .expand-main {
+    width: 97% !important;
+    transition: width 0.5s ease;
+  }
+}
+
+
+@media only screen 
+and (min-width : 1900px) {
+  #sidebarMenu {
+    width: 3%;
+    transition: width 0.5s ease;
+  }
+
+  .expand-main {
+    width: 97% !important;
+    transition: width 0.5s ease;
+  }
+
+}
+
+.loading .card{
+  box-shadow: 6px 14px 19px 0 rgb(0 0 0 / 60%);
+  background-color:#27183461;
+  backdrop-filter: blur( 16.5px );
+  border-radius: 20px;
+}
+
+.remove-loading {
+  animation: fade-out 1s ease-out both;
+}
+
+@keyframes fade-out {
+  0% {opacity: 1;}
+  100% {opacity: 0;}
+}
+
+.hide { display:none; }
+
+/* Optional: The following css just makes sure the twitch video stays responsive */
+#twitch {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 */
+  padding-top: 25px;
+  height: 0;
+}
+#twitch object, #twitch iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+
+.scrollBtn {
+  height: 2.25rem;
+  color: #fff;
+  background-color: #754b99;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  width: 100%;
+}
+
+.scrollBtn.show {
+  opacity: 1;
+}
+
+
+#main {
+  transition: opacity 0.2s ease-in-out;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+
+.grid-buttons-actions {
+  display: grid;
+  padding: 3%;
+  height: 93vh;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 5% 3%;
+  grid-auto-flow: row;
+  grid-template-areas:
+    ". . . . ."
+    ". . . . .";
+}
+
+.grid-buttons-actions button {
+  height: 100%;
+  width: 100%;
+}
+
+.grid-buttons-commands {
+  display: grid;
+  padding: 3%;
+  height: 93vh;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 4% 3%;
+  grid-auto-flow: row;
+  grid-template-areas:
+    ". . . . ."
+    ". . . . .";
+}
+
+.grid-buttons-commands button {
+  height: 100%;
+  width: 100%;
+}
+
+.grid-buttons-config {
+  display: grid;
+  padding: 3%;
+  height: 93vh;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 4% 3%;
+  grid-auto-flow: row;
+  grid-template-areas:
+    ". . . . ."
+    ". . . . .";
+}
+
+.grid-buttons-config button {
+  height: 100%;
+  width: 100%;
+}
+
+

@@ -1,8 +1,8 @@
 async function get_redeem_edit(el_id) {
 
-    var list_redem = await eel.get_redeem('null')();
-
-    if (list_redem) {
+    var list_redem = await window.pywebview.api.get_redeem('null');
+    
+    if (list_redem_parse) {
 
         $("#" + el_id).empty();
 
@@ -16,8 +16,6 @@ async function get_redeem_edit(el_id) {
 
         }
 
-        
-    
         return true
 
     }
@@ -115,7 +113,7 @@ async function get_edit_type(){
 
     var select_edit = document.getElementById('action-edit-select');
     var edit_redeem_name = select_edit.value;
-    var type = await eel.get_edit_type_py(edit_redeem_name)();
+    var type = await window.pywebview.api.get_edit_type_py(edit_redeem_name);
 
     if (type){
 
@@ -123,13 +121,12 @@ async function get_edit_type(){
         if (type == 'sound'){
             type = 'audio'
         }
-        console.log(type)
 
         show_edit_redeem_div(type)
 
         if (type == 'audio'){
             
-            var sound_data = await eel.get_edit_data(edit_redeem_name,type)()
+            var sound_data = await window.pywebview.api.get_edit_data(edit_redeem_name,type)
 
             if (sound_data) {
 
@@ -176,7 +173,7 @@ async function get_edit_type(){
 
         } else if (type == 'video'){
 
-            var video_data = await eel.get_edit_data(edit_redeem_name,type)()
+            var video_data = await window.pywebview.api.get_edit_data(edit_redeem_name,type)
 
             if (video_data) {
 
@@ -220,7 +217,7 @@ async function get_edit_type(){
             }
         } else if (type == 'tts'){
 
-            var tts_data = await eel.get_edit_data(edit_redeem_name,type)()
+            var tts_data = await window.pywebview.api.get_edit_data(edit_redeem_name,type)
 
             if (tts_data) {
 
@@ -265,7 +262,7 @@ async function get_edit_type(){
 
         } else if (type == 'scene'){
 
-            var scene_data = await eel.get_edit_data(edit_redeem_name,type)()
+            var scene_data = await window.pywebview.api.get_edit_data(edit_redeem_name,type)
 
             if (scene_data) {
 
@@ -318,7 +315,7 @@ async function get_edit_type(){
 
         } else if (type == 'response'){
 
-            var response_data = await eel.get_edit_data(edit_redeem_name,type)()
+            var response_data = await window.pywebview.api.get_edit_data(edit_redeem_name,type)
 
             if (response_data) {
 
@@ -361,7 +358,7 @@ async function get_edit_type(){
 
         } else if (type == 'filter'){
 
-            var filter_data = await eel.get_edit_data(edit_redeem_name,type)()
+            var filter_data = await window.pywebview.api.get_edit_data(edit_redeem_name,type)
 
             if (filter_data) {
 
@@ -411,7 +408,7 @@ async function get_edit_type(){
 
         } else if (type == 'source'){
 
-            var source_data = await eel.get_edit_data(edit_redeem_name,type)()
+            var source_data = await window.pywebview.api.get_edit_data(edit_redeem_name,type)
 
             if (source_data) {
 
@@ -461,7 +458,7 @@ async function get_edit_type(){
 
         } else if (type == 'keypress'){
 
-            var keypress_data = await eel.get_edit_data(edit_redeem_name,type)()
+            var keypress_data = await window.pywebview.api.get_edit_data(edit_redeem_name,type)
 
             if (keypress_data) {
 
@@ -536,7 +533,7 @@ async function get_edit_type(){
 
         } else if (type == 'clip'){
 
-            var clip_data = await eel.get_edit_data(edit_redeem_name,type)()
+            var clip_data = await window.pywebview.api.get_edit_data(edit_redeem_name,type)
 
             if (clip_data) {
 
@@ -573,7 +570,7 @@ async function get_edit_type(){
             }
         } else if (type == 'highlight'){
 
-            var highlight_data = await eel.get_edit_data(edit_redeem_name,type)()
+            var highlight_data = await window.pywebview.api.get_edit_data(edit_redeem_name,type)
 
             if (highlight_data) {
 
@@ -650,7 +647,7 @@ function save_edit(event,type_edit){
 
         var formData = JSON.stringify(data);
 
-        eel.save_edit_redeen(formData,'audio')
+        window.pywebview.api.save_edit_redeen(formData,'audio')
 
 
     } else if (type_edit == 'video'){
@@ -688,7 +685,7 @@ function save_edit(event,type_edit){
 
         var formData = JSON.stringify(data);
 
-        eel.save_edit_redeen(formData,'video')
+        window.pywebview.api.save_edit_redeen(formData,'video')
 
 
     } else if (type_edit == 'tts'){
@@ -723,7 +720,7 @@ function save_edit(event,type_edit){
 
         var formData = JSON.stringify(data);
 
-        eel.save_edit_redeen(formData,'tts')
+        window.pywebview.api.save_edit_redeen(formData,'tts')
 
     } else if (type_edit == 'scene'){
 
@@ -769,7 +766,7 @@ function save_edit(event,type_edit){
 
         var formData = JSON.stringify(data);
 
-        eel.save_edit_redeen(formData,'scene')
+        window.pywebview.api.save_edit_redeen(formData,'scene')
 
     } else if (type_edit == 'response'){
 
@@ -802,7 +799,7 @@ function save_edit(event,type_edit){
 
         var formData = JSON.stringify(data);
 
-        eel.save_edit_redeen(formData,'response')
+        window.pywebview.api.save_edit_redeen(formData,'response')
 
     } else if (type_edit == 'filter'){
 
@@ -850,7 +847,7 @@ function save_edit(event,type_edit){
 
         var formData = JSON.stringify(data);
 
-        eel.save_edit_redeen(formData,'filter')
+        window.pywebview.api.save_edit_redeen(formData,'filter')
 
     } else if (type_edit == 'source'){
 
@@ -897,7 +894,7 @@ function save_edit(event,type_edit){
 
         var formData = JSON.stringify(data);
 
-        eel.save_edit_redeen(formData,'source')
+        window.pywebview.api.save_edit_redeen(formData,'source')
         
     } else if (type_edit == 'keypress'){
 
@@ -993,7 +990,7 @@ function save_edit(event,type_edit){
 
         var formData = JSON.stringify(data);
 
-        eel.save_edit_redeen(formData,'keypress')
+        window.pywebview.api.save_edit_redeen(formData,'keypress')
 
 
     } else if (type_edit == 'clip'){
@@ -1025,21 +1022,19 @@ function save_edit(event,type_edit){
 
         var formData = JSON.stringify(data);
 
-        eel.save_edit_redeen(formData,'clip')
+        window.pywebview.api.save_edit_redeen(formData,'clip')
 
     }
 }
 
 async function get_redeem_edit_js(el_id) {
     
-    var list_redem = await eel.get_redeem('edit')();
+    var list_redem_parse = await window.pywebview.api.get_redeem('edit');
 
-    if (list_redem) {
+    if (list_redem_parse) {
         
         $("#" + el_id).empty();
         $("#" + el_id).selectpicker("refresh");
-
-        var list_redem_parse = JSON.parse(list_redem);
 
         for (var i = 0; i < list_redem_parse.redeem.length; i++) {
             var optn = list_redem_parse.redeem[i];

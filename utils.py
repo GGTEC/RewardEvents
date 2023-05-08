@@ -3,15 +3,11 @@ import os
 import shutil
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
-import coverpy
 import requests
-from pytube import YouTube
 from bs4 import BeautifulSoup as bs
-from dateutil import tz
-from PIL import Image
 from random import randint
 
 import urllib.request
@@ -19,8 +15,6 @@ import zipfile
 import tempfile
 
 import tkinter.messagebox as messagebox
-
-coverpy = coverpy.CoverPy()
 
 extDataDir = os.getcwd()
 
@@ -94,78 +88,6 @@ def error_log(ex):
 
     with open(f"{appdata_path}/rewardevents/web/src/error_log.txt", "a+", encoding='utf-8') as log_file_r:
         log_file_r.write(error)
-
-def removestring(value):
-    try:
-        simbolos = [['[', ']'], ['(', ')'], ['"', '"']]
-        for simbolo in simbolos:
-            if value.find(simbolo[0]) and value.find(simbolo[1]):
-                value = value.replace(value[(indice := value.find(simbolo[0])):value.find(simbolo[1], indice + 1) + 1],
-                                    '').strip()
-                
-        return value
-    except:
-        return value
-
-def album_search(title,user_input):
-    
-    user_input = user_input.strip()
-    
-    music = '0'
-    artist = '0'
-    url_youtube = "0"
-    success = 0
-
-    try:
-        url_youtube = user_input
-        rep_input = removestring(title)
-
-        try:
-            
-            result = coverpy.get_cover(rep_input, 1)
-            album_art = result.artwork(625)
-
-            img_data = requests.get(album_art).content
-
-            with open(f'{extDataDir}/web/src/player/images/album.png', 'wb') as album_art_local:
-                album_art_local.write(img_data)
-        
-        except:
-
-            yt = YouTube(url_youtube)
-            thumb_link = yt.thumbnail_url
-            img_data = requests.get(thumb_link).content
-            
-            with open(f'{extDataDir}/web/src/player/images/album.png', 'wb') as album_art_local:
-                album_art_local.write(img_data)
-
-        success = 1
-        
-        try:
-            
-            title_split = rep_input.split(' - ')
-            artist = title_split[0]
-            music = title_split[1]
-        
-        except Exception as e:
-
-            music = rep_input
-            artist = '0'
-
-    except Exception as e:
-        error_log(e)
-        success = 0
-
-
-    response_albumart = {
-        
-        "music" : music,
-        "artist" : artist,
-        "link" : url_youtube,
-        "success" : success
-    }
-
-    return response_albumart
 
 def check_delay(delay_command,last_use):
     
@@ -567,6 +489,34 @@ def update_emote(data):
         error_log(e)
         return False
 
+def update_person(data):
+
+    person_src = data['src']
+
+    with open(f'{appdata_path}/rewardevents/web/src/config/person.json', 'r', encoding='utf-8') as person_file:
+        person_data = json.load(person_file)
+
+    html_person_backup = f"{appdata_path}/rewardevents/web/src/html/person/person.html.tmp"
+    html_person_file = f"{appdata_path}/rewardevents/web/src/html/person/person.html"
+
+    try:
+
+        with open(html_person_backup, "r",encoding='utf-8') as html:
+            soup = bs(html, 'html.parser')
+
+        person_img_tag = soup.find("img")
+        person_img_tag['src'] = 'http://absolute/' + person_src
+
+        with open(html_person_file, "wb") as f_output:
+            f_output.write(soup.prettify("utf-8"))
+
+        return True
+            
+    except Exception as e:
+        
+        error_log(e)
+        return False
+
 def replace_all(text, dic_res):
     
     try:
@@ -691,219 +641,58 @@ def get_files_list():
         with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
             messages_data = json.load(messages_file)
 
-            messages_data['emote_disabled'] = '/me O sistema de emotes está desativado'
-            messages_data['response_get_queue'] = '/me {username} --> Estes valores estão na lista {queue-3}'
-            messages_data['response_noname_queue'] = '/me O Nome {value} não está na fila'
-            messages_data['response_rem_queue'] = '/me Nome {value} removido da fila'
-            messages_data['response_namein_queue'] = '/me O Nome {value} já está na fila'
-            messages_data['response_add_queue'] = '/me Nome {value} adicionado na fila'
-            messages_data['response_queue'] = 'me {username} --> Você foi adicionado na fila de espera.'
+            if not "command_skip_inlist" in messages_data:
+                messages_data['command_skip_inlist'] = '/me {username} --> Você já votou para pular, espere mais votos ou a musica acabar.'
+                messages_data['command_skip_noplaying'] = '/me {username} --> Nenhuma musica em reprodução no momento..'
 
         with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "w", encoding='utf-8') as messages_file:
             json.dump(messages_data, messages_file, indent=6, ensure_ascii=False)  
 
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', "r", encoding='utf-8') as commands_file:
-            commands_data = json.load(commands_file)
+        with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', "r", encoding="utf-8") as player_file:
+            player_data = json.load(player_file)
 
-            commands_data['emote'] = {
-                "command": "!emote",
-                "status": 1,
-                "delay": "10",
-                "last_use": 0,
-                "response": "/me {username} --> Exibindo emotes na tela",
-                "user_level": "mod"
+        if not "skip_users" in player_data:
+
+            new_data = {
+                "STATUS": player_data['STATUS'],
+                "STATUS_MUSIC_ENABLE": player_data['STATUS_MUSIC_ENABLE'],
+                "skip_users" : [],
+                "skip_votes" : 3,
+                "skip_mod" : 1,
+                "skip_requests" : 0,
+                "max_duration": player_data['max_duration'],
+                "blacklist": player_data['blacklist'],
             }
 
-        with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', "w", encoding='utf-8') as commands_file:
-            json.dump(commands_data, commands_file, indent=6, ensure_ascii=False)  
+            with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', "w", encoding="utf-8") as player_file_w:
+                json.dump(new_data,player_file_w,indent=4,ensure_ascii=False)
 
-        path_css = f'{appdata_path}/rewardevents/web/src/html/emote/emote.css'
-        path_js = f'{appdata_path}/rewardevents/web/src/html/emote/emote.js'
-        path_html = f'{appdata_path}/rewardevents/web/src/html/emote/emote.html'
-        path_html_bk = f'{appdata_path}/rewardevents/web/src/html/emote/emote.html.tmp'
+        with open(f'{appdata_path}/rewardevents/web/src/config/event_log.json', "r", encoding="utf-8") as event_file:
+            event_data = json.load(event_file)
 
-        dir_emote = f'{appdata_path}/rewardevents/web/src/html/emote'
+        if not "show_commands_chat" in event_data:
 
-        if not os.path.exists(path_html):
-            
-            os.makedirs(dir_emote)
-
-            content = """
-                <!DOCTYPE html>
-                <html lang="pt-br">
-                <head>
-                <link href="emote.css" rel="stylesheet"/>
-                <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-                <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet"/>
-                <meta charset="utf-8"/>
-                <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
-                <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-                <title>
-                Emote
-                </title>
-                </head>
-                <body>
-                <div id="emojis">
-                </div>
-                <script src="emote.js">
-                </script>
-                </body>
-                </html>
-                    """
-            
-            with open(path_html, "w", encoding='utf-8') as html_file:
-                html_file.write(content)
-
-            with open(path_html_bk, "w", encoding='utf-8') as html_bk_file:
-                html_bk_file.write(content)
-
-            content_css = """
-                        body{
-                                overflow:hidden;
-                        }
-
-                        #emojis img {
-                                position: absolute;
-                                opacity: 0.0;
-                            }
-                            
-                        .drop {
-
-                                animation-name: emojis-fall, emojis-shake;
-                                animation-duration: 5s, 3s;
-                                animation-timing-function: linear, ease-in-out;
-                                animation-play-state: running, running;
-                        }
-
-
-                        @keyframes emojis-fall {
-                                0% {
-                                        top: -10%;
-                                        opacity: 1.0;
-                                }
-                                80% {
-                                        opacity: 1.0;
-                                }
-                                100% {
-                                        top: 100%;
-                                }
-                        }
-                        @keyframes emojis-shake {
-                                0% {
-                                        transform: translateX(0px);
-                                }
-                                25% {
-                                        transform: translateX(15px);
-                                }
-                                50% {
-                                        transform: translateX(-15px);
-                                }
-                                100% {
-                                        transform: translateX(0px);
-                                }
-                        }
-                    """
-            
-            with open(path_css, "w", encoding='utf-8') as css_file:
-                css_file.write(content_css)
-
-            content_js = """
-                const emojis = document.querySelectorAll('#emojis img');
-                emojis.forEach((emoji) => {
-                emoji.style.left = `calc(100% * ${Math.random()})`;
-                });
-            """
-
-            with open(path_js, "w", encoding='utf-8') as js_file:
-                js_file.write(content_js)
-
-        path_html_highlight = f'{appdata_path}/rewardevents/web/src/html/highlight/highlight.html'
-        path_html_highlightbk = f'{appdata_path}/rewardevents/web/src/html/highlight/highlight.html.tmp'
-
-        dir_highlight = f'{appdata_path}/rewardevents/web/src/html/highlight'
-
-        if not os.path.exists(path_html_highlight):
-            
-            os.makedirs(dir_highlight)
-
-            content_highlight = """
-                    <!DOCTYPE html>
-                    <html lang="pt-br">
-                    <head>
-                        <link href="highlight.css" rel="stylesheet">
-                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                        <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet">
-                        <meta charset="UTF-8">
-                        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>highlight</title>
-                    </head>
-                    <body>
-                        <div class="container-fluid d-flex justify-content-center">
-                            <div class="fade-in fadeOut" id="highlight-block">
-                                <p><i class="fa-solid fa-thumbtack"></i><span id="username"></span> : <span id="message"></span></p>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                """
-            
-            with open(path_html_highlight, "w", encoding='utf-8') as html_highlight:
-                html_highlight.write(content_highlight)
-
-            with open(path_html_highlightbk, "w", encoding='utf-8') as html_highlight_bk_file:
-                html_highlight_bk_file.write(content_highlight)
-
-        path_html = f'{appdata_path}/rewardevents/web/src/html/'
-        path_events = f'{appdata_path}/rewardevents/web/src/html/event/event.html'
-        path_notification = f'{appdata_path}/rewardevents/web/src/html/notification/notification.html'
-        path_video = f'{appdata_path}/rewardevents/web/src/html/video/video.html'
-
-        if not os.path.exists(path_events):
-
-            os.makedirs(f'{appdata_path}/rewardevents/web/src/html/event')
-            shutil.move(f'{path_html}/event.html', path_events)
-
-            shutil.move(f'{path_html}/event_styles', f'{path_html}/event')
-            shutil.move(f'{path_html}/event.html.tmp', f'{path_events}.tmp')
-            shutil.move(f'{path_html}/default.mp3', f'{path_html}/event/default.mp3')
-
-        if not os.path.exists(path_notification):
-
-            os.makedirs(f'{appdata_path}/rewardevents/web/src/html/notification')
-
-            shutil.move(f'{path_html}/notification.html', path_notification)
-            shutil.move(f'{path_html}/notification.html.tmp', f'{path_notification}.tmp')
-            shutil.move(f'{path_html}/theme.css', f'{path_html}/notification/theme.css')
-
-        if not os.path.exists(path_video):
-
-            os.makedirs(f'{appdata_path}/rewardevents/web/src/html/video')
-
-            shutil.move(f'{path_html}/video.html', path_video)
-            shutil.move(f'{path_html}/video.html.tmp', f'{path_video}.tmp')
-
-        with open(f'{appdata_path}/rewardevents/web/src/config/goal.json') as goal_file:
-            goal_data = json.load(goal_file)
-
-        if not "subscription_count" in goal_data and not "follow" in goal_data:
-
-            goal_data = {
-                "subscription_count" : {
-                    "type": "subscription_count",
-                    "description": "",
-                    "current_amount": 0,
-                    "target_amount": 0,
-                    "started_at": ""
-                },
-                "follow" : {
-                    "type": "follow",
-                    "description": "",
-                    "current_amount": 0,
-                    "target_amount": 0,
-                    "started_at": ""
-                }
+            new_data = {
+                "font_size": event_data['font_size'],
+                "color_events": event_data['color_events'],
+                "data_show": event_data['data_show'],
+                "show_commands": event_data['show_commands'],
+                "show_redeem": event_data['show_redeem'],
+                "show_events": event_data['show_events'],
+                "show_join": event_data['show_join'],
+                "show_leave": event_data['show_leave'],
+                "show_commands_chat": 0,
+                "show_redeem_chat": 0,
+                "show_events_chat": 0,
+                "show_join_chat": 0,
+                "show_leave_chat": 0,
+                "show_time_events":0,
+                "event_list" : event_data['event_list']
             }
+
+            with open(f'{appdata_path}/rewardevents/web/src/config/event_log.json', "w", encoding="utf-8") as event_file_w:
+                json.dump(new_data,event_file_w,indent=4,ensure_ascii=False)
+
 
 get_files_list()
 

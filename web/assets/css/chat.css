@@ -1,5 +1,5 @@
 body {
-    max-height: 100vh;
+    height: 100%;
     font-family: 'Kanit';
     color: white;
     background-repeat: no-repeat;
@@ -16,6 +16,18 @@ body {
     rgba(48, 2, 59, 0.8) 100%) #260137;
     overflow: hidden;
     
+  }
+
+  .event-message {
+    padding: 1%;
+    margin: 1%;
+    color: white;
+    padding-right: 15px;
+    height: auto;
+    border:  solid #4f016c 3px;
+    overflow-wrap: anywhere;
+    user-select: text;
+    font-size: 18px;
   }
 
   .text-muted-1{
@@ -41,9 +53,8 @@ body {
     background: #000000;
   }
 
-
 .chat-col-new {
-    height: 100vh;
+  height: 100vh;
 }
 
 .chat-col-new .nav-link {
@@ -64,34 +75,33 @@ body {
 }
 
 .top-tab {
-    height: 5vh;
-}
-.tab-chat{
     position: relative;
-    height: 95vh;
+    height: 5%;
 }
 
-.chat-block-new {
+.tab-content {
     position: relative;
-    overflow-y: scroll !important;
     height: 100%;
 }
 
 .form-chat {
-    position: relative;
-    width: 100%;
-    height: auto;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+}
+
+.h-scroll-chat {
+  padding-bottom: 10%;
+  height: 100%;
+  position:relative;
+  overflow-y: scroll;
 }
 
 .users-chat-list {
-    height: 100%;
-    overflow-y: scroll !important;
-    padding: 1% !important;
-}
-
-.config-tab-chat{
-    padding: 3%;
-    height: 100%;
+  height: 95%;
+  position:relative;
+  overflow-y: scroll !important;
 }
 
 .name-user-list:hover {
@@ -99,18 +109,29 @@ body {
     text-decoration: underline;
 }
 
-.chat-message {
-    font-size: 18px;
-    background: #000000;
-    padding: 1%;
-    margin: 1%;
-    color: white;
-    padding-right: 15px;
-    height: auto;
-    overflow-wrap: anywhere;
-    user-select: text;
-
+.name-users-list:hover {
+  background-color: #4f016c;
 }
+.bg-dark {
+  background-color: #000 !important;
+}
+
+.events-sub-color {
+  color: #b3b3b3;
+}
+
+.chat-message {
+  padding: 1%;
+  margin: 1%;
+  color: white;
+  padding-right: 15px;
+  height: auto;
+  border:  solid #4f016c 3px;
+  overflow-wrap: anywhere;
+  user-select: text;
+  font-size: 18px;
+}
+
 
 .material-switch {
     margin-top: 14px; 
@@ -212,12 +233,16 @@ select ,input[type=text] {
     border-color: #710299 !important;
 }
 
-#slider-font {
-    width: 100%;
-    height: 20px;
-    background: transparent;
+select:active,
+select:focus,
+input[type="text"]:active ,
+input[type="text"]:focus,
+button:active,
+button:focus {
+    border-color: #5f0181 !important;
+    outline: none !important;
+    box-shadow: inset 0 2px 2px rgba(148, 0, 194, 0.729),0 0 8px rgba(118, 0, 154, 0.781) !important;
 }
-
 
 .link-style {
   cursor: pointer;
@@ -239,11 +264,6 @@ select ,input[type=text] {
   100% { background-color: transparent; }
 }
 
-input[type="range"] {
-  appearance: none;
-  height: 5px;
-}
-
 #message-replyed-div {
   color: rgb(164, 164, 164) !important;
   overflow: hidden;
@@ -255,149 +275,16 @@ input[type="range"] {
   color: rgb(164, 164, 164) !important;
 }
 
-
-  
-input[type="range"]::-webkit-slider-thumb {
-  appearance: none;
+#nav-chat {
   position: relative;
-  top: -2px;
-  z-index: 1;
-  width: 11px;
-  height: 11px;
-  cursor: pointer;
-  box-shadow: 0px 6px 5px 0px rgba(0, 0, 0, 0.6);
-  border-radius: 40px;
-  background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #fdfdfd), color-stop(50%, #520070), color-stop(51%, #520070), color-stop(100%, #520070));
+  height: 100%;
 }
 
-input[type=range]::-webkit-slider-runnable-track  {
-  appearance: none;
-  background: white;
-  border-radius: 40px; 
-  height: 7px;
-}
-
-
-
-input[type="range"]:hover ~ #rangevalue,
-input[type="range"]:active ~ #rangevalue {
-  filter: alpha(opacity=100);
-  opacity: 1;
-  top: -75px;
-}
-
-#rangevalue {
-  font-size: 13px;
-  text-align: center;
-  display: block;
-  color: #fff;
-  margin: 20px 0;
+#nav-users {
   position: relative;
-  left: 44.5%;
-  background-color: #4f016c;
-  border-radius: 5px;
-  width: 60px;
-  filter: alpha(opacity=0);
-  opacity: 0;
-  transition: all 0.5s ease;
-  top: -95px;
+  height: 100%;
 }
-
-
-
-input[type="range"]:hover ~ #rangevalue,
-input[type="range"]:active ~ #rangevalue {
-    filter: alpha(opacity=100);
-    opacity: 1;
-    top: -75px;
-}
-  
-#rangevalue {
-    font-size: 13px;
-    text-align: center;
-    display: block;
-    color: #fff;
-    margin: 20px 0;
-    position: relative;
-    left: 44.5%;
-    background-color: #4f016c;
-    border-radius: 5px;
-    width: 60px;
-    filter: alpha(opacity=0);
-    opacity: 0;
-    transition: all 0.5s ease;
-    top: -95px;
-}
-
-
-select:active,
-select:focus,
-input[type="text"]:active ,
-input[type="text"]:focus,
-button:active,
-button:focus {
-    border-color: #5f0181 !important;
-    outline: none !important;
-    box-shadow: inset 0 2px 2px rgba(148, 0, 194, 0.729),0 0 8px rgba(118, 0, 154, 0.781) !important;
-}
-  
-select {
-    height: 40px !important;
-}
-
-.dropdown-menu ,
-.bs-searchbox {
-  background-color: #000 !important;
-}
-
-.bs-searchbox .form-control {
-  background-color: #000 !important;
-}
-
-.dropdown-toggle {
-  border-color: #5f0181 !important;
-}
-
-.dropdown-toggle:after {
-  border-color: #5f0181 !important;
-}
-
-.bootstrap-select .dropdown-toggle:focus {
-  outline: 0 !important;
-}
-
-.dropdown-item:hover {
-  background-color: #4f016c !important;
-}
-
-.bs-searchbox .form-control {
-  color: white !important;
-}
-
-.dropdown-menu .no-results {
-  background-color: #000 !important;
-  color: white !important;
-}
-
-.collapsible {
-  color: white;
-  cursor: pointer;
-  border: none;
-  text-align: left;
-  outline: none;
-}
-
 .box-collapse-list {
   background-color: #5f0181;
-  padding: 5px;
-}
-
-.collapsible h5:hover {
-  background-color: #4f016c;
-}
-
-
-#select-message-edit-form .dropdown .dropdown-menu .inner .dropdown-item {
-  white-space: pre-wrap !important;
 }
 

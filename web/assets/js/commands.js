@@ -38,7 +38,7 @@ async function commands_fun(event,type_id){
     
         var formData = JSON.stringify(data);
 
-        eel.commands_py('create',formData);
+        window.pywebview.api.commands_py('create',formData);
 
         form.reset();
 
@@ -68,7 +68,7 @@ async function commands_fun(event,type_id){
 
         var formData = JSON.stringify(data);
 
-        eel.commands_py(type_id,formData);
+        window.pywebview.api.commands_py(type_id,formData);
         form.reset();
 
 
@@ -79,23 +79,23 @@ async function commands_fun(event,type_id){
         var form = document.querySelector("#command-del-form");
         var command = form.querySelector('select[id="command-select-del"]').value;
 
-        eel.commands_py(type_id,command);
+        window.pywebview.api.commands_py(type_id,command);
         form.reset();
         $("#command-select-del option:selected").remove();
         $("#command-select-del").selectpicker("refresh");
 
     } else if (type_id == 'get_list'){
 
-        var command_info = await eel.commands_py(type_id,'null')();
+        var list_command_parse = await window.pywebview.api.commands_py(type_id,'null');
 
-        if (command_info) {
+        if (list_command_parse) {
+            list_command_parse = JSON.parse(list_command_parse)
 
             $("#command-select-del").empty();
             $("#command-select-del").selectpicker("refresh");
             $("#command-select-edit").empty();
             $("#command-select-edit").selectpicker("refresh");
     
-            var list_command_parse = JSON.parse(command_info);
     
             for (var i = 0; i < list_command_parse.length; i++) {
                 var optn = list_command_parse[i];
@@ -110,12 +110,11 @@ async function commands_fun(event,type_id){
     } else if (type_id == 'get_info'){
 
         var command = document.querySelector("#command-select-edit").value;
-        var command_info = await eel.commands_py(type_id,command)();
+        var command_info_parse = await window.pywebview.api.commands_py(type_id,command);
 
-        if (command_info) {
-
-            var command_info_parse = JSON.parse(command_info);
+        if (command_info_parse) {
             
+            command_info_parse = JSON.parse(command_info_parse)
             var status_command = command_info_parse.status;
             var command_edit = command_info_parse.edit_command;
             var message_edit = command_info_parse.edit_message;
@@ -145,10 +144,10 @@ async function commands_fun(event,type_id){
         var create_pred = form_duel.querySelector('#pred-enable');
         var select_batle = form_duel.querySelector('#select-message-duel');
 
-        var duel_info = await eel.commands_py(type_id,'null')();
+        var duel_info_parse = await window.pywebview.api.commands_py(type_id,'null');
 
-        if (duel_info){
-            var duel_info_parse = JSON.parse(duel_info);
+        if (duel_info_parse){
+            duel_info_parse = JSON.parse(duel_info_parse)
 
             command_duel.value = duel_info_parse.command_duel;
             command_accept.value = duel_info_parse.command_accept;
@@ -192,13 +191,10 @@ async function commands_fun(event,type_id){
         if (select_battle.value == 'None'){
             toast_notifc('Selecione uma mensagem')
         } else {
-            var duel_rec = await eel.commands_py(type_id,select_battle.value)();
+            var duel_battle_parse = await window.pywebview.api.commands_py(type_id,select_battle.value);
 
-            if (duel_rec){
-    
-                
-                var duel_battle_parse = JSON.parse(duel_rec);
-    
+            if (duel_battle_parse){
+                duel_battle_parse = JSON.parse(duel_battle_parse)
                 message_0.value = duel_battle_parse.message_0;
                 message_1.value = duel_battle_parse.message_1;
                 message_2.value = duel_battle_parse.message_2;
@@ -262,7 +258,7 @@ async function commands_fun(event,type_id){
         };
     
         var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
+        window.pywebview.api.commands_py(type_id,formData);
 
     
     } else if (type_id == 'get_default'){
@@ -282,10 +278,10 @@ async function commands_fun(event,type_id){
 
         cmd_type.value = select_editor.value
 
-        var resp_default = await eel.commands_py(type_id,select_editor.value)();
+        var resp_default_parse = await window.pywebview.api.commands_py(type_id,select_editor.value);
 
-        if (resp_default) {
-
+        if (resp_default_parse) {
+            resp_default_parse = JSON.parse(resp_default_parse)
             fomr_command_default.hidden = false;
 
             if (cmd_type.value == 'cmd'){
@@ -299,8 +295,6 @@ async function commands_fun(event,type_id){
             } else {
                 cmd_respo.setAttribute('min','0')
             }
-            
-            var resp_default_parse = JSON.parse(resp_default);
 
             if (resp_default_parse.status == 1){
                 cmd_status.checked = true;
@@ -375,17 +369,16 @@ async function commands_fun(event,type_id){
         }
 
         var formData = JSON.stringify(data);
-        eel.commands_py(type_id,formData);
+        window.pywebview.api.commands_py(type_id,formData);
 
     } else if (type_id == 'command-list'){
 
         $("#list-comands-modal").modal("show");
 
-        var command_list = await eel.get_command_list()()
+        var command_list_parse = await window.pywebview.api.get_command_list()
 
-        if (command_list){
+        if (command_list_parse){
 
-            var command_list_parse = JSON.parse(command_list);
 
             var command_list_redeem = command_list_parse.commands_redeem[0]
             var command_list_simple = command_list_parse.commands_simple[0]
@@ -496,7 +489,6 @@ async function commands_fun(event,type_id){
             }
 
             if ($.fn.DataTable.isDataTable("#commandlist_table")) {
-                console.log('destroy')
                 $('#commandlist_table').DataTable().clear().draw();
                 $('#commandlist_table').DataTable().destroy();
             }

@@ -6,19 +6,17 @@ async function queue_js(type_id){
         var response_queue = document.getElementById('queue-response');
         var response_add_queue = document.getElementById('queue-add-response');
 
-        var queue_config = await eel.queue(type_id,'none')();
+        var queue_parse = await window.pywebview.api.queue(type_id,'none');
 
-        if (queue_config) {
+        if (queue_parse) {
             
-            var list_redem = await eel.get_redeem('queue')();
+            var list_redem_parse = await window.pywebview.api.get_redeem('queue');
 
-            if (list_redem) {
+            if (list_redem_parse) {
 
                 var el_id = "redeem-select-queue";
 
                 $("#" + el_id).empty();
-
-                var list_redem_parse = JSON.parse(list_redem);
 
                 $("#" + el_id).append('<option class="bg-dark" style="color: #fff;" value="None">Sem recompensa</option>');
                 $("#" + el_id).selectpicker("refresh");
@@ -31,8 +29,6 @@ async function queue_js(type_id){
                 }
             }
         
-
-        var queue_parse = JSON.parse(queue_config);
 
         response_status.checked = queue_parse.response == 1 ? true : false;
 
@@ -100,18 +96,16 @@ async function queue_js(type_id){
         }
 
         var formData = JSON.stringify(data);
-        eel.queue(type_id,formData)
+        window.pywebview.api.queue(type_id,formData)
 
     } else if (type_id == "queue_add"){
 
         var add_queue = document.getElementById('add_queue').value;
 
-        var queue_data = await eel.queue(type_id,add_queue)();
+        var queue_list = await window.pywebview.api.queue(type_id,add_queue);
 
-        if (queue_data) {
+        if (queue_list) {
             
-        var queue_list = JSON.parse(queue_data);
-
         var dataTableData = [];
 
         for (var key in queue_list) {
@@ -124,7 +118,6 @@ async function queue_js(type_id){
         }
 
         if ($.fn.DataTable.isDataTable("#queuelist_table")) {
-            console.log('destroy')
             $('#queuelist_table').DataTable().clear().draw();
             $('#queuelist_table').DataTable().destroy();
         }
@@ -156,11 +149,10 @@ async function queue_js(type_id){
 
         var add_queue = document.getElementById('add_queue').value;
 
-        var queue_data = await eel.queue(type_id,add_queue)();
+        var queue_list = await window.pywebview.api.queue(type_id,add_queue);
 
-        if (queue_data) {
+        if (queue_list) {
             
-        var queue_list = JSON.parse(queue_data);
 
         var dataTableData = [];
 
@@ -174,7 +166,6 @@ async function queue_js(type_id){
         }
 
         if ($.fn.DataTable.isDataTable("#queuelist_table")) {
-            console.log('destroy')
             $('#queuelist_table').DataTable().clear().draw();
             $('#queuelist_table').DataTable().destroy();
         }
@@ -213,11 +204,9 @@ async function queue_js(type_id){
 
         var queue_command_edit = document.getElementById('command_queue_form');
 
-        var queue_command_data = await eel.queue(type_id,command_queue_select.value)();
+        var queue_parse = await window.pywebview.api.queue(type_id,command_queue_select.value);
 
-        if (queue_command_data){
-
-            var queue_parse = JSON.parse(queue_command_data);
+        if (queue_parse){
 
             queue_command_edit.hidden = false
 
@@ -249,7 +238,7 @@ async function queue_js(type_id){
         }
 
         var formData = JSON.stringify(data);
-        eel.queue(type_id,formData)
+        window.pywebview.api.queue(type_id,formData)
 
     }
 }

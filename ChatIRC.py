@@ -99,7 +99,7 @@ class TwitchBot():
                 time.sleep(10)
                 continue
             else:
-                self.callback(f"REERRORCONNCHAT | Conectado...")
+                self.callback(f"REERRORCONNCHAT | Conectado!")
                 break
 
         self.run()
@@ -143,7 +143,7 @@ class TwitchBot():
 
                     now = datetime.now()
                     with open(log_file, 'a') as f:
-                        f.writelines(f"{now} - {line}  \n\n") 
+                        f.write(f"{now} - {line.encode('unicode_escape').decode()}  \n\n")
 
                     if "PING" in line:
                         message = "PONG tmi.twitch.tv\r\n".encode()

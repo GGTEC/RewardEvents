@@ -1,17 +1,168 @@
-$(document).ready(async function () {
+window.addEventListener('pywebviewready',async function() {
 
-  eel.loaded()();
-  updateTimeDiff()
-  event_log_js('div-events')
-  event_updatetime()
-  prediction_small()
-  poll_small()
-  goal()
+  var progressBar_start = document.getElementById("progress-bar-start");
+  var progress_span = document.getElementById("progress-span");
+  
+  progressBar_start.style.width = `0%`;
+
+  var functionsCount = 18; //defina a quantidade de funções a serem executadas
+  var functionsExecuted = 0; //inicialize o contador de funções executadas
+
+
   $('[data-toggle="tooltip"]').tooltip();
   $("input, select, textarea").attr("autocomplete", "off");
   $("input, select, textarea").attr("spellcheck", "false");
 
+  functionsExecuted++;
+  progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+  progress_span.innerHTML = 'Tooltips, inputs.'
 
+  loaded = await window.pywebview.api.loaded();
+  
+  if (loaded){
+
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+    progress_span.innerHTML = 'Start chat.'
+
+    var disclosure = await window.pywebview.api.disclosure_py('get','null');
+    if (disclosure){
+        document.getElementById('message-disclosure-send').value = disclosure
+
+        progress_span.innerHTML = 'disclosure.'
+        functionsExecuted++;
+        progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+    }
+
+    get_users = await window.pywebview.api.get_users_info('save','null');
+    if (get_users){
+
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+      progress_span.innerHTML = 'Update users data.'
+
+    }
+
+    start_obs = await window.pywebview.api.start_obs();
+    if (start_obs){
+
+      if(start_obs == 'sucess'){
+        document.getElementById('obs_conn_status').innerHTML = 'Conectado'
+      } else if (start_obs == 'error'){
+        document.getElementById('obs_conn_status').innerHTML = 'Desconectado'
+      } else if (start_obs == 'None'){
+        document.getElementById('obs_conn_status').innerHTML = 'Desconhecido'
+      }
+
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+      progress_span.innerHTML = 'start obs.'
+
+    }
+
+
+    start_selectpicker()
+
+    progress_span.innerHTML = 'selectpicker.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+    start_sidebar()
+
+    progress_span.innerHTML = 'sidebar.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+    start_scroll()
+
+    progress_span.innerHTML = 'scroll.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+    start_resizable()
+
+    progress_span.innerHTML = 'resizable.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+    start_update_time_chat()
+
+    progress_span.innerHTML = 'auto update time chat.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+    start_events_log('div-events')
+
+    progress_span.innerHTML = 'get event logs.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+    start_event_updatetime()
+
+    progress_span.innerHTML = 'auto update time events.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+    prediction_small()
+
+    progress_span.innerHTML = 'predicitons status.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+    poll_small()
+
+    progress_span.innerHTML = 'polls status.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+    goal()
+
+    progress_span.innerHTML = 'goal status.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+    start_profile_info()
+
+    progress_span.innerHTML = 'streamer profile info.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+    $('#main').removeClass('d-none')
+    $('#loading').addClass('remove-loading')
+
+    setTimeout(function() {
+      $('#loading').addClass('d-none');
+    }, 1000);
+
+    progress_span.innerHTML = 'remove loading.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+    start_carousel()
+
+    progress_span.innerHTML = 'start info carroucel.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+    progress_span.innerHTML = 'Finish start.'
+    functionsExecuted++;
+    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+  }
+
+});
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function start_selectpicker(){
   $('select').selectpicker({
     liveSearch: true,
     showSubtext: true,
@@ -22,10 +173,11 @@ $(document).ready(async function () {
     liveSearchPlaceholder: "Pesquise o item",
     noneSelectedText : 'Selecione um item'
   });
+}
+function start_carousel(){
 
   const carousel = document.querySelector('.carousel');
   const flkty = new Flickity(carousel, {
-    // Opções do Flickity aqui
     contain: true,
     wrapAround: true,
     autoPlay: true,
@@ -33,50 +185,175 @@ $(document).ready(async function () {
     pageDots: false,
     setGallerySize: false
   });
+}
+function start_scroll(){
 
-  var disclosure = await eel.disclosure_py('get','null')();
-  if (disclosure){
-      document.getElementById('message-disclosure-send').value = disclosure
-  }
-  
+  const scrollToBottomButton = document.querySelector("#scrollBtn");
+  const chatWindow = document.getElementById("chat-block-inner");
 
-});
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  scrollToBottomButton.addEventListener("click", () => {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  });
+
+
+  chatWindow.addEventListener("scroll", () => {
+    if (chatWindow.scrollTop < chatWindow.scrollHeight - chatWindow.clientHeight) {
+      scrollToBottomButton.classList.add("show");
+    } else {
+      scrollToBottomButton.classList.remove("show");
+    }
+  });
+
+
+  const scrollToBottomButtontwo = document.querySelector("#scrollBtntwo");
+  const chatWindowtwo = document.getElementById("chat-block-inner-two");
+
+
+  scrollToBottomButtontwo.addEventListener("click", () => {
+    chatWindowtwo.scrollTop = chatWindowtwo.scrollHeight;
+  });
+
+  chatWindowtwo.addEventListener("scroll", () => {
+    if (chatWindowtwo.scrollTop < chatWindowtwo.scrollHeight - chatWindowtwo.clientHeight) {
+      scrollToBottomButtontwo.classList.add("show");
+    } else {
+      scrollToBottomButtontwo.classList.remove("show");
+    }
+  });
+
+
+  const scrollToBottomButtonthree = document.querySelector("#scrollBtnthree");
+  const chatWindowthree = document.getElementById("chat-block-inner-three");
+
+
+  scrollToBottomButtonthree.addEventListener("click", () => {
+    chatWindowthree.scrollTop = chatWindowthree.scrollHeight;
+  });
+
+
+  chatWindow.addEventListener("scroll", () => {
+    if (chatWindowthree.scrollTop < chatWindowthree.scrollHeight - chatWindowthree.clientHeight) {
+      scrollToBottomButtonthree.classList.add("show");
+    } else {
+      scrollToBottomButtonthree.classList.remove("show");
+    }
+  });
+
 }
 
-eel.expose(receive_live_info)
+function start_sidebar(){
+  const hoverDiv = document.querySelector('#sidebarMenu');
+  const showDiv = document.querySelector('#sidebarMenu-hidden');
+  
+  function show_navbar(type_id){
+    if(type_id == 'show'){
+      showDiv.classList.add('sidebarMenu-show');
+    } else if (type_id == 'hidden'){
+      showDiv.classList.remove('sidebarMenu-show');
+    }
+  }
+  
+  hoverDiv.addEventListener('mouseenter',() => {
+    show_navbar('show');
+  });
+
+  showDiv.addEventListener('mouseleave',() => {
+    show_navbar('hidden');
+  });
+
+}
+
+function start_resizable(){
+
+  $('#events-col').resizable({
+    handles: 'e',
+    resize: function(event, ui) {
+
+      var largura2 = 100 - (ui.size.width / $(this).parent().width() * 100);
+  
+      var chat_col = $('#chat-col');
+      chat_col.css('width', largura2 + '%');
+    }
+  });
+
+  $('#user-list-side').resizable({
+    handles: 'e',
+    resize: function(event, ui) {
+
+      var largura_side = 100 - (ui.size.width / $(this).parent().width() * 100);
+  
+      var chat_col_side = $('#chat-list-side');
+      chat_col_side.css('width', largura_side + '%');
+    }
+  });
+
+  $('#colapse-recent').resizable({
+    handles: 's'
+  });
+
+
+  $("#user-list-inner").resizable({
+    handles: "s",
+    minHeight: "20%",
+    maxHeight: "80%",
+    containment: "#chat-list",
+    alsoResize: false,
+    start: function(event, ui) {
+      var userHeight = ui.size.height;
+      var chatHeight = $(this).parent().height() - userHeight;
+      $("#chat-list-inner").height(chatHeight);
+      $('#user-list-inner').css('width', '100%');
+    },
+    resize: function(event, ui) {
+      var userHeight = ui.size.height;
+      var chatHeight = $(this).parent().height() - userHeight;
+      
+      $("#chat-list-inner").height(chatHeight);
+      $('#user-list-inner').css('width', '100%');
+
+    },
+    stop: function(event, ui) {
+      $('#user-list-inner').css('width', '100%');
+    }
+  });
+  
+}
+
 function receive_live_info(data){
 
-    const spec_data = JSON.parse(data);
+    document.getElementById('text-counter').innerText = " " + data.specs;
+    document.getElementById('time-in-live').innerText = data.time;
 
-    document.getElementById('text-counter').innerText = " " + spec_data.specs;
-    document.getElementById('time-in-live').innerText = spec_data.time;
-
-    if (spec_data.specs != 'Offline'){
+    if (data.specs != 'Offline'){
         document.getElementById('live-dot').style.color = 'red';
     }
 }
 
-eel.profile_info()(async function(data_auth){
 
-    const data_profile = JSON.parse(data_auth);
+async function start_profile_info(){
 
-    var profile_image = document.getElementById("profile_image");
-    var profile_image_new = profile_image.src;
-    profile_image.src = profile_image_new; 
+  profile_info = await window.pywebview.api.profile_info();
 
-    document.getElementById('email').innerText = data_profile.email;;
-    document.getElementById('user_id').innerText = data_profile.user_id;
-    document.getElementById('ex_name').innerText = data_profile.display_name;
-    document.getElementById('login_name').innerText = data_profile.login_name;
+    if (profile_info){
+
+      profile_info = JSON.parse(profile_info)
+
+      var profile_image = document.getElementById("profile_image");
+      var profile_image_new = profile_image.src;
+      profile_image.src = profile_image_new; 
+
+      document.getElementById('email').innerText = profile_info.email;;
+      document.getElementById('user_id').innerText = profile_info.user_id;
+      document.getElementById('ex_name').innerText = profile_info.display_name;
+      document.getElementById('login_name').innerText = profile_info.login_name;
+    }
     
-})
+};
 
 async function create_clip() {
   var buttom_clip = document.getElementById('create-clip');
-  eel.clip()
+  window.pywebview.api.clip()
   buttom_clip.disabled = true;
   buttom_clip.classList.add('disabled');
   await sleep(5000)
@@ -84,7 +361,6 @@ async function create_clip() {
   buttom_clip.classList.remove('disabled');
 }
 
-eel.expose(toast_notifc);
 function toast_notifc(text){
 
   if (text == 'error'){
@@ -123,16 +399,7 @@ function logout() {
 }
 
 function confirm_logout(){
-  eel.logout_auth()
-}
-
-eel.expose(callback_obs);
-function callback_obs(type_id){
-  if(type_id == 'sucess'){
-    document.getElementById('obs_conn_status').innerHTML = 'Conectado'
-  } else if (type_id == 'error'){
-    document.getElementById('obs_conn_status').innerHTML = 'Desconectado'
-  }
+  window.pywebview.api.logout_auth()
 }
 
 async function disclosure(event,type_id){
@@ -146,7 +413,7 @@ async function disclosure(event,type_id){
       var button_copy = document.getElementById("copy-dis");
       var button_save = document.getElementById("submit-message-disclosure");
     
-      eel.disclosure_py(type_id,disclosure);
+      window.pywebview.api.disclosure_py(type_id,disclosure);
     
       button_copy.disabled = true;
       button_save.disabled = true;
@@ -183,11 +450,10 @@ async function disclosure(event,type_id){
   }
 }
 
-eel.expose(update_modal);
 async function update_modal(type_id){
 
   if (type_id == 'get'){
-    var status = await eel.update_check('check')();
+    var status = await window.pywebview.api.update_check('check');
 
     if(status){
       if (status == 'true'){
@@ -197,7 +463,7 @@ async function update_modal(type_id){
       }
     }
   } else if (type_id == 'open'){
-    eel.update_check('open')();
+    window.pywebview.api.update_check('open');
   }
 }
 
@@ -238,10 +504,7 @@ async function updateTimeDiff() {
   }
 }
 
-eel.expose(update_div_redeem);
-function update_div_redeem(data_redeem) {
-
-    var data_redem_parse = JSON.parse(data_redeem);
+function update_div_redeem(data_redem_parse) {
 
     var image_redeem = document.getElementById("image_redeem");
     var name_redeem = document.getElementById("name_redeem");
@@ -256,7 +519,7 @@ function update_div_redeem(data_redeem) {
 
 
 async function getFolder(id,type_id) {
-  var dosya_path = await eel.select_file_py(type_id)();
+  var dosya_path = await window.pywebview.api.select_file_py(type_id);
   if (dosya_path) {
       document.getElementById(id).value = dosya_path;
       if (id == 'file-select-notific'){
@@ -264,41 +527,6 @@ async function getFolder(id,type_id) {
       }
   }
 }
-
-var redeem_icon =  document.querySelector('#redeem-icon-toggler');
-var collpase_redeem = document.getElementById('colapse-redeem')
-
-collpase_redeem.addEventListener('hidden.bs.collapse', function () {
-  redeem_icon.innerHTML = "<i class='fa-solid fa-square-caret-down'></i>"
-})
-
-collpase_redeem.addEventListener('shown.bs.collapse', function () {
-  redeem_icon.innerHTML = "<i class='fa-solid fa-square-caret-up'></i>"
-})
-
-var utils_icon =  document.querySelector('#utils-icon-toggler');
-var collpase_utils = document.getElementById('colapse-utils')
-
-collpase_utils.addEventListener('hidden.bs.collapse', function () {
-  utils_icon.innerHTML = "<i class='fa-solid fa-square-caret-down'></i>"
-})
-
-collpase_utils.addEventListener('shown.bs.collapse', function () {
-  utils_icon.innerHTML = "<i class='fa-solid fa-square-caret-up'></i>"
-})
-
-
-var carroucel_icon =  document.querySelector('#carroucel-icon-toggler');
-var collpase_carroucel = document.getElementById('colapse-carroucel')
-
-collpase_utils.addEventListener('hidden.bs.collapse', function () {
-  carroucel_icon.innerHTML = "<i class='fa-solid fa-square-caret-down'></i>"
-})
-
-collpase_utils.addEventListener('shown.bs.collapse', function () {
-  carroucel_icon.innerHTML = "<i class='fa-solid fa-square-caret-up'></i>"
-})
-
 
 const div_events_scroll = document.getElementById("div-events");
 
@@ -309,11 +537,11 @@ div_events_scroll.addEventListener("scroll",async function() {
 
   if (div_events_scroll.scrollTop + div_events_scroll.clientHeight >= div_events_scroll.scrollHeight) {
 
-    var list_messages = await eel.event_log('get', 'null')();
+    var list_messages_parse = await window.pywebview.api.event_log('get', 'null');
 
-    if (list_messages) {
+    if (list_messages_parse) {
 
-      var list_messages_parse = JSON.parse(list_messages);
+      list_messages_parse = JSON.parse(list_messages_parse);
       var lista = list_messages_parse.messages
 
       lista.reverse()
@@ -403,3 +631,58 @@ div_events_scroll.addEventListener("scroll",async function() {
     
   }
 });
+
+
+let mode = 0
+function mode_change(){
+  
+  var tabs = document.getElementById('nav-tabContent');
+  var chat_list = document.getElementById('chat-list');
+  var side_side = document.getElementById('chat-side');
+
+  var chat_button = document.getElementById('nav-chat-tab');
+  var user_list_button = document.getElementById('nav-users-tab');
+
+  if(mode == 2){
+
+    tabs.hidden = false
+    chat_list.hidden = true
+    side_side.hidden = true
+
+    chat_button.hidden = false
+    user_list_button.hidden = false
+
+    mode = 0
+
+  } else if(mode == 0){
+
+    tabs.hidden = true
+    chat_list.hidden = false
+    side_side.hidden = true
+
+    chat_button.hidden = true
+    user_list_button.hidden = true
+    mode = 1
+
+  } else if(mode == 1){
+    
+    tabs.hidden = true
+    chat_list.hidden = true
+    side_side.hidden = false
+
+    chat_button.hidden = true
+    user_list_button.hidden = true
+    mode = 2
+
+  }
+}
+
+
+function openNav() {
+  document.getElementById("sidebarMenu").style.width = "20%";
+}
+
+/* Set the width of the sidebar to 0 and the left margin of the page content to 0 */
+function closeNav() {
+  document.getElementById("sidebarMenu").style.width = "0";
+}

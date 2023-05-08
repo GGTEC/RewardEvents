@@ -6,13 +6,11 @@ function sleep(ms) {
 
 async function get_redeem_js_config(el_id) {
 
-    var list_redem = await eel.get_redeem('player')();
+    var list_redem_parse = await window.pywebview.api.get_redeem('player');
 
-    if (list_redem) {
+    if (list_redem_parse) {
         
         $("#" + el_id).empty();
-
-        var list_redem_parse = JSON.parse(list_redem);
 
         $("#" + el_id).append('<option style="background: #000; color: #fff;" value="None">Sem recompensa</option>');
         $("#" + el_id).selectpicker("refresh");
@@ -38,11 +36,10 @@ async function get_messages_config_js() {
     var enable_message_next = document.getElementById("enable-message-next");
     var enable_message_error_music = document.getElementById("enable-message-error-music");
 
-    var messages_status = await eel.get_messages_config()();
+    var messages_status_parse = await window.pywebview.api.messages_config();
 
-    if (messages_status) {
+    if (messages_status_parse) {
 
-        var messages_status_parse = JSON.parse(messages_status);
 
         if (messages_status_parse.STATUS_TTS == 1) {
             enable_tts_command.checked = true;
@@ -79,12 +76,11 @@ async function obs_config_js(event,type_id) {
 
     if (type_id == 'get'){
 
-        var conn_info = await eel.obs_config_py(type_id,'null')();
+        var conn_info_parse = await window.pywebview.api.obs_config_py(type_id,'null');
 
-        if (conn_info) {
+        if (conn_info_parse) {
 
-            var conn_info_parse = JSON.parse(conn_info);
-
+            conn_info_parse = JSON.parse(conn_info_parse)
             document.getElementById("obs-host").value = conn_info_parse.host;
             document.getElementById("obs-port").value = conn_info_parse.port;
             document.getElementById("obs-password").value = conn_info_parse.password;
@@ -101,11 +97,10 @@ async function obs_config_js(event,type_id) {
         var time_show_not_events = document.getElementById('time-show-not-events')
         var time_show_not = document.getElementById('time-show-not')
 
-        var not_info = await eel.obs_config_py(type_id,'null')();
+        var not_info_parse = await window.pywebview.api.obs_config_py(type_id,'null');
 
-        if (not_info) {
-
-            var not_info_parse = JSON.parse(not_info);
+        if (not_info_parse) {
+            not_info_parse = JSON.parse(not_info_parse)
 
             not_enabled.checked = not_info_parse.html_active == 1 ? true : false;
             not_music.checked = not_info_parse.html_player_active == 1 ? true : false;
@@ -140,7 +135,7 @@ async function obs_config_js(event,type_id) {
         };
     
         var formData = JSON.stringify(data);
-        eel.obs_config_py(type_id,formData);
+        window.pywebview.api.obs_config_py(type_id,formData);
 
     } else if (type_id == 'save_not'){
         event.preventDefault();
@@ -171,7 +166,7 @@ async function obs_config_js(event,type_id) {
         };
     
         var formData = JSON.stringify(data);
-        eel.obs_config_py(type_id,formData);
+        window.pywebview.api.obs_config_py(type_id,formData);
 
     }
 
@@ -188,7 +183,7 @@ async function config_responses_js(event,fun_id_responses) {
 
     if (fun_id_responses == 'get_response'){
 
-        var messages = await eel.responses_config('get_response',select_id_el,'none')();
+        var messages = await window.pywebview.api.responses_config('get_response',select_id_el,'none');
     
         if (messages) {
 
@@ -254,7 +249,7 @@ async function config_responses_js(event,fun_id_responses) {
 
     } else if (fun_id_responses == "save-response"){
 
-        eel.responses_config('save_response',select_id_el,in_reponse_el.value)
+        window.pywebview.api.responses_config('save_response',select_id_el,in_reponse_el.value)
         in_reponse_el = '';
     }
 }
@@ -389,13 +384,11 @@ function config_messages_change(event) {
 
     var formData = JSON.stringify(data);
 
-    eel.save_messages_config(formData);
+    window.pywebview.api.save_messages_config(formData);
 }
 
 function test_not(){
     var type_id = document.getElementById('type_edit_not').value
-
-    console.log(type_id)
 
     if (type_id == 'follow'){
 
@@ -436,12 +429,12 @@ function test_not(){
         }
 
         var not_data = JSON.stringify(data);
-        eel.on_message('null',not_data);
+        window.pywebview.api.on_message('null',not_data);
 
     } else if (type_id == 'sub'){
 
         msg = '@badge-info=subscriber/1;badges=subscriber/0,premium/1;color=#8A2BE2;display-name=Teste;emotes=;flags=;id=00000;login=teste;mod=0;msg-id=sub;msg-param-cumulative-months=1;msg-param-goal-contribution-type=SUB_POINTS;msg-param-goal-current-contributions=1;msg-param-goal-target-contributions=50;msg-param-goal-user-contributions=1;msg-param-months=0;msg-param-multimonth-duration=1;msg-param-multimonth-tenure=0;msg-param-should-share-streak=0;msg-param-sub-plan-name=GG\sSubzim;msg-param-sub-plan=Prime;msg-param-was-gifted=false;room-id=779823875;subscriber=1;system-msg=Teste\ssubscribed\swith\sPrime.;tmi-sent-ts=1676675858543;user-id=0000000;user-type= :tmi.twitch.tv USERNOTICE #{USERLOGIN} : Teste de mensagem'
-        eel.command_fallback(msg);
+        window.pywebview.api.command_fallback(msg);
 
     } else if (type_id == 'resub'){
         
@@ -495,12 +488,12 @@ function test_not(){
         }
 
         var not_data = JSON.stringify(data);
-        eel.on_message('null',not_data);
+        window.pywebview.api.on_message('null',not_data);
 
     } else if (type_id == 'giftsub'){
 
         msg = '@badge-info=subscriber/1;badges=subscriber/0,sub-gifter/1;color=#FF00BD;display-name=Teste;emotes=;flags=;id=5b075d17-5802-4edd-b6fa-e499351cf3fc;login=Teste;mod=0;msg-id=subgift;msg-param-gift-months=1;msg-param-goal-contribution-type=SUBS;msg-param-goal-current-contributions=14;msg-param-goal-target-contributions=20;msg-param-goal-user-contributions=1;msg-param-months=3;msg-param-origin-id=35\s7d\sd3\sef\s36\s68\s30\sb0\s25\sb2\s26\sf1\se0\sce\sf0\sa4\sd0\sc3\sd9\sae;msg-param-recipient-display-name=TesteRecebe;msg-param-recipient-id=00000000;msg-param-recipient-user-name=testerecebe;msg-param-sender-count=1;msg-param-sub-plan-name=GG\sSubzim;msg-param-sub-plan=1000;room-id=779823875;subscriber=1;system-msg=Teste\sgifted\sa\sTier\s1\ssub\sto\sTesteRecebe!\sThis\sis\stheir\sfirst\sGift\sSub\sin\sthe\schannel!;tmi-sent-ts=1678225751303;user-id=490633382;user-type= :tmi.twitch.tv USERNOTICE #gg_tec'
-        eel.command_fallback(msg);
+        window.pywebview.api.command_fallback(msg);
          
     } else if (type_id == 'raid'){
         
@@ -541,7 +534,7 @@ function test_not(){
         }
 
         var not_data = JSON.stringify(data);
-        eel.on_message('null',not_data);
+        window.pywebview.api.on_message('null',not_data);
 
     } else if (type_id == 'bits1'){
         
@@ -584,7 +577,7 @@ function test_not(){
         }
 
         var not_data = JSON.stringify(data);
-        eel.on_message('null',not_data);
+        window.pywebview.api.on_message('null',not_data);
 
     } else if (type_id == 'bits100'){
 
@@ -628,7 +621,7 @@ function test_not(){
         }
 
         var not_data = JSON.stringify(data);
-        eel.on_message('null',not_data);
+        window.pywebview.api.on_message('null',not_data);
 
     } else if (type_id == 'bits1000'){
 
@@ -671,7 +664,7 @@ function test_not(){
         }
 
         var not_data = JSON.stringify(data);
-        eel.on_message('null',not_data);
+        window.pywebview.api.on_message('null',not_data);
         
     } else if (type_id == 'bits5000'){
 
@@ -715,7 +708,7 @@ function test_not(){
         }
 
         var not_data = JSON.stringify(data);
-        eel.on_message('null',not_data);
+        window.pywebview.api.on_message('null',not_data);
         
     }
 }
@@ -728,12 +721,12 @@ async function sr_config_js(event,type_id){
         var check_seletor = document.querySelector('#music-enable');
         var max_duration = document.getElementById("max-duration")
     
-        var data = await eel.sr_config_py(type_id,'null')();
+        var music_config = await window.pywebview.api.sr_config_py(type_id,'null');
     
-        if(data){
-    
-            var music_config = JSON.parse(data);
-    
+        if(music_config){
+            
+            music_config = JSON.parse(music_config)
+
             if(music_config.not_status == 1){
                 music_not_status.checked = true
             }
@@ -760,13 +753,13 @@ async function sr_config_js(event,type_id){
         var command_player_status = document.getElementById('command-player-status');
         var command_player_delay = document.getElementById('command-player-delay');
 
-        var command_data = await eel.sr_config_py(type_id,select_command_player.value)()
+        var command_data_parse = await window.pywebview.api.sr_config_py(type_id,select_command_player.value)
 
-        if (command_data){
+        if (command_data_parse){
+
+            command_data_parse = JSON.parse(command_data_parse)
 
             form_player.hidden = false
-
-            var command_data_parse = JSON.parse(command_data);
 
             command_player_command.value = command_data_parse.command
             command_player_status.checked = command_data_parse.status == 1 ? true : false
@@ -797,7 +790,7 @@ async function sr_config_js(event,type_id){
         }
 
         var formData = JSON.stringify(data);
-        eel.sr_config_py(type_id,formData);
+        window.pywebview.api.sr_config_py(type_id,formData);
 
     } else if (type_id == 'save'){
 
@@ -817,15 +810,13 @@ async function sr_config_js(event,type_id){
         }
     
         var formData = JSON.stringify(data);
-        eel.sr_config_py(type_id,formData);
+        window.pywebview.api.sr_config_py(type_id,formData);
         
     } else if (type_id == 'list_get'){
 
-        var music_data = await eel.sr_config_py(type_id,'null')()
+        var music_data_parse = await window.pywebview.api.sr_config_py(type_id,'null')
         
-        if (music_data){
-
-            var music_data_parse = JSON.parse(music_data);
+        if (music_data_parse){
 
             $("#modal_list_block").modal("show")
 
@@ -844,7 +835,7 @@ async function sr_config_js(event,type_id){
 
         var blocked_music = document.getElementById('blocked-music').value;
 
-        eel.sr_config_py(type_id,blocked_music);
+        window.pywebview.api.sr_config_py(type_id,blocked_music);
 
         blocked_music.value = '';
         
@@ -852,7 +843,7 @@ async function sr_config_js(event,type_id){
 
         var blocked_music = document.getElementById('blocked-music').value;
 
-        eel.sr_config_py(type_id,blocked_music);
+        window.pywebview.api.sr_config_py(type_id,blocked_music);
 
         blocked_music.value = '';
         
@@ -879,12 +870,11 @@ async function not_config_js(event, type_id, type_not){
 
     if (type_id == 'get'){ 
 
-        var not_config_data = await eel.not_config_py('data',type_id, type_not)();
+        var not_config_data_load = await window.pywebview.api.not_config_py('data',type_id, type_not);
 
-        if (not_config_data){
+        if (not_config_data_load){
 
-            var not_config_data_load = JSON.parse(not_config_data);
-
+            not_config_data_load = JSON.parse(not_config_data_load)
             type_edit.value = type_not
 
             not.checked = not_config_data_load.not == 1 ? true : false;
@@ -925,7 +915,7 @@ async function not_config_js(event, type_id, type_not){
         }
 
         var formData = JSON.stringify(data);
-        eel.not_config_py(formData,type_id,type_edit.value);
+        window.pywebview.api.not_config_py(formData,type_id,type_edit.value);
 
     } else if (type_id == 'select_edit'){
 
@@ -958,11 +948,11 @@ async function userdata_js(type_id,data){
 
     if (type_id == "get"){
 
-        var userdata = ""
-        var userdata = await eel.userdata_py('get','None')()
+        var userdata_parse = await window.pywebview.api.userdata_py('get','None')
         
-        if (userdata){
+        if (userdata_parse){
 
+            userdata_parse = JSON.parse(userdata_parse)
             if ($.fn.DataTable.isDataTable("#userdata_table")) {
                 $('#userdata_table').DataTable().clear().draw();
                 $('#userdata_table').DataTable().destroy();
@@ -988,7 +978,7 @@ async function userdata_js(type_id,data){
                 ordering:  true,
                 retrieve : false,
                 processing: true,
-                responsive: true,
+                responsive: false,
                 lengthMenu: [
                     [10, 25, 50, -1],
                     [10, 25, 50, 'All'],
@@ -998,10 +988,7 @@ async function userdata_js(type_id,data){
                 }
             } );
 
-            userdata_parse = ""
-            var userdata_parse = JSON.parse(userdata);
 
-            
             for (var key in userdata_parse) {
                 
                     var removeBtn = document.createElement("button");
@@ -1010,7 +997,7 @@ async function userdata_js(type_id,data){
                     removeBtn.setAttribute("title", "Remover usuário");
                     removeBtn.setAttribute("data-toggle", "tooltip");
                     removeBtn.setAttribute("data-bs-placement", "top");
-                    removeBtn.setAttribute("onclick", "eel.userdata_py('remove','" + userdata_parse[key].display_name + "')");
+                    removeBtn.setAttribute("onclick", "window.pywebview.api.userdata_py('remove','" + userdata_parse[key].display_name + "')");
 
                     var removeIcon = document.createElement("i");
                     removeIcon.classList.add("fa-solid", "fa-user-xmark");
@@ -1023,7 +1010,7 @@ async function userdata_js(type_id,data){
                     addBtn.setAttribute("title", "Adicionar na lista de bots e remover desta tabela");
                     addBtn.setAttribute("data-toggle", "tooltip");
                     addBtn.setAttribute("data-bs-placement", "top");
-                    addBtn.setAttribute("onclick", "eel.userdata_py('list_add','" + userdata_parse[key].display_name + "')");
+                    addBtn.setAttribute("onclick", "window.pywebview.api.userdata_py('list_add','" + userdata_parse[key].display_name + "')");
 
                     var addIcon = document.createElement("i");
                     addIcon.classList.add("fa-solid", "fa-robot");
@@ -1065,15 +1052,13 @@ async function userdata_js(type_id,data){
 
             $('[data-toggle="tooltip"]').tooltip();
 
-
-
         }
 
     
     } else if (type_id == 'remove'){
-        eel.userdata_py(type_id,data)
+        window.pywebview.api.userdata_py(type_id,data)
     } else if (type_config == 'list_add'){
-        eel.chat_config(data,type_config);
+        window.pywebview.api.chat_config(data,type_config);
     }
 }
 
@@ -1094,11 +1079,11 @@ async function get_stream_info_test(){
     
     button_submt.disabled = true
     
-    var stream_games_list = await eel.get_stream_info_py()()
+    var stream_games_parse = await window.pywebview.api.get_stream_info_py()
     
-    if (stream_games_list){
+    if (stream_games_parse){
 
-        var stream_games_parse = JSON.parse(stream_games_list);
+        stream_games_parse = JSON.parse(stream_games_parse)
 
         streamer_game = stream_games_parse.game;
         streamer_game_id = stream_games_parse.game_id;
@@ -1291,7 +1276,7 @@ function save_stream_info(){
     }
 
     var formData = JSON.stringify(data);
-    eel.save_stream_info_py(formData);
+    window.pywebview.api.save_stream_info_py(formData);
 
 }
 
@@ -1451,12 +1436,10 @@ async function updateProgressBar_votes() {
         }
     
         var formData = JSON.stringify(data);
-        get_poll = await eel.poll_py(formData)();
+        get_poll_parse = await window.pywebview.api.poll_py(formData);
     
-        if (get_poll){
-            
-            var get_poll_parse = JSON.parse(get_poll);
-    
+        if (get_poll_parse){
+            get_poll_parse = JSON.parse(get_poll_parse)
             var options_poll = get_poll_parse.options
             var status_poll = get_poll_parse.status
             
@@ -1541,11 +1524,10 @@ async function poll(type_id){
         }
 
         var formData = JSON.stringify(data);
-        get_poll = await eel.poll_py(formData)();
+        get_poll_parse = await window.pywebview.api.poll_py(formData);
 
-        if (get_poll){
-            
-            var get_poll_parse = JSON.parse(get_poll);
+        if (get_poll_parse){
+            get_poll_parse = JSON.parse(get_poll_parse)
             var status_poll = get_poll_parse.status
 
             if (status_poll == "started") {
@@ -1635,7 +1617,7 @@ async function poll(type_id){
         }
 
         var formData = JSON.stringify(data);
-        eel.poll_py(formData);
+        window.pywebview.api.poll_py(formData);
     }
 }
 
@@ -1695,11 +1677,11 @@ async function prediction_small() {
     }
 
     var formData = JSON.stringify(data);
-    var pred_info = await eel.prediction_py(formData)()
+    var pred_info_parse = await window.pywebview.api.prediction_py(formData)
 
-    if (pred_info){
+    if (pred_info_parse){
 
-        var pred_info_parse = JSON.parse(pred_info);
+        pred_info_parse = JSON.parse(pred_info_parse)
 
         var status = pred_info_parse.status;
 
@@ -1759,11 +1741,11 @@ async function poll_small() {
     }
 
     var formData = JSON.stringify(data);
-    var poll_info = await eel.poll_py(formData)()
+    var poll_info_parse = await window.pywebview.api.poll_py(formData)
 
-    if (poll_info){
+    if (poll_info_parse){
 
-        var poll_info_parse = JSON.parse(poll_info);
+        poll_info_parse = JSON.parse(poll_info_parse)
 
         var status = poll_info_parse.status;
 
@@ -1813,8 +1795,8 @@ async function poll_small() {
 
             poll_running_div.hidden = true
             poll_start_div.hidden = false
-
             poll_bar_smal.hidden = true
+
             title_current.innerHTML = "Nenhuma votação em andamento."
         }
     }
@@ -1844,10 +1826,7 @@ function show_modal(modal_id){
     modal.show()
 }
 
-eel.expose(prediction);
 async function prediction(type_id) {
-
-    console.log(type_id)
 
     if (type_id == 'start'){
 
@@ -1875,7 +1854,7 @@ async function prediction(type_id) {
         }
 
         var formData = JSON.stringify(data);
-        eel.prediction_py(formData);
+        window.pywebview.api.prediction_py(formData);
 
     } else if (type_id == 'get'){
 
@@ -1884,12 +1863,10 @@ async function prediction(type_id) {
         }
 
         var formData = JSON.stringify(data);
-        var pred_info = await eel.prediction_py(formData)()
+        var pred_info_parse = await window.pywebview.api.prediction_py(formData)
     
-        if (pred_info){
-    
-            var pred_info_parse = JSON.parse(pred_info);
-
+        if (pred_info_parse){
+            pred_info_parse = JSON.parse(pred_info_parse)
             var status = pred_info_parse.status;
 
             var body_running = document.getElementById('current-pred');
@@ -2020,7 +1997,7 @@ async function prediction(type_id) {
         }
 
         var formData = JSON.stringify(data);
-        var pred_info = await eel.prediction_py(formData)()
+        var pred_info = await window.pywebview.api.prediction_py(formData)
 
         status_pred.innerHTML = "Aguardando seleção de resultado."
 
@@ -2043,23 +2020,22 @@ async function prediction(type_id) {
         }
 
         var formData = JSON.stringify(data);
-        eel.prediction_py(formData)
+        window.pywebview.api.prediction_py(formData)
 
         
 
     }
 }
 
-eel.expose(goal);
 async function goal() {
 
     while (true){
 
-        data_goal = await eel.goal_py()()
+        data_goal_parse = await window.pywebview.api.goal_py()
 
-        if (data_goal){
+        if (data_goal_parse){
 
-            var data_goal_parse = JSON.parse(data_goal);
+            data_goal_parse = JSON.parse(data_goal_parse)
 
             var goal_follow_status = document.getElementById('status-goal-follows-small')
             var goal_sub_status = document.getElementById('status-goal-subs-small')
@@ -2133,6 +2109,13 @@ async function event_log_config(type_id){
     var show_join = document.getElementById('show-join');
     var show_leave = document.getElementById('show-leave');
 
+    var show_redeem_chat = document.getElementById('show-redeem-chat');
+    var show_commands_chat = document.getElementById('show-commands-chat');
+    var show_events_chat = document.getElementById('show-events-chat');
+    var show_join_chat = document.getElementById('show-join-chat');
+    var show_leave_chat = document.getElementById('show-leave-chat');
+
+
 
     if (type_id == 'save'){
 
@@ -2142,6 +2125,12 @@ async function event_log_config(type_id){
         show_events = show_events.checked ? 1 : 0;
         show_commands = show_commands.checked ? 1 : 0;
         show_redeem = show_redeem.checked ? 1 : 0;
+        
+        show_join_chat = show_join_chat.checked ? 1 : 0;
+        show_leave_chat = show_leave_chat.checked ? 1 : 0;
+        show_events_chat = show_events_chat.checked ? 1 : 0;
+        show_commands_chat = show_commands_chat.checked ? 1 : 0;
+        show_redeem_chat = show_redeem_chat.checked ? 1 : 0;
 
         data = {
             data_show : show_time_events,
@@ -2150,28 +2139,40 @@ async function event_log_config(type_id){
             show_events : show_events,
             show_commands : show_commands,
             show_redeem : show_redeem,
+            show_join_chat : show_join_chat,
+            show_leave_chat : show_leave_chat,
+            show_events_chat : show_events_chat,
+            show_commands_chat : show_commands_chat,
+            show_redeem_chat : show_redeem_chat,
             font_size : font_size_events.value,
             color_events : color_events
         }
 
         var formData = JSON.stringify(data);
-        eel.event_log(type_id,formData);
+        window.pywebview.api.event_log(type_id,formData);
 
     } else if (type_id == 'get'){
 
-        var event_data = await eel.event_log('get_config','null')()
+        var event_data_parse = await window.pywebview.api.event_log('get_config','null')
 
-        if (event_data){
+        if (event_data_parse){
 
-            var event_data_parse = JSON.parse(event_data);
+            event_data_parse = JSON.parse(event_data_parse)
 
-            font_size_events.value = event_data_parse.font_size == 1 ? true : false;
+            font_size_events.value = event_data_parse.font_size
             show_time_events.checked = event_data_parse.show_time_events == 1 ? true : false;
             show_redeem.checked = event_data_parse.show_redeem == 1 ? true : false;
             show_commands.checked = event_data_parse.show_commands == 1 ? true : false;
             show_events.checked = event_data_parse.show_events == 1 ? true : false; 
             show_join.checked = event_data_parse.show_join == 1 ? true : false;
             show_leave.checked = event_data_parse.show_leave == 1 ? true : false;
+
+
+            show_redeem_chat.checked = event_data_parse.show_redeem_chat == 1 ? true : false;
+            show_commands_chat.checked = event_data_parse.show_commands_chat == 1 ? true : false;
+            show_events_chat.checked = event_data_parse.show_events_chat == 1 ? true : false; 
+            show_join_chat.checked = event_data_parse.show_join_chat == 1 ? true : false;
+            show_leave_chat.checked = event_data_parse.show_leave_chat == 1 ? true : false;
 
             font_size_range.innerHTML = event_data_parse.font_size + 'px';
 
@@ -2192,7 +2193,7 @@ async function show_error_log(type_id){
 
         $('#errorlog-textarea').val('');
 
-        var errors_data = await eel.open_py('errolog','null')()
+        var errors_data = await window.pywebview.api.open_py('errolog','null')
     
         if (errors_data){
     
@@ -2208,7 +2209,7 @@ async function show_error_log(type_id){
         $("#errorlog-modal").modal("hide");
         $('#errorlog-textarea').val('');
 
-        eel.open_py('errolog_clear','null')
+        window.pywebview.api.open_py('errolog_clear','null')
 
     }else if (type_id == 'get-debug'){
 
@@ -2216,7 +2217,7 @@ async function show_error_log(type_id){
 
         $('#debug-textarea').val('');
 
-        var errors_data = await eel.open_py('log','null')()
+        var errors_data = await window.pywebview.api.open_py('log','null')
     
         if (errors_data){
     
@@ -2232,7 +2233,7 @@ async function show_error_log(type_id){
         $("#debug-modal").modal("hide");
         $('#debug-textarea').val('');
 
-        eel.open_py('log_clear','null')
+        window.pywebview.api.open_py('log_clear','null')
     }
 
 }
@@ -2250,12 +2251,10 @@ async function highlight_js(type_id){
 
     if (type_id == 'get'){
 
-        get_highlight = await eel.highlight_py(type_id,'null')();
+        get_highlight_parse = await window.pywebview.api.highlight_py(type_id,'null');
 
-        if (get_highlight){
-
-            var get_highlight_parse = JSON.parse(get_highlight);
-
+        if (get_highlight_parse){
+            get_highlight_parse = JSON.parse(get_highlight_parse)
             status_highlight.checked = get_highlight_parse.status == 1 ? true : false;
 
             $("#source-highlight").append('<option style="background: #000; color: #fff;" value="'+ get_highlight_parse.source_name +'">'+ get_highlight_parse.source_name +'</option>');
@@ -2288,32 +2287,26 @@ async function highlight_js(type_id){
         }
 
         var formData = JSON.stringify(data);
-        eel.highlight_py(type_id,formData);
+        window.pywebview.api.highlight_py(type_id,formData);
     }
 
 }
 
 async function debug_status(type_id){
 
-    console.log(type_id)
-
     var status_debug = document.getElementById("debug-status");
 
     if (type_id == "debug-save"){
 
         status_debug = status_debug.checked ? 1 : 0;
-        
-        console.log(status_debug)
 
-        eel.open_py(type_id,status_debug)
+        window.pywebview.api.open_py(type_id,status_debug)
 
     } else if (type_id == "debug-get"){
 
-        var get_debug = await eel.open_py(type_id,'null')();
+        var get_debug = await window.pywebview.api.open_py(type_id,'null');
 
         if (get_debug){
-            
-            console.log(get_debug)
 
             status_debug.checked = get_debug == 1 ? true : false;
 

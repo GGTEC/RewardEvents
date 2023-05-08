@@ -10,13 +10,13 @@ async function giveaway_js(event,type_id) {
 
         var el_id = "redeem-select-giveaway";
     
-        var giveaway_info = await eel.giveaway_py(type_id,'null')();
+        var giveaway_info = await window.pywebview.api.giveaway_py(type_id,'null');
     
         if (giveaway_info) {
             
             var giveaway_info_parse = JSON.parse(giveaway_info);
     
-            var list_redem = await eel.get_redeem('giveaway')();
+            var list_redem = await window.pywebview.api.get_redeem('giveaway');
     
             if (list_redem) {
     
@@ -75,7 +75,7 @@ async function giveaway_js(event,type_id) {
 
         var giveaway_command_edit = document.getElementById('command_giveaway_form');
 
-        var giveaway_command_data = await eel.giveaway_py(type_id,command_giveaway_select.value)();
+        var giveaway_command_data = await window.pywebview.api.giveaway_py(type_id,command_giveaway_select.value);
 
         if (giveaway_command_data){
 
@@ -93,11 +93,10 @@ async function giveaway_js(event,type_id) {
 
     } else if (type_id == 'show_names'){
 
-        var name_list = await eel.giveaway_py(type_id,'null')();
+        var name_list_parse = await window.pywebview.api.giveaway_py(type_id,'null');
 
-        if (name_list) {
-    
-            name_list_parse = JSON.parse(name_list);
+        if (name_list_parse) {
+
     
             $("#giveaway-modal").modal("show");
     
@@ -152,7 +151,7 @@ async function giveaway_js(event,type_id) {
     
         var formData = JSON.stringify(data);
     
-        eel.giveaway_py(type_id,formData);
+        window.pywebview.api.giveaway_py(type_id,formData);
 
 
     } else if (type_id == 'save_commands'){
@@ -175,7 +174,7 @@ async function giveaway_js(event,type_id) {
         }
 
         var formData = JSON.stringify(data);
-        eel.giveaway_py(type_id,formData);
+        window.pywebview.api.giveaway_py(type_id,formData);
 
     } else if (type_id == 'add_user'){
 
@@ -190,13 +189,13 @@ async function giveaway_js(event,type_id) {
         }
 
         var formData = JSON.stringify(data);
-        eel.giveaway_py(type_id,formData);
+        window.pywebview.api.giveaway_py(type_id,formData);
 
 
     } else if (type_id == 'execute'){
-        eel.giveaway_py(type_id,'null');
+        window.pywebview.api.giveaway_py(type_id,'null');
     } else if (type_id == 'clear_list'){
-        eel.giveaway_py(type_id,'null');
+        window.pywebview.api.giveaway_py(type_id,'null');
     }
 }
 

@@ -1,8 +1,9 @@
-$(document).ready(function () {
+window.addEventListener('pywebviewready', function() {
 
-    updateTimeDiff()
+  start_update_time_chat()
     $("input, select, textarea").attr("autocomplete", "off");
     $("input, select, textarea").attr("spellcheck", "false");
+    
   });
 
 

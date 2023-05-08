@@ -9,13 +9,13 @@ async function get_redeem_js(el_id, type_get) {
 
     if (type_get == 'del' || type_get == 'edit'){
 
-        var list_redem = await eel.get_redeem('del')();
+        var list_redem_parse = await window.pywebview.api.get_redeem('del');
 
-        if (list_redem) {
+        if (list_redem_parse) {
             
+            list_redem_parse = JSON.parse(list_redem_parse)
+
             removeOptions(el_id)
-    
-            var list_redem_parse = JSON.parse(list_redem);
     
             for (var i = 0; i < list_redem_parse.redeem.length; i++) {
                 var optn = list_redem_parse.redeem[i];
@@ -27,13 +27,12 @@ async function get_redeem_js(el_id, type_get) {
 
     } else {
 
-        var list_redem = await eel.get_redeem('null')();
+        var list_redem_parse = await window.pywebview.api.get_redeem('null');
 
-        if (list_redem) {
+        if (list_redem_parse) {
             
+            list_redem_parse = JSON.parse(list_redem_parse)
             removeOptions(el_id)
-
-            var list_redem_parse = JSON.parse(list_redem);
 
             for (var i = 0; i < list_redem_parse.redeem.length; i++) {
                 var optn = list_redem_parse.redeem[i];
@@ -367,7 +366,7 @@ function create_action(event,type_id){
     }
 
     var formData = JSON.stringify(data);
-    eel.create_action_save(formData,type_id);
+    window.pywebview.api.create_action_save(formData,type_id);
 
     $(`#${type_id}-create`)[0].reset();
 
@@ -377,7 +376,7 @@ async function get_scenes(id) {
 
     $("#" + id).empty();
 
-    var list_scenes = await eel.update_scene_obs()();
+    var list_scenes = await window.pywebview.api.update_scene_obs();
 
     if (list_scenes) {
 
@@ -397,7 +396,7 @@ async function get_sources(select_id) {
 
     $("#" + select_id).empty();
 
-    var list_sources = await eel.get_sources_obs()();
+    var list_sources = await window.pywebview.api.get_sources_obs();
 
     if (list_sources) {
         var list_sources_parse = JSON.parse(list_sources);
@@ -418,7 +417,7 @@ async function get_filters(id,id_sources) {
 
     $("#" + id).empty();
 
-    var list_filters = await eel.get_filters_obs(value)();
+    var list_filters = await window.pywebview.api.get_filters_obs(value);
 
     if (list_filters) {
 

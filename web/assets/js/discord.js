@@ -26,7 +26,7 @@ async function discord_js(event,type_id) {
     
         var formData_discord = JSON.stringify(data_discord_save);
     
-        eel.discord_config(formData_discord, 'save', input_type_edit.value);
+        window.pywebview.api.discord_config(formData_discord, 'save', input_type_edit.value);
 
     } else if (type_id == 'select_edit'){
 
@@ -44,12 +44,11 @@ async function discord_js(event,type_id) {
         var webhook_description = document.getElementById('embed-description');
         var webhook_status = document.getElementById('webhook-status');
 
-        var data_discord_receive = await eel.discord_config('none', 'get',select.value)();
+        var data_discord_parse = await window.pywebview.api.discord_config('none', 'get',select.value);
 
-    
-        if (data_discord_receive) {
+        if (data_discord_parse) {
 
-            var data_discord_parse = JSON.parse(data_discord_receive);
+            data_discord_parse = JSON.parse(data_discord_parse)
 
             webhook_url.value = data_discord_parse.url_webhook;
             webhook_color.value = data_discord_parse.embed_color;

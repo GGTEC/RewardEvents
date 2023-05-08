@@ -3,7 +3,6 @@ from PyInstaller.utils.hooks import collect_all
 import os
 
 block_cipher = None
-appdata_path = os.getenv('APPDATA')
 
 a = Analysis(
     ['RewardEvents.py'],
@@ -30,13 +29,13 @@ exe = EXE(
     a.datas,
     [],
     name='RewardEvents',
-    debug=True,
+    debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
-    upx_dir='C://upx/',
+    upx=False,
+    upx_dir='None',
     upx_exclude=[],
-    runtime_tmpdir=f'{appdata_path}/rewardevents/web/src/temp',
+    runtime_tmpdir=None,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,

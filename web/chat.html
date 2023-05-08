@@ -18,72 +18,44 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
     <link href="assets/css/chat.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" />
-    <script type="text/javascript" src="/eel.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet" />
     <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
 </head>
 <body>
     <div class="chat-col-new">
-        <div class="bg-dark nav nav-tabs flex-column flex-sm-row top-tab" id="nav-tab" role="tablist" style="height: 40px;">
-            <button class="nav-link flex-sm-fill text-sm-center active" id="nav-chat-tab"
-                data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab"
-                aria-controls="nav-chat" aria-selected="true">Chat</button>
-            <button class="nav-link flex-sm-fill text-sm-center" id="nav-users-tab"
-                data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab"
-                aria-controls="nav-users" aria-selected="false">Usuários no chat</button>
+        <div class="nav nav-tabs bg-dark  top-tab" id="nav-tab" role="tablist" style="height: 40px;">
+            <button class="nav-link flex-sm-fill text-sm-center active" id="nav-chat-tab" data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab" aria-controls="nav-chat" aria-selected="true">Chat</button>
+            <button class="nav-link flex-sm-fill text-sm-center" id="nav-users-tab" data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab" aria-controls="nav-users" aria-selected="false">
+                Usuários no chat
+            </button>
         </div>
         <div class="tab-content" id="nav-tabContent">
             <div class="tab-pane show active purple-border-block" id="nav-chat" role="tabpanel" aria-labelledby="nav-chat-tab">
-                <div class="tab-chat d-flex flex-column align-items-stretch">
-                    <div class="chat-block-new w-100" id="chat-block">
+                <div class="h-scroll-chat" id="chat-block-out"></div>
+                <form onsubmit="send_message_chat_js(event,'out')">
+                    <div class="input-group form-chat">
+                        <input type="text" class="form-control bg-dark" id="message-chat-send_out"  placeholder="Digite sua mensagem" aria-label="Digite sua mensagem" aria-describedby="button-send" required>
+                        <button class="btn bt-submit" type="submit" id="button-send">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
                     </div>
-                    <form id="input-chat-form" class="form-chat" onsubmit="send_message_chat_js(event)">
-                        <div class="input-group">
-                            <input type="text" class="form-control bg-dark" id="message-chat-send" aria-describedby="submit-message-chat" />
-                            <button class="btn bt-submit" type="submit" id="submit-message-chat"><i class="fa-solid fa-paper-plane"></i></button>
-                        </div>
-                    </form>
-                </div>
+                </form>
             </div>
             <div class="tab-pane purple-border-block" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab">
-                <div class="users-chat-list" id="users-chat-list">
-                    <div class="collapsible">
-                        <div class="d-flex justify-content-between box-collapse-list">
-                            <div>
-                                <h5>Espectadores</h5>
-                            </div>
-                            <div>
-                                <button type="button" class="btn btn-sm bt-submit" onclick="collapse('div_users')">
-                                    <i class="fa-solid fa-square-caret-down fa-lg"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="div_users" class="mt-1">
-                            <div class="d-flex justify-content-between">
-                                <div class="m-1">
-                                    <span class="name-user-list">Carregando, aguarde.</span>
-                                </div>
-                            </div>
-                        </div>
+                <div class="users-chat-list d-flex flex-column" id="user-list-out">
+                    <div class="box-collapse-list">
+                      <div>
+                        <h6 class="m-1 mt-0">Espectadores</h6>
+                      </div>
                     </div>
-                    <div class="collapsible mt-1">
-                        <div class="d-flex justify-content-between box-collapse-list">
-                            <div>
-                                <h5>Bots</h5>
-                                </div>
-                            <div>
-                                <button type="button" class="btn btn-sm bt-submit" onclick="collapse('div_bots')">
-                                    <i class="fa-solid fa-square-caret-down fa-lg"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="div_bots" class="mt-1" hidden>
-                            <div class="d-flex justify-content-between">
-                                <div class="m-1">
-                                    <span class="name-user-list">Carregando, aguarde.</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="mt-1 ms-1" id="div_users_out">
+                    </div>
+                    <div class="box-collapse-list mt-1">
+                      <div>
+                        <h6 class="m-1">Bots</h6>
+                      </div>
+                    </div>
+                    <div class="mt-1 ms-1" id="div_bots_out">
                     </div>
                 </div>
             </div>
@@ -107,6 +79,7 @@
     </div>
 </div>
     <script src="assets/js/chat.js"></script>
+    <script src="assets/js/events_chat.js"></script>
     <script src="assets/js/mainchat.js"></script>
 </body>
 </html>

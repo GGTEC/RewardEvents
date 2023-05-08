@@ -1,9 +1,8 @@
-$(document).ready(function () {
+window.addEventListener('pywebviewready',async function() {
 
-    event_log_js('div-events-w')
-    event_updatetime()
-    $("input, select, textarea").attr("autocomplete", "off");
-    $("input, select, textarea").attr("spellcheck", "false");
+  start_events_log('div-events-w')
+  start_event_updatetime()
+
   });
 
 
@@ -17,11 +16,12 @@ const div_events_w_scroll = document.getElementById("div-events-w");
 const itensPorPagina_w = 10;
 let paginaAtual_w = 1;
 
+
 div_events_w_scroll.addEventListener("scroll",async function() {
 
   if (div_events_w_scroll.scrollTop + div_events_w_scroll.clientHeight >= div_events_w_scroll.scrollHeight) {
 
-    var list_messages = await eel.event_log('get', 'null')();
+    var list_messages = await window.pywebview.api.event_log('get', 'null');
 
     if (list_messages) {
 
@@ -117,13 +117,12 @@ div_events_w_scroll.addEventListener("scroll",async function() {
 });
 
 
-
 div_events_w_scroll.addEventListener("wheel",async function(event) {
   if (event.deltaY > 0) {
     if (div_events_w_scroll.scrollHeight <= div_events_w_scroll.clientHeight) {
       if (div_events_w_scroll.scrollTop + div_events_w_scroll.clientHeight >= div_events_w_scroll.scrollHeight) {
 
-        var list_messages = await eel.event_log('get', 'null')();
+        var list_messages = await window.pywebview.api.event_log('get', 'null');
     
         if (list_messages) {
     

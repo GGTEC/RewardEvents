@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,8 +18,7 @@
   <script src="https://cdn.datatables.net/responsive/2.4.0/js/dataTables.responsive.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/css/bootstrap-select.min.css"
-    rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/css/bootstrap-select.min.css" rel="stylesheet">
 
   <script src="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/js/bootstrap-select.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
@@ -30,96 +28,135 @@
   <link href="assets/css/style.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/flickity@2.3.0/dist/flickity.min.css">
   <script src="https://unpkg.com/flickity@2.3.0/dist/flickity.pkgd.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/gh/hung1001/font-awesome-pro-v6@44659d9/css/all.min.css" rel="stylesheet" type="text/css" />
   <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet">
   <script src="https://cdn.plyr.io/3.7.3/plyr.polyfilled.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dragscroll/0.0.8/dragscroll.js"></script>
   <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
-  <script src="/eel.js"></script>
+  <script src="assets/js/jquery-ui.js"></script>
+  <link rel="stylesheet" href="assets/css/jquery-ui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
 </head>
-
-<body class="main">
-  <div class="d-flex flex-column content main-sub">
-    <div class="row">
-      <div class="col-2 p-0">
-        <div id="sidebarMenu" class="bg-dark nav flex-column nav-pills sidebar-nav">
-          <button class="nav-link item active" id="v-pills-resgates-tab" data-bs-toggle="pill"
-            data-bs-target="#v-pills-resgates" type="button" role="tab" aria-controls="v-pills-resgates"
-            aria-selected="true">
-            <i class="fa-sharp fa-solid fa-cart-arrow-down m-2"></i>
-            <span>Resgates</span>
-          </button>
-          <button class="nav-link item" id="v-pills-acoes-tab" data-bs-toggle="pill" data-bs-target="#v-pills-acoes"
-            type="button" role="tab" aria-controls="v-pills-acoes" aria-selected="true">
-            <i class="fa-sharp fa-solid fa-location-arrow m-2"></i>
-            <span>Ações</span>
-          </button>
-          <button class="nav-link item" id="v-pills-comandos-tab" data-bs-toggle="pill"
-            data-bs-target="#v-pills-comandos" type="button" role="tab" aria-controls="v-pills-comandos"
-            aria-selected="true">
-            <i class="fa-sharp fa-solid fa-terminal m-2"></i>
-            <span>Comandos</span>
-          </button>
-          <button class="nav-link item" id="v-pills-timers-tab" onclick="timer_js('event','get')" data-bs-toggle="pill"
-            data-bs-target="#v-pills-timers" type="button" role="tab" aria-controls="v-pills-timers"
-            aria-selected="true">
-            <i class="fa-solid fa-clock m-2"></i>
-            <span>Timers</span>
-          </button>
-          <button class="nav-link item" id="v-pills-giveaway-tab" onclick="giveaway_js('event','get_config')"
-            data-bs-toggle="pill" data-bs-target="#v-pills-giveaway" type="button" role="tab"
-            aria-controls="v-pills-giveaway" aria-selected="true">
-            <i class="fa-sharp fa-solid fa-clover m-2"></i>
-            <span>Sorteio</span>
-          </button>
-          <button class="nav-link item" id="v-pills-counter-tab" onclick="counter_js('get_counter_config',event)"
-            data-bs-toggle="pill" data-bs-target="#v-pills-counter" type="button" role="tab"
-            aria-controls="v-pills-counter" aria-selected="true">
-            <i class="fa-solid fa-stopwatch-20 m-2"></i>
-            <span>Contador</span>
-          </button>
-          <button class="nav-link item" id="v-pills-queue-tab" onclick="queue_js('get',event)" data-bs-toggle="pill"
-            data-bs-target="#v-pills-queue" type="button" role="tab" aria-controls="v-pills-queue" aria-selected="true">
-            <i class="fa-solid fa-stopwatch-20 m-2"></i>
-            <span>Fila (Queue)</span>
-          </button>
-          <button class="nav-link item" id="v-pills-player-tab" data-bs-toggle="pill" data-bs-target="#v-pills-player"
-            type="button" role="tab" aria-controls="v-pills-player" aria-selected="true">
-            <i class="fa-solid fa-music m-2"></i>
-            <span>Player</span>
-          </button>
-          <button class="nav-link item" id="v-pills-config-tab" data-bs-toggle="pill" data-bs-target="#v-pills-config"
-            type="button" role="tab" aria-controls="v-pills-config" aria-selected="true">
-            <i class="fa-sharp fa-solid fa-gear m-2"></i>
-            <span>Configurações</span>
-          </button>
-          <button class="nav-link item" id="v-pills-perfil-tab" data-bs-toggle="pill" data-bs-target="#v-pills-perfil"
-            type="button" role="tab" aria-controls="v-pills-perfil" aria-selected="true">
-            <i class="fa-sharp fa-solid fa-user m-2"></i>
-            <span>Perfil</span>
-          </button>
-          <button class="nav-link item" id="v-pills-sobre-tab" onclick="debug_status('debug-get')" data-bs-toggle="pill" data-bs-target="#v-pills-sobre"
-            type="button" role="tab" aria-controls="v-pills-sobre" aria-selected="true">
-            <i class="fa-sharp fa-solid fa-circle-question m-2"></i>
-            <span>Sobre</span>
-          </button>
-          <button class="nav-link item" id="logout" type="button" onclick="logout()" aria-selected="true">
-            <i class="fa-solid fa-right-from-bracket m-2"></i>
-            <span>Logout</span>
-          </button>
+<body class="main" id="body-pd">
+  <div class="loading" id="loading">
+    <div class="container">
+        <div class="row vh-100">
+            <div class="col-sm-12 my-auto">
+                <div class="card card-block w-50 mx-auto text-center">
+                    <div class="card-body">
+                        <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+                        <h5 class="card-title">Carregando... <span id="progress-span"></span></h5>
+                        <div id="progress-start" class="progress h-auto bg-black">
+                          <div class="progress-bar progress-bar-striped progress-bar-animated"
+                            id="progress-bar-start" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="col vh-100 pe-3 ps-0">
-        <div class="tab-content center-content" id="v-pills-tabContent">
-          <div class="tab-pane show active vh-100" id="v-pills-resgates" role="tabpanel"
-            aria-labelledby="v-pills-resgates-tab">
-            <div class="row p-2">
-              <div class="col" style="max-height: 85vh;">
+    </div>
+  </div>
+  <div id="main" class="d-none">
+      <div class="row d-flex">
+        <nav id="sidebarMenu-hidden" class=" sidebar">
+          <div class="nav  w-100">
+            <button class="nav-link item active" id="v-pills-resgates-tab" data-bs-toggle="pill" data-bs-target="#v-pills-resgates" type="button" role="tab" aria-controls="v-pills-resgates" aria-selected="true">
+              <i class="fa-sharp fa-solid fa-cart-arrow-down m-2"></i>
+                <span>Resgates</span>
+              </button>
+              <button class="nav-link item" id="v-pills-acoes-tab" data-bs-toggle="pill" data-bs-target="#v-pills-acoes" type="button" role="tab" aria-controls="v-pills-acoes" aria-selected="true">
+                <i class="fa-sharp fa-solid fa-location-arrow m-2"></i>
+                <span>Ações</span>
+              </button>
+              <button class="nav-link item" id="v-pills-comandos-tab" data-bs-toggle="pill" data-bs-target="#v-pills-comandos" type="button" role="tab" aria-controls="v-pills-comandos">
+                <i class="fa-sharp fa-solid fa-terminal m-2"></i>
+                <span>Comandos</span>
+              </button>
+              <button class="nav-link item" id="v-pills-timers-tab" onclick="timer_js('event','get')" data-bs-toggle="pill" data-bs-target="#v-pills-timers" type="button" role="tab" aria-controls="v-pills-timers">
+                <i class="fa-solid fa-clock m-2"></i>
+                <span>Timers</span>
+              </button>
+              <button class="nav-link item" id="v-pills-giveaway-tab" onclick="giveaway_js('event','get_config')" data-bs-toggle="pill" data-bs-target="#v-pills-giveaway" type="button" role="tab" aria-controls="v-pills-giveaway" >
+                <i class="fa-sharp fa-solid fa-clover m-2"></i>
+                <span>Sorteio</span>
+              </button>
+              <button class="nav-link item" id="v-pills-counter-tab" onclick="counter_js('get_counter_config',event)" data-bs-toggle="pill" data-bs-target="#v-pills-counter" type="button" role="tab" aria-controls="v-pills-counter" >
+                <i class="fa-solid fa-stopwatch-20 m-2"></i>
+                <span>Contador</span>
+              </button>
+              <button class="nav-link item" id="v-pills-queue-tab" onclick="queue_js('get',event)" data-bs-toggle="pill" data-bs-target="#v-pills-queue" type="button" role="tab" aria-controls="v-pills-queue" >
+                <i class="fa-solid fa-stopwatch-20 m-2"></i>
+                <span>Fila (Queue)</span>
+              </button>
+              <button class="nav-link item" id="v-pills-player-tab" data-bs-toggle="pill" data-bs-target="#v-pills-player" type="button" role="tab" aria-controls="v-pills-player">
+                <i class="fa-solid fa-music m-2"></i>
+                <span>Player</span>
+              </button>
+              <button class="nav-link item" id="v-pills-config-tab" data-bs-toggle="pill" data-bs-target="#v-pills-config" type="button" role="tab" aria-controls="v-pills-config" >
+                <i class="fa-sharp fa-solid fa-gear m-2"></i>
+                <span>Configurações</span>
+              </button>
+              <button class="nav-link item" id="v-pills-perfil-tab" data-bs-toggle="pill" data-bs-target="#v-pills-perfil" type="button" role="tab" aria-controls="v-pills-perfil" >
+                <i class="fa-sharp fa-solid fa-user m-2"></i>
+                <span>Perfil</span>
+              </button>
+              <button class="nav-link item" id="v-pills-sobre-tab" onclick="debug_status('debug-get')" data-bs-toggle="pill" data-bs-target="#v-pills-sobre" type="button" role="tab" aria-controls="v-pills-sobre" >
+                <i class="fa-sharp fa-solid fa-circle-question m-2"></i>
+                <span>Sobre</span>
+              </button>
+              <button class="nav-link item" id="logout" type="button" onclick="logout()" >
+                <i class="fa-solid fa-right-from-bracket m-2"></i>
+                <span>Logout</span>
+              </button>
+          </div>
+        </nav>
+        <nav id="sidebarMenu" class="sidebar">
+          <div class="w-100">
+            <button class="nav-link item active">
+              <i class="fa-sharp fa-solid fa-cart-arrow-down m-2"></i>
+            </button>
+            <button class="nav-link item" type="button">
+              <i class="fa-sharp fa-solid fa-location-arrow m-2"></i>
+            </button>
+            <button class="nav-link item" type="button">
+              <i class="fa-sharp fa-solid fa-terminal m-2"></i>
+            </button>
+            <button class="nav-link item" type="button">
+              <i class="fa-solid fa-clock m-2"></i>
+            </button>
+            <button class="nav-link item" type="button">
+              <i class="fa-sharp fa-solid fa-clover m-2"></i>
+            </button>
+            <button class="nav-link item"  type="button">
+              <i class="fa-solid fa-stopwatch-20 m-2"></i>
+            </button>
+            <button class="nav-link item" type="button">
+              <i class="fa-solid fa-stopwatch-20 m-2"></i>
+            </button>
+            <button class="nav-link item" type="button">
+              <i class="fa-solid fa-music m-2"></i>
+            </button>
+            <button class="nav-link item" type="button">
+              <i class="fa-sharp fa-solid fa-gear m-2"></i>
+            </button>
+            <button class="nav-link item" type="button">
+              <i class="fa-sharp fa-solid fa-user m-2"></i>
+            </button>
+            <button class="nav-link item" type="button">
+              <i class="fa-sharp fa-solid fa-circle-question m-2"></i>
+            </button>
+            <button class="nav-link item" type="button">
+              <i class="fa-solid fa-right-from-bracket m-2"></i>
+            </button>
+          </div>
+        </nav>
+        <div class="tab-content ps-0 expand-main" id="v-pills-tabContent">
+          <div class="tab-pane show active vh-100" id="v-pills-resgates" role="tabpanel" aria-labelledby="v-pills-resgates-tab">
+            <div class="row p-1" style="height: 90%;">
+              <div class="events-col" id="events-col">
                 <div class="out-redeem">
-                  <div class="bg-dark redeem-block" style="height: auto;">
-                    <div class="bg-dark top-toggler d-flex justify-content-between" id="redeem-toggler"
-                      data-bs-toggle="collapse" data-bs-target="#colapse-redeem" aria-expanded="false"
-                      aria-controls="colapse-redeem">
+                  <div class="bg-dark redeem-block" style="height: auto; margin-top: 0%;">
+                    <div class="bg-dark top-toggler d-flex justify-content-between" id="redeem-toggler" data-bs-toggle="collapse" data-bs-target="#colapse-redeem" aria-expanded="false" aria-controls="colapse-redeem">
                       <p class="m-1">Resgates</p>
                       <p class="m-1" id="redeem-icon-toggler">
                         <i class="fa-solid fa-square-caret-down"></i>
@@ -143,9 +180,7 @@
                     </div>
                   </div>
                   <div class="bg-dark redeem-block" style="height: auto;">
-                    <div class="bg-dark top-toggler d-flex justify-content-between" id="utils-toggler"
-                      data-bs-toggle="collapse" data-bs-target="#colapse-utils" aria-expanded="false"
-                      aria-controls="colapse-utils">
+                    <div class="bg-dark top-toggler d-flex justify-content-between" id="utils-toggler" data-bs-toggle="collapse" data-bs-target="#colapse-utils" aria-expanded="false" aria-controls="colapse-utils">
                       <p class="m-1">Utilidades</p>
                       <p class="m-1" id="utils-icon-toggler">
                         <i class="fa-solid fa-square-caret-down"></i>
@@ -180,11 +215,11 @@
                       <p class="m-1">Eventos recentes</p>
                       <div>
                         <span class="m-1" id="recent-icon-toggler"><i class="fa-solid fa-square-caret-down"></i></span>
-                        <span class="m-1" title="Abrir em nova janela" onclick="eel.webview_start_app('events')"><i
+                        <span class="m-1" title="Abrir em nova janela" onclick="window.pywebview.api.webview_start_app('events')"><i
                             class="fa-solid fa-square-arrow-up-right"></i></span>
                       </div>
                     </div>
-                    <div class="collapse" id="colapse-recent">
+                    <div class="collapse div-events" id="colapse-recent">
                       <div class="h-scroll-events dragscroll" id="div-events"></div>
                     </div>
                   </div>
@@ -242,84 +277,128 @@
                   </div>
                 </div>
               </div>
-              <div class="col chat-col" style="height: 85vh;">
-                <div class="bg-dark nav nav-tabs flex-column flex-sm-row top-tab" id="nav-tab" role="tablist"
-                  style="height: 5vh;">
-                  <button class="nav-link flex-sm-fill text-sm-center active" id="nav-chat-tab" data-bs-toggle="tab"
-                    data-bs-target="#nav-chat" type="button" role="tab" aria-controls="nav-chat" aria-selected="true">
-                    Chat
-                  </button>
-                  <button class="nav-link flex-sm-fill text-sm-center" id="nav-users-tab" data-bs-toggle="tab"
-                    data-bs-target="#nav-users" type="button" role="tab" aria-controls="nav-users"
-                    aria-selected="false">
-                    Usuários no chat
-                  </button>
+              <div class="chat-col" id="chat-col">
+                <div class="bg-dark nav nav-tabs flex-sm-row top-tab w-100 justify-content-end" id="nav-tab" role="tablist" style="height: 5%;">
+                    <button class="nav-link flex-sm-fill active "  style="text-align: center !important;" id="nav-chat-tab" data-bs-toggle="tab" data-bs-target="#nav-chat" type="button" role="tab" aria-controls="nav-chat" aria-selected="true">
+                      Chat
+                    </button>
+                    <button class="nav-link flex-sm-fill " style="text-align: center !important; " id="nav-users-tab" data-bs-toggle="tab" data-bs-target="#nav-users" type="button" role="tab" aria-controls="nav-users" aria-selected="false">
+                      Usuários no chat
+                    </button>
+                    <button class="nav-link align-self-end" id="chat-mode-toggler" title="Alternar modo de exibção" onclick="mode_change()">
+                      <i class="fa-solid fa-arrow-right-arrow-left m-1" ></i>
+                    </button>
                 </div>
-                <div class="tab-content purple-border-block" id="nav-tabContent" style="height: 80vh;">
+                <div class="tab-content purple-border-block" id="nav-tabContent" style="height: 95%;border-top: none;" >
                   <div class="tab-pane show active" id="nav-chat" role="tabpanel" aria-labelledby="nav-chat-tab" style="height: 100%;">
                     <div class="nav-chat-div" style="height: 100%;">
-                      <div class="chat-block col-12" id="chat-block"></div>
-                      <form id="input-chat-form" class="form-chat" onsubmit="send_message_chat_js(event)">
+                      <button type="button" id="scrollBtn" class="btn btn-sm scrollBtn">Rolar para novas mensagems</button>
+                      <div class="h-scroll-chat d-block" id="chat-block-inner">
+                      </div>
+                      <form class="form-chat" onsubmit="send_message_chat_js(event,'inner')">
                         <div class="input-group">
-                          <input type="text" class="form-control bg-dark" style="width: 80%;" id="message-chat-send"
-                            aria-describedby="submit-message-chat">
-                          <button class="btn bt-submit" type="submit" id="submit-message-chat">
+                          <input type="text" class="form-control bg-dark inp-chat" id="message-chat-send" required>
+                          <button class="btn bt-submit" type="submit" id="submit-message-chat" style="border-right: none;" >
                             <i class="fa-solid fa-paper-plane"></i>
                           </button>
-                          <button class="btn bt-submit" type="button" id="open-chat"
-                            onclick="eel.webview_start_app('chat')" title="Abrir chat em uma nova janela">
+                          <button class="btn bt-submit" type="button" id="open-chat" style="border-right: none;" onclick="window.pywebview.api.webview_start_app('chat')" title="Abrir chat em uma nova janela">
                             <i class="fa-solid fa-circle-plus"></i>
                           </button>
                         </div>
                       </form>
                     </div>
                   </div>
-                  <div class="tab-pane" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab">
-                    <div class="users-chat-list" id="users-chat-list">
-                      <div class="collapsible">
-                        <div class="d-flex justify-content-between box-collapse-list">
-                          <div>
-                            <h5>Espectadores</h5>
-                          </div>
-                          <div>
-                            <button type="button" class="btn btn-sm bt-submit" onclick="collapse('div_users')">
-                              <i class="fa-solid fa-square-caret-down fa-lg"></i>
-                            </button>
-                          </div>
-                        </div>
-                        <div id="div_users" class="mt-1">
-                          <div class="d-flex justify-content-between">
-                            <div class="m-1">
-                              <span class="name-user-list">Carregando, aguarde.</span>
-                            </div>
-                          </div>
+                  <div class="tab-pane" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab" style="height: 100%;">
+                    <div class="users-chat-list" id="users-chat-list" style="height: 100%;">
+                      <div class="box-collapse-list">
+                        <div>
+                          <h6 class="m-1  mt-0">Espectadores</h6>
                         </div>
                       </div>
-                      <div class="collapsible mt-1">
-                        <div class="d-flex justify-content-between box-collapse-list">
-                          <div>
-                            <h5>Bots</h5>
-                          </div>
-                          <div>
-                            <button type="button" class="btn btn-sm bt-submit" onclick="collapse('div_bots')">
-                              <i class="fa-solid fa-square-caret-down fa-lg"></i>
-                            </button>
-                          </div>
+                      <div class="mt-1 ms-1" id="div_users_tabs">
+                      </div>
+                      <div class="box-collapse-list mt-1">
+                        <div>
+                          <h6 class="m-1">Bots</h6>
                         </div>
-                        <div id="div_bots" class="mt-1" hidden>
-                          <div class="d-flex justify-content-between">
-                            <div class="m-1">
-                              <span class="name-user-list">Carregando, aguarde.</span>
-                            </div>
-                          </div>
-                        </div>
+                      </div>
+                      <div class="mt-1 ms-1" id="div_bots_tabs">
                       </div>
                     </div>
                   </div>
                 </div>
+                <div class="purple-border-block" id="chat-list" style="height: 95%; border-top: none;" hidden>
+                  <div class="users-chat-list" id="user-list-inner" style="height: 50%;">
+                    <div class="box-collapse-list">
+                      <div>
+                        <h6 class="m-1 mt-0">Espectadores</h6>
+                      </div>
+                    </div>
+                    <div class="mt-1 ms-1" id="div_users_list">
+                    </div>
+                    <div class="box-collapse-list mt-1">
+                      <div>
+                        <h6 class="m-1">Bots</h6>
+                      </div>
+                    </div>
+                    <div class="mt-1 ms-1" id="div_bots_list">
+                    </div>
+                  </div>
+                  <div class="nav-chat-div" id="chat-list-inner" style="height: 50%;border-top: solid #4f016c 2px">
+                    <button type="button" id="scrollBtntwo" class="btn btn-sm scrollBtn">Rolar para novas mensagems</button>
+                    <div class="h-scroll-chat d-block" id="chat-block-inner-two"></div>
+                    <form class="form-chat" onsubmit="send_message_chat_js(event,'inner-sec')">
+                      <div class="input-group">
+                        <input type="text" class="form-control bg-dark inp-chat" id="message-chat-send_sec" required>
+                        <button class="btn bt-submit" type="submit" >
+                          <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                        <button class="btn bt-submit" type="button" onclick="window.pywebview.api.webview_start_app('chat')" title="Abrir chat em uma nova janela">
+                          <i class="fa-solid fa-circle-plus"></i>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+                <div class="purple-border-block" id="chat-side" style="height: 95%; border-top: none;" hidden>
+                  <div class="d-flex justify-content-between" style="height: 100%;">
+                    <div class="users-chat-list purple-border-block" id="user-list-side" style="height: 100%;width: 50%;">
+                      <div class="box-collapse-list  mt-0">
+                        <div>
+                          <h6 class="m-1 mt-0">Espectadores</h6>
+                        </div>
+                      </div>
+                      <div class="mt-1 ms-1" id="div_users_side">
+                      </div>
+                      <div class="box-collapse-list mt-1">
+                        <div>
+                          <h6 class="m-1">Bots</h6>
+                        </div>
+                      </div>
+                      <div class="mt-1 ms-1" id="div_bots_side">
+                      </div>
+                    </div>
+                    <div class="nav-chat-div purple-border-block" id="chat-list-side" style="height: 100%;width: 50%;">
+                      <button type="button" id="scrollBtnthree" class="btn btn-sm scrollBtn">Rolar para novas mensagems</button>
+                      <div class="d-block h-scroll-chat" id="chat-block-inner-three"></div>
+                      <form class="form-chat" onsubmit="send_message_chat_js(event,'inner-three')">
+                        <div class="input-group">
+                          <input type="text" class="form-control bg-dark  inp-chat" id="message-chat-send_three" required>
+                          <button class="btn bt-submit" type="submit" >
+                            <i class="fa-solid fa-paper-plane"></i>
+                          </button>
+                          <button class="btn bt-submit" type="button" onclick="window.pywebview.api.webview_start_app('chat')" title="Abrir chat em uma nova janela">
+                            <i class="fa-solid fa-circle-plus"></i>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+
+                </div>
               </div>
             </div>
-            <div class="row bottom-info">
+            <div class="row bottom-info m-0 d-flex align-content-center">
               <div class="col-2">
                 <span title="Tempo em live"><i class="fa-solid fa-circle" id="live-dot"></i> :
                   <span id="time-in-live"></span></span>
@@ -351,67 +430,75 @@
           </div>
           <div class="tab-pane" id="v-pills-acoes" role="tabpanel" aria-labelledby="v-pills-acoes-tab">
             <div id="create-redeem">
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Ações</h4>
+              <div class="internal-top">
+                <span>Ações</span>
               </div>
-              <div class="h-scroll justify-content-center">
-                <div class="internal-block w-100 d-flex flex-wrap justify-content-center">
-                  <div class="w-100 d-flex flex-wrap justify-content-center">
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('audio-div','redeem-select-audio')">
-                      Reproduzir audio
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('tts-div','redeem-select-tts')">
-                      Texto falado google
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('scene-div','redeem-select-scene')">
-                      Mudar cena OBS
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('response-div','redeem-select-response')">
-                      Resposta no chat
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('filter-div','redeem-select-filter')">
-                      Exibir/Ocultar Filtro OBS
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('source-div','redeem-select-source')">
-                      Exibir/Oculta Fonte OBS
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('keypress-div','redeem-select-keypress')">
-                      Atalho no teclado
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('clip-div','redeem-select-clip')">
-                      Criar um clip
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('highlight-div','redeem-select-highlight')">
-                      Destacar mensagem
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('video-div','redeem-select-video')">
-                      Reproduzir video
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt" type="button"
-                      onclick="show_div('del-div','action-del-select')">
-                      Excluir Ações
-                    </button>
-                    <button class="btn bg-dark redeem-block-bt mb-3" type="button"
-                      onclick="show_div('edit-div','action-edit-select')">
-                      Editar Ações
-                    </button>
-                  </div>
-                </div>
+              <div class="internal-block w-100 grid-buttons-actions">
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('audio-div','redeem-select-audio')">
+                    <i class="fa-solid fa-volume-high fa-2xl"></i>
+                    <p>Reproduzir audio</p> 
+                  </button>
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('tts-div','redeem-select-tts')">
+                    <i class="fa-brands fa-teamspeak fa-2xl"></i>
+                    <p>Texto falado</p>
+                  </button>
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('scene-div','redeem-select-scene')">
+                    <i class="fa-solid fa-tv fa-2xl"></i>
+                    <p>Mudar cena OBS</p>
+                  </button>
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('response-div','redeem-select-response')">
+                    <i class="fa-solid fa-comments fa-2xl"></i>
+                    <p>Resposta no chat</p>
+                  </button>
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('filter-div','redeem-select-filter')">
+                    <i class="fa-solid fa-filter fa-2xl"></i>
+                    <p>Exibir/Ocultar Filtro OBS</p>
+                  </button> 
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('source-div','redeem-select-source')">
+                    <i class="fa-solid fa-photo-film fa-2xl"></i>
+                    <p>Exibir/Oculta Fonte OBS</p>
+                  </button>
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('keypress-div','redeem-select-keypress')">
+                    <i class="fa-solid fa-keyboard fa-2xl"></i>
+                    <p>Atalho no teclado</p>
+                  </button>
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('clip-div','redeem-select-clip')">
+                    <i class="fa-solid fa-clapperboard fa-2xl"></i>
+                    <p>Criar um clip</p>
+                  </button>
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('highlight-div','redeem-select-highlight')">
+                    <i class="fa-solid fa-highlighter fa-2xl"></i>
+                    <p>Destacar mensagem</p>
+                  </button>
+                  <button class="btn redeem-block-bt " type="button"
+                    onclick="show_div('video-div','redeem-select-video')">
+                    <i class="fa-brands fa-youtube fa-2xl"></i>
+                    <p>Reproduzir video</p>
+                  </button>
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('del-div','action-del-select')">
+                    <i class="fa-solid fa-eraser fa-2xl"></i>
+                    <p>Excluir Ações</p>
+                  </button>
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_div('edit-div','action-edit-select')">
+                    <i class="fa-solid fa-pen-to-square fa-2xl"></i>
+                    <p>Editar Ações</p>
+                  </button>
               </div>
             </div>
             <div id="audio-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Reproduzir audio</h4>
+              <div class="internal-top">
+                <span>Reproduzir audio</span>
                 <button type="button" class="btn" onclick="hide_create('audio-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -483,8 +570,8 @@
               </div>
             </div>
             <div id="video-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Reproduzir video/gif</h4>
+              <div class="internal-top">
+                <span>Reproduzir video/gif</span>
                 <button class="btn" onclick="hide_create('video-div')" data-toggle="tooltip" data-bs-placement="left"
                   title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -500,7 +587,7 @@
                     <div class="form-group mt-3">
                       <label for="command-text">Comando</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -558,8 +645,8 @@
               </div>
             </div>
             <div id="tts-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Texto falado google</h4>
+              <div class="internal-top">
+                <span>Texto falado google</span>
                 <button class="btn" onclick="hide_create('tts-div')" data-toggle="tooltip" data-bs-placement="left"
                   title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -575,7 +662,7 @@
                     <div class="form-group mt-3">
                       <label for="command-text">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -620,8 +707,8 @@
               </div>
             </div>
             <div id="scene-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Mudar cena OBS</h4>
+              <div class="internal-top">
+                <span>Mudar cena OBS</span>
                 <button class="btn" onclick="hide_create('scene-div')" data-toggle="tooltip" data-bs-placement="left"
                   title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -637,7 +724,7 @@
                     <div class="form-group mt-3">
                       <label for="command-text">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -717,8 +804,8 @@
               </div>
             </div>
             <div id="response-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Resposta no chat</h4>
+              <div class="internal-top">
+                <span>Resposta no chat</span>
                 <button class="btn" onclick="hide_create('response-div')" data-toggle="tooltip" data-bs-placement="left"
                   title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -734,7 +821,7 @@
                     <div class="form-group mt-3">
                       <label for="command-text">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -782,8 +869,8 @@
               </div>
             </div>
             <div id="filter-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Exibir/Ocular Filtro OBS</h4>
+              <div class="internal-top">
+                <span>Exibir/Ocular Filtro OBS</span>
                 <button class="btn" onclick="hide_create('filter-div')" data-toggle="tooltip" data-bs-placement="left"
                   title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -799,7 +886,7 @@
                     <div class="form-group mt-3">
                       <label for="command-text">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$)</p>
                     </div>
                     <div class="form-group mt-3">
@@ -890,8 +977,8 @@
               </div>
             </div>
             <div id="source-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Exibir/Ocular Fonte OBS</h4>
+              <div class="internal-top">
+                <span>Exibir/Ocular Fonte OBS</span>
                 <button class="btn" onclick="hide_create('source-div')" data-toggle="tooltip" data-bs-placement="left"
                   title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -907,7 +994,7 @@
                     <div class="form-group mt-3">
                       <label for="command-text">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -983,8 +1070,8 @@
               </div>
             </div>
             <div id="keypress-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Atalho no teclado</h4>
+              <div class="internal-top">
+                <span>Atalho no teclado</span>
                 <button class="btn" onclick="hide_create('keypress-div')" data-toggle="tooltip" data-bs-placement="left"
                   title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -1000,7 +1087,7 @@
                     <div class="form-group mt-3">
                       <label for="command-text">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -1253,8 +1340,8 @@
               </div>
             </div>
             <div id="clip-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Criar um clip</h4>
+              <div class="internal-top">
+                <span>Criar um clip</span>
                 <button class="btn" onclick="hide_create('clip-div')" data-toggle="tooltip" data-bs-placement="left"
                   title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -1271,7 +1358,7 @@
                     <div class="form-group mt-3">
                       <label for="command-text">Comando</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$)</p>
                     </div>
 
@@ -1313,8 +1400,8 @@
               </div>
             </div>
             <div id="highlight-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Destacar uma mensagem</h4>
+              <div class="internal-top">
+                <span>Destacar uma mensagem</span>
                 <button class="btn" onclick="hide_create('highlight-div')" data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
@@ -1367,8 +1454,8 @@
               </div>
             </div>
             <div id="del-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Excluir Ações</h4>
+              <div class="internal-top">
+                <span>Excluir Ações</span>
                 <button class="btn" onclick="hide_create('del-div')" data-toggle="tooltip" data-bs-placement="left"
                   title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -1389,8 +1476,8 @@
               </div>
             </div>
             <div id="edit-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Editar Ações</h4>
+              <div class="internal-top">
+                <span>Editar Ações</span>
                 <button class="btn" onclick="hide_create_edit('edit-div','action-edit-select')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -1412,7 +1499,7 @@
                     </div>
                   </div>
                 </div>
-                <div id="edit-audio-div" class="internal-block" hidden>
+                <div id="edit-audio-div" class="internal-block mt-0" hidden>
                   <form id="audio-edit-form" class="bg-dark form-block" onsubmit="save_edit(event,'sound')">
                     <h4>Editar ação para audio</h4>
                     <div class="form-group mb-3 mt-5">
@@ -1427,7 +1514,7 @@
                       <input type="text" id="old-audio-command" style="display: none;" />
                       <label for="command-text-audio-edit">Comando</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text-audio-edit"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -1494,7 +1581,7 @@
                     </button>
                   </form>
                 </div>
-                <div id="edit-video-div" class="internal-block" hidden>
+                <div id="edit-video-div" class="internal-block mt-0" hidden>
                   <form id="video-edit-form" class="bg-dark form-block" onsubmit="save_edit(event,'video')">
                     <h4>Editar ação para video</h4>
                     <div class="form-group mb-3 mt-5">
@@ -1509,7 +1596,7 @@
                       <input type="text" id="old-video-command" style="display: none;" />
                       <label for="command-text-video-edit">Comando</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text-video-edit"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -1577,7 +1664,7 @@
                     </button>
                   </form>
                 </div>
-                <div id="edit-tts-div" class="internal-block" hidden>
+                <div id="edit-tts-div" class="internal-block mt-0" hidden>
                   <form id="tts-edit-form" class="bg-dark form-block" onsubmit="save_edit(event,'tts')">
                     <h4>Editar ação para texto falado</h4>
                     <div class="form-group mb-3 mt-5">
@@ -1592,7 +1679,7 @@
                       <input type="text" id="old-tts-command" style="display: none;" />
                       <label for="command-text-tts-edit">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text-tts-edit"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -1655,7 +1742,7 @@
                     </button>
                   </form>
                 </div>
-                <div id="edit-scene-div" class="internal-block" hidden>
+                <div id="edit-scene-div" class="internal-block mt-0" hidden>
                   <form id="scene-edit-form" class="bg-dark form-block" onsubmit="save_edit(event,'scene')">
                     <h4>Editar ação para mudança de cena</h4>
                     <div class="form-group mb-3 mt-5">
@@ -1670,7 +1757,7 @@
                       <input type="text" id="old-scene-command" style="display: none;" />
                       <label for="command-text-scene-edit">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text-scene-edit"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -1767,7 +1854,7 @@
                     </button>
                   </form>
                 </div>
-                <div id="edit-response-div" class="internal-block" hidden>
+                <div id="edit-response-div" class="internal-block mt-0" hidden>
                   <form id="response-edit-form" class="bg-dark form-block" onsubmit="save_edit(event,'response')">
                     <h4>Editar ação para mudança resposta de texto</h4>
                     <div class="form-group mb-3 mt-5">
@@ -1782,7 +1869,7 @@
                       <input type="text" id="old-response-command" style="display: none;" />
                       <label for="command-text-response-edit">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text-response-edit"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer, O comando não deve conter espaços
                         prefixo (!,@,#,$)</p>
                     </div>
@@ -1837,7 +1924,7 @@
                     </button>
                   </form>
                 </div>
-                <div id="edit-filter-div" class="internal-block" hidden>
+                <div id="edit-filter-div" class="internal-block mt-0" hidden>
                   <form id="filter-edit-form" class="bg-dark form-block" onsubmit="save_edit(event,'filter')">
                     <h4>Editar ação para filtro no obs</h4>
                     <div class="form-group mb-3 mt-5">
@@ -1852,7 +1939,7 @@
                       <input type="text" id="old-filter-command" style="display: none;" />
                       <label for="command-text-filter-edit">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text-filter-edit"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -1959,7 +2046,7 @@
                     </button>
                   </form>
                 </div>
-                <div id="edit-source-div" class="internal-block" hidden>
+                <div id="edit-source-div" class="internal-block mt-0" hidden>
                   <form id="source-edit-form" class="bg-dark form-block" onsubmit="save_edit(event,'source')">
                     <h4>Editar ação para fonte no obs</h4>
                     <div class="form-group mb-3 mt-5">
@@ -1974,7 +2061,7 @@
                       <input type="text" id="old-source-command" style="display: none;" />
                       <label for="command-text-source-edit">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text-source-edit"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$)</p>
                     </div>
                     <div class="form-group mt-3">
@@ -2061,7 +2148,7 @@
                     </button>
                   </form>
                 </div>
-                <div id="edit-keypress-div" class="internal-block" hidden>
+                <div id="edit-keypress-div" class="internal-block mt-0"  hidden>
                   <form id="keypress-edit-form" class="bg-dark form-block" onsubmit="save_edit(event,'keypress')">
                     <h4>Editar ação para pressionar tecla ou atalho</h4>
                     <div class="form-group mb-3 mt-5">
@@ -2077,7 +2164,7 @@
 
                       <label for="command-keypress-edit">Comando (Opcional)</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-keypress-edit"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -2341,7 +2428,7 @@
                     </button>
                   </form>
                 </div>
-                <div id="edit-clip-div" class="internal-block" hidden>
+                <div id="edit-clip-div" class="internal-block mt-0" hidden>
                   <form id="clip-edit-form" class="bg-dark form-block" onsubmit="save_edit(event,'clip')">
                     <h4>Editar ação para criar um clip</h4>
                     <div class="form-group mb-3 mt-5">
@@ -2356,7 +2443,7 @@
                       <input type="text" id="old-clip-command" style="display: none;" />
                       <label for="command-text-clip-edit">Comando</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-text-clip-edit"
-                       placeholder="Digite o comando" pattern="[^\s]+" />
+                        placeholder="Digite o comando" pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não
                         deve conter espaços</p>
                     </div>
@@ -2406,7 +2493,7 @@
                     </button>
                   </form>
                 </div>
-                <div id="edit-highlight-div" class="internal-block" hidden>
+                <div id="edit-highlight-div" class="internal-block mt-0" hidden>
                   <form id="highlight-edit-form" class="bg-dark form-block" onsubmit="save_edit(event,'highlight')">
                     <h4>Editar ação para destacar uma mensagem</h4>
                     <div class="form-group mb-3 mt-5">
@@ -2473,57 +2560,65 @@
           </div>
           <div class="tab-pane" id="v-pills-comandos" role="tabpanel" aria-labelledby="v-pills-comandos-tab">
             <div id="commands-div">
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Comandos</h4>
+              <div class="internal-top">
+                <span>Comandos</span>
               </div>
-              <div class="h-scroll justify-content-center">
-                <div class="internal-block align-self-center">
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="show_commands_div('create-commands-div')">
-                    Criar
-                  </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="show_commands_div('edit-commands-div')">
-                    Editar
-                  </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="show_commands_div('del-commands-div')">
-                    Excluir
-                  </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="show_commands_div('duel-commands-div')">
-                    Duelo
-                  </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="show_commands_div('default-commands-div')">
-                    Padrão
-                  </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="show_commands_div('player-commands-div')">
-                    Música
-                  </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="show_commands_div('counter-commands-div')">
-                    Contador
-                  </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="show_commands_div('queue-commands-div')">
-                    Fila de espera
-                  </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="show_commands_div('giveaway-commands-div')">
-                    Sorteio
-                  </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="commands_fun('null','command-list')">
-                    Lista de comandos
-                  </button>
-                </div>
+              <div class="internal-block w-100 grid-buttons-commands">
+                <button class="btn redeem-block-bt"  type="button"
+                  onclick="show_commands_div('create-commands-div')">
+                  <i class="fa-solid fa-circle-plus fa-2xl"></i>
+                    <p>Criar</p>
+                </button>
+                <button class="btn redeem-block-bt" type="button"
+                  onclick="show_commands_div('edit-commands-div')">
+                  <i class="fa-solid fa-pen-to-square fa-2xl"></i>
+                    <p>Editar</p>
+                </button>
+                <button class="btn redeem-block-bt" type="button"
+                  onclick="show_commands_div('del-commands-div')">
+                  <i class="fa-solid fa-eraser fa-2xl"></i>
+                    <p>Excluir</p>
+                </button>
+                <button class="btn redeem-block-bt" type="button"
+                  onclick="show_commands_div('duel-commands-div')">
+                  <i class="fa-solid fa-swords fa-2xl"></i>
+                    <p>Duelo</p>
+                </button>
+                <button class="btn redeem-block-bt" type="button"
+                  onclick="show_commands_div('default-commands-div')">
+                  <i class="fa-solid fa-square-terminal fa-2xl"></i>
+                    <p>Padrão</p>
+                </button>
+                <button class="btn redeem-block-bt" type="button"
+                  onclick="show_commands_div('player-commands-div')">
+                  <i class="fa-solid fa-user-music fa-2xl"></i>
+                    <p>Música</p>
+                </button>
+                <button class="btn redeem-block-bt" type="button"
+                  onclick="show_commands_div('counter-commands-div')">
+                  <i class="fa-solid fa-arrow-up-9-1 fa-2xl"></i>
+                    <p>Contador</p>
+                </button>
+                <button class="btn redeem-block-bt" type="button"
+                  onclick="show_commands_div('queue-commands-div')">
+                  <i class="fa-solid fa-clipboard-list-check fa-2xl"></i>
+                    <p>Fila de espera</p>
+                </button>
+                <button class="btn redeem-block-bt" type="button"
+                  onclick="show_commands_div('giveaway-commands-div')">
+                  <i class="fa-solid fa-circle-dollar-to-slot fa-2xl"></i>
+                    <p>Sorteio</p>
+                </button>
+                <button class="btn redeem-block-bt" type="button"
+                  onclick="commands_fun('null','command-list')">
+                  <i class="fa-solid fa-square-list fa-2xl"></i>
+                    <p>Lista de comandos</p>
+                </button>
               </div>
             </div>
             <div id="create-commands-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Criar comando</h4>
+              <div class="internal-top">
+                <span>Criar comando</span>
                 <button class="btn" onclick="hide_commands_div('create-commands-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -2581,8 +2676,8 @@
               </div>
             </div>
             <div id="edit-commands-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Editar comando</h4>
+              <div class="internal-top">
+                <span>Editar comando</span>
                 <button class="btn" onclick="hide_commands_div('edit-commands-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -2603,7 +2698,7 @@
                     <div class="form-group mt-3">
                       <label for="edit-command">Comando</label>
                       <input type="text" class="form-control bg-dark mt-3" id="edit-command"
-                       placeholder="Digite o comando" required pattern="[^\s]+" />
+                        placeholder="Digite o comando" required pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$), O comando não deve conter espaços</p>
                     </div>
                     <div class="form-group mt-3">
@@ -2660,8 +2755,8 @@
               </div>
             </div>
             <div id="del-commands-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Excluir comando</h4>
+              <div class="internal-top">
+                <span>Excluir comando</span>
                 <button class="btn" onclick="hide_commands_div('del-commands-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -2682,8 +2777,8 @@
               </div>
             </div>
             <div id="duel-commands-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Duelo</h4>
+              <div class="internal-top">
+                <span>Duelo</span>
                 <button class="btn" onclick="hide_commands_div('duel-commands-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -2695,7 +2790,7 @@
                     <div class="form-group mt-3">
                       <label for="command-duel">Comando</label>
                       <input type="text" class="form-control bg-dark mt-3" id="command-duel"
-                       placeholder="Digite o comando" required pattern="[^\s]+" />
+                        placeholder="Digite o comando" required pattern="[^\s]+" />
                       <p class="text-muted text-sm-start m-0">Utilize qualquer prefixo (!,@,#,$)</p>
                     </div>
                     <div class="form-group mt-3">
@@ -2803,8 +2898,8 @@
               </div>
             </div>
             <div id="default-commands-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Comandos padrão</h4>
+              <div class="internal-top">
+                <span>Comandos padrão</span>
                 <button type="button" class="btn" onclick="hide_commands_div('default-commands-div')"
                   data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -2934,8 +3029,8 @@
               </div>
             </div>
             <div id="player-commands-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Comandos de Música</h4>
+              <div class="internal-top">
+                <span>Comandos de Música</span>
                 <button type="button" class="btn" onclick="hide_commands_div('player-commands-div')"
                   data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -3023,8 +3118,8 @@
               </div>
             </div>
             <div id="counter-commands-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Comandos do Contador</h4>
+              <div class="internal-top">
+                <span>Comandos do Contador</span>
                 <button type="button" class="btn" onclick="hide_commands_div('counter-commands-div')"
                   data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -3107,8 +3202,8 @@
               </div>
             </div>
             <div id="queue-commands-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Comandos da Fila de espera</h4>
+              <div class="internal-top">
+                <span>Comandos da Fila de espera</span>
                 <button type="button" class="btn" onclick="hide_commands_div('queue-commands-div')"
                   data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -3190,8 +3285,8 @@
               </div>
             </div>
             <div id="giveaway-commands-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Comandos de Sorteio</h4>
+              <div class="internal-top">
+                <span>Comandos de Sorteio</span>
                 <button type="button" class="btn" onclick="hide_commands_div('giveaway-commands-div')"
                   data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -3329,8 +3424,8 @@
           </div>
           <div class="tab-pane" id="v-pills-timers" role="tabpanel" aria-labelledby="v-pills-timers-tab">
             <div id="ger-timer-div">
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Mensagens automáticas</h4>
+              <div class="internal-top">
+                <span>Mensagens automáticas</span>
               </div>
               <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block" id="timer-ger-internal">
@@ -3462,11 +3557,11 @@
                       <h4>Delay entre as mensagens (segundos)</h4>
                       <div class="form-group mt-3">
                         <label for="timer-delay-min">Delay mínimo</label>
-                        <input type="number" class="form-control bg-dark mt-3" id="timer-delay-min" placeholder="Digite um numero"/>
+                        <input type="number" class="form-control bg-dark mt-3" id="timer-delay-min" placeholder="Digite um numero" min="30"/>
                       </div>
                       <div class="form-group mt-3">
                         <label for="timer-delay-max">Delay máximo</label>
-                        <input type="number" class="form-control bg-dark mt-3" id="timer-delay-max" placeholder="Digite um numero"/>
+                        <input type="number" class="form-control bg-dark mt-3" id="timer-delay-max" placeholder="Digite um numero" min="30"/>
                       </div>
                       <button type="submit" id="submit-timer-delay" class="btn bt-submit mt-4">
                         Salvar
@@ -3479,8 +3574,8 @@
           </div>
           <div class="tab-pane" id="v-pills-giveaway" role="tabpanel" aria-labelledby="v-pills-giveaway-tab">
             <div id="ger-giveaway-div">
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Sorteio</h4>
+              <div class="internal-top">
+                <span>Sorteio</span>
               </div>
               <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block">
@@ -3620,8 +3715,8 @@
           </div>
           <div class="tab-pane" id="v-pills-counter" role="tabpanel" aria-labelledby="v-pills-counter-tab">
             <div id="ger-counter-div">
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Contador</h4>
+              <div class="internal-top">
+                <span>Contador</span>
               </div>
               <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block">
@@ -3683,8 +3778,8 @@
           </div>
           <div class="tab-pane" id="v-pills-queue" role="tabpanel" aria-labelledby="v-pills-queue-tab">
             <div id="ger-queue-div">
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Fila de espera</h4>
+              <div class="internal-top">
+                <span>Fila de espera</span>
               </div>
               <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block">
@@ -3757,8 +3852,8 @@
           </div>
           <div class="tab-pane" id="v-pills-player" role="tabpanel" aria-labelledby="v-pills-player-tab">
             <div id="ger-player-div">
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Player</h4>
+              <div class="internal-top">
+                <span>Player</span>
               </div>
               <div class="h-scroll justify-content-center align-content-center">
                 <div class="w-75 bg-dark form-block" id="player-div">
@@ -3802,7 +3897,7 @@
                       </div>
                       <div class="col-2">
                         <div class="material-switch bg-white d-flex justify-content-end">
-                          <input id="playlist-switch" type="checkbox" onclick="playlist_js(event,'save')" />
+                          <input id="playlist-switch" type="checkbox" onchange="playlist_js(event,'save')" />
                           <label for="playlist-switch" class="form-check-label"></label>
                         </div>
                       </div>
@@ -3854,61 +3949,65 @@
             </div>
           </div>
           <div class="tab-pane" id="v-pills-config" role="tabpanel" aria-labelledby="v-pills-config-tab">
-            <div id="config-div">
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Configurações</h4>
+            <div id="config-div overflow-scroll">
+              <div class="internal-top">
+                <span>Configurações</span>
               </div>
-              <div class="h-scroll justify-content-center">
-                <div class="internal-block align-self-center mt-5">
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
-                    onclick="show_config_div('config-conn-obs-div')">
-                    Conexão com OBS STUDIO
+                <div class="internal-block w-100 grid-buttons-config ">
+                  <button class="btn redeem-block-bt" type="button" onclick="show_config_div('config-conn-obs-div')">
+                    <i class="fa-solid fa-link-horizontal fa-2xl"></i>
+                    <p>Conexão com OBS STUDIO</p>
                   </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
+                  <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-not-obs-div')">
-                    Notificações OBS STUDIO
+                    <i class="fa-solid fa-light-emergency-on fa-2xl"></i>
+                    <p>Notificações OBS STUDIO</p>
                   </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
+                  <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-discord-div')">
-                    Discord
+                    <i class="fa-brands fa-discord fa-2xl"></i>
+                    <p>Discord</p>
                   </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
+                  <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-responses-div')">
-                    Respostas
+                    <i class="fa-solid fa-reply fa-2xl"></i>
+                    <p>Respostas</p>
                   </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
+                  <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-chat-messages-div')">
-                    Mensagens no Chat
+                    <i class="fa-solid fa-message-dots fa-2xl"></i>
+                    <p>Mensagens no Chat</p>
                   </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
+                  <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-music-div')">
-                    Pedidos de música
+                    <i class="fa-solid fa-user-music fa-2xl"></i>
+                    <p>Pedidos de música</p>
                   </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
+                  <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('chat-config-div')">
-                    Chat
+                    <i class="fa-solid fa-message-captions fa-2xl"></i>
+                    <p>Chat</p>
                   </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
+                  <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-highlight-div')">
-                    Mensagem destacada
+                    <i class="fa-solid fa-message-pen fa-2xl"></i>
+                    <p>Mensagem destacada</p>
                   </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
+                  <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('not-config-div')">
-                    Alertas
+                    <i class="fa-solid fa-message-exclamation fa-2xl"></i>
+                    <p>Alertas</p>
                   </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button"
+                  <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('events-config-div')">
-                    Registro de eventos
-                  </button>
-                  <button class="w-100 btn bg-dark redeem-block-bt" type="button" onclick="show_userdata_modal()">
-                    Dados de usuários
+                    <i class="fa-solid fa-calendar-circle-exclamation fa-2xl"></i>
+                    <p>Registro de eventos</p>
                   </button>
                 </div>
-              </div>
             </div>
             <div id="config-conn-obs-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Conexão com OBS Studio</h4>
+              <div class="internal-top">
+                <span>Conexão com OBS Studio</span>
                 <button class="btn" onclick="hide_config_div('config-conn-obs-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -3937,8 +4036,8 @@
               </div>
             </div>
             <div id="config-not-obs-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Notificações no OBS Studio</h4>
+              <div class="internal-top">
+                <span>Notificações no OBS Studio</span>
                 <button class="btn" onclick="hide_config_div('config-not-obs-div')" data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
@@ -4010,7 +4109,7 @@
                           Carregar
                         </button>
                       </div>
-                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="eel.open_py('dir_not','null')">
+                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.open_py('dir_not','null')">
                         Abrir diretório do HTML
                       </button>
                     </div>
@@ -4026,7 +4125,7 @@
                           Carregar
                         </button>
                       </div>
-                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="eel.open_py('dir_video','null')">
+                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.open_py('dir_video','null')">
                         Abrir diretório do HTML
                       </button>
                     </div>
@@ -4042,7 +4141,7 @@
                           Carregar
                         </button>
                       </div>
-                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="eel.open_py('dir_event','null')">
+                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.open_py('dir_event','null')">
                         Abrir diretório do HTML
                       </button>
                     </div>                    
@@ -4058,7 +4157,7 @@
                           Carregar
                         </button>
                       </div>
-                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="eel.open_py('dir_emote','null')">
+                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.open_py('dir_emote','null')">
                         Abrir diretório do HTML
                       </button>
                     </div>
@@ -4082,8 +4181,8 @@
               </div>
             </div>
             <div id="config-chat-messages-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Mensagens no chat</h4>
+              <div class="internal-top">
+                <span>Mensagens no chat</span>
                 <button class="btn" onclick="hide_config_div('config-chat-messages-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -4091,8 +4190,7 @@
               </div>
               <div class="h-scroll justify-content-center">
                 <div class="internal-block">
-                  <form id="chat-messages-config-form" class="bg-dark form-block"
-                    onsubmit="config_messages_change(event)">
+                  <form id="chat-messages-config-form" class="bg-dark form-block">
                     <h4>Configurar mensagens no chat</h4>
                     <div class="row mt-5">
                       <div class="col">
@@ -4211,7 +4309,7 @@
                         </div>
                       </div>
                     </div>
-                    <button type="submit" id="submit-messages-config" class="btn bt-submit mt-4">
+                    <button type="button" id="submit-messages-config" class="btn bt-submit mt-4" onclick="messages_config_js('save')">
                       Atualizar configurações
                     </button>
                   </form>
@@ -4219,8 +4317,8 @@
               </div>
             </div>
             <div id="config-discord-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Discord Webhook</h4>
+              <div class="internal-top">
+                <span>Discord Webhook</span>
                 <button class="btn" onclick="hide_config_div('config-discord-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -4340,8 +4438,8 @@
               </div>
             </div>
             <div id="config-responses-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Respostas no chat</h4>
+              <div class="internal-top">
+                <span>Respostas no chat</span>
                 <button class="btn" onclick="hide_config_div('config-responses-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -4354,8 +4452,7 @@
                     <div class="form-group mt-3">
                       <label for="response-select-edit">Selecione a mensagem para editar</label>
                       <div class="input-group mt-3" id="select-message-edit-form">
-                        <select class="bg-dark w-100" id="response-select-edit"
-                          onchange="config_responses_js(event,'get_response')">
+                        <select class="bg-dark w-100" id="response-select-edit" onchange="config_responses_js(event,'get_response')">
                           <option selected>
                             Selecione o tipo de mensagem
                           </option>
@@ -4680,6 +4777,10 @@
                           <option value="emote_disabled">
                             Resposta para sistema de emotes desabilitado
                           </option>
+                          <option value="skip_votes">
+                            Resposta para contagem de votos para pular musica
+                          </option>
+                          
                         </select>
                       </div>
                     </div>
@@ -4699,8 +4800,8 @@
               </div>
             </div>
             <div id="config-music-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Pedidos de música</h4>
+              <div class="internal-top">
+                <span>Pedidos de música</span>
                 <button class="btn" onclick="hide_config_div('config-music-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -4740,14 +4841,29 @@
                       <select class="form-control bg-dark mt-3" id="redeem-select-music"></select>
                     </div>
                     <div class="form-group mt-3">
-                      <label for="max-duration">Duração máxima da música permitida para
-                        pedidos</label>
+                      <label for="max-duration">Duração máxima da música permitida para pedidos</label>
                       <input type="text" class="form-control bg-dark mt-3" id="max-duration" />
+                    </div>
+                    <div class="form-group mt-3">
+                      <label for="skip-requests">Votos de !Skip necessários para pular a musica</label>
+                      <input type="text" class="form-control bg-dark mt-3" id="skip-requests" />
+                    </div>
+                    <div class="row">
+                      <div class="col">
+                        <p class="form-check-label">
+                          Moderadores ignoram votos de skip
+                        </p>
+                      </div>
+                      <div class="col-2">
+                        <div class="material-switch bg-white d-flex justify-content-end">
+                          <input id="skip-ignore" type="checkbox" />
+                          <label for="skip-ignore" class="form-check-label"></label>
+                        </div>
+                      </div>
                     </div>
                     <div class="input-group mt-4">
                       <label for="blocked-music" class="w-100 mb-3">Termos ou nomes de música bloqueados</label>
-                      <input type="text" class="form-control bg-dark" placeholder="Termos ou nomes"
-                        id="blocked-music" />
+                      <input type="text" class="form-control bg-dark" placeholder="Termos ou nomes" id="blocked-music" />
                       <button type="button" class="btn bt-submit" onclick="sr_config_js('event','list_add')">
                         Adicionar
                       </button>
@@ -4786,8 +4902,8 @@
               </div>
             </div>
             <div id="config-highlight-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Mensagem destacada</h4>
+              <div class="internal-top">
+                <span>Mensagem destacada</span>
                 <button class="btn" onclick="hide_config_div('config-highlight-div')" data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
@@ -4945,8 +5061,8 @@
               </div>
             </div>
             <div id="chat-config-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Chat</h4>
+              <div class="internal-top">
+                <span>Chat</span>
                 <button class="btn" onclick="hide_config_div('chat-config-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -5211,8 +5327,8 @@
               </div>
             </div>
             <div id="events-config-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Registro de eventos</h4>
+              <div class="internal-top">
+                <span>Registro de eventos</span>
                 <button class="btn" onclick="hide_config_div('events-config-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -5304,6 +5420,19 @@
                         </div>
                       </div>
                     </div>
+                    <div class="row mt-3">
+                      <div class="col">
+                        <p class="form-check-label">
+                          Enviar resgates de recompensas no chat 
+                        </p>
+                      </div>
+                      <div class="col-2">
+                        <div class="material-switch bg-white d-flex justify-content-end">
+                          <input id="show-redeem-chat" type="checkbox" />
+                          <label for="show-redeem-chat" class="form-check-label"></label>
+                        </div>
+                      </div>
+                    </div>
                     <div class="row mt-1">
                       <div class="col">
                         <p class="form-check-label">
@@ -5314,6 +5443,19 @@
                         <div class="material-switch bg-white d-flex justify-content-end">
                           <input id="show-commands" type="checkbox" />
                           <label for="show-commands" class="form-check-label"></label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row mt-1">
+                      <div class="col">
+                        <p class="form-check-label">
+                          Exibir utilização de comandos no chat (Aparecerá como o registro de eventos juntamente com a mensagem do comando)
+                        </p>
+                      </div>
+                      <div class="col-2">
+                        <div class="material-switch bg-white d-flex justify-content-end">
+                          <input id="show-commands-chat" type="checkbox" />
+                          <label for="show-commands-chat" class="form-check-label"></label>
                         </div>
                       </div>
                     </div>
@@ -5333,7 +5475,20 @@
                     <div class="row mt-1">
                       <div class="col">
                         <p class="form-check-label">
-                          Exibir notificação quando um novo usuário entrar no
+                          Emviar eventos gerais (follow, sub, etc) no chat
+                        </p>
+                      </div>
+                      <div class="col-2">
+                        <div class="material-switch bg-white d-flex justify-content-end">
+                          <input id="show-events-chat" type="checkbox" />
+                          <label for="show-events-chat" class="form-check-label"></label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row mt-1">
+                      <div class="col">
+                        <p class="form-check-label">
+                          Exibir notificação quando um usuário entrar no
                           chat (podem ocorrer atrasos)
                         </p>
                       </div>
@@ -5341,6 +5496,19 @@
                         <div class="material-switch bg-white d-flex justify-content-end">
                           <input id="show-join" type="checkbox" />
                           <label for="show-join" class="form-check-label"></label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row mt-1">
+                      <div class="col">
+                        <p class="form-check-label">
+                          Enviar no chat quando um usuário entrar (podem ocorrer atrasos)
+                        </p>
+                      </div>
+                      <div class="col-2">
+                        <div class="material-switch bg-white d-flex justify-content-end">
+                          <input id="show-join-chat" type="checkbox" />
+                          <label for="show-join-chat" class="form-check-label"></label>
                         </div>
                       </div>
                     </div>
@@ -5357,6 +5525,20 @@
                           <label for="show-leave" class="form-check-label"></label>
                         </div>
                       </div>
+                    </div>                    
+                    <div class="row mt-1">
+                      <div class="col">
+                        <p class="form-check-label">
+                          Enviar no chat quando um usuário sair
+                          (podem ocorrer atrasos)
+                        </p>
+                      </div>
+                      <div class="col-2">
+                        <div class="material-switch bg-white d-flex justify-content-end">
+                          <input id="show-leave-chat" type="checkbox" />
+                          <label for="show-leave-chat" class="form-check-label"></label>
+                        </div>
+                      </div>
                     </div>
                     <button type="button" class="bt-submit btn bg-dark mt-5" onclick="event_log_config('save')">
                       Salvar
@@ -5366,8 +5548,8 @@
               </div>
             </div>
             <div id="not-config-div" hidden>
-              <div class="d-flex justify-content-between bg-dark p-2">
-                <h4>Alertas</h4>
+              <div class="internal-top">
+                <span>Alertas</span>
                 <button class="btn" onclick="hide_config_div('not-config-div')" data-toggle="tooltip"
                   data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
@@ -5524,21 +5706,21 @@
             </div>
           </div>
           <div class="tab-pane" id="v-pills-perfil" role="tabpanel" aria-labelledby="v-pills-perfil-tab">
-            <div class="d-flex justify-content-between bg-dark p-2">
-              <h4>Perfil</h4>
+            <div class="internal-top">
+              <span>Perfil</span>
             </div>
             <div class="h-scroll justify-content-center">
-              <div class="card bg-dark form-block align-self-center">
+              <div class="card form-block align-self-center w-75">
                 <img id="profile_image" src="./src/profile.png" class="rounded mx-auto d-block" width="200px" />
                 <div class="card-body">
                   <div class="row w-100" style="margin-left: 0%;">
-                    <div class="col w-100">
+                    <div class="col text-left w-50">
                       <p class="card-text">Login name</p>
                       <p class="card-text">Nome de exibição</p>
                       <p class="card-text">ID de Usuário</p>
                       <p class="card-text">Email</p>
                     </div>
-                    <div class="col" style="text-align: right;">
+                    <div class="col text-right w-50">
                       <p class="card-text" id="login_name">gg_tec</p>
                       <p class="card-text" id="ex_name">GGTEC</p>
                       <p class="card-text" id="user_id">000000000</p>
@@ -5550,14 +5732,14 @@
             </div>
           </div>
           <div class="tab-pane" id="v-pills-sobre" role="tabpanel" aria-labelledby="v-pills-sobre-tab">
-            <div class="d-flex justify-content-between bg-dark p-2">
-              <h4>Sobre</h4>
+            <div class="internal-top">
+              <span>Sobre</span>
             </div>
             <div class="h-scroll justify-content-center">
               <div class="d-flex card bg-dark form-block align-self-center">
                 <img src="./src/profile.png" class="rounded mx-auto d-block" width="150px" />
                 <div class="card-body text-center">
-                  <h4 class="card-title m-3">RewardEvents V5.3.0 - BETA</h4>
+                  <h4 class="card-title m-3">RewardEvents V5.5.5 - BETA</h4>
                   <button class="bt-submit btn m-3" onclick="update_modal('get')">
                     Verificar Atualização
                   </button>
@@ -5584,11 +5766,11 @@
                 </div>
                 <div class="card-footer text-center">
                   <button type="button" class="btn bt-submit m-3 mt-0" title="Navegar para a Wiki"
-                    onclick="eel.open_py('wiki','null')">
+                    onclick="window.pywebview.api.open_py('wiki','null')">
                     <i class="fa-solid fa-circle-question"></i>
                   </button>
                   <button type="button" class="btn bt-submit m-3 mt-0 ms-0"
-                    title="Abrir pasta de arquivos de configurações" onclick="eel.open_py('appdata','null')">
+                    title="Abrir pasta de arquivos de configurações" onclick="window.pywebview.api.open_py('appdata','null')">
                     <i class="fa-solid fa-folder-open"></i>
                   </button>
                   <button type="button" class="btn bt-submit m-3 mt-0 me-0 ms-0" title="Log de erros"
@@ -5600,8 +5782,11 @@
                     <i class="fa-solid fa-bug"></i>
                   </button>
                   <button type="button" class="btn bt-submit m-3 mt-0" title="Suporte no discord"
-                    onclick="eel.open_py('discord','null')">
+                    onclick="window.pywebview.api.open_py('discord','null')">
                     <i class="fa-brands fa-discord"></i>
+                  </button>
+                  <button type="button" class="btn bt-submit m-3 mt-0 ms-0" onclick="show_userdata_modal()" title="Dados de usuários">
+                    <i class="fa-solid fa-users"></i>
                   </button>
                 </div>
                 <div class="modal" id="errorlog-modal" data-backdrop="static" tabindex="-1">
@@ -5678,6 +5863,18 @@
             </div>
           </div>
         </div>
+        <div class="toast m-5 bg-dark p-0 d-none" id="notific" role="alert">
+          <div class="toast-header d-flex justify-content-between">
+            <div>
+              <i class="fa-solid fa-triangle-exclamation text-black"></i>
+              <strong class="ms-2 text-white">Notificação</strong>
+            </div>
+            <div>
+              <button type="button" class="btn-close-white btn-close" data-bs-dismiss="toast"></button>
+            </div>
+          </div>
+          <div class="toast-body" id="notific-message">Notificação</div>
+        </div>
       </div>
       <div class="modal fade" id="confirm-logout" data-bs-backdrop="static" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -5696,7 +5893,7 @@
                 </div>
                 <div class="form-group">
                   <button type="button" class="w-100 btn bt-modal mt-1" data-bs-dismiss="modal"
-                    onclick="eel.logout_auth()">
+                    onclick="window.pywebview.api.logout_auth()">
                     Confirmar
                   </button>
                 </div>
@@ -5717,11 +5914,11 @@
                   aria-label="Close"></button>
               </div>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-0">
               <div class="h-scroll">
-                <div id="table_out">
+                <div id="table_out" class="w-100">
                   <table class="table table-dark table-striped" id="userdata_table">
-                    <thead>
+                    <thead class="w">
                       <tr>
                         <th>Usuário</th>
                         <th>Cargos</th>
@@ -6056,19 +6253,6 @@
           </div>
         </div>
       </div>
-      <div class="toast m-5 bg-dark p-0 d-none" id="notific" role="alert">
-        <div class="toast-header d-flex justify-content-between">
-          <div>
-            <i class="fa-solid fa-triangle-exclamation text-black"></i>
-            <strong class="ms-2 text-white">Notificação</strong>
-          </div>
-          <div>
-            <button type="button" class="btn-close-white btn-close" data-bs-dismiss="toast"></button>
-          </div>
-        </div>
-        <div class="toast-body" id="notific-message">Notificação</div>
-      </div>
-    </div>
   </div>
   <script src="assets/js/audioplayer.js"></script>
   <script src="assets/js/actions.js"></script>
