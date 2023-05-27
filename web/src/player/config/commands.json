@@ -1,0 +1,38 @@
+{
+      "redeem": "Pedido de musica",
+      "request": {
+            "command": "!sr",
+            "status": 1,
+            "delay": 10,
+            "last_use": 1681444927,
+            "user_level": "subs"
+      },
+      "atual": {
+            "command": "!atual",
+            "status": 1,
+            "delay": 10,
+            "last_use": 0,
+            "user_level": "subs"
+      },
+      "next": {
+            "command": "!next",
+            "status": 1,
+            "delay": 10,
+            "last_use": 0,
+            "user_level": "subs"
+      },
+      "skip": {
+            "command": "!skip",
+            "status": 1,
+            "delay": 10,
+            "last_use": 1681407249,
+            "user_level": "subs"
+      },
+      "volume": {
+            "command": "!volume",
+            "status": 1,
+            "delay": 10,
+            "last_use": 1681348784,
+            "user_level": "mod"
+      }
+}

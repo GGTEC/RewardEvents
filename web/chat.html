@@ -44,18 +44,20 @@
             <div class="tab-pane purple-border-block" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab">
                 <div class="users-chat-list d-flex flex-column" id="user-list-out">
                     <div class="box-collapse-list">
-                      <div>
-                        <h6 class="m-1 mt-0">Espectadores</h6>
-                      </div>
+                        <div class="d-flex justify-content-between" id="users-toggler-out" data-bs-toggle="collapse" data-bs-target="#div_users_out" aria-expanded="false" aria-controls="div_users_out">
+                            <h6 class="m-1 mt-0 ">Espectadores</h6>
+                            <i class="fa-solid fa-square-caret-down m-1"></i>
+                        </div>
                     </div>
-                    <div class="mt-1 ms-1" id="div_users_out">
+                    <div class="mt-1 ms-1 collapse show" id="div_users_out">
                     </div>
                     <div class="box-collapse-list mt-1">
-                      <div>
+                        <div class="d-flex justify-content-between" id="bots-toggler-out" data-bs-toggle="collapse" data-bs-target="#div_bots_out" aria-expanded="false" aria-controls="div_bots_out">
                         <h6 class="m-1">Bots</h6>
+                        <i class="fa-solid fa-square-caret-down m-1"></i>
                       </div>
                     </div>
-                    <div class="mt-1 ms-1" id="div_bots_out">
+                    <div class="mt-1 ms-1 collapse" id="div_bots_out">
                     </div>
                 </div>
             </div>

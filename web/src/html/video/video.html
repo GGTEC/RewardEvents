@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="utf-8"/>
+        <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+        <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" rel="stylesheet"/>
+        <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet"/>
+        <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
+        <title>Event</title>
+    </head>
+    <style>
+        body {
+            background-color: transparent;
+        }
+
+        .fade-in {
+            animation: fade-in 5s ease-in both;
+        }
+
+        .fade-out {
+            animation: fade-out 5s ease-out both;
+        }
+ 
+        @keyframes fade-in {
+                0% {
+                        opacity: 0;
+                }
+                10% {
+                        opacity: 1;
+                }
+                25% {
+                        opacity: 1;
+                }
+                50% {
+                        opacity: 1;
+                }
+                75% {
+                        opacity: 1;
+                }
+                90% {
+                        opacity: 1;
+                }
+                100% {
+                        opacity: 0;
+                }
+
+                }
+
+        @-webkit-keyframes fade-out {
+                0% {
+                opacity: 1;
+                }
+                100% {
+                opacity: 0;
+                }
+            }
+            @keyframes fade-out {
+                0% {
+                opacity: 1;
+                }
+                100% {
+                opacity: 0;
+                }
+            }
+
+    </style>
+    <body>
+        <div class="fade-in fade-out" id="main-block" style="animation-duration: 9s">
+            <div id="video_div" style="display: block;">
+                <video autoplay="" height="100%" src="" width="100%">
+                </video>
+            </div>
+            <div id="gif_div" style="display: none !important;">
+                <img height="100%" src="" width="100%"/>
+            </div>
+        </div>
+    </body>
+</html>

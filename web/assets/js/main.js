@@ -132,12 +132,13 @@ window.addEventListener('pywebviewready',async function() {
     functionsExecuted++;
     progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
 
-
     $('#main').removeClass('d-none')
     $('#loading').addClass('remove-loading')
 
     setTimeout(function() {
       $('#loading').addClass('d-none');
+      
+      update_modal('get_start')
     }, 1000);
 
     progress_span.innerHTML = 'remove loading.'
@@ -153,6 +154,11 @@ window.addEventListener('pywebviewready',async function() {
     progress_span.innerHTML = 'Finish start.'
     functionsExecuted++;
     progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+    $("#tags").on("click", "p", function() {
+      $(this).remove(); 
+    });
+    
 
   }
 
@@ -453,15 +459,97 @@ async function disclosure(event,type_id){
 async function update_modal(type_id){
 
   if (type_id == 'get'){
+
     var status = await window.pywebview.api.update_check('check');
 
     if(status){
-      if (status == 'true'){
+      
+      if (status != 'false'){
+
+        var repoOwner = 'GGTEC'
+        var repoName = 'RewardEvents'
+
+        fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/releases/latest`)
+        .then(response => response.json())
+        .then(data => {
+
+          let releasesList = document.querySelector("#update_body");
+
+          if (releasesList != undefined){
+            
+            const firstRelease = data; // Obter o primeiro item da lista
+            
+            const converter = new showdown.Converter()
+
+            var html_release = converter.makeHtml(firstRelease.body);
+
+            let releaseEl = document.createElement("div");
+
+            releaseEl.classList.add('version_block')
+            releaseEl.innerHTML = `
+              <p>Versão: ${firstRelease.tag_name}</p>
+              <p class='version_text'>${html_release}</p>
+            `;
+
+            releasesList.appendChild(releaseEl);
+          }
+          
+        })
+        .catch(error => console.error(error));
+
+
         $("#update-modal").modal("show");
-      } else if (status == 'false'){
-        document.getElementById('no-update').hidden = false;
+
+      } else {
+        document.getElementById('no-update').hidden = false
       }
     }
+
+  } else if (type_id == 'get_start'){
+
+    var status = await window.pywebview.api.update_check('check');
+
+    if(status){
+      
+      if (status != 'false'){
+
+        var repoOwner = 'GGTEC'
+        var repoName = 'RewardEvents'
+
+        fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/releases/latest`)
+        .then(response => response.json())
+        .then(data => {
+
+          let releasesList = document.querySelector("#update_body");
+
+          if (releasesList != undefined){
+            
+            const firstRelease = data; // Obter o primeiro item da lista
+            
+            const converter = new showdown.Converter()
+
+            var html_release = converter.makeHtml(firstRelease.body);
+
+            let releaseEl = document.createElement("div");
+
+            releaseEl.classList.add('version_block')
+            releaseEl.innerHTML = `
+              <p>Versão: ${firstRelease.tag_name}</p>
+              <p class='version_text'>${html_release}</p>
+            `;
+
+            releasesList.appendChild(releaseEl);
+          }
+          
+        })
+        .catch(error => console.error(error));
+
+
+        $("#update-modal").modal("show");
+
+      }
+    }
+
   } else if (type_id == 'open'){
     window.pywebview.api.update_check('open');
   }

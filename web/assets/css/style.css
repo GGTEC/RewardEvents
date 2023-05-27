@@ -193,7 +193,6 @@ span {
   padding: 5%;
   box-shadow: 6px 14px 19px 0 rgb(0 0 0 / 60%);
   background-color:#754b9905;
-  backdrop-filter: blur( 16.5px );
   border-radius: 20px;
 }
 
@@ -662,6 +661,11 @@ input::-webkit-inner-spin-button {
   white-space: nowrap;
 }
 
+.name-users-list {
+  padding: 0.1rem;
+  transition: 0.35s;
+}
+
 .name-user-list:hover {
   user-select: text;
   cursor: pointer;
@@ -689,6 +693,7 @@ input::-webkit-inner-spin-button {
 .event-message {
   padding: 1%;
   margin-top: 1%;
+  margin: 1%;
   color: #754b99;
   height: auto;
   border:  solid #4f016c 1px;
@@ -897,7 +902,9 @@ hr {
   background-color: #5f0181;
 }
 
-
+.collapse:not(.show){
+  display: none !important;
+}
 .name-users-list:hover {
   background-color: #4f016c;
 }
@@ -1211,6 +1218,10 @@ hr {
 .top-toggler {
   height: 35px;
   border-bottom: #754b99 1px solid;
+  cursor: pointer;
+}
+
+#user-toggler-side,#bots-toggler-side,#users-toggler-list,#bots-toggler-list,#users-toggler,#bots-toggler,#bots-toggler-out,#users-toggler-out {
   cursor: pointer;
 }
 

@@ -368,8 +368,6 @@ function create_action(event,type_id){
     var formData = JSON.stringify(data);
     window.pywebview.api.create_action_save(formData,type_id);
 
-    $(`#${type_id}-create`)[0].reset();
-
 }
 
 async function get_scenes(id) {

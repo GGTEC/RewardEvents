@@ -9,6 +9,8 @@ async function get_redeem_js_config(el_id) {
     var list_redem_parse = await window.pywebview.api.get_redeem('player');
 
     if (list_redem_parse) {
+
+        list_redem_parse = JSON.parse(list_redem_parse)
         
         $("#" + el_id).empty();
 
@@ -24,7 +26,7 @@ async function get_redeem_js_config(el_id) {
     }
 }
 
-async function get_messages_config_js() {
+async function messages_config_js(type_id) {
     
     var enable_tts_command = document.getElementById("enable-tts-module");
     var enable_commands = document.getElementById("enable-commands");
@@ -36,39 +38,54 @@ async function get_messages_config_js() {
     var enable_message_next = document.getElementById("enable-message-next");
     var enable_message_error_music = document.getElementById("enable-message-error-music");
 
-    var messages_status_parse = await window.pywebview.api.messages_config();
+    if (type_id == 'get'){
 
-    if (messages_status_parse) {
+        var messages_status_parse = await window.pywebview.api.messages_config('get','none');
 
+        if (messages_status_parse) {
+    
+            messages_status_parse = JSON.parse(messages_status_parse)
+    
+            enable_tts_command.checked = messages_status_parse.STATUS_TTS == 1 ? true : false;
+            enable_commands.checked = messages_status_parse.STATUS_COMMANDS == 1 ? true : false;
+            enable_responses.checked = messages_status_parse.STATUS_RESPONSE == 1 ? true : false;
+            enable_delay_response.checked = messages_status_parse.STATUS_ERROR_TIME == 1 ? true : false;
+            enable_clip_responses.checked = messages_status_parse.STATUS_CLIP == 1 ? true : false;
+            enable_permisson_responses.checked = messages_status_parse.STATUS_ERROR_USER == 1 ? true : false;
+            enable_message_music.checked = messages_status_parse.STATUS_MUSIC == 1 ? true : false;
+            enable_message_next.checked = messages_status_parse.STATUS_MUSIC_CONFIRM == 1 ? true : false;
+            enable_message_error_music.checked = messages_status_parse.STATUS_MUSIC_ERROR == 1 ? true : false;
 
-        if (messages_status_parse.STATUS_TTS == 1) {
-            enable_tts_command.checked = true;
         }
-        if (messages_status_parse.STATUS_COMMANDS == 1) {
-            enable_commands.checked = true;
-        }
-        if (messages_status_parse.STATUS_RESPONSE == 1) {
-            enable_responses.checked = true;
-        }
-        if (messages_status_parse.STATUS_ERROR_TIME == 1) {
-            enable_delay_response.checked = true;
-        }
-        if (messages_status_parse.STATUS_CLIP == 1) {
-            enable_clip_responses.checked = true;
-        }
-        if (messages_status_parse.STATUS_ERROR_USER == 1) {
-            enable_permisson_responses.checked = true;
-        }
-        if (messages_status_parse.STATUS_MUSIC == 1) {
-            enable_message_music.checked = true;
-        }
-        if (messages_status_parse.STATUS_MUSIC_CONFIRM == 1) {
-            enable_message_next.checked = true;
-        }
-        if (messages_status_parse.STATUS_MUSIC_ERROR == 1) {
-            enable_message_error_music.checked = true;
-        }
+    } else if (type_id == 'save'){
+
+        enable_tts_command = enable_tts_command.checked ? 1 : 0;
+        enable_commands = enable_commands.checked ? 1 : 0;
+        enable_responses = enable_responses.checked ? 1 : 0;
+        enable_delay_response = enable_delay_response.checked ? 1 : 0;
+        enable_clip_responses = enable_clip_responses.checked ? 1 : 0;
+        enable_permisson_responses = enable_permisson_responses.checked ? 1 : 0;
+        enable_message_music = enable_message_music.checked ? 1 : 0;
+        enable_message_next = enable_message_next.checked ? 1 : 0;
+        enable_message_error_music = enable_message_error_music.checked ? 1 : 0
+    
+        data = {
+            status_tts: enable_tts_command,
+            status_commands: enable_commands,
+            status_response: enable_responses,
+            status_delay: enable_delay_response,
+            status_clip: enable_clip_responses,
+            status_permission: enable_permisson_responses,
+            status_music : enable_message_music,
+            status_next : enable_message_next,
+            status_error_music :enable_message_error_music
+        };
+    
+        var formData = JSON.stringify(data);
+    
+        window.pywebview.api.messages_config('save',formData);
     }
+
 }
 
 async function obs_config_js(event,type_id) {
@@ -88,39 +105,25 @@ async function obs_config_js(event,type_id) {
 
     } else if (type_id == 'get_not'){
 
-        
-        var not_enabled = document.getElementById('not-enabled')
-        var not_music = document.getElementById('not-music-enabled')
-        var not_events = document.getElementById('not-events-enabled')
-        var not_emote = document.getElementById('not-emote-enabled')
+        var not_redeem_enabled_status = document.getElementById('not-redeem-enabled');
+        var not_music_enabled_status = document.getElementById('not-music-enabled');
+        var not_emote_enabled_status = document.getElementById('not-emote-enabled');
         var emote_size = document.getElementById('emote-px')
-        var time_show_not_events = document.getElementById('time-show-not-events')
         var time_show_not = document.getElementById('time-show-not')
+        var time_show_music = document.getElementById('time-show-music')
 
         var not_info_parse = await window.pywebview.api.obs_config_py(type_id,'null');
 
         if (not_info_parse) {
             not_info_parse = JSON.parse(not_info_parse)
 
-            not_enabled.checked = not_info_parse.html_active == 1 ? true : false;
-            not_music.checked = not_info_parse.html_player_active == 1 ? true : false;
-            not_events.checked = not_info_parse.html_events_active == 1 ? true : false;
-            not_emote.checked = not_info_parse.html_emote_active == 1 ? true : false;
+            not_redeem_enabled_status.checked = not_info_parse.html_redem_active == 1 ? true : false;
+            not_music_enabled_status.checked = not_info_parse.html_player_active == 1 ? true : false;
+            not_emote_enabled_status.checked = not_info_parse.html_emote_active == 1 ? true : false;
 
-            time_show_not_events.value = not_info_parse.html_events_time
-            time_show_not.value = not_info_parse.html_time
+            time_show_not.value = not_info_parse.html_redeem_time
+            time_show_music.value = not_info_parse.html_music_time
             emote_size.value = not_info_parse.emote_px
-
-            $("#not-source-name").append('<option style="background: #000; color: #fff;" value="'+ not_info_parse.html_title +'"selected> '+ not_info_parse.html_title +'</option>');
-            $("#video-source-name").append('<option style="background: #000; color: #fff;" value="'+ not_info_parse.html_video +'" selected> '+ not_info_parse.html_video +'</option>');
-            $("#events-source-name").append('<option style="background: #000; color: #fff;" value="'+ not_info_parse.html_events +'" selected>'+ not_info_parse.html_events +'</option>');
-            $("#emote-source-name").append('<option style="background: #000; color: #fff;" value="'+ not_info_parse.html_emote +'" selected>'+ not_info_parse.html_emote +'</option>');
-
-            $("#not-source-name").selectpicker("refresh");
-            $("#video-source-name").selectpicker("refresh");
-            $("#events-source-name").selectpicker("refresh");
-            $("#emote-source-name").selectpicker("refresh");
-
             
         }
     } else if (type_id == 'save_conn'){
@@ -140,29 +143,24 @@ async function obs_config_js(event,type_id) {
     } else if (type_id == 'save_not'){
         event.preventDefault();
 
-        var form = document.querySelector("#obs-not-form");
-        var not_enabled_status = form.querySelector('#not-enabled').checked;
-        var not_music_enabled_status = form.querySelector('#not-music-enabled').checked;
-        var not_event_enabled_status = form.querySelector('#not-events-enabled').checked;
-        var not_emote_enabled_status = form.querySelector('#not-emote-enabled').checked;
+        var not_redeem_enabled_status = document.getElementById('not-redeem-enabled').checked;
+        var not_music_enabled_status = document.getElementById('not-music-enabled').checked;
+        var not_emote_enabled_status = document.getElementById('not-emote-enabled').checked;
+        var emote_px = document.getElementById('emote-px').value
+        var time_show_not = document.getElementById('time-show-not').value
+        var time_show_music = document.getElementById('time-show-music').value
         
-        not_enabled_status = not_enabled_status ? 1 : 0;
+        not_redeem_enabled_status = not_redeem_enabled_status ? 1 : 0;
         not_music_enabled_status = not_music_enabled_status ? 1 : 0;
-        not_event_enabled_status = not_event_enabled_status ? 1 : 0;
         not_emote_enabled_status = not_emote_enabled_status ? 1 : 0;
         
         data = {
-            not_enabled: not_enabled_status,
+            not_redeem: not_redeem_enabled_status,
             not_music: not_music_enabled_status,
-            not_event: not_event_enabled_status,
             not_emote: not_emote_enabled_status,
-            source_name: form.querySelector('#not-source-name').value,
-            video_source_name: form.querySelector('#video-source-name').value,
-            event_source_name: form.querySelector('#events-source-name').value,
-            emote_source_name: form.querySelector('#emote-source-name').value,
-            emote_px: form.querySelector('#emote-px').value,
-            time_showing_not: form.querySelector('#time-show-not').value,
-            time_showing_event_not: form.querySelector('#time-show-not-events').value,
+            emote_px: emote_px,
+            time_showing_not: time_show_not,
+            time_showing_music : time_show_music
         };
     
         var formData = JSON.stringify(data);
@@ -261,7 +259,7 @@ function show_config_div(div_id) {
     } else if (div_id == "config-not-obs-div") {
         obs_config_js('event','get_not');
     } else if (div_id == "config-chat-messages-div") {
-        get_messages_config_js();
+        messages_config_js('get');
     } else if (div_id == "config-discord-div") {
         discord_js('event','get');
     } else if (div_id == "config-music-div"){
@@ -287,431 +285,6 @@ function hide_config_div(div_id, modal) {
     document.getElementById(div_id).hidden = true;
 }
 
-function config_messages_change(event) {
-    event.preventDefault();
-
-    var form = document.querySelector("#chat-messages-config-form");
-
-    var enable_tts_module = form.querySelector('input[id="enable-tts-module"]');
-    var enable_commands = form.querySelector('input[id="enable-commands"]');
-    var enable_responses = form.querySelector('input[id="enable-responses"]');
-    var enable_delay_response = form.querySelector('input[id="enable-delay-response"]');
-    var enable_clip_responses = form.querySelector('input[id="enable-clip-responses"]');
-    var enable_permisson_responses = form.querySelector('input[id="enable-permisson-responses"]');
-    var enable_timer_module = form.querySelector('input[id="enable-timer-module"]');
-    var enable_message_music = form.querySelector('input[id="enable-message-music"]');
-    var enable_message_next = form.querySelector('input[id="enable-message-next"]');
-    var enable_message_error_music = form.querySelector('input[id="enable-message-error-music"]');
-
-    if (enable_tts_module.checked == true) {
-        enable_tts_module = 1;
-    } else {
-        enable_tts_module = 0;
-    }
-
-    if (enable_tts_command.checked == true) {
-        enable_tts_command = 1;
-    } else {
-        enable_tts_command = 0;
-    }
-
-    if (enable_commands.checked == true) {
-        enable_commands = 1;
-    } else {
-        enable_commands = 0;
-    }
-
-    if (enable_responses.checked == true) {
-        enable_responses = 1;
-    } else {
-        enable_responses = 0;
-    }
-
-    if (enable_delay_response.checked == true) {
-        enable_delay_response = 1;
-    } else {
-        enable_delay_response = 0;
-    }
-
-    if (enable_clip_responses.checked == true) {
-        enable_clip_responses = 1;
-    } else {
-        enable_clip_responses = 0;
-    }
-
-    if (enable_permisson_responses.checked == true) {
-        enable_permisson_responses = 1;
-    } else {
-        enable_permisson_responses = 0;
-    }
-
-    if (enable_timer_module.checked == true) {
-        enable_timer_module = 1;
-    } else {
-        enable_timer_module = 0;
-    }
-
-    if (enable_message_music.checked == true) {
-        enable_message_music = 1;
-    } else {
-        enable_message_music = 0;
-    }
-
-    if (enable_message_next.checked == true) {
-        enable_message_next = 1;
-    } else {
-        enable_message_next = 0;
-    }
-
-    if (enable_message_error_music.checked == true) {
-        enable_message_error_music = 1;
-    } else {
-        enable_message_error_music = 0;
-    }
-
-    data = {
-        status_error_music :enable_message_error_music,
-        status_next : enable_message_next,
-        status_music : enable_message_music,
-        status_tts: enable_tts_module,
-        status_commands: enable_commands,
-        status_response: enable_responses,
-        status_delay: enable_delay_response,
-        status_clip: enable_clip_responses,
-        status_permission: enable_permisson_responses,
-        status_timer: enable_timer_module
-    };
-
-    var formData = JSON.stringify(data);
-
-    window.pywebview.api.save_messages_config(formData);
-}
-
-function test_not(){
-    var type_id = document.getElementById('type_edit_not').value
-
-    if (type_id == 'follow'){
-
-        data = {
-            "metadata": {
-                "message_id": "Rz5CUTXgiX7y3ZYAwSwX8ID7dYm1zkDW43W-w0DK3TY=",
-                "message_type": "notification",
-                "message_timestamp": "2023-02-15T21:26:03.587909679Z",
-                "subscription_type": "channel.follow",
-                "subscription_version": "1"
-            },
-            "payload": {
-                "subscription": {
-                    "id": "8ff22d32-4697-4d7e-a3a7-17535610af0f",
-                    "status": "enabled",
-                    "type": "channel.follow",
-                    "version": "1",
-                    "condition": {
-                        "broadcaster_user_id": "0000000"
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                    },
-                    "created_at": "2022-02-15T21:24:56.760792011Z",
-                    "cost": 0
-                },
-                "event": {
-                    "user_id": "836288612",
-                    "user_login": "teste",
-                    "user_name": "teste",
-                    "broadcaster_user_id": "000000",
-                    "broadcaster_user_login": "gg_tec",
-                    "broadcaster_user_name": "GG_TEC",
-                    "followed_at": "2022-02-15T21:26:03.58790142Z"
-                }
-            }
-        }
-
-        var not_data = JSON.stringify(data);
-        window.pywebview.api.on_message('null',not_data);
-
-    } else if (type_id == 'sub'){
-
-        msg = '@badge-info=subscriber/1;badges=subscriber/0,premium/1;color=#8A2BE2;display-name=Teste;emotes=;flags=;id=00000;login=teste;mod=0;msg-id=sub;msg-param-cumulative-months=1;msg-param-goal-contribution-type=SUB_POINTS;msg-param-goal-current-contributions=1;msg-param-goal-target-contributions=50;msg-param-goal-user-contributions=1;msg-param-months=0;msg-param-multimonth-duration=1;msg-param-multimonth-tenure=0;msg-param-should-share-streak=0;msg-param-sub-plan-name=GG\sSubzim;msg-param-sub-plan=Prime;msg-param-was-gifted=false;room-id=779823875;subscriber=1;system-msg=Teste\ssubscribed\swith\sPrime.;tmi-sent-ts=1676675858543;user-id=0000000;user-type= :tmi.twitch.tv USERNOTICE #{USERLOGIN} : Teste de mensagem'
-        window.pywebview.api.command_fallback(msg);
-
-    } else if (type_id == 'resub'){
-        
-        data = {
-            "metadata": {
-                "message_id": "Rz5CUTXgiX7y3ZYAwSwX8ID7dYm1zkDW43W-w0DK3TY=",
-                "message_type": "notification",
-                "message_timestamp": "2023-02-15T21:26:03.587909679Z",
-                "subscription_type": "channel.subscription.message",
-                "subscription_version": "1"
-            },
-            "payload": {
-                "subscription": {
-                    "id": "8ff22d32-4697-4d7e-a3a7-17535610af0f",
-                    "status": "enabled",
-                    "type": "channel.subscription.message",
-                    "version": "1",
-                    "condition": {
-                        "broadcaster_user_id": "0000000"
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                    },
-                    "created_at": "2022-02-15T21:24:56.760792011Z",
-                    "cost": 0
-                },
-                "event": {
-                    "user_id": "1234",
-                    "user_login": "Teste",
-                    "user_name": "Teste",
-                    "broadcaster_user_id": "1337",
-                    "broadcaster_user_login": "Teste",
-                    "broadcaster_user_name": "Teste",
-                    "tier": "1000",
-                    "message": {
-                        "text": "Love the stream! FevziGG",
-                        "emotes": [
-                            {
-                                "begin": 17,
-                                "end": 23,
-                                "id": "302976485"
-                            }
-                        ]
-                    },
-                    "cumulative_months": 15,
-                    "streak_months": 1, // null if not shared
-                    "duration_months": 6
-                }
-            }
-        }
-
-        var not_data = JSON.stringify(data);
-        window.pywebview.api.on_message('null',not_data);
-
-    } else if (type_id == 'giftsub'){
-
-        msg = '@badge-info=subscriber/1;badges=subscriber/0,sub-gifter/1;color=#FF00BD;display-name=Teste;emotes=;flags=;id=5b075d17-5802-4edd-b6fa-e499351cf3fc;login=Teste;mod=0;msg-id=subgift;msg-param-gift-months=1;msg-param-goal-contribution-type=SUBS;msg-param-goal-current-contributions=14;msg-param-goal-target-contributions=20;msg-param-goal-user-contributions=1;msg-param-months=3;msg-param-origin-id=35\s7d\sd3\sef\s36\s68\s30\sb0\s25\sb2\s26\sf1\se0\sce\sf0\sa4\sd0\sc3\sd9\sae;msg-param-recipient-display-name=TesteRecebe;msg-param-recipient-id=00000000;msg-param-recipient-user-name=testerecebe;msg-param-sender-count=1;msg-param-sub-plan-name=GG\sSubzim;msg-param-sub-plan=1000;room-id=779823875;subscriber=1;system-msg=Teste\sgifted\sa\sTier\s1\ssub\sto\sTesteRecebe!\sThis\sis\stheir\sfirst\sGift\sSub\sin\sthe\schannel!;tmi-sent-ts=1678225751303;user-id=490633382;user-type= :tmi.twitch.tv USERNOTICE #gg_tec'
-        window.pywebview.api.command_fallback(msg);
-         
-    } else if (type_id == 'raid'){
-        
-        data = {
-            "metadata": {
-                "message_id": "Rz5CUTXgiX7y3ZYAwSwX8ID7dYm1zkDW43W-w0DK3TY=",
-                "message_type": "notification",
-                "message_timestamp": "2023-02-15T21:26:03.587909679Z",
-                "subscription_type": "channel.raid",
-                "subscription_version": "1"
-            },
-            "payload": {
-                "subscription": {
-                    "id": "8ff22d32-4697-4d7e-a3a7-17535610af0f",
-                    "status": "enabled",
-                    "type": "cchannel.raid",
-                    "version": "1",
-                    "condition": {
-                        "to_broadcaster_user_id": "0000000"
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                    },
-                    "created_at": "2022-02-15T21:24:56.760792011Z",
-                    "cost": 0
-                },
-                "event": {
-                    "from_broadcaster_user_id": "1234",
-                    "from_broadcaster_user_login": "cool_user",
-                    "from_broadcaster_user_name": "Cool_User",
-                    "to_broadcaster_user_id": "1337",
-                    "to_broadcaster_user_login": "cooler_user",
-                    "to_broadcaster_user_name": "Cooler_User",
-                    "viewers": 9001
-                }
-            }
-        }
-
-        var not_data = JSON.stringify(data);
-        window.pywebview.api.on_message('null',not_data);
-
-    } else if (type_id == 'bits1'){
-        
-        data = {
-            "metadata": {
-                "message_id": "Rz5CUTXgiX7y3ZYAwSwX8ID7dYm1zkDW43W-w0DK3TY=",
-                "message_type": "notification",
-                "message_timestamp": "2023-02-15T21:26:03.587909679Z",
-                "subscription_type": "channel.cheer",
-                "subscription_version": "1"
-            },
-            "payload": {
-                "subscription": {
-                    "id": "8ff22d32-4697-4d7e-a3a7-17535610af0f",
-                    "status": "enabled",
-                    "type": "channel.cheer",
-                    "version": "1",
-                    "condition": {
-                        "broadcaster_user_id": "0000000"
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                    },
-                    "created_at": "2022-02-15T21:24:56.760792011Z",
-                    "cost": 0
-                },
-                "event": {
-                    "is_anonymous": false,
-                    "user_id": "1234",
-                    "user_login": "cool_user",  
-                    "user_name": "Cool_User",   
-                    "broadcaster_user_id": "1337",
-                    "broadcaster_user_login": "cooler_user",
-                    "broadcaster_user_name": "Cooler_User",
-                    "message": "pogchamp",
-                    "bits": 60
-                }
-            }
-        }
-
-        var not_data = JSON.stringify(data);
-        window.pywebview.api.on_message('null',not_data);
-
-    } else if (type_id == 'bits100'){
-
-
-        data = {
-            "metadata": {
-                "message_id": "Rz5CUTXgiX7y3ZYAwSwX8ID7dYm1zkDW43W-w0DK3TY=",
-                "message_type": "notification",
-                "message_timestamp": "2023-02-15T21:26:03.587909679Z",
-                "subscription_type": "channel.cheer",
-                "subscription_version": "1"
-            },
-            "payload": {
-                "subscription": {
-                    "id": "8ff22d32-4697-4d7e-a3a7-17535610af0f",
-                    "status": "enabled",
-                    "type": "channel.cheer",
-                    "version": "1",
-                    "condition": {
-                        "broadcaster_user_id": "0000000"
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                    },
-                    "created_at": "2022-02-15T21:24:56.760792011Z",
-                    "cost": 0
-                },
-                "event": {
-                    "is_anonymous": false,
-                    "user_id": "1234",
-                    "user_login": "cool_user",  
-                    "user_name": "Cool_User",   
-                    "broadcaster_user_id": "1337",
-                    "broadcaster_user_login": "cooler_user",
-                    "broadcaster_user_name": "Cooler_User",
-                    "message": "pogchamp",
-                    "bits": 100
-                }
-            }
-        }
-
-        var not_data = JSON.stringify(data);
-        window.pywebview.api.on_message('null',not_data);
-
-    } else if (type_id == 'bits1000'){
-
-        data = {
-            "metadata": {
-                "message_id": "Rz5CUTXgiX7y3ZYAwSwX8ID7dYm1zkDW43W-w0DK3TY=",
-                "message_type": "notification",
-                "message_timestamp": "2023-02-15T21:26:03.587909679Z",
-                "subscription_type": "channel.cheer",
-                "subscription_version": "1"
-            },
-            "payload": {
-                "subscription": {
-                    "id": "8ff22d32-4697-4d7e-a3a7-17535610af0f",
-                    "status": "enabled",
-                    "type": "channel.cheer",
-                    "version": "1",
-                    "condition": {
-                        "broadcaster_user_id": "0000000"
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                    },
-                    "created_at": "2022-02-15T21:24:56.760792011Z",
-                    "cost": 0
-                },
-                "event": {
-                    "is_anonymous": false,
-                    "user_id": "1234",
-                    "user_login": "cool_user",  
-                    "user_name": "Cool_User",   
-                    "broadcaster_user_id": "1337",
-                    "broadcaster_user_login": "cooler_user",
-                    "broadcaster_user_name": "Cooler_User",
-                    "message": "pogchamp",
-                    "bits": 1000
-                }
-            }
-        }
-
-        var not_data = JSON.stringify(data);
-        window.pywebview.api.on_message('null',not_data);
-        
-    } else if (type_id == 'bits5000'){
-
-        data = {
-
-            "metadata": {
-                "message_id": "Rz5CUTXgiX7y3ZYAwSwX8ID7dYm1zkDW43W-w0DK3TY=",
-                "message_type": "notification",
-                "message_timestamp": "2023-02-15T21:26:03.587909679Z",
-                "subscription_type": "channel.cheer",
-                "subscription_version": "1"
-            },
-            "payload": {
-                "subscription": {
-                    "id": "8ff22d32-4697-4d7e-a3a7-17535610af0f",
-                    "status": "enabled",
-                    "type": "channel.cheer",
-                    "version": "1",
-                    "condition": {
-                        "broadcaster_user_id": "0000000"
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                    },
-                    "created_at": "2022-02-15T21:24:56.760792011Z",
-                    "cost": 0
-                },
-                "event": {
-                    "is_anonymous": false,
-                    "user_id": "1234",
-                    "user_login": "cool_user",  
-                    "user_name": "Cool_User",   
-                    "broadcaster_user_id": "1337",
-                    "broadcaster_user_login": "cooler_user",
-                    "broadcaster_user_name": "Cooler_User",
-                    "message": "pogchamp",
-                    "bits": 5000
-                }
-            }
-        }
-
-        var not_data = JSON.stringify(data);
-        window.pywebview.api.on_message('null',not_data);
-        
-    }
-}
 
 async function sr_config_js(event,type_id){
     
@@ -720,6 +293,9 @@ async function sr_config_js(event,type_id){
         var music_not_status = document.querySelector("#not-music");
         var check_seletor = document.querySelector('#music-enable');
         var max_duration = document.getElementById("max-duration")
+
+        var skip_votes = document.getElementById("skip-requests");
+        var skip_mod = document.getElementById("skip-ignore");
     
         var music_config = await window.pywebview.api.sr_config_py(type_id,'null');
     
@@ -736,8 +312,14 @@ async function sr_config_js(event,type_id){
             } else if (music_config.allow_music == 0){
                 check_seletor.checked = false;
             }
+
+            if(music_config.skip_mod == 1){
+                skip_mod.checked = true
+            }
             
             max_duration.value = music_config.max_duration;
+
+            skip_votes.value = music_config.skip_votes;
 
             $("#redeem-select-music").selectpicker('val', music_config.redeem);
     
@@ -798,15 +380,22 @@ async function sr_config_js(event,type_id){
         var redeem_music_save = document.getElementById("redeem-select-music");
         var max_duration = document.getElementById("max-duration")
         var music_not_status_save = document.getElementById("not-music");
+
+        var skip_votes = document.getElementById("skip-requests");
+        var skip_mod = document.getElementById("skip-ignore");
     
         music_not_status_save = music_not_status_save.checked == true ? 1 : 0
         allow_music = check_seletor.checked == true ? 1 : 0
+
+        skip_mod = skip_mod.checked == true ? 1 : 0
     
         data = {
             redeem_music_data: redeem_music_save.value,
             max_duration: max_duration.value,
             allow_music_save : allow_music,
             music_not_status_data: music_not_status_save,
+            skip_votes : skip_votes.value,
+            skip_mod : skip_mod
         }
     
         var formData = JSON.stringify(data);
@@ -848,100 +437,6 @@ async function sr_config_js(event,type_id){
         blocked_music.value = '';
         
     } 
-}
-
-async function not_config_js(event, type_id, type_not){
-    
-    var type_edit = document.getElementById(`type_edit_not`);
-    var not = document.getElementById(`not`);
-    var image_over = document.getElementById(`over-image`);
-    var image = document.getElementById(`image`);
-    var image_px = document.getElementById(`image-px`);
-    var audio = document.getElementById(`audio`);
-    var audio_volume = document.getElementById(`not-audio-volume`);
-    var tts = document.getElementById(`tts`);
-    var response = document.getElementById(`response`);
-    var response_chat = document.getElementById(`response-chat`);
-    var response_px = document.getElementById(`response-px`);
-    var response_weight = document.getElementById(`response-weight`);
-    var response_color = document.getElementById(`response-color`);
-    var response_aliases = document.getElementById(`aliases-event`);
-    
-
-    if (type_id == 'get'){ 
-
-        var not_config_data_load = await window.pywebview.api.not_config_py('data',type_id, type_not);
-
-        if (not_config_data_load){
-
-            not_config_data_load = JSON.parse(not_config_data_load)
-            type_edit.value = type_not
-
-            not.checked = not_config_data_load.not == 1 ? true : false;
-            tts.checked = not_config_data_load.tts == 1 ? true : false;
-            image_over.checked = not_config_data_load.image_over == 1 ? true : false;
-
-            image.value = not_config_data_load.image;
-            image_px.value = not_config_data_load.image_px;
-            audio.value = not_config_data_load.audio;
-            audio_volume.value = not_config_data_load.audio_volume;
-            response.value = not_config_data_load.response;
-            response_chat.value = not_config_data_load.response_chat;
-            response_px.value = not_config_data_load.response_px;
-            response_weight.value = not_config_data_load.response_weight;
-            response_color.value = not_config_data_load.response_color;
-
-        }
-
-    } else if (type_id == 'save'){
-
-        not_save = not.checked ? 1 : 0;
-        tts_save = tts.checked ? 1 : 0;
-        image_over = image_over.checked ? 1 : 0;
-
-        data = {
-            not: not_save,
-            image_over: image_over,
-            image: image.value,
-            image_px: image_px.value,
-            audio: audio.value,
-            audio_volume: audio_volume.value,
-            tts: tts_save,
-            response: response.value,
-            response_chat: response_chat.value,
-            response_px: response_px.value,
-            response_weight: response_weight.value,
-            response_color: response_color.value,
-        }
-
-        var formData = JSON.stringify(data);
-        window.pywebview.api.not_config_py(formData,type_id,type_edit.value);
-
-    } else if (type_id == 'select_edit'){
-
-        var div = document.getElementById('not-div')
-        var selectEdit = document.getElementById('not-select-edit');
-        
-        div.hidden = false 
-        not_config_js(event, `get`, selectEdit.value);
-
-    }
-
-    const responses_aliases = {
-        follow: '{username}',
-        sub: '{username}, {type}, {plan}, {months}, {cumulative}',
-        resub: ' {username}, {tier}, {total_months}, {streak_months}, {months}, {user_message}',
-        giftsub: ' {username}, {months}, {rec_username}, {plan}',
-        mysterygift: '{username}, {count}, {plan}',
-        're-mysterygift': ' {username}',
-        raid: ' {username}, {specs}',
-        bits1: ' {username}, {amount}',
-        bits100: ' {username}, {amount}',
-        bits1000: ' {username}, {amount}',
-        bits5000: ' {username}, {amount}'
-    };
-      
-    response_aliases.value = responses_aliases[type_not];
 }
 
 async function userdata_js(type_id,data){
@@ -1238,26 +733,12 @@ async function get_stream_info_test(){
     
 }
 
-jQuery($ => { // DOM ready and $ alias in scope.
-
-    $("#tags").on("click", "p", function() {
-      $(this).remove(); 
-    });
-    
-});
-
 function save_stream_info(){
 
     var stream_title = document.getElementById("stream-title").value;
     var stream_game = document.getElementById("stream-game").value;
     var stream_game_name = document.getElementById('stream-game-inp').value;
-    
-    var seletor_not_discord = document.getElementById('enable-discord-not-stream');
-    var seletor_not_discord_off  = document.getElementById('enable-discord-not-stream-off');
 
-    seletor_not_discord_off = seletor_not_discord_off.checked ? 1 : 0;
-    seletor_not_discord = seletor_not_discord.checked ? 1 : 0;
-    
     var div_tags = document.getElementById("tags");
     var tags_get = div_tags.querySelectorAll('p');
     var tags_list = []
@@ -1270,9 +751,7 @@ function save_stream_info(){
         title : stream_title,
         game : stream_game_name,
         game_id : stream_game,
-        tags : tags_list,
-        discord : seletor_not_discord,
-        offline : seletor_not_discord_off
+        tags : tags_list
     }
 
     var formData = JSON.stringify(data);
@@ -2246,23 +1725,17 @@ async function highlight_js(type_id){
     var color_message = document.getElementById("color-message-highlight");
     var color_username = document.getElementById("color-username-highlight");
     var duration = document.getElementById("duration-highlight");
-    var source_name = document.getElementById("source-highlight");
-    var time = document.getElementById("time-highlight");
 
     if (type_id == 'get'){
 
         get_highlight_parse = await window.pywebview.api.highlight_py(type_id,'null');
 
         if (get_highlight_parse){
+
             get_highlight_parse = JSON.parse(get_highlight_parse)
+
             status_highlight.checked = get_highlight_parse.status == 1 ? true : false;
 
-            $("#source-highlight").append('<option style="background: #000; color: #fff;" value="'+ get_highlight_parse.source_name +'">'+ get_highlight_parse.source_name +'</option>');
-                    
-            $("#source-highlight").selectpicker('val',get_highlight_parse.source_name)
-            $("#source-highlight").selectpicker("refresh");
-
-            time.value = get_highlight_parse.time;
             font_size.value = get_highlight_parse.font_size;
             font_weight.value = get_highlight_parse.font_weight;
             color_message.value = get_highlight_parse.color_message;
@@ -2277,8 +1750,6 @@ async function highlight_js(type_id){
 
         data = {
             status : status,
-            source_name : source_name.value,
-            time : time.value,
             font_size : font_size.value,
             font_weight : font_weight.value,
             color_message : color_message.value,
@@ -2313,4 +1784,8 @@ async function debug_status(type_id){
         }
     }
 
+}
+
+async function create_source(type_id){
+    window.pywebview.api.create_source(type_id,);
 }

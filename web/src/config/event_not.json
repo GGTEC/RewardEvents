@@ -1,0 +1,83 @@
+{
+      "sub": {
+            "status": 1,
+            "response_chat": "/me {username} se inscreveu no canal com {type} "
+      },
+      "resub": {
+            "status": 1,
+            "response_chat": "/me {username} se re-inscreveu no canal {user_mesage}"
+
+      },
+      "giftsub": {
+            "status": 1,
+            "response_chat": "/me {username} Presenteou {rec_username} com sub"
+      },
+      "mysterygift": {
+            "status": 1,
+            "response_chat": "/me {username} Presenteou a comunidade com {count} inscrição(ões)"
+      },
+      "re-mysterygift": {
+            "status": 1,
+            "response_chat": "/me {username} Renovou o sub que recebeu de presente !! "
+      },
+      "raid": {
+            "status": 1,
+            "response_chat": "/me {username} Invadiu o canal e trouxe {specs} com ele!"
+      },
+      "follow": {
+            "status": 1,
+            "response_chat": "/me {username} deu follow no canal !!!"
+      },
+      "bits": {
+            "status": 1,
+            "response_chat": "/me {username} Doou {amount} Bits"
+      },
+      "shield_start": {
+            "status": 1,
+            "response_chat": "/me O moderador {moderator} ativou o modo escudo"
+      },
+      "shield_end": {
+            "status": 1,
+            "response_chat": "/me O moderador {moderator} desativou o modo escudo"
+      },
+      "charity_campaign_donate": {
+            "status": 1,
+            "response_chat": "/me O usuário {username} Enviou um donate para a campanha {charity_name} !!!"
+      },
+      "charity_campaign_progress": {
+            "status": 1,
+            "response_chat": "/me O Progresso da campanha {charity_name} foi atualizado"
+      },
+      "charity_campaign_start": {
+            "status": 1,
+            "response_chat": "/me Uma campanha para {charity_name} foi iniciada"
+      },
+      "charity_campaign_stop": {
+            "status": 1,
+            "response_chat": "/me A campanha {charity_name} foi finalizada"
+      },
+      "ban": {
+            "status": 1,
+            "response_chat": "/me O usuário {username} foi banido por tempo {time} pelo(a) {moderator}, motivo {reason}"
+      },
+      "live_start": {
+            "status": 1,
+            "response_chat": "/me O streamer iniciou uma live"
+      },
+      "live_cat": {
+            "status": 1,
+            "response_chat": "/me O streamer finalizou a live"
+      },
+      "live_end": {
+            "status": 1,
+            "response_chat": "/me O streamer finalizou a live"
+      },
+      "goal_start": {
+            "status": 1,
+            "response_chat": "/me Uma meta para {current}/{target} {type} foi iniciada"
+      },
+      "goal_end": {
+            "status": 1,
+            "response_chat": "/me A meta para {current}/{target }{type} foi finalizada"
+      }
+}

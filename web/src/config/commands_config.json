@@ -1,0 +1,15 @@
+{
+      "STATUS_TTS": 1,
+      "STATUS_COMMANDS": 1,
+      "STATUS_RESPONSE": 1,
+      "STATUS_ERROR_TIME": 1,
+      "STATUS_CLIP": 1,
+      "STATUS_ERROR_USER": 1,
+      "STATUS_TIMER": 1,
+      "STATUS_BOT": 1,
+      "STATUS_MUSIC": 1,
+      "STATUS_MUSIC_CONFIRM": 1,
+      "STATUS_MUSIC_ERROR": 1,
+      "delay_date": "31/12/2022 17:21:37",
+      "delay_config": 6
+}

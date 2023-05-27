@@ -1,0 +1,19 @@
+{
+      "appply-colors": 1,
+      "appply-no-colors": 0,
+      "color-apply": "Blue",
+      "block-color": 1,
+      "font-size": "18",
+      "show-badges": 1,
+      "wrapp-message": 1,
+      "not-user-sound": 0,
+      "not-sound-path": "",
+      "user_not_display": [],
+      "send-greetings": 1,
+      "greetings": "Seja bem vindo ao chat {user}",
+      "data-show": 1,
+      "type-data": "current",
+      "time-format": "%H:%M",
+      "top_chatter_min": "1000000",
+      "regular_min": "10000"
+}

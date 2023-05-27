@@ -1,0 +1,37 @@
+{
+      "execute_giveaway": {
+            "command": "!execute",
+            "status": 1,
+            "delay": 10,
+            "last_use": 0,
+            "user_level": "mod"
+      },
+      "clear_giveaway": {
+            "command": "!limpar_sorteio",
+            "status": 1,
+            "delay": 10,
+            "last_use": 0,
+            "user_level": "mod"
+      },
+      "check_name": {
+            "command": "!check_user",
+            "status": 1,
+            "delay": 10,
+            "last_use": 0,
+            "user_level": "mod"
+      },
+      "check_self_name": {
+            "command": "!selfcheck",
+            "status": 1,
+            "delay": 10,
+            "last_use": 0,
+            "user_level": "mod"
+      },
+      "add_user": {
+            "command": "!useradd",
+            "status": 1,
+            "delay": 10,
+            "last_use": 0,
+            "user_level": "mod"
+      }
+}

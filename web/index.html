@@ -28,7 +28,7 @@
   <link href="assets/css/style.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/flickity@2.3.0/dist/flickity.min.css">
   <script src="https://unpkg.com/flickity@2.3.0/dist/flickity.pkgd.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/gh/hung1001/font-awesome-pro-v6@44659d9/css/all.min.css" rel="stylesheet" type="text/css" />
+  <link href="assets/css/fontawesome-free-6.4.0-web/css/all.css" rel="stylesheet" type="text/css" />
   <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet">
   <script src="https://cdn.plyr.io/3.7.3/plyr.polyfilled.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dragscroll/0.0.8/dragscroll.js"></script>
@@ -36,6 +36,7 @@
   <script src="assets/js/jquery-ui.js"></script>
   <link rel="stylesheet" href="assets/css/jquery-ui.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/showdown@2.0/dist/showdown.min.js"></script>
 </head>
 <body class="main" id="body-pd">
   <div class="loading" id="loading">
@@ -311,18 +312,20 @@
                   <div class="tab-pane" id="nav-users" role="tabpanel" aria-labelledby="nav-users-tab" style="height: 100%;">
                     <div class="users-chat-list" id="users-chat-list" style="height: 100%;">
                       <div class="box-collapse-list">
-                        <div>
-                          <h6 class="m-1  mt-0">Espectadores</h6>
+                        <div class="d-flex justify-content-between" id="users-toggler" data-bs-toggle="collapse" data-bs-target="#div_users_tabs" aria-expanded="false" aria-controls="div_users_tabs">
+                          <h6 class="m-1 mt-0">Espectadores</h6>
+                          <i class="fa-solid fa-square-caret-down m-1"></i>
                         </div>
                       </div>
-                      <div class="mt-1 ms-1" id="div_users_tabs">
+                      <div class="mt-1 ms-1 collapse show" id="div_users_tabs">
                       </div>
                       <div class="box-collapse-list mt-1">
-                        <div>
+                        <div class="d-flex justify-content-between" id="bots-toggler" data-bs-toggle="collapse" data-bs-target="#div_bots_tabs" aria-expanded="false" aria-controls="div_bots_tabs">
                           <h6 class="m-1">Bots</h6>
+                          <i class="fa-solid fa-square-caret-down m-1"></i>
                         </div>
                       </div>
-                      <div class="mt-1 ms-1" id="div_bots_tabs">
+                      <div class="mt-1 ms-1 collapse" id="div_bots_tabs">
                       </div>
                     </div>
                   </div>
@@ -330,18 +333,20 @@
                 <div class="purple-border-block" id="chat-list" style="height: 95%; border-top: none;" hidden>
                   <div class="users-chat-list" id="user-list-inner" style="height: 50%;">
                     <div class="box-collapse-list">
-                      <div>
+                      <div class="d-flex justify-content-between" id="users-toggler-list" data-bs-toggle="collapse" data-bs-target="#div_users_list" aria-expanded="false" aria-controls="div_users_list">
                         <h6 class="m-1 mt-0">Espectadores</h6>
+                        <i class="fa-solid fa-square-caret-down m-1"></i>
                       </div>
                     </div>
-                    <div class="mt-1 ms-1" id="div_users_list">
+                    <div class="mt-1 ms-1 collapse show" id="div_users_list">
                     </div>
                     <div class="box-collapse-list mt-1">
-                      <div>
+                      <div class="d-flex justify-content-between" id="bots-toggler-list" data-bs-toggle="collapse" data-bs-target="#div_bots_list" aria-expanded="false" aria-controls="div_bots_list">
                         <h6 class="m-1">Bots</h6>
+                        <i class="fa-solid fa-square-caret-down m-1"></i>
                       </div>
                     </div>
-                    <div class="mt-1 ms-1" id="div_bots_list">
+                    <div class="mt-1 ms-1 collapse" id="div_bots_list">
                     </div>
                   </div>
                   <div class="nav-chat-div" id="chat-list-inner" style="height: 50%;border-top: solid #4f016c 2px">
@@ -364,18 +369,20 @@
                   <div class="d-flex justify-content-between" style="height: 100%;">
                     <div class="users-chat-list purple-border-block" id="user-list-side" style="height: 100%;width: 50%;">
                       <div class="box-collapse-list  mt-0">
-                        <div>
+                        <div class="d-flex justify-content-between" id="user-toggler-side" data-bs-toggle="collapse" data-bs-target="#div_users_side" aria-expanded="false" aria-controls="div_users_side">
                           <h6 class="m-1 mt-0">Espectadores</h6>
+                          <i class="fa-solid fa-square-caret-down m-1"></i>
                         </div>
                       </div>
-                      <div class="mt-1 ms-1" id="div_users_side">
+                      <div class="mt-1 ms-1 collapse show" id="div_users_side">
                       </div>
                       <div class="box-collapse-list mt-1">
-                        <div>
+                        <div class="d-flex justify-content-between" id="bots-toggler-side" data-bs-toggle="collapse" data-bs-target="#div_bots_side" aria-expanded="false" aria-controls="div_bots_side">
                           <h6 class="m-1">Bots</h6>
+                          <i class="fa-solid fa-square-caret-down m-1"></i>
                         </div>
                       </div>
-                      <div class="mt-1 ms-1" id="div_bots_side">
+                      <div class="mt-1 ms-1 collapse" id="div_bots_side">
                       </div>
                     </div>
                     <div class="nav-chat-div purple-border-block" id="chat-list-side" style="height: 100%;width: 50%;">
@@ -504,7 +511,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="w-100 bg-dark form-block mb-5" id="audio-create" onsubmit="create_action(event,'audio')">
                     <div class="form-group mb-3 mt-2">
@@ -519,7 +526,7 @@
                     <div class="form-group mt-3">
                       <label for="chat-message">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message" placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -577,7 +584,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="bg-dark form-block" id="video-create" onsubmit="create_action(event,'video')">
                     <div class="form-group mb-3 mt-2">
@@ -595,7 +602,7 @@
                       <label for="chat-message">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -652,7 +659,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="bg-dark form-block" id="tts-create" onsubmit="create_action(event,'tts')">
                     <div class="form-group mb-3 mt-2">
@@ -714,7 +721,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="bg-dark form-block" id="scene-create" onsubmit="create_action(event,'scene')">
                     <div class="form-group mb-3 mt-2">
@@ -732,7 +739,7 @@
                       <label for="chat-message">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -811,7 +818,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="bg-dark form-block" id="response-create" onsubmit="create_action(event,'response')">
                     <div class="form-group mb-3 mt-2">
@@ -829,7 +836,7 @@
                       <label for="chat-message">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -876,7 +883,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="bg-dark form-block" id="filter-create" onsubmit="create_action(event,'filter')">
                     <div class="form-group mb-3 mt-2">
@@ -893,7 +900,7 @@
                       <label for="chat-message">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -984,7 +991,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="bg-dark form-block" id="source-create" onsubmit="create_action(event,'source')">
                     <div class="form-group mb-3 mt-2">
@@ -1002,7 +1009,7 @@
                       <label for="chat-message">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -1077,7 +1084,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="bg-dark form-block" id="keypress-create" onsubmit="create_action(event,'keypress')">
                     <div class="form-group mb-3 mt-2">
@@ -1095,7 +1102,7 @@
                       <label for="chat-message">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -1347,7 +1354,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="bg-dark form-block" id="clip-create" onsubmit="create_action(event,'clip')">
                     <div class="form-group mb-3 mt-2">
@@ -1406,7 +1413,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="bg-dark form-block" id="highlight-create" onsubmit="create_action(event,'highlight')">
                     <div class="form-group mb-3 mt-2">
@@ -1461,7 +1468,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll justify-content-center">
+              <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form class="bg-dark form-block" id="action-del" onsubmit="create_action(event,'delete')">
                     <div class="form-group mb-3 mt-3">
@@ -1483,7 +1490,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="form-group bg-dark form-block mb-0">
                     <label for="action-edit-select">Selecione uma ação para editar</label>
@@ -1533,7 +1540,7 @@
                       <label for="chat-message-audio-edit">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message-audio-edit"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -1617,7 +1624,7 @@
                       <label for="chat-message-video-edit">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message-video-edit"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -1700,7 +1707,7 @@
                       <label for="chat-message-tts-edit">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message-tts-edit"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -1778,7 +1785,7 @@
                       <label for="chat-message-scene-edit">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message-scene-edit"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -1960,7 +1967,7 @@
                       <label for="chat-message-filter-edit">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message-filter-edit"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -2081,7 +2088,7 @@
                       <label for="chat-message-source-edit">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message-source-edit"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -2185,7 +2192,7 @@
                       <label for="chat-message-keypress-edit">Resposta</label>
                       <input type="text" class="form-control bg-dark mt-3" id="chat-message-keypress-edit"
                         placeholder="Mensagem no chat" />
-                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {command},
+                      <p class="text-muted text-sm-start m-0">Pseudônimos (aliases) Úteis = {username}, {reward}, {command},
                         {prefix}, {user_level}, {user_id}, {user_input},
                         {counter}</p>
                     </div>
@@ -2581,17 +2588,17 @@
                 </button>
                 <button class="btn redeem-block-bt" type="button"
                   onclick="show_commands_div('duel-commands-div')">
-                  <i class="fa-solid fa-swords fa-2xl"></i>
+                  <i class="fa-solid fa-people-arrows fa-2xl"></i>
                     <p>Duelo</p>
                 </button>
                 <button class="btn redeem-block-bt" type="button"
                   onclick="show_commands_div('default-commands-div')">
-                  <i class="fa-solid fa-square-terminal fa-2xl"></i>
+                  <i class="fa-brands fa-stack-exchange fa-2xl"></i>
                     <p>Padrão</p>
                 </button>
                 <button class="btn redeem-block-bt" type="button"
                   onclick="show_commands_div('player-commands-div')">
-                  <i class="fa-solid fa-user-music fa-2xl"></i>
+                  <i class="fa-solid fa-music fa-2xl"></i>
                     <p>Música</p>
                 </button>
                 <button class="btn redeem-block-bt" type="button"
@@ -2601,7 +2608,7 @@
                 </button>
                 <button class="btn redeem-block-bt" type="button"
                   onclick="show_commands_div('queue-commands-div')">
-                  <i class="fa-solid fa-clipboard-list-check fa-2xl"></i>
+                  <i class="fa-solid fa-elevator fa-2xl"></i>
                     <p>Fila de espera</p>
                 </button>
                 <button class="btn redeem-block-bt" type="button"
@@ -2611,7 +2618,7 @@
                 </button>
                 <button class="btn redeem-block-bt" type="button"
                   onclick="commands_fun('null','command-list')">
-                  <i class="fa-solid fa-square-list fa-2xl"></i>
+                  <i class="fa-solid fa-terminal fa-2xl"></i>
                     <p>Lista de comandos</p>
                 </button>
               </div>
@@ -2624,7 +2631,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form id="command-create-form" class="bg-dark form-block" onsubmit="commands_fun(event,'create')">
                     <div class="form-group mt-3">
@@ -2683,7 +2690,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form id="command-edit-form" class="bg-dark form-block" onsubmit="commands_fun(event,'edit')">
                     <div class="form-group mt-3">
@@ -2762,7 +2769,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form id="command-del-form" class="bg-dark form-block" onsubmit="commands_fun(event,'delete')">
                     <div class="form-group mb-3 mt-2">
@@ -2784,7 +2791,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form id="duel-form" class="bg-dark form-block" onsubmit="commands_fun(event,'save_duel')">
                     <div class="form-group mt-3">
@@ -2905,7 +2912,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="bg-dark form-block">
                     <label for="command-select-edit">Selecione o comando para configurar.</label>
@@ -3036,7 +3043,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="bg-dark form-block">
                     <label for="command-player-edit">Selecione o comando para configurar.</label>
@@ -3125,7 +3132,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="bg-dark form-block">
                     <label for="command-counter-select">Selecione o comando para configurar.</label>
@@ -3209,7 +3216,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="bg-dark form-block">
                     <label for="command-queue-select">Selecione o comando para configurar.</label>
@@ -3292,7 +3299,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="bg-dark form-block">
                     <label for="command-giveaway-select">Selecione o comando para configurar.</label>
@@ -3427,7 +3434,7 @@
               <div class="internal-top">
                 <span>Mensagens automáticas</span>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block" id="timer-ger-internal">
                   <div class="bg-dark form-block">
                     <div class="row mt-3">
@@ -3577,7 +3584,7 @@
               <div class="internal-top">
                 <span>Sorteio</span>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="bg-dark form-block">
                     <h4>Configurações</h4>
@@ -3718,7 +3725,7 @@
               <div class="internal-top">
                 <span>Contador</span>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="bg-dark form-block">
                     <form id="counter-set-value">
@@ -3781,7 +3788,7 @@
               <div class="internal-top">
                 <span>Fila de espera</span>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="bg-dark form-block">
                     <h4>Fila de espera</h4>
@@ -3855,7 +3862,7 @@
               <div class="internal-top">
                 <span>Player</span>
               </div>
-              <div class="h-scroll justify-content-center align-content-center">
+              <div class="h-scroll flex-wrap justify-content-center align-content-center">
                 <div class="w-75 bg-dark form-block" id="player-div">
                   <div id="song-img" class="d-flex flex-column song-img">
                     <div class="p-5 m-5 text-center">
@@ -3949,24 +3956,24 @@
             </div>
           </div>
           <div class="tab-pane" id="v-pills-config" role="tabpanel" aria-labelledby="v-pills-config-tab">
-            <div id="config-div overflow-scroll">
+            <div id="config-div">
               <div class="internal-top">
                 <span>Configurações</span>
               </div>
                 <div class="internal-block w-100 grid-buttons-config ">
                   <button class="btn redeem-block-bt" type="button" onclick="show_config_div('config-conn-obs-div')">
-                    <i class="fa-solid fa-link-horizontal fa-2xl"></i>
+                    <i class="fa-solid fa-link fa-2xl"></i>
                     <p>Conexão com OBS STUDIO</p>
                   </button>
                   <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-not-obs-div')">
-                    <i class="fa-solid fa-light-emergency-on fa-2xl"></i>
+                    <i class="fa-solid fa-bell fa-2xl"></i>
                     <p>Notificações OBS STUDIO</p>
                   </button>
                   <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-discord-div')">
-                    <i class="fa-brands fa-discord fa-2xl"></i>
-                    <p>Discord</p>
+                    <i class="fa-solid fa-bell fa-2xl"></i>
+                    <p>Alertas <br> Chat/Discord</p>
                   </button>
                   <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-responses-div')">
@@ -3975,34 +3982,34 @@
                   </button>
                   <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-chat-messages-div')">
-                    <i class="fa-solid fa-message-dots fa-2xl"></i>
+                    <i class="fa-solid fa-comment-dots fa-2xl"></i>
                     <p>Mensagens no Chat</p>
                   </button>
                   <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-music-div')">
-                    <i class="fa-solid fa-user-music fa-2xl"></i>
+                    <i class="fa-solid fa-music fa-2xl"></i>
                     <p>Pedidos de música</p>
                   </button>
                   <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('chat-config-div')">
-                    <i class="fa-solid fa-message-captions fa-2xl"></i>
+                    <i class="fa-solid fa-comments fa-2xl"></i>
                     <p>Chat</p>
                   </button>
                   <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('config-highlight-div')">
-                    <i class="fa-solid fa-message-pen fa-2xl"></i>
+                    <i class="fa-solid fa-highlighter fa-2xl"></i>
                     <p>Mensagem destacada</p>
                   </button>
                   <button class="btn redeem-block-bt" type="button"
-                    onclick="show_config_div('not-config-div')">
-                    <i class="fa-solid fa-message-exclamation fa-2xl"></i>
-                    <p>Alertas</p>
-                  </button>
-                  <button class="btn redeem-block-bt" type="button"
                     onclick="show_config_div('events-config-div')">
-                    <i class="fa-solid fa-calendar-circle-exclamation fa-2xl"></i>
+                    <i class="fa-solid fa-calendar-day fa-2xl"></i>
                     <p>Registro de eventos</p>
                   </button>
+                  <button class="btn redeem-block-bt" type="button"
+                    onclick="show_userdata_modal()" >
+                  <i class="fa-solid fa-users fa-2xl"></i>
+                  <p>Registros de usuários</p>
+                </button>
                 </div>
             </div>
             <div id="config-conn-obs-div" hidden>
@@ -4013,7 +4020,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll justify-content-center">
+              <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form id="obs-conn-form" class="bg-dark form-block" onsubmit="obs_config_js(event,'save_conn')">
                     <div class="form-group mt-4">
@@ -4042,9 +4049,9 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll justify-content-center">
+              <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block">
-                  <form id="obs-not-form" class="bg-dark form-block" onsubmit="obs_config_js(event,'save_not')">
+                  <form id="obs-not-form" class="bg-dark form-block" >
                     <div class="row mt-3">
                       <div class="col">
                         <p class="form-check-label">
@@ -4053,8 +4060,8 @@
                       </div>
                       <div class="col-2">
                         <div class="material-switch bg-white d-flex justify-content-end">
-                          <input id="not-enabled" type="checkbox" />
-                          <label for="not-enabled" class="form-check-label"></label>
+                          <input id="not-redeem-enabled" type="checkbox" />
+                          <label for="not-redeem-enabled" class="form-check-label"></label>
                         </div>
                       </div>
                     </div>
@@ -4074,19 +4081,6 @@
                     <div class="row mt-3">
                       <div class="col">
                         <p class="form-check-label">
-                          Ativar Notificações para Eventos (follow, sub, raid e etc)
-                        </p>
-                      </div>
-                      <div class="col-2">
-                        <div class="material-switch bg-white d-flex justify-content-end">
-                          <input id="not-events-enabled" type="checkbox" />
-                          <label for="not-events-enabled" class="form-check-label"></label>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="row mt-3">
-                      <div class="col">
-                        <p class="form-check-label">
                           Ativar emote rain 
                         </p>
                       </div>
@@ -4098,82 +4092,51 @@
                       </div>
                     </div>
                     <div class="form-group mt-5">
-                      <label for="not-source-name">Fonte para notificações de resgates de recompensa.</label>
-                      <div class="input-group none-flex mt-3">
-                        <select class="bg-dark" id="not-source-name">
-                          <option selected>
-                            Pressione o botão carregar as fontes
-                          </option>
-                        </select>
-                        <button class="btn bt-submit" type="button" onclick="get_sources('not-source-name')">
-                          Carregar
-                        </button>
-                      </div>
-                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.open_py('dir_not','null')">
-                        Abrir diretório do HTML
+                      Utilize os botões abaixo para criar as fontes HTML no OBS studio necessáras para cada função descrita.
+                    </div>
+                    <div class="form-group mt-5">
+                      <p>Notificações de resgates de recompensa.</p>
+                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.create_source('redeem')">
+                        Criar Fonte
                       </button>
                     </div>
                     <div class="form-group mt-5">
-                      <label for="video-source-name">Fonte para ação de video (Criar ação de video na sessão ações).</label>
-                      <div class="input-group none-flex mt-3">
-                        <select class="bg-dark" id="video-source-name">
-                          <option selected>
-                            Pressione o botão carregar as fontes
-                          </option>
-                        </select>
-                        <button class="btn bt-submit" type="button" onclick="get_sources('video-source-name')">
-                          Carregar
-                        </button>
-                      </div>
-                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.open_py('dir_video','null')">
-                        Abrir diretório do HTML
+                      <p>Notificação para reprodução de musica.</p>
+                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.create_source('music')">
+                        Criar Fonte
                       </button>
                     </div>
                     <div class="form-group mt-5">
-                      <label for="events-source-name">Fonte para notificações de eventos (follow,sub e etc).</label>
-                      <div class="input-group none-flex mt-2">
-                        <select class="bg-dark w-100" id="events-source-name">
-                          <option selected>
-                            Pressione o botão carregar as fontes
-                          </option>
-                        </select>
-                        <button class="btn bt-submit" type="button" onclick="get_sources('events-source-name')">
-                          Carregar
-                        </button>
-                      </div>
-                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.open_py('dir_event','null')">
-                        Abrir diretório do HTML
+                      <p>Exibição de mensagem destacada.</p>
+                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.create_source('highlight')">
+                        Criar Fonte
                       </button>
-                    </div>                    
+                    </div> 
                     <div class="form-group mt-5">
-                      <label for="events-source-name">Fonte para emote rain</label>
-                      <div class="input-group none-flex mt-2">
-                        <select class="bg-dark w-100" id="emote-source-name">
-                          <option selected>
-                            Pressione o botão carregar as fontes
-                          </option>
-                        </select>
-                        <button class="btn bt-submit" type="button" onclick="get_sources('emote-source-name')">
-                          Carregar
-                        </button>
-                      </div>
-                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.open_py('dir_emote','null')">
-                        Abrir diretório do HTML
+                      <p>Exibição do video de resgate de recompensa do tipo Video</p>
+                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.create_source('video')">
+                        Criar Fonte
                       </button>
-                    </div>
+                    </div>   
+                    <div class="form-group mt-5">
+                      <p>Exibição de Emote Rain</p>
+                      <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.create_source('emote')">
+                        Criar Fonte
+                      </button>
+                    </div>                   
                     <div class="form-group mt-5">
                       <label for="emote-px">Tamanho dos emotes do emote rain (Pixels)</label>
                       <input type="number" class="form-control bg-dark mt-3" id="emote-px" />
                     </div>
-                    <div class="form-group mt-5">
-                      <label for="time-show-not-events">Tempo exibindo a notificação para eventos (segundos)</label>
-                      <input type="number" class="form-control bg-dark mt-3" id="time-show-not-events" />
-                    </div>
                     <div class="form-group mt-4">
-                      <label for="time-show-not">Tempo exibindo a notificação para resgates de música e recompensas (segundos)</label>
+                      <label for="time-show-not">Tempo exibindo a notificação para resgates de música  (segundos)</label>
                       <input type="number" class="form-control bg-dark mt-3" id="time-show-not" required />
                     </div>
-                    <button type="submit" id="submit-obs-not--config" class="btn bt-submit mt-4">
+                    <div class="form-group mt-4">
+                      <label for="time-show-music">Tempo exibindo a notificação para resgates recompensas (segundos)</label>
+                      <input type="number" class="form-control bg-dark mt-3" id="time-show-music" required />
+                    </div>
+                    <button type="submit" class="btn bt-submit mt-4" onclick="obs_config_js(event,'save_not')">
                       Salvar
                     </button>
                   </form>
@@ -4188,9 +4151,9 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll justify-content-center">
+              <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block">
-                  <form id="chat-messages-config-form" class="bg-dark form-block">
+                  <div id="chat-messages-config-form" class="bg-dark form-block">
                     <h4>Configurar mensagens no chat</h4>
                     <div class="row mt-5">
                       <div class="col">
@@ -4312,25 +4275,23 @@
                     <button type="button" id="submit-messages-config" class="btn bt-submit mt-4" onclick="messages_config_js('save')">
                       Atualizar configurações
                     </button>
-                  </form>
+                  </div>
                 </div>
               </div>
             </div>
             <div id="config-discord-div" hidden>
               <div class="internal-top">
-                <span>Discord Webhook</span>
-                <button class="btn" onclick="hide_config_div('config-discord-div')" data-toggle="tooltip"
-                  data-bs-placement="left" title="Voltar">
+                <span>Notificação para eventos</span>
+                <button class="btn" onclick="hide_config_div('config-discord-div')" data-toggle="tooltip" data-bs-placement="left" title="Voltar">
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="form-group bg-dark form-block">
-                    <label for="discord_select_edit">Selecione tipo de notificação webhook para
-                      editar.</label>
+                    <label for="select_edit_not">Selecione tipo de notificação para editar.</label>
                     <div class="input-group none-flex mt-3">
-                      <select class="form-control bg-dark" id="discord_select_edit">
+                      <select class="form-control bg-dark" id="select_edit_not">
                         <option value="live_start">
                           Notificações de inicio de lives
                         </option>
@@ -4351,6 +4312,12 @@
                         </option>
                         <option value="sub">
                           Notificações de novo Sub
+                        </option>
+                        <option value="endsub">
+                          Notificações para Fim de Sub
+                        </option>
+                        <option value="giftsub">
+                          Notificações para GiftSub
                         </option>
                         <option value="resub">
                           Notificações de renovação de sub
@@ -4376,64 +4343,108 @@
                         <option value="prediction_end">
                           Notificações para fim de palpites
                         </option>
+                        <option value="raid">
+                          Notificações para Raids
+                        </option>
+                        <option value="ban">
+                          Notificações para banimentos
+                        </option>
+                        <option value="shield_start">
+                          Notificações para modo escudo ativado
+                        </option>
+                        <option value="shield_end">
+                          Notificações para modo escudo desativado
+                        </option>
+                        <option value="shoutout_start">
+                          Notificações para ShotOut Enviado
+                        </option>
+                        <option value="shoutout_receive">
+                          Notificações para ShotOut Recebido
+                        </option>
                       </select>
                       <button class="btn bt-submit" type="button" onclick="discord_js('event','select_edit')">
                         Editar
                       </button>
                     </div>
                   </div>
-                </div>
-                <div class="bg-dark form-block mt-0 w-75">
-                  <input id="type_edit_discord" type="text" hidden />
-                  <form id="discord-form">
-                    <div class="form-group">
-                      <label for="url-webhook">Url Webhook</label>
-                      <input type="text" class="form-control bg-dark mt-3" id="url-webhook" />
-                    </div>
-                    <div class="form-group mt-4">
-                      <label for="embed-color">Cor</label>
-                      <input type="text" class="form-control bg-dark mt-3" id="embed-color" />
-                    </div>
-                    <div class="form-group mt-3" id="discord_aliases_block" hidden>
-                      <label for="aliases-discord">Pseudônimos (aliases) Úteis | (Não editável)</label>
-                      <input type="text" class="form-control bg-dark mt-3" id="aliases-discord" readonly />
-                    </div>
-                    <div class="form-group mt-4">
-                      <label for="embed-content">Conteúdo (Aparecerá antes do bloco de embed, util
-                        para marcações) <span id="tags-webhook"></span>
-                      </label>
-                      <p>
-                        <span class="text-muted">Para mencionar um cargo, usuário ou canal utilize
-                          as tags = '&lt;@ID&gt;' para usuários,'&lt;@&ID&gt;'
-                          é para cargos e '&lt;#ID&gt;' é para canais
-                        </span>
-                      </p>
-                      <input type="text" class="form-control bg-dark mt-3" id="embed-content" />
-                    </div>
-                    <div class="form-group mt-4">
-                      <label for="embed-title">Título <span id="tags-webhook-title"></span>
-                      </label>
-                      <input type="text" class="form-control bg-dark mt-3" id="embed-title" />
-                    </div>
-                    <div class="form-group mt-4">
-                      <label for="embed-description">Descrição <span id="tags-webhook-desc"></span></label>
-                      <input type="text" class="form-control bg-dark mt-3" id="embed-description" />
-                    </div>
-                    <div class="row mt-3">
-                      <div class="col">
-                        <p class="form-check-label">Ativar Webhook.</p>
+                  <input id="type_edit" type="text" hidden />
+                  <div id="event_not_divs" class="bg-dark form-block mt-0" hidden>
+                    <div id="aliases-form" >
+                      <div class="form-group mt-3">
+                        <label for="aliases-event">Pseudônimos (aliases) Úteis | (Não editável)</label>
+                        <input type="text" class="form-control bg-dark mt-3" id="aliases-event" readonly />
                       </div>
-                      <div class="col-2">
-                        <div class="material-switch bg-white d-flex justify-content-end">
-                          <input id="webhook-status" type="checkbox" />
-                          <label for="webhook-status" class="form-check-label"></label>
+                    </div>
+                    <div id="discord-form" class="mt-5">
+                        <h5>Notificações no Discord</h5>
+                        <div class="row mt-3">
+                          <div class="col">
+                            <p class="form-check-label">Ativar Notificação</p>
+                          </div>
+                          <div class="col-2">
+                            <div class="material-switch bg-white d-flex justify-content-end">
+                              <input id="webhook-status" type="checkbox" />
+                              <label for="webhook-status" class="form-check-label"></label>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="form-group mt-3">
+                          <label for="url-webhook">Url Webhook</label>
+                          <input type="text" class="form-control bg-dark mt-3" id="url-webhook" />
+                        </div>
+                        <div class="form-group mt-4">
+                          <label for="embed-color">Cor</label>
+                          <input type="text" class="form-control bg-dark mt-3" id="embed-color" />
+                        </div>
+                        <div class="form-group mt-4">
+                          <label for="embed-content">Conteúdo (Aparecerá antes do bloco de embed, util para marcações) <span id="tags-webhook"></span>
+                          </label>
+                          <p>
+                            <span class="text-muted">Para mencionar um cargo, usuário ou canal utilize
+                              as tags = '&lt;@ID&gt;' para usuários,'&lt;@&ID&gt;'
+                              é para cargos e '&lt;#ID&gt;' é para canais
+                            </span>
+                          </p>
+                          <input type="text" class="form-control bg-dark mt-3" id="embed-content" />
+                        </div>
+                        <div class="form-group mt-4">
+                          <label for="embed-title">Título <span id="tags-webhook-title"></span>
+                          </label>
+                          <input type="text" class="form-control bg-dark mt-3" id="embed-title" />
+                        </div>
+                        <div class="form-group mt-4">
+                          <label for="embed-description">Descrição <span id="tags-webhook-desc"></span></label>
+                          <input type="text" class="form-control bg-dark mt-3" id="embed-description" />
+                        </div>
+                    </div>
+                    <div id="chat-alert-form" class="mt-5">
+                      <h5>Notificações no Chat</h5>
+                      <div class="form-group mt-3">
+                        <div class="row">
+                          <div class="col">
+                            <p class="form-check-label">
+                              Ativar notificações
+                            </p>
+                          </div>
+                          <div class="col-2">
+                            <div class="material-switch bg-white d-flex justify-content-end">
+                              <input id="not" type="checkbox" />
+                              <label for="not" class="form-check-label"></label>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                      <div class="form-group mt-3">
+                        <label for="response-chat">Mensagem no Chat</label>
+                        <input type="text" class="form-control bg-dark mt-3" id="response-chat" />
+                      </div>
                     </div>
-                    <button type="button" class="btn bt-submit mt-4" onclick="discord_js(event,'save')">
-                      Salvar
-                    </button>
-                  </form>
+                    <div class="form-group mt-5 w-100">
+                      <button type="button" class="btn bt-submit mt-4" onclick="discord_js(event,'save')">
+                        Salvar
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4445,7 +4456,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll justify-content-center">
+              <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block">
                   <form id="responses-config-form" class="bg-dark form-block"
                     onsubmit="config_responses_js(event,'save-response')">
@@ -4807,7 +4818,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div id="music-config-form" class="bg-dark form-block">
                     <div class="row">
@@ -4908,7 +4919,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center">
+              <div class="h-scroll flex-wrap flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div id="highlight-config-form" class="bg-dark form-block">
                     <div class="row">
@@ -4924,69 +4935,55 @@
                         </div>
                       </div>
                     </div>
-                    <div class="form-group mt-3">
-                      <label for="source-highlight">Fonte de navegador do OBS Studio configurada com o arquivo HTML highlight.html</label>
-                      <div class="input-group none-flex mt-3">
-                        <select class="bg-dark" id="source-highlight">
-                          <option selected>
-                            Pressione o botão carregar as fontes
-                          </option>
-                        </select>
-                        <button class="btn bt-submit" type="button" onclick="get_sources('source-highlight')">
-                          Carregar
-                        </button>
-                      </div>
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="time-highlight">Tempo exbindo a mensagem na tela</label>
-                      <input type="number" class="form-control bg-dark mt-3" id="time-highlight" />
-                    </div>
                     <div class="form-group mt-2">
                       <label for="color-username-highlight">Cor do nome de usuário na mensagem destacada</label>
                       <select class="form-control bg-dark mt-3" id="color-username-highlight">
-                        <option value="Blue" style="color: white;">
+                        <option value="Blue" style="color: Blue;">
                           Azul
                         </option>
-                        <option value="Coral" style="color: white;">
+                        <option value="White" style="color: white;">
+                          Branco
+                        </option>
+                        <option value="Coral" style="color: Coral;">
                           Coral
                         </option>
-                        <option value="DodgerBlue" style="color: white;">
+                        <option value="DodgerBlue" style="color: DodgerBlue;">
                           Azul furtivo
                         </option>
-                        <option value="SpringGreen" style="color: white;">
+                        <option value="SpringGreen" style="color: SpringGreen;">
                           Verde primavera
                         </option>
-                        <option value="YellowGreen" style="color: white;">
+                        <option value="YellowGreen" style="color: YellowGreen;">
                           Verde amarelado
                         </option>
-                        <option value="Green" style="color: white;">
+                        <option value="Green" style="color: Green;">
                           Verde
                         </option>
-                        <option value="OrangeRed" style="color: white;">
+                        <option value="OrangeRed" style="color: OrangeRed;">
                           Vermelhão
                         </option>
-                        <option value="Red" style="color: white;">
+                        <option value="Red" style="color: Red;">
                           Vermelho
                         </option>
-                        <option value="GoldenRod" style="color: white;">
+                        <option value="GoldenRod" style="color: GoldenRod;">
                           Dourado
                         </option>
-                        <option value="HotPink" style="color: white;">
+                        <option value="HotPink" style="color: HotPink;">
                           Rosa forte
                         </option>
-                        <option value="CadetBlue" style="color: white;">
+                        <option value="CadetBlue" style="color: CadetBlue;">
                           Azul cadete
                         </option>
-                        <option value="SeaGreen" style="color: white;">
+                        <option value="SeaGreen" style="color: SeaGreen;">
                           Verde mar
                         </option>
-                        <option value="Chocolate" style="color: white;">
+                        <option value="Chocolate" style="color: Chocolate;">
                           Chocolate
                         </option>
-                        <option value="BlueViolet" style="color: white;">
+                        <option value="BlueViolet" style="color: BlueViolet;">
                           Azul violeta
                         </option>
-                        <option value="Firebrick" style="color: white;">
+                        <option value="Firebrick" style="color: Firebrick;">
                           Tijolo
                         </option>
                       </select>
@@ -4994,49 +4991,52 @@
                     <div class="form-group mt-2">
                       <label for="color-message-highlight">Cor da mensagem destacada</label>
                       <select class="form-control bg-dark mt-3" id="color-message-highlight">
-                        <option value="Blue" style="color: white;">
+                        <option value="Blue" style="color: Blue;">
                           Azul
                         </option>
-                        <option value="Coral" style="color: white;">
+                        <option value="White" style="color: white;">
+                          Branco
+                        </option>
+                        <option value="Coral" style="color: Coral;">
                           Coral
                         </option>
-                        <option value="DodgerBlue" style="color: white;">
+                        <option value="DodgerBlue" style="color: DodgerBlue;">
                           Azul furtivo
                         </option>
-                        <option value="SpringGreen" style="color: white;">
+                        <option value="SpringGreen" style="color: SpringGreen;">
                           Verde primavera
                         </option>
-                        <option value="YellowGreen" style="color: white;">
+                        <option value="YellowGreen" style="color: YellowGreen;">
                           Verde amarelado
                         </option>
-                        <option value="Green" style="color: white;">
+                        <option value="Green" style="color: Green;">
                           Verde
                         </option>
-                        <option value="OrangeRed" style="color: white;">
+                        <option value="OrangeRed" style="color: OrangeRed;">
                           Vermelhão
                         </option>
-                        <option value="Red" style="color: white;">
+                        <option value="Red" style="color: Red;">
                           Vermelho
                         </option>
-                        <option value="GoldenRod" style="color: white;">
+                        <option value="GoldenRod" style="color: GoldenRod;">
                           Dourado
                         </option>
-                        <option value="HotPink" style="color: white;">
+                        <option value="HotPink" style="color: HotPink;">
                           Rosa forte
                         </option>
-                        <option value="CadetBlue" style="color: white;">
+                        <option value="CadetBlue" style="color: CadetBlue;">
                           Azul cadete
                         </option>
-                        <option value="SeaGreen" style="color: white;">
+                        <option value="SeaGreen" style="color: SeaGreen;">
                           Verde mar
                         </option>
-                        <option value="Chocolate" style="color: white;">
+                        <option value="Chocolate" style="color: Chocolate;">
                           Chocolate
                         </option>
-                        <option value="BlueViolet" style="color: white;">
+                        <option value="BlueViolet" style="color: BlueViolet;">
                           Azul violeta
                         </option>
-                        <option value="Firebrick" style="color: white;">
+                        <option value="Firebrick" style="color: Firebrick;">
                           Tijolo
                         </option>
                       </select>
@@ -5053,9 +5053,11 @@
                       <label for="duration-highlight">Duração da animação CSS</label>
                       <input type="number" class="form-control bg-dark mt-3" id="duration-highlight" />
                     </div>
-                    <button type="button" id="submit-highlight-config" class="btn bt-submit mt-4" onclick="highlight_js('save')">
-                      Salvar
-                    </button>
+                    <div class="form-group mt-3">
+                      <button type="button" id="submit-highlight-config" class="btn bt-submit mt-4 m-1" onclick="highlight_js('save')">
+                        Salvar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -5068,7 +5070,7 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll justify-content-center">
+              <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block">
                   <div class="form-group bg-dark form-block">
                     <div class="form-group">
@@ -5334,9 +5336,9 @@
                   <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
                 </button>
               </div>
-              <div class="h-scroll justify-content-center">
+              <div class="h-scroll flex-wrap justify-content-center">
                 <div class="internal-block">
-                  <div class="form-group bg-dark form-block">
+                  <div class="bg-dark form-block">
                     <div class="form-group">
                       <label for="slider-font-events">Tamanho da letra na lista de eventos</label>
                       <input class="mt-4" type="range" min="0" max="100" value="18" id="slider-font-events" step="1"
@@ -5547,169 +5549,12 @@
                 </div>
               </div>
             </div>
-            <div id="not-config-div" hidden>
-              <div class="internal-top">
-                <span>Alertas</span>
-                <button class="btn" onclick="hide_config_div('not-config-div')" data-toggle="tooltip"
-                  data-bs-placement="left" title="Voltar">
-                  <i class="fa-sharp fa-solid fa-chevron-left fa-xl"></i>
-                </button>
-              </div>
-              <div class="h-scroll flex-wrap justify-content-center">
-                <div class="internal-block">
-                  <div class="form-group bg-dark form-block">
-                    <label for="not-select-edit">Selecione tipo de notificação para editar.</label>
-                    <div class="input-group none-flex mt-3">
-                      <select class="form-control bg-dark" id="not-select-edit">
-                        <option value="follow">
-                          Follow
-                        </option>
-                        <option value="sub">
-                          Sub
-                        </option>
-                        <option value="resub">
-                          Renovação Sub
-                        </option>
-                        <option value="giftsub">
-                          Gift-Sub
-                        </option>
-                        <option value="mysterygift">
-                          Gift-Sub Misterioso
-                        </option>
-                        <option value="re-mysterygift">
-                          Renovação Gift-Sub
-                        </option>
-                        <option value="raid">
-                          Raid
-                        </option>
-                        <option value="bits1">
-                          1 Bit
-                        </option>
-                        <option value="bits100">
-                          100 Bits
-                        </option>
-                        <option value="bits1000">
-                          1000 Bits
-                        </option>
-                        <option value="bits5000">
-                          5000 Bits
-                        </option>
-                      </select>
-                      <button class="btn bt-submit" type="button" onclick="not_config_js('event','select_edit')">
-                        Editar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div class="internal-block">
-                  <div id="not-div" class="w-100 bg-dark form-block mt-0" hidden>
-                    <input id="type_edit_not" type="text" hidden />
-                    <div class="row">
-                      <div class="col">
-                        <p class="form-check-label">
-                          Ativar notificações
-                        </p>
-                      </div>
-                      <div class="col-2">
-                        <div class="material-switch bg-white d-flex justify-content-end">
-                          <input id="not" type="checkbox" />
-                          <label for="not" class="form-check-label"></label>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="row mt-3">
-                      <div class="col">
-                        <p class="form-check-label">
-                          Ativar texto-falado nas notificações
-                        </p>
-                      </div>
-                      <div class="col-2">
-                        <div class="material-switch bg-white d-flex justify-content-end">
-                          <input id="tts" type="checkbox" />
-                          <label for="tts" class="form-check-label"></label>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="audio">Som das notificações</label>
-                      <input type="text" class="form-control bg-dark mt-3" placeholder="Clique para selecionar"
-                        id="audio" onclick="getFolder('audio','audio')" />
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="not-audio-volume">Volume do audio</label>
-                      <input class="w-100" type="range" min="0" max="100" value="50" id="not-audio-volume" step="1"
-                        oninput="rangevalue_not_volume.innerText = this.value" />
-                      <output id="rangevalue_not_volume">50</output>
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="image">Imagem das notificações</label>
-                      <input type="text" class="form-control bg-dark mt-3" placeholder="Clique para selecionar"
-                        id="image" onclick="getFolder('image','image')" />
-                    </div>
-                    <div class="row mt-3">
-                      <div class="col">
-                        <p class="form-check-label">
-                          Exibir texto sobre imagem
-                        </p>
-                      </div>
-                      <div class="col-2">
-                        <div class="material-switch bg-white d-flex justify-content-end">
-                          <input id="over-image" type="checkbox" />
-                          <label for="over-image" class="form-check-label"></label>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="image-px">Tamanho da imagem em pixels (Não é necessário
-                        utilizar o 'px' no final)</label>
-                      <input type="text" class="form-control bg-dark mt-3" id="image-px" />
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="response">Mensagem no HTML</label>
-                      <input type="text" class="form-control bg-dark mt-3" id="response" />
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="aliases-event">Pseudônimos (aliases) Úteis | (Não editável)</label>
-                      <input type="text" class="form-control bg-dark mt-3" id="aliases-event" readonly />
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="response-chat">Mensagem no Chat</label>
-                      <input type="text" class="form-control bg-dark mt-3" id="response-chat" />
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="response-px">Tamanho do texto em pixels (Não é necessário utilizar
-                        o 'px' no final)</label>
-                      <input type="text" class="form-control bg-dark mt-3" id="response-px" />
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="response-weight">Peso (espessura) da fonte do texto destacado (nome de
-                        usuário)</label>
-                      <input type="text" class="form-control bg-dark mt-3" id="response-weight" />
-                    </div>
-                    <div class="form-group mt-3">
-                      <label for="response-color">Cor do texto destacado (nome de usuário)</label>
-                      <input type="text" class="form-control bg-dark mt-3" id="response-color" />
-                    </div>
-                    <div class="form-group mt-3">
-                      <button type="button" class="btn bt-submit" onclick="test_not()">
-                        Testar notificação
-                      </button>
-                    </div>
-                    <div class="form-group mt-3 w-100">
-                      <button type="button" class="btn bt-submit mt-5" onclick="not_config_js(event,'save','null')">
-                        Salvar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
           <div class="tab-pane" id="v-pills-perfil" role="tabpanel" aria-labelledby="v-pills-perfil-tab">
             <div class="internal-top">
               <span>Perfil</span>
             </div>
-            <div class="h-scroll justify-content-center">
+            <div class="h-scroll flex-wrap justify-content-center">
               <div class="card form-block align-self-center w-75">
                 <img id="profile_image" src="./src/profile.png" class="rounded mx-auto d-block" width="200px" />
                 <div class="card-body">
@@ -5735,17 +5580,17 @@
             <div class="internal-top">
               <span>Sobre</span>
             </div>
-            <div class="h-scroll justify-content-center">
+            <div class="h-scroll flex-wrap justify-content-center">
               <div class="d-flex card bg-dark form-block align-self-center">
                 <img src="./src/profile.png" class="rounded mx-auto d-block" width="150px" />
                 <div class="card-body text-center">
-                  <h4 class="card-title m-3">RewardEvents V5.5.5 - BETA</h4>
+                  <h4 class="card-title m-3">RewardEvents V5.6.0</h4>
                   <button class="bt-submit btn m-3" onclick="update_modal('get')">
                     Verificar Atualização
                   </button>
-                  <h4 id="no-update" class="card-text" hidden>
-                    Você já está na ultima versão
-                  </h4>
+                  <h6 id="no-update" class="card-text" hidden>
+                    Você está na ultima versão
+                  </h6>
                 </div>
                 <div class="card-footer">
                   <div class="form-group mt-3 mb-3 ">
@@ -5784,9 +5629,6 @@
                   <button type="button" class="btn bt-submit m-3 mt-0" title="Suporte no discord"
                     onclick="window.pywebview.api.open_py('discord','null')">
                     <i class="fa-brands fa-discord"></i>
-                  </button>
-                  <button type="button" class="btn bt-submit m-3 mt-0 ms-0" onclick="show_userdata_modal()" title="Dados de usuários">
-                    <i class="fa-solid fa-users"></i>
                   </button>
                 </div>
                 <div class="modal" id="errorlog-modal" data-backdrop="static" tabindex="-1">
@@ -5847,20 +5689,7 @@
                 </div>
               </div>
             </div>
-            <div class="modal" id="update-modal" tabindex="-1">
-              <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content bg-dark custom-border-modal">
-                  <div class="modal-body text-center m-5">
-                    <h2>Atualização disponível !!</h2>
-                    <p>Ir para pagina de download ?</p>
-                    <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal"
-                      onclick="update_modal('open')">
-                      Abrir
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+
           </div>
         </div>
         <div class="toast m-5 bg-dark p-0 d-none" id="notific" role="alert">
@@ -5874,6 +5703,30 @@
             </div>
           </div>
           <div class="toast-body" id="notific-message">Notificação</div>
+        </div>
+      </div>
+      <div class="modal fade" id="update-modal" data-bs-backdrop="static"  tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+          <div class="modal-content bg-dark custom-border-modal">
+            <div class="modal-header">
+              <h2>Atualização disponível!</h2>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+              aria-label="Close"></button>
+            </div>
+            <div class="modal-body m-1">
+
+              <div id="update_body">
+
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn bt-modal mt-4" data-bs-dismiss="modal"
+                onclick="update_modal('open')">
+                Ir para pagina de download
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="modal fade" id="confirm-logout" data-bs-backdrop="static" tabindex="-1">
@@ -5999,34 +5852,6 @@
                             Carregando...
                           </option>
                         </select>
-                      </div>
-                      <div class="row mt-3">
-                        <div class="col">
-                          <p class="form-check-label">
-                            Enviar notificação de alteração de
-                            informação de stream no discord .
-                          </p>
-                        </div>
-                        <div class="col-2">
-                          <div class="material-switch bg-white d-flex justify-content-end">
-                            <input id="enable-discord-not-stream" type="checkbox">
-                            <label for="enable-discord-not-stream" class="form-check-label"></label>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="row mt-3">
-                        <div class="col">
-                          <p class="form-check-label">
-                            Enviar notificação no discord mesmo se o
-                            canal estiver offline.
-                          </p>
-                        </div>
-                        <div class="col-2">
-                          <div class="material-switch bg-white d-flex justify-content-end">
-                            <input id="enable-discord-not-stream-off" type="checkbox" />
-                            <label for="enable-discord-not-stream-off" class="form-check-label"></label>
-                          </div>
-                        </div>
                       </div>
                     </div>
                     <div class="col-3">

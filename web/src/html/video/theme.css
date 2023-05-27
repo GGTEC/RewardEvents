@@ -1,0 +1,92 @@
+body {
+        background-color: transparent;
+}
+
+
+.background{
+        border: 2px solid #927aac;
+        width: 100%;
+        background-color: black;
+        margin: auto;
+}
+
+.img {  
+        margin: 10%;
+        width: 80%;
+}
+
+.redem_block{
+        margin: 5%;
+}
+
+.music_block{
+        margin-top: 5%;
+        margin-left: 1%;
+}
+
+p {
+        color: #fff;
+        text-align: left;
+        margin: 0%;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+}
+
+.redem_name ,.redem_user ,.artist_name,.music_name ,.redem_user_music {
+        font-size: 45px;
+}
+
+
+.fade-in {
+        animation: fade-in 5s ease-in both;
+}
+
+.fade-out {
+        animation: fade-out 5s ease-out both;
+}
+ 
+@keyframes fade-in {
+        0% {
+                opacity: 0;
+        }
+        10% {
+                opacity: 1;
+        }
+        25% {
+                opacity: 1;
+        }
+        50% {
+                opacity: 1;
+        }
+        75% {
+                opacity: 1;
+        }
+        90% {
+                opacity: 1;
+        }
+        100% {
+                opacity: 0;
+        }
+
+        }
+
+@-webkit-keyframes fade-out {
+        0% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      @keyframes fade-out {
+        0% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      
+      

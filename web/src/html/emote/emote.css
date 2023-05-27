@@ -1,0 +1,50 @@
+body {
+        overflow: hidden;
+}
+
+#emojis img {
+        position: absolute;
+        opacity: 0.0;
+}
+
+.drop {
+
+        animation-name: emojis-fall, emojis-shake;
+        animation-duration: 5s, 3s;
+        animation-timing-function: linear, ease-in-out;
+        animation-play-state: running, running;
+}
+
+
+@keyframes emojis-fall {
+        0% {
+                top: -10%;
+                opacity: 1.0;
+        }
+
+        80% {
+                opacity: 1.0;
+        }
+
+        100% {
+                top: 100%;
+        }
+}
+
+@keyframes emojis-shake {
+        0% {
+                transform: translateX(0px);
+        }
+
+        25% {
+                transform: translateX(15px);
+        }
+
+        50% {
+                transform: translateX(-15px);
+        }
+
+        100% {
+                transform: translateX(0px);
+        }
+}

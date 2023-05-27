@@ -31,8 +31,8 @@ import pytz
 import re
 import emoji
 import tkinter.messagebox as messagebox
+import sk
 
-from bs4 import BeautifulSoup as bs
 from ChatIRC import TwitchBot
 from dotenv import load_dotenv
 from io import BytesIO
@@ -42,8 +42,6 @@ from requests.structures import CaseInsensitiveDict
 from random import randint
 from discord_webhook import DiscordWebhook, DiscordEmbed
 from twitchAPI.twitch import Twitch, AuthScope, PredictionStatus, PollStatus
-from flask import Flask
-from waitress import serve
 
 
 extDataDir = os.getcwd()
@@ -57,27 +55,29 @@ load_dotenv(dotenv_path=os.path.join(extDataDir, '.env'))
 appdata_path = os.getenv('APPDATA')
 clientid = os.getenv('CLIENTID')
 
+try:
+    lock_file_path = os.path.join(f"{appdata_path}/rewardevents/web", 'my_program.lock')
+
+    with open(lock_file_path, 'w') as lock_file:
+        msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+
+except IOError:
+    
+    logging.info("Program already running.")
+    sys.exit(0)
+
 def start_log_files():
 
     MAX_LOG_SIZE = 1024 * 1024 * 10  # 10 MB
 
-    try:
-        lock_file_path = os.path.join(f"{appdata_path}/rewardevents/web", 'my_program.lock')
-
-        with open(lock_file_path, 'w') as lock_file:
-            msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
-
-    except IOError:
-        
-        logging.info("Program already running.")
-        sys.exit(0)
-
     log_file_path = f'{appdata_path}/rewardevents/web/src/output.log'
     chat_file_path = os.path.join(appdata_path, 'rewardevents', 'web', 'src', 'chat_log.txt')
 
-    LOG_LEVEL = logging.ERROR
-    logging.basicConfig(filename=log_file_path, level=LOG_LEVEL, format='%(asctime)s - %(levelname)s - %(message)s')
-
+    logging.basicConfig(
+        filename=log_file_path,
+        level=logging.ERROR,
+        format='%(asctime)s - %(levelname)s - %(name)s  - %(message)s'
+    )
     if os.path.exists(log_file_path):
         log_file_size = os.path.getsize(log_file_path)
         if log_file_size > MAX_LOG_SIZE:
@@ -121,6 +121,7 @@ def start_log_files():
 
 start_log_files()
     
+
 lock_file = None
 def remove_lock_file(signum, frame):
 
@@ -132,6 +133,7 @@ def remove_lock_file(signum, frame):
         msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
         lock_file.close()
         os.remove(lock_file_path)
+
     sys.exit(0)
 
 signal.signal(signal.SIGINT, remove_lock_file)
@@ -146,21 +148,6 @@ window_events_open = 0
 
 
 authdata = auth.auth_data(f'{appdata_path}/rewardevents/web/src/auth/auth.json')
-
-app = Flask(__name__)
-
-@app.route("/")
-def receive_url():
-
-    try:
-
-        with open(f"{extDataDir}/web/auth_sucess.html", "r") as html:
-            soup = bs(html, 'html.parser')
-            
-        return soup.prettify('utf-8')
-
-    except Exception as e:
-        utils.error_log(e)
 
 
 def toast(message):
@@ -615,517 +602,936 @@ def send_discord_webhook(data):
         discord_webhook.DiscordWebhookException: If the webhook execution failed for any reason.
     """
 
-    type_id = data['type_id']
+    try:
 
-    with open(f'{appdata_path}/rewardevents/web/src/config/discord.json', 'r', encoding='utf-8') as discord_config_file:
-        discord_config_data = json.load(discord_config_file)
+        type_id = data['type_id']
 
-    webhook_status = discord_config_data[type_id]['status']
-    webhook_color = discord_config_data[type_id]['color']
-    webhook_content = discord_config_data[type_id]['content']
-    webhook_url = discord_config_data[type_id]['url']
-    webhook_title = discord_config_data[type_id]['title']
-    webhook_description = discord_config_data[type_id]['description']
+        with open(f'{appdata_path}/rewardevents/web/src/config/discord.json', 'r', encoding='utf-8') as discord_config_file:
+            discord_config_data = json.load(discord_config_file)
 
-    if webhook_status == 1 and not webhook_url == "":
+        webhook_status = discord_config_data[type_id]['status']
+        webhook_color = discord_config_data[type_id]['color']
+        webhook_content = discord_config_data[type_id]['content']
+        webhook_url = discord_config_data[type_id]['url']
+        webhook_title = discord_config_data[type_id]['title']
+        webhook_description = discord_config_data[type_id]['description']
+
+        if webhook_status == 1 and not webhook_url == "":
         
-        
-        if type_id == 'clips_create':
+            if type_id == 'clips_create':
 
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-            
-            clip_id = data['clip_id']
-            username = data['username']
-            
-            aliases = {
-                '{url}' : f'https://clips.twitch.tv/{clip_id}',
-                '{username}' : username
-            }
-            
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
-            
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
-
-            webhook.add_embed(embed)
-            webhook.execute() 
-
-        if type_id == 'clips_edit':
-
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-
-            clip_id = data['clip_id']
-            username = data['username']
-            
-            aliases = {
-                '{url}' : f'https://clips.twitch.tv/{clip_id}/edit',
-                '{username}' : username
-            }
-            
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
-            
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
-
-            webhook.add_embed(embed)
-            webhook.execute() 
-
-        elif type_id == 'follow':
-
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-
-            username = data['follow_name']
-            
-            aliases = {
-                '{username}' : username
-            }
-            
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
-            
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
-
-            webhook.add_embed(embed)
-            webhook.execute() 
-
-        elif type_id == 'sub':
-
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-
-            username = data['username']
-            
-            aliases = {
-                '{username}' : username
-            }
-            
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
-            
-
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
-            
-            embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
-
-            webhook.add_embed(embed)
-            webhook.execute() 
-
-        elif type_id == 'live_start':
-            
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-
-            response = twitch_api.get_streams(first=1,user_id=authdata.BROADCASTER_ID())
-            
-            title = response['data'][0]['title']
-            game = response['data'][0]['game_name']
-            viewer_count = response['data'][0]['viewer_count']
-            is_mature = response['data'][0]['viewer_count']
-            thumb_url = response['data'][0]['thumbnail_url']
-            
-
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description=webhook_description,
-                color=webhook_color
-            )
-            
-            embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
-            
-            embed.set_image(url=thumb_url)
-            embed.add_embed_field(name='Titulo', value=title,inline=False)
-            embed.add_embed_field(name='Jogo', value=game,inline=False)
-            embed.add_embed_field(name='Espectadores', value=viewer_count,inline=True)
-            embed.add_embed_field(name='+18?', value=is_mature,inline=True)
-
-            webhook.add_embed(embed)
-            webhook.execute() 
-                                   
-        elif type_id == 'live_cat':
-
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-
-            response = twitch_api.get_streams(first=1,user_id=authdata.BROADCASTER_ID())
-            
-            if 'send_offline' in data:
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
                 
-                send_offline = data['send_offline']
+                clip_id = data['clip_id']
+                username = data['username']
                 
-                if len(response['data']) > 1 or send_offline == 1:
+                aliases = {
+                    '{url}' : f'https://clips.twitch.tv/{clip_id}',
+                    '{username}' : username
+                }
                 
-                    title = data['title']
-                    tag = data['tag']  
-                            
-                    aliases = {
-                        '{title}' : title,
-                        '{tag}' : tag
-                    }
-                    
-                    webhook_title = utils.replace_all(webhook_title, aliases)
-                    webhook_description = utils.replace_all(webhook_description, aliases)
-                    
-                    embed = DiscordEmbed(
-                        title=webhook_title,
-                        description= webhook_description,
-                        color= webhook_color
-                    )
-                    
-                    embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
-                    
-                    embed.add_embed_field(name='Titulo', value=title,inline=False)
-                    embed.add_embed_field(name='Jogo', value=tag,inline=False)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
 
+                webhook.add_embed(embed)
+                webhook.execute() 
+
+            if type_id == 'clips_edit':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+                clip_id = data['clip_id']
+                username = data['username']
+                
+                aliases = {
+                    '{url}' : f'https://clips.twitch.tv/{clip_id}/edit',
+                    '{username}' : username
+                }
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+
+                webhook.add_embed(embed)
+                webhook.execute() 
+
+            elif type_id == 'follow':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+                username = data['follow_name']
+                
+                aliases = {
+                    '{username}' : username
+                }
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+
+                webhook.add_embed(embed)
+                webhook.execute() 
+
+            elif type_id == 'sub':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+                username = data['username']
+                
+                aliases = {
+                    '{username}' : username
+                }
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute() 
+            
+            elif type_id == 'resub':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+                username = data['username']
+                
+                aliases = {
+                    '{username}' : username,
+                    '{tier}' : data['tier'],
+                    '{total_months}' : data['total_months'],
+                    '{streak_months}' : data['streak_months'],
+                    '{months}' : data['months'],
+                    '{user_mesage}' : data['user_mesage']
+                }
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+
+                webhook.add_embed(embed)
+                webhook.execute() 
+
+            elif type_id == 'bits':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+
+                aliases = {
+                    '{username}' : data['username'],
+                    '{ammount}' : data['ammount']
+                }
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute() 
+
+            elif type_id == 'live_start':
+                
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+                response = twitch_api.get_streams(first=1,user_id=authdata.BROADCASTER_ID())
+                
+                title = response['data'][0]['title']
+                game = response['data'][0]['game_name']
+                viewer_count = response['data'][0]['viewer_count']
+                is_mature = response['data'][0]['viewer_count']
+                thumb_url = response['data'][0]['thumbnail_url']
+                
+                aliases = {
+                    '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
+                }
+
+                webhook_description = utils.replace_all(webhook_description, aliases)
+
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description=webhook_description,
+                    color=webhook_color
+                )
+                
+
+                
+                embed.set_image(url=thumb_url)
+                embed.add_embed_field(name='Titulo', value=title,inline=False)
+                embed.add_embed_field(name='Jogo', value=game,inline=False)
+                embed.add_embed_field(name='Espectadores', value=viewer_count,inline=True)
+                embed.add_embed_field(name='+18?', value=is_mature,inline=True)
+
+                webhook.add_embed(embed)
+                webhook.execute() 
+                                    
+            elif type_id == 'live_cat':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+                
+                title = data['title']
+                tag = data['tag']  
+                        
+                aliases = {
+                    '{title}' : str(title),
+                    '{tag}' : str(tag),
+                    '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
+                }
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+                
+                embed.add_embed_field(name='Titulo', value=title,inline=False)
+                embed.add_embed_field(name='Jogo', value=tag,inline=False)
+
+                webhook.add_embed(embed)
+                webhook.execute()
+                
+            elif type_id == 'live_end':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+                username = data['username']
+                        
+                aliases = {
+                    '{username}' : username,
+                }
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute()     
+
+            elif type_id == 'poll_start':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+                title = data['title']
+                choices = data['choices']
+                bits_voting = data['bits_status']
+                bits_amount = data['bits_amount']
+                points_status = data['points_status']
+                points_amount = data['points_amount']
+                        
+                aliases = {
+                    '{title}' : title,
+                    '{bits_voting}' : str(bits_voting),
+                    '{bits_amount}' : str(bits_amount),
+                    '{points_status}' : str(points_status),
+                    '{points_amount}' : str(points_amount),
+                    '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
+                }
+                
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+                if points_status == 1:
+                    points_status = 'Sim'
+                else:
+                    points_status = 'Não'
+                    
+                
+                if bits_voting == 1:
+                    bits_voting = 'Sim'
+                else:
+                    bits_voting = 'Não'
+                    
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+                embed.add_embed_field(name=f'Votação com pontos do canal ?', value=points_status,inline=False)
+                embed.add_embed_field(name=f'Votação com bits ?', value=bits_voting,inline=False)
+                
+
+                
+                op_count = 0
+                
+                for option in choices:
+                    title_op = option['title']
+                    op_count += 1
+                    embed.add_embed_field(name=f'Opção {op_count}', value=title_op,inline=False)
+
+                webhook.add_embed(embed)
+                webhook.execute() 
+
+            elif type_id == 'poll_status':
+                
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+                title = data['title']
+                choices = data['choices']
+                bits_voting = data['bits_status']
+                bits_amount = data['bits_amount']
+                points_status = data['points_status']
+                points_amount = data['points_amount']
+                        
+                aliases = {
+                    '{title}' : title,
+                    '{bits_voting}' : str(bits_voting),
+                    '{bits_amount}' : str(bits_amount),
+                    '{points_status}' : str(points_status),
+                    '{points_amount}' : str(points_amount),
+                    '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
+                }
+                
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+                if points_status == 1:
+                    points_status = 'Sim'
+                else:
+                    points_status = 'Não'
+                    
+                
+                if bits_voting == 1:
+                    bits_voting = 'Sim'
+                else:
+                    bits_voting = 'Não'
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+                embed.add_embed_field(name=f'Votação com pontos do canal ?', value=f"Status : {points_status} | Pontos para votar: {points_amount}",inline=False)
+                embed.add_embed_field(name=f'Votação com bits ?', value=f"Status : {bits_voting} | Bits para votar: {bits_amount}",inline=False)
+                
+
+                
+                op_count = 0
+                
+                for option in choices:
+
+                    title_op = option['title']
+                    votes_op = option['votes']
+                    points_votes_op = option['channel_points_votes']
+                    bits_votes_op = option['bits_votes']
+                    
+                    op_count += 1
+                    embed.add_embed_field(name=f'{title_op}', value=f"Votos : {votes_op} | Votos com pontos do canal : {points_votes_op} | Votos com bits : {bits_votes_op}",inline=False)
+                    
                     webhook.add_embed(embed)
-                    webhook.execute() 
-                    
-                elif len(response['data']) > 1 != '':
-                    
-                    title = data['title']
-                    tag = data['tag']  
-                            
-                    aliases = {
-                        '{title}' : title,
-                        '{tag}' : tag
-                    }
-                    
-                    webhook_title = utils.replace_all(webhook_title, aliases)
-                    webhook_description = utils.replace_all(webhook_description, aliases)
-                    
-                    embed = DiscordEmbed(
-                        title=webhook_title,
-                        description= webhook_description,
-                        color= webhook_color
-                    )
-                    
-                    embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
-                    
-                    embed.add_embed_field(name='Titulo', value=title,inline=False)
-                    embed.add_embed_field(name='Jogo', value=tag,inline=False)
+                    webhook.execute()   
 
-                    webhook.add_embed(embed)
-                    webhook.execute() 
+            elif type_id == 'poll_end':
 
-        elif type_id == 'live_end':
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
 
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-
-            username = data['username']
-                      
-            aliases = {
-                '{username}' : username,
-            }
-            
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
-            
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
-            
-            embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
-
-            webhook.add_embed(embed)
-            webhook.execute()     
-
-        elif type_id == 'poll_start':
-
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-
-            title = data['title']
-            choices = data['choices']
-            bits_voting = data['bits_status']
-            bits_amount = data['bits_amount']
-            points_status = data['points_status']
-            points_amount = data['points_amount']
-                      
-            aliases = {
-                '{title}' : title,
-                '{bits_voting}' : str(bits_voting),
-                '{bits_amount}' : str(bits_amount),
-                '{points_status}' : str(points_status),
-                '{points_amount}' : str(points_amount),
-                '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
-            }
-            
-            
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
-            
-            if points_status == 1:
-                points_status = 'Sim'
-            else:
-                points_status = 'Não'
+                title = data['title']
+                choices = data['choices']
+                bits_voting = data['bits_status']
+                bits_amount = data['bits_amount']
+                points_status = data['points_status']
+                points_amount = data['points_amount']
+                        
+                aliases = {
+                    '{title}' : title,
+                    '{bits_voting}' : str(bits_voting),
+                    '{bits_amount}' : str(bits_amount),
+                    '{points_status}' : str(points_status),
+                    '{points_amount}' : str(points_amount),
+                    '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
+                }
                 
-            
-            if bits_voting == 1:
-                bits_voting = 'Sim'
-            else:
-                bits_voting = 'Não'
                 
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
-            
-            embed.add_embed_field(name=f'Votação com pontos do canal ?', value=points_status,inline=False)
-            embed.add_embed_field(name=f'Votação com bits ?', value=bits_voting,inline=False)
-            
-            embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
-            
-            op_count = 0
-            
-            for option in choices:
-                title_op = option['title']
-                op_count += 1
-                embed.add_embed_field(name=f'Opção {op_count}', value=title_op,inline=False)
-
-            webhook.add_embed(embed)
-            webhook.execute() 
-
-        elif type_id == 'poll_status':
-            
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-
-            title = data['title']
-            choices = data['choices']
-            bits_voting = data['bits_status']
-            bits_amount = data['bits_amount']
-            points_status = data['points_status']
-            points_amount = data['points_amount']
-                      
-            aliases = {
-                '{title}' : title,
-                '{bits_voting}' : str(bits_voting),
-                '{bits_amount}' : str(bits_amount),
-                '{points_status}' : str(points_status),
-                '{points_amount}' : str(points_amount),
-                '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
-            }
-            
-            
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
-            
-            if points_status == 1:
-                points_status = 'Sim'
-            else:
-                points_status = 'Não'
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
                 
-            
-            if bits_voting == 1:
-                bits_voting = 'Sim'
-            else:
-                bits_voting = 'Não'
-            
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
-            
-            embed.add_embed_field(name=f'Votação com pontos do canal ?', value=f"Status : {points_status} | Pontos para votar: {points_amount}",inline=False)
-            embed.add_embed_field(name=f'Votação com bits ?', value=f"Status : {bits_voting} | Bits para votar: {bits_amount}",inline=False)
-            
-            embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
-            
-            op_count = 0
-            
-            for option in choices:
-
-                title_op = option['title']
-                votes_op = option['votes']
-                points_votes_op = option['channel_points_votes']
-                bits_votes_op = option['bits_votes']
+                if points_status == 1:
+                    points_status = 'Sim'
+                else:
+                    points_status = 'Não'
+                    
                 
-                op_count += 1
-                embed.add_embed_field(name=f'{title_op}', value=f"Votos : {votes_op} | Votos com pontos do canal : {points_votes_op} | Votos com bits : {bits_votes_op}",inline=False)
+                if bits_voting == 1:
+                    bits_voting = 'Sim'
+                else:
+                    bits_voting = 'Não'
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+                embed.add_embed_field(name=f'Votação com pontos do canal ?', value=f"Status : {points_status} | Pontos para votar: {points_amount}",inline=False)
+                embed.add_embed_field(name=f'Votação com bits ?', value=f"Status : {bits_voting} | Bits para votar: {bits_amount}",inline=False)
+                
+
+                
+                op_count = 0
+                
+                for option in choices:
+                    title_op = option['title']
+                    votes_op = option['votes']
+                    points_votes_op = option['channel_points_votes']
+                    bits_votes_op = option['bits_votes']
+                    op_count += 1
+                    embed.add_embed_field(name=f'{title_op}', value=f"Votos : {votes_op} | Votos com pontos do canal : {points_votes_op} | Votos com bits : {bits_votes_op}",inline=False)
                 
                 webhook.add_embed(embed)
-                webhook.execute()   
+                webhook.execute() 
 
-        elif type_id == 'poll_end':
+            elif type_id == 'prediction_start':
 
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
 
-            title = data['title']
-            choices = data['choices']
-            bits_voting = data['bits_status']
-            bits_amount = data['bits_amount']
-            points_status = data['points_status']
-            points_amount = data['points_amount']
-                      
-            aliases = {
-                '{title}' : title,
-                '{bits_voting}' : str(bits_voting),
-                '{bits_amount}' : str(bits_amount),
-                '{points_status}' : str(points_status),
-                '{points_amount}' : str(points_amount),
-                '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
-            }
-            
-            
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
-            
-            if points_status == 1:
-                points_status = 'Sim'
-            else:
-                points_status = 'Não'
+                title = data['title']
+                options = data['outcomes']
+                        
+                aliases = {
+                    '{title}' : title,
+                }
                 
-            
-            if bits_voting == 1:
-                bits_voting = 'Sim'
-            else:
-                bits_voting = 'Não'
-            
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
-            
-            embed.add_embed_field(name=f'Votação com pontos do canal ?', value=f"Status : {points_status} | Pontos para votar: {points_amount}",inline=False)
-            embed.add_embed_field(name=f'Votação com bits ?', value=f"Status : {bits_voting} | Bits para votar: {bits_amount}",inline=False)
-            
-            embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
-            
-            op_count = 0
-            
-            for option in choices:
-                title_op = option['title']
-                votes_op = option['votes']
-                points_votes_op = option['channel_points_votes']
-                bits_votes_op = option['bits_votes']
-                op_count += 1
-                embed.add_embed_field(name=f'{title_op}', value=f"Votos : {votes_op} | Votos com pontos do canal : {points_votes_op} | Votos com bits : {bits_votes_op}",inline=False)
-            
-            webhook.add_embed(embed)
-            webhook.execute() 
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
 
-        elif type_id == 'prediction_start':
+                op_count = 0
+                for option in options:
+                    title_op = option['title']
+                    op_count += 1
+                    embed.add_embed_field(name=f'Opção {op_count}', value=title_op,inline=False)
 
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
 
-            title = data['title']
-            options = data['outcomes']
-                      
-            aliases = {
-                '{title}' : title,
-            }
+
+                webhook.add_embed(embed)
+                webhook.execute()
+
+            elif type_id == 'prediction_progress':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+                title = data['title']
+                options = data['outcomes']
+                        
+                aliases = {
+                    '{title}' : title,
+                }
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+
+                op_count = 0
+
+                for option in options:
+                    title_op = option['title']
+                    users = option['users']
+                    points = option['channel_points']
+                    op_count += 1
+                    embed.add_embed_field(name=f'Opção {op_count}', value=f"{title_op} | Votos: {users} | Pontos do canal: {points}",inline=False)
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute()
+
+            elif type_id == 'prediction_end':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+
+                title = data['title']
+                outcome_win = data['outcome_win']
+                channel_points = data['channel_points']
+        
+                aliases = {
+                    '{title}' : title,
+                    '{outcome_win}' : str(outcome_win),
+                    '{channel_points}' : str(channel_points)
+                }
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                
+                embed.add_embed_field(name=f'Vencedor', value=f"{outcome_win} | Pontos do canal: {channel_points}",inline=False)
+
+
+                webhook.add_embed(embed)
+                webhook.execute()
+
+            elif type_id == 'giftsub':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{tier}' : str(data['tier']),
+                    '{total}' : str(data['total']),
+                    '{cumulative_total}' :str(data['user_name']),
+                    '{is_anonymous}' : str(data['user_name']),
+                    '{username}' : str(data['user_name'])
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute()
+
+            elif type_id == 'subend':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{username}' : str(data['user_name'])
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute()
+
+            elif type_id == 'raid':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{username}' : str(data['username']),
+                    '{specs}' : str(data['specs'])
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute()
+    
+            elif type_id == 'ban':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{reason}' : data['reason'],
+                    '{moderator}' : data['moderator'],
+                    '{username}' : data['username'],
+                    '{time}' : data['time']
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute()
+
+            elif type_id == 'unban':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{moderator}' : data['moderator'],
+                    '{username}' : data['username'],
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute()
+
+            elif type_id == 'goal_start':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{target}' : str(data['target']),
+                    '{current}' : str(data['current']),
+                    '{description}' : str(data['description']),
+                    '{type}' : data['goal_type']
+                }
+
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute()
+
+            elif type_id == 'goal_end':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{target}' : str(data['target']),
+                    '{current}' : str(data['current']),
+                    '{description}' : str(data['description']),
+                    '{type}' : data['goal_type']
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+
+                webhook.add_embed(embed)
+                webhook.execute()
+
+            elif type_id == 'shoutout_start':
+
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{broadcaster}' : str(data['broadcaster']),
+                    '{moderator}' : str(data['moderator']),
+                    '{to_broadcaster}': str(data['to_broadcaster']),
+                    '{viewer_count}': str(data['viewer_count'])
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+                webhook.add_embed(embed)
+                webhook.execute()
             
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
+            elif type_id == 'shoutout_receive':
 
-            op_count = 0
-            for option in options:
-                title_op = option['title']
-                op_count += 1
-                embed.add_embed_field(name=f'Opção {op_count}', value=title_op,inline=False)
-
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{broadcaster}' : str(data['broadcaster']),
+                    '{from_broadcaster}' : str(data['from_broadcaster'])
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+                webhook.add_embed(embed)
+                webhook.execute()
             
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
+            elif type_id == 'shield_start':
             
-            embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{broadcaster}' : str(data['broadcaster']),
+                    '{moderator}' : str(data['moderator'])
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
 
-            webhook.add_embed(embed)
-            webhook.execute()
-
-        elif type_id == 'prediction_progress':
-
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-
-            title = data['title']
-            options = data['outcomes']
-                      
-            aliases = {
-                '{title}' : title,
-            }
+                webhook.add_embed(embed)
+                webhook.execute()
             
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
-
-            op_count = 0
-
-            for option in options:
-                title_op = option['title']
-                users = option['users']
-                points = option['channel_points']
-                op_count += 1
-                embed.add_embed_field(name=f'Opção {op_count}', value=f"{title_op} | Votos: {users} | Pontos do canal: {points}",inline=False)
+            elif type_id == 'shield_end':
             
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{broadcaster}' : str(data['broadcaster']),
+                    '{moderator}' : str(data['moderator'])
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+
+                webhook.add_embed(embed)
+                webhook.execute()
             
-            embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
-
-            webhook.add_embed(embed)
-            webhook.execute()
-
-        elif type_id == 'prediction_end':
-
-            webhook = DiscordWebhook(url=webhook_url)
-            webhook.content = webhook_content   
-
-            title = data['title']
-            outcome_win = data['outcome_win']
-            channel_points = data['channel_points']
-     
-            aliases = {
-                '{title}' : title,
-                '{outcome_win}' : str(outcome_win),
-                '{channel_points}' : str(channel_points)
-            }
+            elif type_id == 'charity_campaign_donate':
             
-            embed = DiscordEmbed(
-                title=webhook_title,
-                description= webhook_description,
-                color= webhook_color
-            )
-            
-            webhook_title = utils.replace_all(webhook_title, aliases)
-            webhook_description = utils.replace_all(webhook_description, aliases)
-            
-            embed.add_embed_field(name=f'Vencedor', value=f"{outcome_win} | Pontos do canal: {channel_points}",inline=False)
-            embed.set_author(name='RewardEvents', url='https://ggtec.netlify.app', icon_url='https://ggtec.netlify.app/assets/img/about.png')
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    '{username}': data['username'],
+                    '{charity_name}': data['charity_name'],
+                    '{charity_logo}': data['charity_logo'],
+                    '{value}': str(data['value']),
+                    '{decimal_places}': str(data['decimal_places']),
+                    '{currency}': data['currency']
+                }
+                            
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
 
-            webhook.add_embed(embed)
-            webhook.execute()
+                embed.add_embed_field(name=f'Valor', value=f"{data['currency']} {str(data['value'])}",inline=True)
+
+                embed.set_thumbnail(url=data['charity_logo'])
+
+
+                webhook.add_embed(embed)
+                webhook.execute()
+            
+            elif type_id == 'charity_campaign_progress':
+            
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+                        
+                aliases = {
+                    "{charity_name}": data['charity_name'],
+                    "{charity_logo}": data['charity_logo'],
+                    "{current_amount_value}": str(data['current_amount_value']),
+                    "{current_amount_currency}": data['current_amount_currency'],
+                    "{target_amount_value}": str(data['target_amount_value']),
+                    "{target_amount_currency}": data['target_amount_currency']
+                }
+
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color,
+                    
+                )
+
+                embed.add_embed_field(name=f'Valor atual', value=f"{data['current_amount_currency']} {str(data['current_amount_value'])}",inline=True)
+                embed.add_embed_field(name=f'Meta', value=f"{data['target_amount_currency']} {str(data['target_amount_value'])}",inline=True)
+                
+                embed.set_thumbnail(url=data['charity_logo'])
+
+                webhook.add_embed(embed)
+                webhook.execute()
+            
+            elif type_id == 'charity_campaign_start':
+            
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    "{charity_name}": data['charity_name'],
+                    "{charity_logo}": data['charity_logo'],
+                    "{current_amount_value}": str(data['current_amount_value']),
+                    "{current_amount_currency}": data['current_amount_currency'],
+                    "{target_amount_value}": str(data['target_amount_value']),
+                    "{target_amount_currency}": data['target_amount_currency']
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+                embed.add_embed_field(name=f'Valor atual', value=f"{data['current_amount_currency']} {str(data['current_amount_value'])}",inline=True)
+                embed.add_embed_field(name=f'Meta', value=f"{data['target_amount_currency']} {str(data['target_amount_value'])}",inline=True)
+                
+                embed.set_thumbnail(url=data['charity_logo'])
+
+                webhook.add_embed(embed)
+                webhook.execute()
+            
+            elif type_id == 'charity_campaign_stop':
+    
+                webhook = DiscordWebhook(url=webhook_url)
+                webhook.content = webhook_content   
+        
+                aliases = {
+                    "{charity_name}": data['charity_name'],
+                    "{charity_logo}": data['charity_logo'],
+                    "{current_amount_value}": str(data['current_amount_value']),
+                    "{current_amount_currency}": data['current_amount_currency'],
+                    "{target_amount_value}": str(data['target_amount_value']),
+                    "{target_amount_currency}": data['target_amount_currency']
+                }
+                
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+                embed.add_embed_field(name=f'Valor atual', value=f"{data['current_amount_currency']} {str(data['current_amount_value'])}",inline=True)
+                embed.add_embed_field(name=f'Meta', value=f"{data['target_amount_currency']} {str(data['target_amount_value'])}",inline=True)
+                
+                embed.set_thumbnail(url=data['charity_logo'])
+
+                webhook.add_embed(embed)
+                webhook.execute()
+
+    except Exception as e:
+        logging.error("Exception occurred", exc_info=True)
 
 
 def get_auth_py(type_id):
@@ -1280,7 +1686,7 @@ def get_spec():
                     data_time_dump = json.dumps(data_time, ensure_ascii=False)
                     window.evaluate_js(f"receive_live_info({data_time_dump})")
                 
-                    time.sleep(60)
+                    time.sleep(300)
 
                 else:
 
@@ -1305,7 +1711,7 @@ def get_spec():
                     data_time_dump = json.dumps(data_time, ensure_ascii=False)
                     window.evaluate_js(f"receive_live_info({data_time_dump})")
                     
-                    time.sleep(60)
+                    time.sleep(300)
                 
             else:
                 
@@ -1322,7 +1728,7 @@ def get_spec():
 
             data_time_dump = json.dumps(data_time, ensure_ascii=False)
             window.evaluate_js(f"receive_live_info({data_time_dump})")
-            time.sleep(60)
+            time.sleep(300)
 
     
 def get_chat_list():
@@ -1373,6 +1779,7 @@ def get_redeem(type_id):
     if type_id == 'del' or type_id == "edit":
 
         list_titles = {"redeem": []}
+
         with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as path_file:
             path = json.load(path_file)
 
@@ -1554,8 +1961,6 @@ def save_stream_info_py(data):
         game = data['game']
         game_id = data['game_id']
         tags = data['tags']
-        send_discord = data['discord']
-        send_offline = data['offline']
         
         headers = {
             'Authorization': f'Bearer {authdata.TOKEN()}',
@@ -1582,13 +1987,9 @@ def save_stream_info_py(data):
         data_discord = {
             'type_id' : 'live_cat',
             'title': title,
-            'tag' : game,
-            'send_discord': send_discord,
-            'send_offline' : send_offline
+            'tag' : game
         }
-        
-        if send_offline == 1:
-            send_discord_webhook(data_discord)
+
         
         if response.status_code == 204:
             toast('success')
@@ -1923,8 +2324,9 @@ def create_action_save(data, type_id):
             else:
                 send_response = 1
 
-            old_data = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8')
-            new_data = json.load(old_data)
+
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
+                new_data = json.load(old_data)
 
             new_data[redeem_value] = {
 
@@ -1936,12 +2338,8 @@ def create_action_save(data, type_id):
                 'show_time': time_showing_video
             }
 
-            old_data.close()
-
-            old_data_write = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8')
-            json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
-
-            old_data_write.close()
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as old_data_write:
+                json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -1953,8 +2351,8 @@ def create_action_save(data, type_id):
 
             characters = data_receive['characters']
 
-            old_data = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8')
-            new_data = json.load(old_data)
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
+                new_data = json.load(old_data)
 
             new_data[redeem_value] = {
                 'type': 'tts',
@@ -1962,11 +2360,8 @@ def create_action_save(data, type_id):
                 'characters': characters
             }
 
-            old_data.close()
-
-            old_data_write = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8')
-            json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
-            old_data_write.close()
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as old_data_write:
+                json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
             
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2016,8 +2411,9 @@ def create_action_save(data, type_id):
             chat_response = data_receive['chat_response']
             redeem_value = data_receive['redeem_value']
 
-            old_data = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8')
-            new_data = json.load(old_data)
+
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
+                new_data = json.load(old_data)
 
             new_data[redeem_value] = {
                 'type': 'response',
@@ -2025,11 +2421,8 @@ def create_action_save(data, type_id):
                 'chat_response': chat_response
             }
 
-            old_data.close()
-
-            old_data_write = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8')
-            json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
-            old_data_write.close()
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as old_data_write:
+                json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2052,8 +2445,8 @@ def create_action_save(data, type_id):
             if time_showing == "":
                 time_showing = 0
 
-            old_data = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8')
-            new_data = json.load(old_data)
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
+                new_data = json.load(old_data)
 
             new_data[redeem_value] = {
 
@@ -2067,11 +2460,8 @@ def create_action_save(data, type_id):
                 'time': int(time_showing)
             }
 
-            old_data.close()
-
-            old_data_write = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8')
-            json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
-            old_data_write.close()
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as old_data_write:
+                json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2093,8 +2483,8 @@ def create_action_save(data, type_id):
             if time_showing == "":
                 time_showing = 0
 
-            old_data = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8')
-            new_data = json.load(old_data)
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
+                new_data = json.load(old_data)
 
             new_data[redeem_value] = {
 
@@ -2108,11 +2498,8 @@ def create_action_save(data, type_id):
 
             }
 
-            old_data.close()
-
-            old_data_write = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8')
-            json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
-            old_data_write.close()
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as old_data_write:
+                json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2143,8 +2530,8 @@ def create_action_save(data, type_id):
             else:
                 send_response = 1
 
-            key_data_file = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8')
-            key_data = json.load(key_data_file)
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as key_data_file:
+                key_data = json.load(key_data_file)
 
             if mode_press == 'mult':
 
@@ -2202,11 +2589,9 @@ def create_action_save(data, type_id):
                     'key4': key4
                 }
 
-            key_data_file.close()
 
-            key_data_file_write = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8')
-            json.dump(key_data, key_data_file_write, indent=6, ensure_ascii=False)
-            key_data_file_write.close()
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as key_data_file_write:
+                json.dump(key_data, key_data_file_write, indent=6, ensure_ascii=False)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2216,19 +2601,16 @@ def create_action_save(data, type_id):
             command_value = data_receive['command_value']
             redeem_value = data_receive['redeem_value']
 
-            old_data = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8')
-            new_data = json.load(old_data)
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
+                new_data = json.load(old_data)
 
             new_data[redeem_value] = {'type': 'clip', 'command': command_value.lower(), }
-            old_data.close()
 
-            old_data_write = open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8')
-            json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
+            with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'w', encoding='utf-8') as old_data_write:
+                json.dump(new_data, old_data_write, indent=6, ensure_ascii=False)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
-
-            old_data_write.close()
 
         elif type_id == 'highlight':
 
@@ -2877,8 +3259,9 @@ def giveaway_py(type_id, data_receive):
         user_level = data['user_level']
         
         def check_perm(user_level, command_level):
-            
+
             level = ["spec","regular","top_chatter", "vip", "subs", "mod", "streamer"]
+
             if level.index(user_level) >= level.index(command_level):
                 return True
             else:
@@ -3383,17 +3766,12 @@ def obs_config_py(type_id,data_receive):
             obs_not_data = json.load(obs_not_file)
         
         data = {
-            'html_events_active' : obs_not_data['HTML_EVENTS_ACTIVE'],
             'html_player_active': obs_not_data['HTML_PLAYER_ACTIVE'],
             'html_emote_active': obs_not_data['HTML_EMOTE_ACTIVE'],
-            'html_active': obs_not_data['HTML_ACTIVE'],
-            'html_title': obs_not_data['HTML_TITLE'],
-            'html_video': obs_not_data['HTML_VIDEO'],
-            'html_events' : obs_not_data['HTML_EVENTS'],
-            'html_emote' : obs_not_data['HTML_EMOTE'],
+            'html_redem_active': obs_not_data['HTML_REDEEM_ACTIVE'],
+            'html_redeem_time': obs_not_data['HTML_REDEEM_TIME'],
+            'html_music_time': obs_not_data['HTML_MUSIC_TIME'],
             'emote_px' : obs_not_data['EMOTE_PX'],
-            'html_time': obs_not_data['HTML_TIME'],
-            'html_events_time': obs_not_data['HTML_EVENTS_TIME'],
         }
         
         not_data = json.dumps(data, ensure_ascii=False)
@@ -3427,17 +3805,12 @@ def obs_config_py(type_id,data_receive):
             data = json.loads(data_receive)
 
             data_save = {
-                'HTML_EVENTS_ACTIVE' : data['not_event'],
                 'HTML_PLAYER_ACTIVE': data['not_music'],
                 'HTML_EMOTE_ACTIVE': data['not_emote'],
-                'HTML_ACTIVE': data['not_enabled'],
-                'HTML_TITLE': data['source_name'],
-                'HTML_VIDEO': data['video_source_name'],
-                'HTML_EVENTS' : data['event_source_name'],
+                'HTML_REDEEM_ACTIVE': data['not_redeem'],
+                'HTML_REDEEM_TIME': int(data['time_showing_not']),
+                'HTML_MUSIC_TIME': int(data['time_showing_music']),
                 'EMOTE_PX' : data['emote_px'],
-                'HTML_EMOTE' : data['emote_source_name'],
-                'HTML_TIME': int(data['time_showing_not']),
-                'HTML_EVENTS_TIME': int(data['time_showing_event_not']),
             }
 
             with open(f"{appdata_path}/rewardevents/web/src/config/notfic.json", "w", encoding='utf-8') as obs_not_file:
@@ -3451,6 +3824,74 @@ def obs_config_py(type_id,data_receive):
             toast('error')
 
 
+def create_source(type_id):
+        
+    if type_id == 'redeen':
+
+        try:
+
+            obs_events.create_source('redeen')
+
+        except Exception as e:
+            
+            if '601' in str(e):
+
+                utils.error_log(e)
+                toast('A cena já foi criada no Obs Studio.')
+
+    elif type_id == 'music':
+
+        try:
+
+            obs_events.create_source('music')
+
+        except Exception as e:
+            
+            if '601' in str(e):
+
+                utils.error_log(e)
+                toast('A cena já foi criada no Obs Studio.')
+
+    elif type_id == 'video':
+
+        try:
+
+            obs_events.create_source('video')
+
+        except Exception as e:
+            
+            if '601' in str(e):
+
+                utils.error_log(e)
+                toast('A cena já foi criada no Obs Studio.')
+
+    elif type_id == 'highlight':
+
+        try:
+
+            obs_events.create_source('highlight')
+
+        except Exception as e:
+            
+            if '601' in str(e):
+
+                utils.error_log(e)
+                toast('A cena já foi criada no Obs Studio.')
+
+    elif type_id == 'emote':
+
+        try:
+
+            obs_events.create_source('emote')
+
+        except Exception as e:
+            
+            if '601' in str(e):
+
+                utils.error_log(e)
+                toast('A cena já foi criada no Obs Studio.')
+
+
 def not_config_py(data_receive,type_id,type_not):
     
     with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'r', encoding='utf-8') as event_config_file:
@@ -3462,18 +3903,7 @@ def not_config_py(data_receive,type_id,type_not):
 
         data = {
             'not': file_data['status'],
-            'image_over': file_data['text_over_image'],
-            'image': file_data['image'],
-            'image_px': file_data['image_px'],
-            'audio': file_data['audio'],
-            'audio_volume': file_data['audio_volume'],
-            'tts': file_data['tts'],
-            'response': file_data['response'],
             'response_chat': file_data['response_chat'],
-            'response_px': file_data['response_px'],
-
-            'response_weight': file_data['response_weight'],
-            'response_color': file_data['response_color'],
         }
         
         event_not_data_dump = json.dumps(data, ensure_ascii=False)
@@ -3487,18 +3917,7 @@ def not_config_py(data_receive,type_id,type_not):
             data = json.loads(data_receive)
             
             event_config_data[type_not]['status'] = data['not']
-            event_config_data[type_not]['text_over_image'] = data['image_over']
-            event_config_data[type_not]['image'] = data['image']
-            event_config_data[type_not]['image_px'] = data['image_px']
-            event_config_data[type_not]['audio'] = data['audio']
-            event_config_data[type_not]['audio_volume'] = data['audio_volume']
-            event_config_data[type_not]['tts'] = data['tts']
-            event_config_data[type_not]['response'] = data['response']
             event_config_data[type_not]['response_chat'] = data['response_chat']
-            event_config_data[type_not]['response_px'] = data['response_px']
-            event_config_data[type_not]['response_weight'] = data['response_weight']
-            event_config_data[type_not]['response_color'] = data['response_color']
-            
             
             with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
                 json.dump(event_config_data, event_config_file_w,indent=6,ensure_ascii=False)
@@ -3513,8 +3932,8 @@ def not_config_py(data_receive,type_id,type_not):
         
 def messages_config(type_id,data_receive):
 
-    message_file_get = open(f'{appdata_path}/rewardevents/web/src/config/commands_config.json', 'r', encoding="utf-8")
-    message_data_get = json.load(message_file_get)
+    with open(f'{appdata_path}/rewardevents/web/src/config/commands_config.json', 'r', encoding="utf-8") as message_file_get:
+        message_data_get = json.load(message_file_get)
 
     if type_id == "get":
 
@@ -3527,8 +3946,6 @@ def messages_config(type_id,data_receive):
         status_message_music = message_data_get['STATUS_MUSIC']
         status_message_music_confirm = message_data_get['STATUS_MUSIC_CONFIRM']
         status_message_music_error = message_data_get['STATUS_MUSIC_ERROR']
-
-        message_file_get.close()
 
         messages_data_get = {
 
@@ -3609,21 +4026,29 @@ def responses_config(fun_id, response_key, message):
 
 
 def discord_config(data_discord_save, mode,type_id):
-    
+       
+    ignore_list = [
+        'clips_create',
+        'clips_edit',
+    ]
+
     if mode == 'save':
 
         try:
-            data_discord_receive = json.loads(data_discord_save)
+            data_receive = json.loads(data_discord_save)
             
             with open(f'{appdata_path}/rewardevents/web/src/config/discord.json', 'r', encoding='utf-8') as discord_data_file:
                 discord_data = json.load(discord_data_file)
             
-            url_webhook = data_discord_receive['webhook_url']
-            embed_color = data_discord_receive['embed_color']
-            embed_content = data_discord_receive['embed_content']
-            embed_title = data_discord_receive['embed_title']
-            embed_description = data_discord_receive['embed_description']
-            status = data_discord_receive['webhook_status']
+            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'r', encoding='utf-8') as event_config_file:
+                event_config_data = json.load(event_config_file)
+
+            url_webhook = data_receive['webhook_url']
+            embed_color = data_receive['embed_color']
+            embed_content = data_receive['embed_content']
+            embed_title = data_receive['embed_title']
+            embed_description = data_receive['embed_description']
+            status = data_receive['webhook_status']
             
             
             discord_data[type_id] = {
@@ -3635,6 +4060,14 @@ def discord_config(data_discord_save, mode,type_id):
                 'title' : embed_title,
                 'description' : embed_description
             }
+
+            if type_id not in ignore_list:
+                event_config_data[type_id]['status'] = data_receive['not']
+                event_config_data[type_id]['response_chat'] = data_receive['response_chat']
+
+
+            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'w', encoding='utf-8') as event_config_file_w:
+                json.dump(event_config_data, event_config_file_w,indent=6,ensure_ascii=False)
                   
             with open(f'{appdata_path}/rewardevents/web/src/config/discord.json', 'w', encoding='utf-8') as discord_data_file:
                 json.dump(discord_data, discord_data_file, indent=6, ensure_ascii=False)
@@ -3651,6 +4084,9 @@ def discord_config(data_discord_save, mode,type_id):
         with open(f'{appdata_path}/rewardevents/web/src/config/discord.json', 'r', encoding='utf-8') as discord_data_file:
             discord_data = json.load(discord_data_file)
 
+        with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'r', encoding='utf-8') as event_config_file:
+            event_config_data = json.load(event_config_file)
+
         url_webhook = discord_data[type_id]['url']
         embed_content = discord_data[type_id]['content']
         embed_title = discord_data[type_id]['title']
@@ -3658,6 +4094,13 @@ def discord_config(data_discord_save, mode,type_id):
         embed_color = discord_data[type_id]['color']
         status = discord_data[type_id]['status']
 
+        if type_id in ignore_list:
+            notifc = '' 
+            response_chat = ''
+        else:
+            file_data = event_config_data[type_id]
+            notifc = file_data['status']
+            response_chat = file_data['response_chat']  
 
         data_get = {
             "url_webhook" : url_webhook,
@@ -3666,6 +4109,8 @@ def discord_config(data_discord_save, mode,type_id):
             "embed_title": embed_title,
             "embed_description": embed_description,
             "status": status,
+            'not': notifc,
+            'response_chat': response_chat,
         }
 
         data_get_sent = json.dumps(data_get, ensure_ascii=False)
@@ -4662,7 +5107,7 @@ def playlist_py(type_id,data):
         def is_youtube_url(string):
             
             youtube_regex = re.compile(
-                r"(http(s)?://)?(www\.)?((youtube\.com/(watch\?v=|playlist\?list=)|youtu\.be/)[^\s]+)"
+                r"(http(s)?://)?(www\.)?(youtube\.com/(watch\?v=|playlist\?list=)|youtu\.be/)[^\s]+"
             )
 
             match = youtube_regex.match(string)
@@ -4674,14 +5119,14 @@ def playlist_py(type_id,data):
             
         if is_youtube_url:
 
-            if re.match(r"https://www\.youtube\.com/playlist\?list=.*", data):
+            if re.match(r"https?://(www\.)?youtube\.com/playlist\?list=.*", data):
                 
                 toast('Adicionando, aguarde')
 
                 playlist_thread = threading.Thread(target=start_add, args=(data,), daemon=True)
                 playlist_thread.start()
                 
-            elif re.match(r"https://www\.youtube\.com/watch\?v=.*&list=.*", data):
+            elif re.match(r"https?://(www\.)?youtube\.com/watch\?v=.*&list=.*", data):
 
                 url = re.sub(r"watch\?v=[^&]*&?", "", data)
                 url = url.replace("list=", "playlist?list=")
@@ -4690,12 +5135,12 @@ def playlist_py(type_id,data):
                                  
                 playlist_thread = threading.Thread(target=start_add, args=(url,), daemon=True)
                 playlist_thread.start()
+
             else:
                 toast('A url deve ser do youtube e conter uma id de playlist, ex: https://www.youtube.com/watch?v=xxxxxxxxxx&list=xxxxxxxxxxxxxxxxxxxxxxxxxx ou https://www.youtube.com/playlist?list=xxxxxxxxxxxxxxxxxxxxxxxxxxxx')
         else:
             toast('A url deve ser do youtube e conter uma id de playlist, ex: https://www.youtube.com/watch?v=xxxxxxxxxx&list=xxxxxxxxxxxxxxxxxxxxxxxxxx ou https://www.youtube.com/playlist?list=xxxxxxxxxxxxxxxxxxxxxxxxxxxx')
         
- 
     elif type_id == 'save':
         
         with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', 'r', encoding="utf-8") as playlist_stats_file:
@@ -4941,9 +5386,10 @@ def update_check(type_id):
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'V5.5.5':
+        if version != 'v5.6.0':
 
             return 'true'
+        
         else:
 
             return 'false'
@@ -5095,51 +5541,78 @@ def get_users_info(type_id, user_id):
     if type_id == 'save':
 
         mod_dict = {}
-        mod_info = twitch_api.get_moderators(broadcaster_id=authdata.BROADCASTER_ID())
 
-        for index in range(len(mod_info['data'])):
-            user_id = mod_info['data'][index]['user_id']
-            user_name = mod_info['data'][index]['user_name']
-            mod_dict[user_id] = user_name
+        mod_info_url = f'https://api.twitch.tv/helix/moderation/moderators?broadcaster_id={authdata.BROADCASTER_ID()}&first=100'
 
-        with open(f'{appdata_path}/rewardevents/web/src/user_info/mods.json', 'w', encoding='utf-8') as mods_file:
-            json.dump(mod_dict, mods_file, indent=4, ensure_ascii=False)
+        headers = {
+            "Authorization": f"Bearer {authdata.TOKEN()}",
+            "Client-Id": clientid,
+            "Content-Type": "application/json"
+        }
+
+        mod_info_response = req.get(mod_info_url, headers=headers)
+
+        if mod_info_response.status_code == 200:
+
+            mod_info = json.loads(mod_info_response.content)
+
+            for index in range(len(mod_info['data'])):
+                user_id = mod_info['data'][index]['user_id']
+                user_name = mod_info['data'][index]['user_name']
+                mod_dict[user_id] = user_name
+
+            with open(f'{appdata_path}/rewardevents/web/src/user_info/mods.json', 'w', encoding='utf-8') as mods_file:
+                json.dump(mod_dict, mods_file, indent=4, ensure_ascii=False)
+
 
         with open(f'{appdata_path}/rewardevents/web/src/user_info/subs.json', 'r', encoding='utf-8') as subs_file_r:
             sub_dict_saved = json.load(subs_file_r)
 
         sub_dict_rec = {}
-        sub_info = twitch_api.get_broadcaster_subscriptions(broadcaster_id=authdata.BROADCASTER_ID())
 
-        for index in range(len(sub_info['data'])):
-            user_id = sub_info['data'][index]['user_id']
-            user_name = sub_info['data'][index]['user_name']
+        sub_info_url = f'https://api.twitch.tv/helix/subscriptions?broadcaster_id={authdata.BROADCASTER_ID()}&first=100'
 
-            sub_dict_rec[user_id] = user_name
+        headers = {
+            "Authorization": f"Bearer {authdata.TOKEN()}",
+            "Client-Id": clientid,
+            "Content-Type": "application/json"
+        }
 
-        dict_compare = compare_dictionaries(sub_dict_rec,sub_dict_saved)
-        
-        if dict_compare:
+        sub_info_response = req.get(sub_info_url, headers=headers)
 
-            for key, value in dict_compare.items():
+        if sub_info_response.status_code == 200:
 
-                aliases = {
-                    '{username}' : value
-                }
-                
-                message_event = utils.messages_file_load('event_subend')
-                message_event = utils.replace_all(str(message_event), aliases)
+            sub_info = json.loads(sub_info_response.content)
 
-                data_append = {
-                    "type" : "event",
-                    "message" : message_event,
-                    "user_input" : '',
-                }
-                
-                append_notice(data_append)
+            for index in range(len(sub_info['data'])):
+                user_id = sub_info['data'][index]['user_id']
+                user_name = sub_info['data'][index]['user_name']
 
-        with open(f'{appdata_path}/rewardevents/web/src/user_info/subs.json', 'w', encoding='utf-8') as subs_file:
-            json.dump(sub_dict_rec, subs_file, indent=4, ensure_ascii=False)
+                sub_dict_rec[user_id] = user_name
+
+            dict_compare = compare_dictionaries(sub_dict_rec,sub_dict_saved)
+            
+            if dict_compare:
+
+                for key, value in dict_compare.items():
+
+                    aliases = {
+                        '{username}' : value
+                    }
+                    
+                    message_event = utils.messages_file_load('event_subend')
+                    message_event = utils.replace_all(str(message_event), aliases)
+
+                    data_append = {
+                        "type" : "event",
+                        "message" : message_event,
+                        "user_input" : '',
+                    }
+                    
+                    append_notice(data_append)
+
+            with open(f'{appdata_path}/rewardevents/web/src/user_info/subs.json', 'w', encoding='utf-8') as subs_file:
+                json.dump(sub_dict_rec, subs_file, indent=4, ensure_ascii=False)
 
 
         return True
@@ -5178,11 +5651,8 @@ def start_play(link, user):
     def download_music(link):
 
         def my_hook(d):
-
             if d['status'] == 'finished':
                 toast('Download concluido, Em pós processamento')
-            else:
-                toast('aixando musica. aguarde')
 
         try:
 
@@ -5232,6 +5702,9 @@ def start_play(link, user):
         with open(f'{extDataDir}/web/src/player/images/album.png', 'wb') as album_art_local:
             album_art_local.write(img_data)
 
+        with open(f'{appdata_path}/rewardevents/web/src/player/images/album.png', 'wb') as album_art_file:
+            album_art_file.write(img_data)
+
         window.evaluate_js(f"update_image()")
 
         caching = 1
@@ -5244,16 +5717,21 @@ def start_play(link, user):
             music_name_short = textwrap.shorten(media_name, width=13, placeholder="...")
 
             redeem_data = {
-                "redeem_name": '',
                 "redeem_user": user,
                 "music" : music_name_short,
                 "artist" : music_artist,
             }
             
-            utils.update_notif(redeem_data, 'music')
+            message_html = utils.update_music(redeem_data)
 
-            not_thread = threading.Thread(target=obs_events.notification_player, args=(), daemon=True)
-            not_thread.start()
+            data = {
+                'type' : 'music',
+                'html' : message_html
+            }
+
+            data_dump = json.dumps(data)
+
+            sk.broadcast_message(data_dump)
 
             window.evaluate_js(f"update_music_name('{music_name}', '{music_artist}')")
 
@@ -5564,18 +6042,22 @@ def receive_redeem(data_rewards, received_type):
         perms_list = []
 
         if user_id == authdata.BROADCASTER_ID():
+
             perms_list.append('streamer')
+
+        user_data = user_data_load.get(redeem_by_user.lower())
+
+        if user_data:
+
+            for key in perms_map.keys():
+                if user_data.get(key) == 1:
+                    perms_list.append(perms_map[key])
+
+            user_level = check_user_level(perms_list)
+
         else:
-            user_data = user_data_load.get(redeem_by_user)
-            if user_data:
-                for key in perms_map.keys():
-                    if user_data.get(key) == 1:
-                        perms_list.append(perms_map[key])
 
-                user_level = check_user_level(perms_list)
-            else:
-
-                user_level = 'spec'
+            user_level = 'spec'
 
         img_redeem_data = req.get(redeem_reward_image).content
 
@@ -5599,8 +6081,6 @@ def receive_redeem(data_rewards, received_type):
     redeem_data = {
         "redeem_name": redeem_reward_name,
         "redeem_user": redeem_by_user,
-        "music" : "",
-        "artist" : "",
     }
 
     redeem_data_parse = json.dumps(redeem_data, ensure_ascii=False)
@@ -5618,11 +6098,16 @@ def receive_redeem(data_rewards, received_type):
         '{counter}': str(counter_actual)
     }
 
+    message_html = utils.update_notif(redeem_data)
 
-    if utils.update_notif(redeem_data, 'redeem'):
+    data = {
+        'type' : 'redeen',
+        'html' : message_html
+    }
 
-        not_thread_1 = threading.Thread(target=obs_events.notification, args=(), daemon=True)
-        not_thread_1.start()
+    data_dump = json.dumps(data)
+
+    sk.broadcast_message(data_dump)
 
     def play_sound():
 
@@ -5654,17 +6139,18 @@ def receive_redeem(data_rewards, received_type):
 
         video_path = path[redeem_reward_name]['path']
         send_response_value = path[redeem_reward_name]['send_response']
+        time_show = path[redeem_reward_name]['show_time']
 
-        if utils.update_video(video_path) == True:
+        message_html = utils.update_video(video_path,time_show)
 
-            time.sleep(1)
-            video_not_file = open(f"{appdata_path}/rewardevents/web/src/config/notfic.json","r",encoding="utf-8")
-            video_not_data = json.load(video_not_file)
-            
-            time_show = path[redeem_reward_name]['show_time']
-            source = video_not_data['HTML_VIDEO']
-                
-            obs_events.show_source_video(source,time_show)
+        data = {
+            'type' : 'video',
+            'html' : message_html
+        }
+
+        data_dump = json.dumps(data)
+
+        sk.broadcast_message(data_dump)
 
         if send_response_value:
 
@@ -5973,10 +6459,12 @@ def receive_redeem(data_rewards, received_type):
 
     def add_giveaway():
 
+        
         data = {
             'new_name' : redeem_by_user,
             'user_level' : user_level
         }
+
         giveaway_py('add_user', data)
 
     def add_queue():
@@ -6039,14 +6527,12 @@ def receive_redeem(data_rewards, received_type):
         weight = data_highlight['font-weight']
         duration = data_highlight['duration']
 
-        source = data_highlight['source']
-        time = data_highlight['time']
-
         if status == 1:
 
             if user_input != None:
 
                 data = {
+                    "type" : 'HIGH',
                     "username" : redeem_by_user,
                     "user_input" : user_input,
                     "color_message" : color_message,
@@ -6056,19 +6542,26 @@ def receive_redeem(data_rewards, received_type):
                     "duration" : duration
                 }
 
-                if utils.update_highlight(data):
-                    obs_events.show_source(source, time, 0)
+                message_html = utils.update_highlight(data)
+
+                data = {
+                    'type' : 'highlight',
+                    'html' : message_html
+                }
+
+                data_dump = json.dumps(data)
+
+                sk.broadcast_message(data_dump)
+                
 
             else:
                 
-                chat_response = utils.messages_file_load('command_value')
-                response_redus = utils.replace_all(chat_response, aliases)
+                response_redus = utils.replace_all(utils.messages_file_load('command_value'), aliases)
                 if utils.send_message("RESPONSE"):
                     send(response_redus)
                     
           
     eventos = {
-
         'sound': play_sound,
         'video': play_video,
         'scene': change_scene,
@@ -6163,27 +6656,21 @@ def highlight_py(type_id,data):
         size = data_highlight['font-size']
         weight = data_highlight['font-weight']
         duration = data_highlight['duration']
-        source_name = data_highlight['source']
-        time = data_highlight['time']
 
 
         data = {
             'status' : status,
-            'source_name' : source_name,
-            'time' : time,
             'color_message' : color_message,
             'color_username' : color_username,
             'font_size' : size,
             'font_weight' : weight,
             'duration' : duration,
-            
         }
 
         data_dump = json.dumps(data, ensure_ascii=False)
 
         return data_dump
     
-
     elif type_id == 'save':
 
         data_received = json.loads(data)
@@ -6193,8 +6680,6 @@ def highlight_py(type_id,data):
                 data_highlight = json.load(file_highlight)
 
             data_highlight['status'] = data_received['status']
-            data_highlight['source'] = data_received['source_name']
-            data_highlight['time'] = data_received['time']
             data_highlight['color_message'] = data_received['color_message']
             data_highlight['color_username'] = data_received['color_username']
             data_highlight['font-size'] = data_received['font_size']
@@ -6210,6 +6695,18 @@ def highlight_py(type_id,data):
 
             utils.error_log(e)
             toast('error')  
+
+    elif type_id == 'create-source':
+
+        try:
+            obs_events.create_source('highlight')
+
+        except Exception as e:
+            
+            if '601' in str(e):
+
+                utils.error_log(e)
+                toast('A cena já foi criada no Obs Studio.')
 
 
 def open_py(type_id,link_profile):
@@ -6341,117 +6838,6 @@ def open_py(type_id,link_profile):
             utils.error_log(e)
             toast('Ocorreu um erro.')
 
-
-def send_not_fun(data: dict) -> None:
-
-    """
-        Processa uma mensagem para enviar notificações de eventos.
-
-        Args:
-            data (dict): Um dicionário contendo as seguintes chaves obrigatórias:
-                - 'type': Uma string que descreve o tipo de mensagem. Exemplo: 'follow', 'sub', resub. (minúscula)
-                - 'username': Uma string contendo o nome de usuário.
-                - 'message': Uma string contendo a mensagem preparada e codificada.
-
-        Raises:
-            TypeError: Se o argumento não for um dicionário ou não conter todas as chaves obrigatórias.
-
-        Exemplo:
-            >>> data = {'type': 'follow', 'username': 'gg_tec', 'message': 'GG_TEC Seguiu o canal'}
-            >>> process_data(data)
-    """
-    
-    with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json','r',encoding='utf-8') as event_file:
-        event_data = json.load(event_file)
-        
-    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as not_config_file:
-        not_config_data = json.load(not_config_file)
-    
-    
-    type_id = data['type']
-    
-    def start_notification():
-        
-        def save_tts():
-            
-            message = data['message']
-            message = message.replace('<br>','')
-            
-            if message != "":
-                    
-                tts = gTTS(text=message, lang='pt-br', slow=False)
-                tts.save(f'{appdata_path}/rewardevents/web/src/player/cache/tts.mp3')
-                
-                return True
-            
-            else :
-                
-                return True
-
-        img_src = event_data[type_id]['image']
-        img_px = event_data[type_id]['image_px']
-        audio_src = event_data[type_id]['audio']
-        audio_volume = event_data[type_id]['audio_volume']
-        response_px = event_data[type_id]['response_px']
-        image_above = event_data[type_id]['text_over_image']
-        weight = event_data[type_id]['response_weight']
-        color = event_data[type_id]['response_color']
-        
-
-        if event_data[type_id]['tts'] == 1:
-
-            data_not = {
-                "type_id" : type_id,
-                "username" : data['username'],
-                "message" : data['message_html'],
-                "duration" : not_config_data['HTML_EVENTS_TIME'],
-                "img_src" : img_src,
-                "img_px": img_px,
-                "audio_src" : audio_src,
-                "audio_volume" : audio_volume,
-                "response_px": response_px,
-                "image_above" : image_above,
-                "play_tts" : 1,
-                "weight" : weight,
-                "color" : color
-            }
-
-            if save_tts():
-
-                if utils.update_event(data_not):
-                    
-                    not_thread_2 = threading.Thread(target=obs_events.notification_event(), args=(), daemon=True)
-                    not_thread_2.start()
-        
-        else :
-            
-            data_not = {
-                "type_id" : type_id,
-                "username" : data['username'],
-                "message" : data['message_html'],
-                "duration" : not_config_data['HTML_EVENTS_TIME'],
-                "img_src" : img_src,
-                "img_px": img_px,
-                "audio_src" : audio_src,
-                "audio_volume" : audio_volume,
-                "response_px": response_px,
-                "image_above" : image_above,
-                "play_tts" : 0,
-                "weight" : weight,
-                "color" : color
-            }
-            
-            if utils.update_event(data_not):
-                    
-                not_thread_2 = threading.Thread(target=obs_events.notification_event(), args=(), daemon=True)
-                not_thread_2.start()
-            
-
-    if event_data[type_id]['status'] == 1:
-        
-        not_thread_4 = threading.Thread(target=start_notification, args=(), daemon=True)
-        not_thread_4.start()
-    
  
 def chat_config(data_save,type_config):
 
@@ -9373,10 +9759,10 @@ def commands_module(data) -> None:
             
             append_notice(data_append)
 
-            delay = command_data_queue['emote']['delay']
-            last_use = command_data_queue['emote']['last_use']
-            status = command_data_queue['emote']['status']
-            user_level = command_data_queue['emote']['user_level']
+            delay = command_data_default['emote']['delay']
+            last_use = command_data_default['emote']['last_use']
+            status = command_data_default['emote']['status']
+            user_level = command_data_default['emote']['user_level']
 
             if status:      
 
@@ -9388,22 +9774,17 @@ def commands_module(data) -> None:
                     
                         if emotes != []:
 
-                            with open(f'{appdata_path}/rewardevents/web/src/queue/queue.json', 'r+', encoding='utf-8') as queue_file:
-                                queue_data = json.load(queue_file)
-
-
                             emote_thread = threading.Thread(target=emote_rain, args=(emotes,), daemon=True)
                             emote_thread.start()
 
-                            response = command_data_queue['emote']['response']
+                            response = command_data_default['emote']['response']
                             if utils.send_message("RESPONSE"):
                                 send(utils.replace_all(response,aliases))
 
-
-                            command_data_queue['emote']['last_use'] = current
-                    
-                            with open(f'{appdata_path}/rewardevents/web/src/queue/commands.json', 'w', encoding='utf-8') as command_queue_file:
-                                json.dump(command_data_queue, command_queue_file, indent=6, ensure_ascii=False)
+                            command_data_default['emote']['last_use'] = current
+                        
+                            with open(f'{appdata_path}/rewardevents/web/src/config/default_commands.json', 'w', encoding='utf-8') as default_save:
+                                json.dump(command_data_default, default_save, indent=6,ensure_ascii=False)
 
                         else:
 
@@ -9539,14 +9920,18 @@ def emote_rain(emotes):
         obs_not_data = json.load(obs_not_file)
 
     if obs_not_data['HTML_EMOTE_ACTIVE'] == 1:
-        while True:
-            if obs_events.showing == 0:
-                if utils.update_emote(emotes):
-                    html = obs_not_data['HTML_EMOTE']
-                    obs_events.show_source(html, 10, 0)
-                    break
-                else:
-                    time.sleep(1)
+
+        message_html = utils.update_emote(emotes)
+
+        data = {
+            'type' : 'emotes',
+            'html' : message_html
+        }
+
+        data_dump = json.dumps(data)
+
+        sk.broadcast_message(data_dump)
+
     else:
         if utils.send_message("RESPONSE"):
             send(utils.messages_file_load('emote_disabled'))
@@ -9970,75 +10355,9 @@ def command_fallback(message: str) -> None:
                     
                 if 'msg-id' in message_data:
                     
-                    msg_id = utils.find_between( message, 'msg-id=', ';' )
-                                 
-                    if msg_id == 'sub':
-
-                        paran_talk_split = message.split(f'USERNOTICE #{authdata.USERNAME()} :')
-                        
-                        if len(paran_talk_split) > 1:
-                            paran_talk_split = paran_talk_split[1]
-                            
-                        else:
-                            paran_talk_split = ''
-                             
-                        data = {
-                            'display_name' : utils.find_between( message, 'display-name=', ';' ),
-                            'cumulative' : utils.find_between( message, 'msg-param-cumulative-months=', ';' ),
-                            'monts' : utils.find_between( message, 'msg-param-months=', ';' ),
-                            'plan' : utils.find_between( message, 'msg-param-sub-plan-name=', ';' ),
-                            'plan_type' : utils.find_between( message, 'msg-param-sub-plan=', ';' ),
-                            'gifited' : utils.find_between( message, 'msg-param-was-gifted=', ';' ),
-                            'paran_talk' : paran_talk_split
-                        }    
-                        
-                        response =  event_config_data['sub']['response']
-                        response_chat =  event_config_data['sub']['response_chat']
-                        
-                        if data['paran_talk'] != '' :
-                            response += f" '{data['paran_talk']}'"
-                            response_chat += f"  '{data['paran_talk']}'"
-                            message = data['paran_talk']
-                        
-                        else:
-                            message = ''   
-                            
-                        if data['plan_type'] != "Prime":
-                            plan_type = "Sub"
-                        else:
-                            plan_type = "Prime"
-                            
-                        
-                        data_discord = {
-                            'type_id' : 'sub',
-                            'username' : data['display_name'],
-                        }
-                        
-                        send_discord_webhook(data_discord)
-
-                        aliases = {
-                            '{username}' : data['display_name'],
-                            '{type}' : plan_type,
-                            '{plan}' : data['plan'],
-                            '{months}' : data['monts'],
-                            '{cumulative}' : data['cumulative']
-                        }
-                        
-                        response = utils.replace_all(response,aliases)
-                        response_chat = utils.replace_all(response_chat,aliases)
-                        
-                        data_send = {
-                            'type_id' : 'sub',
-                            'type' : 'sub',
-                            'username' : data['display_name'],
-                            'message_html' : response,
-                            'message' : response_chat
-                        }
-                        
-                        send_announcement(response_chat,'purple')                
-                        send_not_fun(data_send)   
+                    msg_id = utils.find_between( message, 'msg-id=', ';' )               
                     
-                    elif msg_id == 'subgift': 
+                    if msg_id == 'subgift': 
                         
                         data = {
                             'display_name' : utils.find_between( message, 'display-name=', ';' ),
@@ -10048,9 +10367,6 @@ def command_fallback(message: str) -> None:
                             'plan_type' : utils.find_between( message, 'msg-param-sub-plan=', ';'),
                         }
                         
-                        response =  event_config_data['giftsub']['response']
-                        response_chat =  event_config_data['giftsub']['response_chat']
-                        
                         aliases = {
                             '{months}' : data['months'],
                             '{username}' : data['display_name'],
@@ -10058,18 +10374,18 @@ def command_fallback(message: str) -> None:
                             '{plan}' : data['plan'],
                         }
                         
-                        response = utils.replace_all(response,aliases)
-                        response_chat = utils.replace_all(response_chat,aliases)
-                        
-                        data_send = {
-                            'type' : 'giftsub',
-                            'username' : data['display_name'],
-                            'message' : response_chat,
-                            'message_html' : response
-                        }  
+                        response_chat = utils.replace_all(event_config_data['giftsub']['response_chat'],aliases)
                         
                         send_announcement(response_chat,'purple')
-                        send_not_fun(data_send)     
+
+                        data_discord = {
+                            'type_id' : 'giftsub',
+                            'username' : data['display_name'],
+                            'rec_username' : data['rec_username'],
+                            'plan' : data['plan']
+                        }
+                        
+                        send_discord_webhook(data_discord)  
                     
                     elif msg_id == 'submysterygift': 
                         
@@ -10078,54 +10394,44 @@ def command_fallback(message: str) -> None:
                             'count' : utils.find_between( message, 'msg-param-mass-gift-count=', ';' ),
                             'plan' : utils.find_between( message, 'msg-param-sub-plan=', ';'),
                         }
-                        
-                        response =  event_config_data['mysterygift']['response']
-                        response_chat =  event_config_data['mysterygift']['response_chat']
-                        
+
                         aliases = {
                             '{username}' : data['display_name'],
                             '{count}' : data['count'],
                             '{plan}' : data['plan'],
                         }
-                    
                         
-                        response = utils.replace_all(response,aliases) 
-                        
-                        data = {
-                            'type' : 'mysterygift',
-                            'username' : data['display_name'],
-                            'message_html' : response,
-                            'message' : response_chat
-                        }  
-                        
+                        response_chat = utils.replace_all(event_config_data['mysterygift']['response_chat'],aliases) 
                         send_announcement(response_chat,'purple')
-                        send_not_fun(data)   
+
+                        data_discord = {
+                            'type_id' : 'mysterygift',
+                            'username' : data['display_name'],
+                            'count' : data['count'],
+                            'plan' : data['plan']
+                        }
+                        
+                        send_discord_webhook(data_discord)  
 
                     elif msg_id == 'anongiftpaidupgrade': 
                         
                         data = {
                             'display_name' : utils.find_between( message, 'display-name=', ';' ),
                         }
-                        
-                        response =  event_config_data['re-mysterygift']['response']
-                        response_chat =  event_config_data['re-mysterygift']['response_chat']
-                        
+
                         aliases = {
                             '{username}' : data['display_name'],
                         }
                     
-                        
-                        response = utils.replace_all(response,aliases) 
-                        
-                        data = {
-                            'type' : 're-mysterygift',
-                            'username' : data['display_name'],
-                            'message_html' : response,
-                            'message' : response_chat
-                        }  
-                        
+                        response_chat = utils.replace_all(event_config_data['re-mysterygift']['response_chat'],aliases) 
                         send_announcement(response_chat,'purple')
-                        send_not_fun(data)         
+
+                        data_discord = {
+                            'type_id' : 're-mysterygift',
+                            'username' : data['display_name']
+                        }
+                        
+                        send_discord_webhook(data_discord)      
 
                     elif msg_id == 'announcement':
                                 
@@ -10513,191 +10819,288 @@ def close():
 def download_badges():
 
     os.makedirs(f'{appdata_path}/rewardevents/web/src/badges',exist_ok=True)
+   
+    global_badge_url = 'https://api.twitch.tv/helix/chat/badges/global'
+    channel_badge_url = f'https://api.twitch.tv/helix/chat/badges?broadcaster_id={authdata.BROADCASTER_ID()}'
 
-    global_badge_url = req.get(f'https://badges.twitch.tv/v1/badges/global/display')
-    global_badge_json = json.loads(global_badge_url.content)
+    headers = {
+        "Authorization": f"Bearer {authdata.TOKEN()}",
+        "Client-Id": clientid,
+        "Content-Type": "application/json"
+    }
 
-    channel_badge_url = req.get(f'https://badges.twitch.tv/v1/badges/channels/{authdata.BROADCASTER_ID()}/display')
-    channel_badge_json = json.loads(channel_badge_url.content)
+    response_global_badge = req.get(global_badge_url, headers=headers)
 
-    with open(f'{appdata_path}/rewardevents/web/src/badges/badges_global.json','w',encoding='utf-8') as badge_global_file:
-        json.dump(global_badge_json,badge_global_file,indent=6,ensure_ascii=False)
+    if response_global_badge.status_code == 200:
 
-    with open(f'{appdata_path}/rewardevents/web/src/badges/badges_channel.json','w',encoding='utf-8') as badge_global_file:
-        json.dump(channel_badge_json,badge_global_file,indent=6,ensure_ascii=False)
+        global_badge_json = json.loads(response_global_badge.content)
+
+        new_dict = {
+            "badge_sets": {}
+        }
+
+        for item in global_badge_json["data"]:
+            set_id = item["set_id"]
+            versions = item["versions"]
+
+            new_dict["badge_sets"][set_id] = {
+                "versions": {}
+            }
+
+            for version in versions:
+                version_id = version["id"]
+                version.pop("id")
+
+                new_dict["badge_sets"][set_id]["versions"][version_id] = version
+
+
+        with open(f'{appdata_path}/rewardevents/web/src/badges/badges_global.json','w',encoding='utf-8') as badge_global_file:
+            json.dump(new_dict,badge_global_file,indent=6,ensure_ascii=False)
+
+    else:
+
+        print(response_global_badge.status_code,response_global_badge.text)
+
+    headers = {
+        "Authorization": f"Bearer {authdata.TOKEN()}",
+        "Client-Id": clientid,
+        "Content-Type": "application/json"
+    }
+    response_channel_badge = req.get(channel_badge_url, headers=headers)
+
+    if response_channel_badge.status_code == 200:
+        
+        channel_badge_json = json.loads(response_channel_badge.content)
+
+        new_dict = {
+            "badge_sets": {}
+        }
+
+        for item in channel_badge_json["data"]:
+            set_id = item["set_id"]
+            versions = item["versions"]
+
+            new_dict["badge_sets"][set_id] = {
+                "versions": {}
+            }
+
+            for version in versions:
+                version_id = version["id"]
+                version.pop("id")
+
+                new_dict["badge_sets"][set_id]["versions"][version_id] = version
+
+        with open(f'{appdata_path}/rewardevents/web/src/badges/badges_channel.json','w',encoding='utf-8') as badge_global_file:
+            json.dump(new_dict,badge_global_file,indent=6,ensure_ascii=False)
+
+    else:
+
+        print(response_channel_badge.status_code,response_channel_badge.text)
 
 
 def post_eventsub(id):
     
-        url_post = 'https://api.twitch.tv/helix/eventsub/subscriptions'
+    url_post = 'https://api.twitch.tv/helix/eventsub/subscriptions'
+    
+    header = CaseInsensitiveDict()
+    header["Authorization"] = f"Bearer {authdata.TOKEN()}"
+    header["Client-Id"] = clientid
+    header['Content-Type'] = 'application/json'
+    
+    with open(f'{appdata_path}/rewardevents/web/src/config/websocket_param.json') as json_file:
+        json_data_param = json.load(json_file)
         
-        header = CaseInsensitiveDict()
-        header["Authorization"] = f"Bearer {authdata.TOKEN()}"
-        header["Client-Id"] = clientid
-        header['Content-Type'] = 'application/json'
+    for type_param in json_data_param:
         
-        with open(f'{appdata_path}/rewardevents/web/src/config/websocket_param.json') as json_file:
-            json_data_param = json.load(json_file)
+        need_mod_list = ['channel.shoutout.receive','channel.shoutout.create','channel.shield_mode.end','channel.shield_mode.begin']
+        
+        if type_param == 'channel.raid':
             
-        for type_param in json_data_param:
+            broadcast_type = 'to_broadcaster_user_id'
             
+            parameters = {
+                "type": f"{type_param}",
+                "version": "1",
+                "condition": {
+                    f"{broadcast_type}": authdata.BROADCASTER_ID()
+                },
+                "transport": {
+                    "method": "websocket",
+                    "session_id": id
+                }   
+            } 
+                            
+        elif type_param == 'channel.follow':
             
-            if type_param == 'channel.raid':
-                
-                broadcast_type = 'to_broadcaster_user_id'
-                
-                parameters = {
-                    "type": f"{type_param}",
-                    "version": "1",
-                    "condition": {
-                        f"{broadcast_type}": authdata.BROADCASTER_ID()
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": id
-                    }   
-                } 
-                                
-            elif type_param == 'channel.follow':
-                
-                broadcast_type = 'broadcaster_user_id'
+            broadcast_type = 'broadcaster_user_id'
+        
+            parameters = {
+                "type": f"{type_param}",
+                "version": "2",
+                "condition": {
+                    f"{broadcast_type}": authdata.BROADCASTER_ID(),
+                    "moderator_user_id": authdata.BROADCASTER_ID()
+                },
+                "transport": {
+                    "method": "websocket",
+                    "session_id": id
+                }   
+            }    
+        
+        elif type_param in need_mod_list:
             
-                parameters = {
-                    "type": f"{type_param}",
-                    "version": "2",
-                    "condition": {
-                        f"{broadcast_type}": authdata.BROADCASTER_ID(),
-                        "moderator_user_id": authdata.BROADCASTER_ID()
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": id
-                    }   
-                }    
-            
-            else:
-            
-                broadcast_type = 'broadcaster_user_id'
-            
-                parameters = {
-                    "type": f"{type_param}",
-                    "version": "1",
-                    "condition": {
-                        f"{broadcast_type}": authdata.BROADCASTER_ID()
-                    },
-                    "transport": {
-                        "method": "websocket",
-                        "session_id": id
-                    }   
-                }         
-            
-            param_dump = json.dumps(parameters)
-            
-            response = req.post(url_post, data=param_dump, headers=header)
-  
+            broadcast_type = 'broadcaster_user_id'
+        
+            parameters = {
+                "type": f"{type_param}",
+                "version": "1",
+                "condition": {
+                    f"{broadcast_type}": authdata.BROADCASTER_ID(),
+                    "moderator_user_id": authdata.BROADCASTER_ID()
+                },
+                "transport": {
+                    "method": "websocket",
+                    "session_id": id
+                }   
+            }    
+        
+
+        else:
+        
+            broadcast_type = 'broadcaster_user_id'
+        
+            parameters = {
+                "type": f"{type_param}",
+                "version": "1",
+                "condition": {
+                    f"{broadcast_type}": authdata.BROADCASTER_ID()
+                },
+                "transport": {
+                    "method": "websocket",
+                    "session_id": id
+                }   
+            }         
+        
+        param_dump = json.dumps(parameters)
+        
+        resp = req.post(url_post, data=param_dump, headers=header)
+        
+        if resp.status_code != 202:
+            print(resp.text , type_param)
+
       
 def on_message(ws, message): 
-        
-    data = json.loads(message)
-    
-    message_type = data["metadata"]["message_type"]
-    
-    if message_type == 'session_welcome':
-        
-        session_id = data["payload"]["session"]["id"]
-        post_eventsub(session_id)
-        
-    elif message_type == 'notification':
-        
-        subscription_type = data["metadata"]["subscription_type"]
-        
-        if subscription_type == 'channel.follow':
-            
-            event = data['payload']['event']
-            
-            follow_name = event['user_name']
-            follow_date = event['followed_at']
-            
-            data_send = {
-                'type_id' : "follow",
-                'follow_name' : follow_name,
-                'follow_date' : follow_date
-            }
-            
 
-            with open(f"{appdata_path}/rewardevents/web/src/config/follow.json", "r", encoding='utf-8') as file:
-                follow_data = json.load(file)
-                
-            if follow_name in follow_data:
-                
-                follow_date_old = follow_data[follow_name]['follow_date']
-                time_followed = utils.calculate_time(follow_date_old)
-                
-                if int(time_followed['days']) > 1:
-                    
-                    follow_data[follow_name]['follow_date'] = follow_date
-                    
-                    with open(f'{appdata_path}/rewardevents/web/src/config/follow.json', 'w', encoding='utf-8') as file_follows:
-                        json.dump(follow_data,file_follows,ensure_ascii=False,indent=4)
-                        
-                    
-                    aliases = {
-                        '{username}' : follow_name
-                    }
-                    
-                    message_event = utils.messages_file_load('event_follow')
-                    message_event = utils.replace_all(str(message_event), aliases)
+    try:
+        data = json.loads(message)
 
+        with open(f"{appdata_path}/rewardevents/web/src/config/event_not.json", "r", encoding='utf-8') as message_file:
+            message_data = json.load(message_file)
+        
+        message_type = data["metadata"]["message_type"]
+        
+        if message_type == 'session_welcome':
+            
+            session_id = data["payload"]["session"]["id"]
+            post_eventsub(session_id)
+            
+        elif message_type == 'notification':
+            
+            subscription_type = data["metadata"]["subscription_type"]
+            
+            if subscription_type == 'channel.follow':
+                
+                type_id = 'follow'
 
-                    data_append = {
-                        "type" : "event",
-                        "message" : message_event,
-                        "user_input" : '',
-                    }
-                    
-                    append_notice(data_append)
-                    
-                    with open(f"{appdata_path}/rewardevents/web/src/config/event_not.json", "r", encoding='utf-8') as message_file:
-                        message_data = json.load(message_file)
-                        
-                    message_chat = message_data['follow']['response_chat']
-                    message = message_data['follow']['response']
-                    
-                    
-                    aliases = {
-                        '{username}' : follow_name,
-                    }
-                    
-                    message_chat = utils.replace_all(message_chat,aliases)
-                    message = utils.replace_all(message,aliases)
-                    
-                    send_announcement(message_chat,'purple')   
-                    
-                    
-                    data = {
-                        'type' : 'follow',
-                        'username' : follow_name,
-                        'message_html' : message,
-                        'message' : message
-                    }
-                    
-                    send_not_fun(data)
-                    send_discord_webhook(data_send)
-                        
-            else:
+                with open(f"{appdata_path}/rewardevents/web/src/config/event_not.json", "r", encoding='utf-8') as message_file:
+                    message_data = json.load(message_file)
                 
-                follow_data[follow_name] = { 'follow_date' : follow_date}
+                event = data['payload']['event']
                 
-                with open(f'{appdata_path}/rewardevents/web/src/config/follow.json', 'w', encoding='utf-8') as file_follows:
-                    json.dump(follow_data,file_follows,ensure_ascii=False,indent=4)
-                    
+                follow_name = event['user_name']
+                follow_date = event['followed_at']
                 
                 aliases = {
                     '{username}' : follow_name
                 }
                 
-                message_event = utils.messages_file_load('event_follow')
-                message_event = utils.replace_all(str(message_event), aliases)
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+                
+
+                data_send = {
+                    'type_id' : "follow",
+                    'follow_name' : follow_name,
+                    'follow_date' : follow_date
+                }
+                
+                append_notice(data_append)
+                send_discord_webhook(data_send)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+                    
+            elif subscription_type == 'channel.channel_points_custom_reward_redemption.add':
+                
+                event = data['payload']['event']
+                user_name = event['user_name']
+                user_id = event['user_id']
+                user_input = event['user_input']
+                reward_id = event['reward']['id']
+                reward_title = event['reward']['title']
+                
+                reward_data = twitch_api.get_custom_reward(authdata.BROADCASTER_ID(),reward_id) 
+                
+                image = reward_data["data"][0]["image"]
+                
+                if not image == None:
+                    redeem_image = reward_data["data"][0]["image"]["url_4x"]
+                else:
+                    redeem_image = reward_data["data"][0]["default_image"]["url_4x"]
+                
+                data_reward_send = {
+                    'user_name' : user_name,
+                    'user_id' : user_id,
+                    'user_input' : user_input,
+                    'reward_title' : reward_title,
+                    'image' : redeem_image
+                }
+                
+                receive_redeem(data_reward_send, 'redeem')
+            
+            elif subscription_type == 'channel.update':  
+
+                type_id = 'live_cat'
+
+                event = data['payload']['event']
+                
+                user_name = event['broadcaster_user_name']
+                title = event['title']
+                category_name = event['category_name']
+                is_mature = event['is_mature']
+                
+                data = {
+                    'type_id' : "live_cat",
+                    'tag' : str(category_name),
+                    'title' : str(title),
+                    'is_mature' : str(is_mature)
+                }
+                
+                send_discord_webhook(data)
+
+                aliases = {
+                    '{tag}' : str(category_name),
+                    '{title}' : str(title),
+                    '{is_mature}' : str(is_mature)
+                }
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
 
                 data_append = {
                     "type" : "event",
@@ -10706,992 +11109,1163 @@ def on_message(ws, message):
                 }
                 
                 append_notice(data_append)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+                
+            elif subscription_type == 'stream.online':  
+                
+                type_id = 'live_start'
+
+                event = data['payload']['event']
+                
+                user_name = event['broadcaster_user_name']
                 
                 data = {
-                    'type' : 'follow',
-                    'username' : '',
-                    'message' : message_event
+                    'type_id' : "live_start",
+                    'username' : user_name,
                 }
-                
-                with open(f"{appdata_path}/rewardevents/web/src/config/event_not.json", "r", encoding='utf-8') as message_file:
-                    message_data = json.load(message_file)
-                        
-                message_chat = message_data['follow']['response_chat']
-                message = message_data['follow']['response']
-                
                 
                 aliases = {
-                    '{username}' : follow_name,
+                    '{broadcaster}' : user_name
                 }
                 
-                message_chat = utils.replace_all(message_chat,aliases)
-                message = utils.replace_all(message,aliases)
-                
-                
-                send_announcement(message_chat,'purple')   
-                send_discord_webhook(data_send)
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
 
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+                
+                send_discord_webhook(data)
+                append_notice(data_append)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+                
+            elif subscription_type == 'stream.offline':  
+                
+                type_id = 'live_end'
+
+                event = data['payload']['event']
+                
+                user_name = event['broadcaster_user_name']
 
                 data = {
-                    'type' : 'follow',
-                    'username' : follow_name,
-                    'message_html' : message,
-                    'message' : message
+                    'type_id' : "live_end",
+                    'username' : user_name,
+                }
+                
+                send_discord_webhook(data)
+
+                aliases = {
+                    '{broadcaster}' : user_name
                 }
 
-                send_not_fun(data)
-                   
-        elif subscription_type == 'channel.channel_points_custom_reward_redemption.add':
-            
-            event = data['payload']['event']
-            user_name = event['user_name']
-            user_id = event['user_id']
-            user_input = event['user_input']
-            reward_id = event['reward']['id']
-            reward_title = event['reward']['title']
-            
-            reward_data = twitch_api.get_custom_reward(authdata.BROADCASTER_ID(),reward_id) 
-            
-            image = reward_data["data"][0]["image"]
-            
-            if not image == None:
-                redeem_image = reward_data["data"][0]["image"]["url_4x"]
-            else:
-                redeem_image = reward_data["data"][0]["default_image"]["url_4x"]
-            
-            data_reward_send = {
-                'user_name' : user_name,
-                'user_id' : user_id,
-                'user_input' : user_input,
-                'reward_title' : reward_title,
-                'image' : redeem_image
-            }
-            
-            receive_redeem(data_reward_send, 'redeem')
-        
-        elif subscription_type == 'channel.update':  
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
                 
-            event = data['payload']['event']
-            
-            user_name = event['broadcaster_user_name']
-            title = event['title']
-            language = event['language']
-            category_name = event['category_name']
-            is_mature = event['is_mature']
-            
-            data = {
-                'type_id' : "live_cat",
-                'tag' : category_name,
-                'title' : title,
-                'is_mature' : is_mature
-            }
-            
-            send_discord_webhook(data)
+                append_notice(data_append)
 
-            message_event = utils.messages_file_load('event_live_cat')
-
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append)
-            
-        elif subscription_type == 'stream.online':  
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+                                
+            elif subscription_type == 'channel.subscribe':  
                 
-            event = data['payload']['event']
-            
-            user_name = event['broadcaster_user_name']
-            
-            data = {
-                'type_id' : "live_start",
-                'username' : user_name,
-            }
-            
-            send_discord_webhook(data)
+                type_id = 'sub'
 
-            message_event = utils.messages_file_load('event_live_start')
-
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append)
-            
-        elif subscription_type == 'stream.offline':  
+                event = data['payload']['event']
                 
-            event = data['payload']['event']
-            
-            user_name = event['broadcaster_user_name']
+                user_name = event['user_name']
 
-            data = {
-                'type_id' : "live_end",
-                'username' : user_name,
-            }
-            
-            send_discord_webhook(data)
+                data = {
+                    'type_id' : 'sub',
+                    'username' : user_name,
+                }
 
-            message_event = utils.messages_file_load('event_live_end')
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append)
-                             
-        elif subscription_type == 'channel.subscribe':  
+                aliases = {
+                    '{username}' : user_name
+                }
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                append_notice(data_append)
+                send_discord_webhook(data)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+
+            elif subscription_type == 'channel.subscription.gift':  
+
+                type_id = 'giftsub'
+
+                event = data['payload']['event']
                 
-            event = data['payload']['event']
-            
-            user_name = event['user_name']
-
-            data = {
-                'type' : 'sub',
-                'username' : user_name,
-            }
-
-            aliases = {
-                '{username}' : user_name
-            }
-            
-            message_event = utils.messages_file_load('event_sub')
-            message_event = utils.replace_all(str(message_event), aliases)
-
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append)
-
-        elif subscription_type == 'channel.subscription.gift':  
+                aliases = {
+                    '{tier}' : str(event['tier']),
+                    '{total}' : str(event['total']),
+                    '{cumulative_total}' :str(event['user_name']),
+                    '{is_anonymous}' : str(event['user_name']),
+                    '{username}' : str(event['user_name'])
+                }
                 
-            event = data['payload']['event']
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
 
-            aliases = {
-                '{username}' : event['user_name']
-            }
-            
-            message_event = utils.messages_file_load('event_giftsub')
-            message_event = utils.replace_all(str(message_event), aliases)
-
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append)
-                      
-        elif subscription_type == 'channel.subscription.end':  
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
                 
-            event = data['payload']['event']
-            
-            user_name = event['user_name']
-            tier = event['tier']
-            
-            aliases = {
-                '{username}' : event['user_name']
-            }
-            
-            message_event = utils.messages_file_load('event_subend')
-            message_event = utils.replace_all(str(message_event), aliases)
+                data_discord = {
+                    "type_id" : "giftsub",
+                    "user_name" : event['user_name'],
+                    "tier" : event['tier'],
+                    "total" : event['total'],
+                    "cumulative_total" : event['cumulative_total'],
+                    "is_anonymous" : event['is_anonymous'],
+                }
 
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append)
+                send_discord_webhook(data_discord)
+                append_notice(data_append)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+    
+            elif subscription_type == 'channel.subscription.end':  
+                    
+                type_id = 'subend'
+
+                event = data['payload']['event']
                 
-        elif subscription_type == 'channel.subscription.message':  
+                user_name = event['user_name']
+                tier = event['tier']
                 
-            def parse_emotes(emotes):
+                aliases = {
+                    '{username}' : event['user_name']
+                }
                 
-                emote_dict = {}
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
 
-                for emote in emotes:
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
 
-                    emote_id = emote['id']
-                    emote_dict[emote_id] = []
-
-                    pos_dict = {}
-                    pos1 = emote['begin']
-                    pos2 = emote['end']
-
-                    pos_dict = {
-                        'startPosition' : pos1,
-                        'endPosition' : pos2
-                    }
-
-                    emote_dict[emote_id].append(pos_dict)
-
-                return emote_dict
-
-            def parse_emotes_message(emote,parameters):
-
-                emotes = {}
-
-                for emote_id, emote_info in emote["emotes"].items():
-
-                    for emote in emote_info:
-
-                        start_position = int(emote["startPosition"])
-                        end_position = int(emote["endPosition"]) + 1
-                        emotes[start_position] = (end_position, emote_id)
-
-                output = ""
-                position = 0
-
-                while position < len(parameters):
-
-                    if position in emotes:
-
-                        end_position, emote_id = emotes[position]
-                        emote_html = "<img src='https://static-cdn.jtvnw.net/emoticons/v1/{}/1.0'/>".format(emote_id)
-                        output += emote_html
-                        position = end_position
-
-                    else:
-                        
-                        output += parameters[position]
-                        position += 1
-
-                return output
+                data_discord = {
+                    'type_id' : 'subend',
+                    'user_name' : user_name,
+                }
                 
-            event = data['payload']['event']
-            
-            with open(f"{appdata_path}/rewardevents/web/src/config/event_not.json", "r", encoding='utf-8') as message_file:
-                message_data = json.load(message_file)
-            
-            user_name = event['user_name']
-            
-            tier = event['tier']
-            message_text = event['message']['text']
-            emotes = event['message']['emotes']
+                send_discord_webhook(data_discord)
+                append_notice(data_append)
 
-            if not emotes == "" and not emotes == None:
-                message_parse_chat = parse_emotes_message({'emotes': parse_emotes(emotes)},message_text)
-            else :
-                message_parse_chat = message_text
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+                    
+            elif subscription_type == 'channel.subscription.message':  
 
-            cumulative_months = event['cumulative_months']
-            streak_months = event['streak_months']
-            duration_months = event['duration_months']
-            
-            response =  message_data['resub']['response']
-            
-            aliases_html = {
-                '{username}' : user_name,
-                '{tier}' : str(tier),
-                '{total_months}' : str(cumulative_months),
-                '{streak_months}' : str(streak_months),
-                '{months}' : str(duration_months),
-                '{user_message}' : str(message_text)
-            }
+                type_id = 'resub'
 
-            response_html = utils.replace_all(response,aliases_html) 
+                event = data['payload']['event']
 
-
-            response_chat =  message_data['resub']['response_chat']
-            
-
-            data = {
-                'type_id' : 'resub',
-                'username' : user_name,
-                'message' : response_chat
-            }
-            
-            send_discord_webhook(data)
-
-            aliases_chat = {
+                user_name = event['user_name']
+                
+                tier = event['tier']
+                message_text = event['message']['text']
+                cumulative_months = event['cumulative_months']
+                streak_months = event['streak_months']
+                duration_months = event['duration_months']
+                
+                aliases = {
                     '{username}' : user_name,
                     '{tier}' : str(tier),
                     '{total_months}' : str(cumulative_months),
                     '{streak_months}' : str(streak_months),
                     '{months}' : str(duration_months),
-                    '{user_mesage}' : str(message_parse_chat)
+                    '{user_mesage}' : str(message_text)
                 }
-            
-            response_chat = utils.replace_all(response_chat,aliases_chat)     
 
-            send_announcement(response_chat,'purple')
-
-
-            data = {
-                'type' : 'resub',
-                'username' : response_html,
-                'message_html' : response_html,
-                'message' : message_text
-            }
-
-            send_not_fun(data) 
-            
-            message_event = utils.messages_file_load('event_resub')
-            message_event = utils.replace_all(str(message_event), aliases_chat)
-
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append)
-            
-        elif subscription_type == 'channel.raid':  
+                data_discord = {
+                    'type_id' : 'resub',
+                    'username' : user_name,
+                    'tier' : str(tier),
+                    'total_months' : str(cumulative_months),
+                    'streak_months': str(streak_months),
+                    'months': str(duration_months),
+                    'user_mesage' : str(message_text)
+                }
                 
-            event = data['payload']['event']
-            
-            username = event['from_broadcaster_user_name']
-            viewers = event['viewers']
-        
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'r', encoding='utf-8') as event_config_file:
-                event_config_data = json.load(event_config_file)
-    
-            response = event_config_data['raid']['response']
-            response_chat = event_config_data['raid']['response_chat']
-            
-            aliases = {
-                '{username}' : username,
-                '{specs}' : str(viewers),
-            }
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
 
-            response = utils.replace_all(response,aliases) 
-            response_chat = utils.replace_all(response_chat,aliases) 
-            
-            data = {
-                'type_id' : 'raid',
-                'type' : 'raid',
-                'username' : username,
-                'message_html' : response,
-                'message' : response_chat
-            }  
-            
-            send_announcement(response_chat,'purple')
-            send_not_fun(data) 
-
-            
-            message_event = utils.messages_file_load('event_raid')
-            message_event = utils.replace_all(str(message_event), aliases)
-
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append)  
-                        
-        elif subscription_type == 'channel.cheer':  
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
                 
-            event = data['payload']['event']
-            
-            is_anonymous = event['is_anonymous']
-            
-            if is_anonymous == 'True':
-                user_name = ""
-            else:
-                user_name = event['user_name']
+                send_discord_webhook(data_discord)
+                append_notice(data_append)
 
-            message = event['message']
-            bits = event['bits']
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_not.json', 'r', encoding='utf-8') as event_config_file:
-                event_config_data = json.load(event_config_file)
-
-            if int(bits) >= 1:
-                type_not = 'bits1'
-
-            elif int(bits) >= 100:
-                type_not = 'bits100'
-
-            elif int(bits) >= 1000:
-                type_not = 'bits1000'
-
-            elif int(bits) >= 1000:
-                type_not = 'bits5000'
-
-            response = event_config_data[type_not]['response']
-            response_chat = event_config_data[type_not]['response_chat']
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
                 
-            aliases = {
-                '{username}' : user_name,
-                '{amount}' : str(bits),
-            }   
+            elif subscription_type == 'channel.raid':  
 
-            response = utils.replace_all(response,aliases) 
-            response_chat = utils.replace_all(response_chat,aliases)
+                type_id = 'raid'
 
+                event = data['payload']['event']
+                
+                username = event['from_broadcaster_user_name']
+                viewers = event['viewers']
             
-            message_event = utils.messages_file_load('event_cheer')
-            message_event = utils.replace_all(str(message_event), aliases)
-
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append) 
-        
-            data = {
-                'type_id' : 'bits',
-                'type' : type_not,
-                'username' : user_name,
-                'message_html' : response,
-                'message' : message
-            }  
-            
-            send_announcement(response_chat,'purple')
-            send_discord_webhook(data)
-            send_not_fun(data)  
-
-        elif subscription_type == 'channel.ban':  
-            
-            event = data['payload']['event']
-            
-            user_name = event['user_name']
-            moderator_user_name = event['moderator_user_name']
-            reason = event['reason']
-            banned_at = event['banned_at']
-            ends_at = event['ends_at']
-            is_permanent = event['is_permanent']
-
-            if is_permanent:
 
                 aliases = {
-                    '{reason}' : reason,
-                    '{moderator}' : moderator_user_name,
-                    '{username}' : user_name
-                }   
-                                
-                message_event = utils.messages_file_load('event_ban')
- 
+                    '{username}' : username,
+                    '{specs}' : str(viewers),
+                }
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                data_discord = {
+                    "type_id" : "raid",
+                    "specs" : str(viewers),
+                    "username" : username,
+                }
                 
-            else:
+                send_discord_webhook(data_discord)
+                append_notice(data_append)  
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+                            
+            elif subscription_type == 'channel.cheer':  
+
+                type_id = 'bits'
+
+                event = data['payload']['event']
+                
+                is_anonymous = event['is_anonymous']
+                
+                if is_anonymous == 'True':
+                    user_name = "Anonymous"
+                else:
+                    user_name = event['user_name']
+
+                message = event['message']
+                bits = event['bits']
+                
+                    
+                aliases = {
+                    '{username}' : user_name,
+                    '{amount}' : str(bits),
+                }   
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+                
+                append_notice(data_append) 
+
+                data_discord = {
+                    'type_id' : 'bits',
+                    'username' : user_name,
+                    'amount' : str(bits)
+                }
+
+                send_discord_webhook(data_discord)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+
+            elif subscription_type == 'channel.ban':  
+                
+                type_id = 'ban'
+
+                event = data['payload']['event']
+                
+                user_name = event['user_name']
+                moderator_user_name = event['moderator_user_name']
+                reason = event['reason']
+
+                banned_at = event['banned_at']
+                ends_at = event['ends_at']
+                
+                is_permanent = event['is_permanent']
 
                 banned_at = datetime.datetime.fromisoformat(banned_at)
                 ends_at = datetime.datetime.fromisoformat(ends_at)
+                interval = ends_at - banned_at
 
-                intervalo = ends_at - banned_at
+                if is_permanent:
 
-                message_event = utils.messages_file_load('event_timeout')
+                    time = 'Permanente'
+
+                else:
+
+                    time = interval
 
                 aliases = {
                     '{reason}' : reason,
-                    '{username}' : user_name,
                     '{moderator}' : moderator_user_name,
-                    '{seconds}' : str(int(intervalo.total_seconds())),
-                }  
-            
-            message_event = utils.replace_all(str(message_event), aliases)
+                    '{username}' : user_name,
+                    '{time}' : str(time)
+                }   
+                                
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
 
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                data_discord = {
+                    'type_id' : 'ban',
+                    'username' : user_name,
+                    'reason' : reason,
+                    'moderator' : moderator_user_name,
+                    'time' : str(time)
+                }
+                
+                send_discord_webhook(data_discord)
+                append_notice(data_append)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+                
+            elif subscription_type == 'channel.unban':  
+                
+                type_id = 'unban'
+
+                event = data['payload']['event']
             
-            append_notice(data_append) 
-            
-        elif subscription_type == 'channel.unban':  
-            
-            event = data['payload']['event']
+                user_name = event['user_name']
+                moderator_user_name = event['moderator_user_name']
+                
+                aliases = {
+                    '{moderator}' : moderator_user_name,
+                    '{username}' : user_name
+                } 
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                data_discord = {
+                    "type_id" : "unban",
+                    "username" : user_name,
+                    "moderator" : moderator_user_name
+                }
+
+                send_discord_webhook(data_discord)
+                append_notice(data_append) 
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+                
+            elif subscription_type == 'channel.poll.begin':  
+                
+                type_id = 'poll_start'
+
+                event = data['payload']['event']
+
+                ##POOL = ENQUETE
+                
+                title = event['title']
+                choices = event['choices']
+                current_id = event['id']
+                bits_voting_status = event['bits_voting']['is_enabled']
+                bits_voting_amount = event['bits_voting']['amount_per_vote']
+                channel_points_voting_status = event['channel_points_voting']['is_enabled']
+                channel_points_voting_amount = event['channel_points_voting']['amount_per_vote']
+                start_at = event['started_at']
+                ends_at = event['ends_at']
+                
+
+                aliases = {
+                    '{title}': title,
+                    '{choices}': choices,
+                    '{current_id}': current_id,
+                    '{bits_voting_status}': str(bits_voting_status),
+                    '{bits_voting_amount}': str(bits_voting_amount),
+                    '{channel_points_voting_status}': str(channel_points_voting_status),
+                    '{channel_points_voting_amount}': str(channel_points_voting_amount),
+                    '{start_at}': start_at,
+                    '{ends_at}': ends_at
+                }
+
+                with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'r',encoding='utf-8') as poll_file:
+                    poll_data = json.load(poll_file)
+
+                options_list = []
+                poll_data['status'] = 'started'
+                poll_data['current'] = current_id
+                poll_data['title'] = title
+                poll_data['time_start'] = start_at
+                poll_data['time_end'] = ends_at
+
+                for option in choices:
+                    title = option['title']
+                    choice_id = option['id']
+                    option_data = {
+                        "title": title, "id" : choice_id, "votes" : 0
+                    }
+
+                    options_list.append(option_data)
+                    poll_data['options'] = options_list
+
+                
+                with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'w',encoding='utf-8') as poll_filedump:
+                    json.dump(poll_data,poll_filedump,indent=4,ensure_ascii=False)
+             
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                data = {
+                    "type_id" : "poll_start",
+                    "title" : title,
+                    "choices" : choices,
+                    "bits_status" : bits_voting_status,
+                    "bits_amount" : bits_voting_amount,
+                    "points_status" : channel_points_voting_status,
+                    "points_amount" : channel_points_voting_amount,
+                }
+
+                
+                send_discord_webhook(data)
+                append_notice(data_append) 
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+                
+            elif subscription_type == 'channel.poll.progress':  
+                
+                type_id = 'poll_status'
+
+                event = data['payload']['event']
+                
+                title = event['title']
+                choices = event['choices']
+                
+                bits_voting_status = event['bits_voting']['is_enabled']
+                bits_voting_amount = event['bits_voting']['amount_per_vote']
+                channel_points_voting_status = event['channel_points_voting']['is_enabled']
+                channel_points_voting_amount = event['channel_points_voting']['amount_per_vote']
+
+                start_at = event['started_at']
+                ends_at = event['ends_at']
+
+                aliases = {
+                    '{title}': title,
+                    '{choices}': choices,
+                    '{bits_voting_status}': str(bits_voting_status),
+                    '{bits_voting_amount}': str(bits_voting_amount),
+                    '{channel_points_voting_status}': str(channel_points_voting_status),
+                    '{channel_points_voting_amount}': str(channel_points_voting_amount)
+                }
+                
+                with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'r',encoding='utf-8') as poll_file:
+                    poll_data = json.load(poll_file)
+
+                options_list = []
+
+                for option in choices:
+                    title = option['title']
+                    choice_id = option['id']
+                    votes = option['votes']
+                    option_data = {
+                        "title": title, "id" : choice_id, "votes" : votes
+                    }
+
+                    options_list.append(option_data)
+                    poll_data['options'] = options_list
+
+                with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'w',encoding='utf-8') as poll_filedump:
+                    json.dump(poll_data,poll_filedump,indent=4,ensure_ascii=False)
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                data = {
+                    "type_id" : "poll_status",
+                    "title" : title,
+                    "choices" : choices,
+                    "bits_status" : bits_voting_status,
+                    "bits_amount" : bits_voting_amount,
+                    "points_status" : channel_points_voting_status,
+                    "points_amount" : channel_points_voting_amount
+                }
+
+                send_discord_webhook(data)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')
+                
+            elif subscription_type == 'channel.poll.end':  
+                
+                type_id = 'poll_end'
+
+                event = data['payload']['event']
+
+                title = event['title']
+                choices = event['choices']
+                current_id = event['id']
+                
+                poll_status = event['status']
+                bits_voting_status = event['bits_voting']['is_enabled']
+                bits_voting_amount = event['bits_voting']['amount_per_vote']
+                channel_points_voting_status = event['channel_points_voting']['is_enabled']
+                channel_points_voting_amount = event['channel_points_voting']['amount_per_vote']
+
+                start_at = event['started_at']
+                ends_at = event['ended_at']
+
+                aliases = {
+                    '{title}': title,
+                    '{choices}': choices,
+                    '{current_id}': current_id,
+                    '{poll_status}': poll_status,
+                    '{bits_voting_status}': str(bits_voting_status),
+                    '{bits_voting_amount}': str(bits_voting_amount),
+                    '{channel_points_voting_status}': str(channel_points_voting_status),
+                    '{channel_points_voting_amount}': str(channel_points_voting_amount)
+                }
+                
+
+                with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'r',encoding='utf-8') as poll_file:
+                    poll_data = json.load(poll_file)
+
+                options_list = []
+                poll_data['status'] = poll_status
+                poll_data['current'] = current_id
+                poll_data['title'] = title
+                poll_data['time_start'] = start_at
+                poll_data['time_end'] = ends_at
+
+                for option in choices:
+                    title = option['title']
+                    choice_id = option['id']
+                    votes = option['votes']
+                    option_data = {
+                        "title": title, "id" : choice_id, "votes" : votes
+                    }
+
+                    options_list.append(option_data)
+                    poll_data['options'] = options_list
+
+                
+                with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'w',encoding='utf-8') as poll_filedump:
+                    json.dump(poll_data,poll_filedump,indent=4,ensure_ascii=False)
+                
+
+                data = {
+                    "type_id" : "poll_end",
+                    "title" : title,
+                    "choices" : choices,
+                    "bits_status" : bits_voting_status,
+                    "bits_amount" : bits_voting_amount,
+                    "points_status" : channel_points_voting_status,
+                    "points_amount" : channel_points_voting_amount
+                }
+                    
+                send_discord_webhook(data)
+                                
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+                
+                append_notice(data_append)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple') 
+                
+            elif subscription_type == 'channel.prediction.begin':  
+                
+                type_id = 'prediction_start'
+
+                with open(f'{appdata_path}/rewardevents/web/src/config/pred_id.json', 'r',encoding='utf-8') as pred_file:
+                    pred_data = json.load(pred_file)
+
+                event = data['payload']['event']
+                
+                title = event['title']
+                outcomes = event['outcomes']
+                current_id = event['id']
+                time_start = event['started_at']
+                time_locks = event['locks_at']
+
+                options_list = []
+                pred_data['status'] = 'running'
+                pred_data['current'] = current_id
+                pred_data['title'] = title
+                pred_data['time_start'] = time_start
+                pred_data['time_locks'] = time_locks
+
+                for outcome in outcomes:
+                    title = outcome['title']
+                    outcome_id = outcome['id']
+                    option_data = {
+                        title : outcome_id
+                    }
+
+                    options_list.append(option_data)
+                    pred_data['options'] = options_list
+                
+                with open(f'{appdata_path}/rewardevents/web/src/config/pred_id.json', 'w',encoding='utf-8') as pred_filedump:
+                    json.dump(pred_data,pred_filedump,indent=4,ensure_ascii=False)
+
+                data = {
+                    'type_id': "prediction_start",
+                    "title" : title,
+                    "outcomes" : outcomes
+                }
+
+                send_discord_webhook(data)
+
+                aliases = {
+                    '{title}': title
+                }
+                                
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple') 
+                
+            elif subscription_type == 'channel.prediction.progress':  
+                
+                type_id = 'prediction_progress'
+
+                event = data['payload']['event']
+                
+                title = event['title']
+                outcomes = event['outcomes']
+
+                aliases = {
+                    '{title}': title,
+                }
+                
+                data = {
+                    'type_id': "prediction_progress",
+                    "title" : title,
+                    "outcomes" : outcomes
+                }
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+                
+                send_discord_webhook(data)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple') 
+                                
+            elif subscription_type == 'channel.prediction.lock':
+                
+                type_id = 'prediction_progress'
+
+                event = data['payload']['event']
+
+                with open(f'{appdata_path}/rewardevents/web/src/config/pred_id.json', 'r',encoding='utf-8') as pred_file:
+                    pred_data = json.load(pred_file)
+
+                pred_data['status'] = 'locked'
+
+                with open(f'{appdata_path}/rewardevents/web/src/config/pred_id.json', 'w',encoding='utf-8') as pred_filedump:
+                    json.dump(pred_data,pred_filedump,indent=4,ensure_ascii=False)
+
+                title = event['title']
+                outcomes = event['outcomes']
+                
+                data = {
+                    'type_id': "prediction_progress",
+                    'title': title,
+                    'outcomes' : outcomes
+                }
+
+                aliases = {
+                    '{title}': title,
+                }
+                
+                send_discord_webhook(data)
+                
+                toast('A votação do palpite foi encerrada.')
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple') 
+                                        
+            elif subscription_type == 'channel.prediction.end':    
+                
+                type_id = 'prediction_end'
+
+                event = data['payload']['event']
+
+                title = event['title']
+                outcomes = event['outcomes']
+                
+                winning_outcome_id = event['winning_outcome_id']
+                
+                if winning_outcome_id != "":
+
+                    for outcome in event["outcomes"]:
+                        if outcome["id"] == winning_outcome_id:
+                            winner = outcome["title"]
+                            channel_points = outcome["channel_points"]
+                            break
+                else :
+                    channel_points = 0
+                    winner = "Nenhum"
+                    
+                data = {
+                    'type_id': "prediction_end",
+                    'title': title,
+                    'outcome_win' : winner,
+                    'channel_points' : channel_points,
+                }
+
+                pred_data = {
+                    "status" : "end",
+                    "winner" : winner
+                }   
+
+                with open(f'{appdata_path}/rewardevents/web/src/config/pred_id.json', 'w',encoding='utf-8') as pred_filedump:
+                    json.dump(pred_data,pred_filedump,indent=4,ensure_ascii=False)
+                
+                send_discord_webhook(data)
+                
+                aliases = {
+                    '{title}' : title,
+                }
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+                
+                append_notice(data_append)
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')  
+                
+            elif subscription_type == 'channel.goal.begin':  
+                    
+                type_id = 'goal_start'
+
+                event = data['payload']['event']
+                    
+                goal_type = event['type']
+                description = event['description']
+                current_amount = event['current_amount']
+                target_amount = event['target_amount']
+                started_at = event['started_at']
+
+                if goal_type == "subscription":
+                    goal_type = 'subscription_count'
+
+                with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"r", encoding="utf-8" ) as goal_file_r:
+                    data_goal = json.load(goal_file_r)
+
+                data_goal[goal_type] = {
+                    "type" : goal_type,
+                    "description" : description,
+                    "current_amount" : current_amount,
+                    "target_amount" : target_amount,
+                    "started_at" : started_at
+                }
+
+                with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"w", encoding="utf-8" ) as goal_file:
+                    json.dump(data_goal,goal_file,indent=4,ensure_ascii=False)
+                
+                if goal_type == "subscription_count":
+                    goal_type = 'Inscrições'
+
+                elif goal_type == "follow":
+                    goal_type = 'Seguidores'
+
+                aliases = {
+                    "{target}" : str(target_amount),
+                    "{current}" : str(current_amount),
+                    "{description}" : str(description),
+                    "{type}" : goal_type
+                }   
+                                
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+                
+                data_discord = {
+                    'type_id' : 'goal_begin',
+                    'target' : target_amount,
+                    'current' : current_amount,
+                    'description' : description,
+                    'goal_type' : goal_type
+                }
+                
+                send_discord_webhook(data_discord)
+                
+                append_notice(data_append) 
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')  
+
+            elif subscription_type == 'channel.goal.progress':  
+
+                type_id = 'goal_progress'
+
+                event = data['payload']['event']
+                
+                goal_type = event['type']
+                description = event['description']
+                current_amount = event['current_amount']
+                target_amount = event['target_amount']
+                started_at = event['started_at']
+
+                if goal_type == "subscription":
+                    goal_type = 'subscription_count'
+
+                with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"r", encoding="utf-8" ) as goal_file_r:
+                    data_goal = json.load(goal_file_r)
+
+                data_goal[goal_type] = {
+                    "type" : goal_type,
+                    "description" : description,
+                    "current_amount" : current_amount,
+                    "target_amount" : target_amount,
+                    "started_at" : started_at
+                }
+
+                with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"w", encoding="utf-8" ) as goal_file:
+                    json.dump(data_goal,goal_file,indent=4,ensure_ascii=False)
+
+                aliases = {
+                    "{target}" : str(target_amount),
+                    "{current}" : str(current_amount),
+                    "{description}" : str(description),
+                    "{type}" : goal_type
+                } 
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple')  
+  
+            elif subscription_type == 'channel.goal.end':  
+                    
+                type_id = 'goal_end'
+
+                event = data['payload']['event']
+                
+                goal_type = event['type']
+                description = event['description']
+                current_amount = event['current_amount']
+                target_amount = event['target_amount']
+                started_at = event['started_at']
+                
+                if goal_type == "subscription":
+                    goal_type = 'subscription_count'
+
+                with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"r", encoding="utf-8" ) as goal_file_r:
+                    data_goal = json.load(goal_file_r)
+
+                data_goal[goal_type] = {
+                    "type" : goal_type,
+                    "description" : description,
+                    "current_amount" : current_amount,
+                    "target_amount" : target_amount,
+                    "started_at" : started_at
+                }
+
+                with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"w", encoding="utf-8" ) as goal_file:
+                    json.dump(data_goal,goal_file,indent=4,ensure_ascii=False)
+
+                if goal_type == "subscription_count":
+                    goal_type = 'Inscrições'
+
+                elif goal_type == "follow":
+                    goal_type = 'Seguidores'
+
+                aliases = {
+                    "{target}" : str(target_amount),
+                    "{current}" : str(current_amount),
+                    "{description}" : str(description),
+                    "{type}" : goal_type
+                }    
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                data_discord = {
+                    'type_id' : 'goal_end',
+                    'target' : target_amount,
+                    'current' : current_amount,
+                    'description' : description,
+                    'goal_type' : goal_type
+                }
+                
+                send_discord_webhook(data_discord)
+                append_notice(data_append) 
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple') 
+
+            elif subscription_type == 'channel.shoutout.create':
+
+                type_id = 'shoutout_start'
+
+                event = data['payload']['event']
+
+                broadcaster_user_name = event['broadcaster_user_name']
+                moderator_user_name = event['moderator_user_name']
+                
+                to_broadcaster_user_name = event['to_broadcaster_user_name']
+
+                viewer_count = event['viewer_count']
+
+
+                aliases = {
+                    "{broadcaster_user_name}": broadcaster_user_name,
+                    "{moderator_user_name}": moderator_user_name,
+                    "{to_broadcaster_user_name}": to_broadcaster_user_name,
+                    "{viewer_count}": str(viewer_count)
+                }
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                data_discord = {
+                    'type_id': 'shoutout_start',
+                    'broadcaster': broadcaster_user_name,
+                    'moderator': moderator_user_name,
+                    'to_broadcaster': to_broadcaster_user_name,
+                    'viewer_count': viewer_count
+                }
+
+                send_discord_webhook(data_discord)
+                append_notice(data_append) 
+                
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple') 
+
+            elif subscription_type == 'channel.shoutout.receive':
+                
+                type_id = 'shoutout_receive'
+
+                event = data['payload']['event']
+
+                broadcaster_user_name = event['broadcaster_user_name']
+                from_broadcaster_user_name = event['from_broadcaster_user_name']
+
+                aliases = {
+                    "{broadcaster_user_name}": broadcaster_user_name,
+                    "{from_broadcaster_user_name}": from_broadcaster_user_name
+                }
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                data_discord = {
+                    'type_id': 'shoutout_receive',
+                    'broadcaster': broadcaster_user_name,
+                    'from_broadcaster' : from_broadcaster_user_name
+                }
+
+                send_discord_webhook(data_discord)
+                append_notice(data_append) 
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple') 
+
+            elif subscription_type == 'channel.shield_mode.begin':
+                
+                type_id = 'shield_start'
+
+                event = data['payload']['event']
+
+                broadcaster_user_name = event['broadcaster_user_name']
+                moderator_user_name = event['moderator_user_name']
+                
+                aliases = {
+                    "{broadcaster}": broadcaster_user_name,
+                    "{moderator}": moderator_user_name
+                }
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                data_discord = {
+                    'type_id': 'shield_start',
+                    'broadcaster': broadcaster_user_name,
+                    'moderator' : moderator_user_name
+                }
+
+                send_discord_webhook(data_discord)
+                append_notice(data_append) 
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple') 
+
+            elif subscription_type == 'channel.shield_mode.end':
+                
+                type_id = 'shield_end'
+                
+                event = data['payload']['event']
+
+                broadcaster_user_name = event['broadcaster_user_name']
+                moderator_user_name = event['moderator_user_name']
+
+
+                aliases = {
+                    "{broadcaster}": broadcaster_user_name,
+                    "{moderator}": moderator_user_name
+                }
+
+                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+
+                data_append = {
+                    "type" : "event",
+                    "message" : message_event,
+                    "user_input" : '',
+                }
+
+                data_discord = {
+                    'type_id': 'shield_end',
+                    'broadcaster': broadcaster_user_name,
+                    'moderator' : moderator_user_name
+                }
+
+                send_discord_webhook(data_discord)
+                append_notice(data_append) 
+
+                if message_data[type_id]['status'] == 1:
+                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                    send_announcement(message_chat,'purple') 
+
+            else:
+                
+                event = data['payload']['event']
         
-            user_name = event['user_name']
-            moderator_user_name = event['moderator_user_name']
-            
+        elif message_type == 'session_keepalive':
+            pass
 
-            aliases = {
-                '{moderator}' : moderator_user_name,
-                '{username}' : user_name
-            }   
-                            
-            message_event = utils.messages_file_load('event_unban')
-            message_event = utils.replace_all(str(message_event), aliases)
-
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append) 
-            
-        elif subscription_type == 'channel.poll.begin':  
-            
-            event = data['payload']['event']
-
-            ##POOL = ENQUETE
-            
-            title = event['title']
-            choices = event['choices']
-            current_id = event['id']
-            
-            bits_voting_status = event['bits_voting']['is_enabled']
-            bits_voting_amount = event['bits_voting']['amount_per_vote']
-            channel_points_voting_status = event['channel_points_voting']['is_enabled']
-            channel_points_voting_amount = event['channel_points_voting']['amount_per_vote']
-            start_at = event['started_at']
-            ends_at = event['ends_at']
-            
-            data = {
-                "type_id" : "poll_start",
-                "title" : title,
-                "choices" : choices,
-                "bits_status" : bits_voting_status,
-                "bits_amount" : bits_voting_amount,
-                "points_status" : channel_points_voting_status,
-                "points_amount" : channel_points_voting_amount,
-            }
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'r',encoding='utf-8') as poll_file:
-                poll_data = json.load(poll_file)
-
-            options_list = []
-            poll_data['status'] = 'started'
-            poll_data['current'] = current_id
-            poll_data['title'] = title
-            poll_data['time_start'] = start_at
-            poll_data['time_end'] = ends_at
-
-            for option in choices:
-                title = option['title']
-                choice_id = option['id']
-                option_data = {
-                    "title": title, "id" : choice_id, "votes" : 0
-                }
-
-                options_list.append(option_data)
-                poll_data['options'] = options_list
-
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'w',encoding='utf-8') as poll_filedump:
-                json.dump(poll_data,poll_filedump,indent=4,ensure_ascii=False)
-
-            
-            send_discord_webhook(data)
-
-            aliases = {
-                '{title}' : title
-            }   
-                            
-            message_event = utils.messages_file_load('event_pool_start')
-            message_event = utils.replace_all(str(message_event), aliases)
-
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append) 
-            
-        elif subscription_type == 'channel.poll.progress':  
-            
-            event = data['payload']['event']
-            
-            title = event['title']
-            choices = event['choices']
-            
-            bits_voting_status = event['bits_voting']['is_enabled']
-            bits_voting_amount = event['bits_voting']['amount_per_vote']
-            channel_points_voting_status = event['channel_points_voting']['is_enabled']
-            channel_points_voting_amount = event['channel_points_voting']['amount_per_vote']
-
-            start_at = event['started_at']
-            ends_at = event['ends_at']
-            
-            data = {
-                "type_id" : "poll_status",
-                "title" : title,
-                "choices" : choices,
-                "bits_status" : bits_voting_status,
-                "bits_amount" : bits_voting_amount,
-                "points_status" : channel_points_voting_status,
-                "points_amount" : channel_points_voting_amount
-            }
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'r',encoding='utf-8') as poll_file:
-                poll_data = json.load(poll_file)
-
-            options_list = []
-
-            for option in choices:
-                title = option['title']
-                choice_id = option['id']
-                votes = option['votes']
-                option_data = {
-                    "title": title, "id" : choice_id, "votes" : votes
-                }
-
-                options_list.append(option_data)
-                poll_data['options'] = options_list
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'w',encoding='utf-8') as poll_filedump:
-                json.dump(poll_data,poll_filedump,indent=4,ensure_ascii=False)
-            
-            send_discord_webhook(data)
-            
-        elif subscription_type == 'channel.poll.end':  
-            
-            event = data['payload']['event']
-
-            title = event['title']
-            choices = event['choices']
-            current_id = event['id']
-            
-            poll_status = event['status']
-            bits_voting_status = event['bits_voting']['is_enabled']
-            bits_voting_amount = event['bits_voting']['amount_per_vote']
-            channel_points_voting_status = event['channel_points_voting']['is_enabled']
-            channel_points_voting_amount = event['channel_points_voting']['amount_per_vote']
-
-            start_at = event['started_at']
-            ends_at = event['ended_at']
-            
-            data = {
-                "type_id" : "poll_end",
-                "title" : title,
-                "choices" : choices,
-                "bits_status" : bits_voting_status,
-                "bits_amount" : bits_voting_amount,
-                "points_status" : channel_points_voting_status,
-                "points_amount" : channel_points_voting_amount
-            }
-
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'r',encoding='utf-8') as poll_file:
-                poll_data = json.load(poll_file)
-
-            options_list = []
-            poll_data['status'] = poll_status
-            poll_data['current'] = current_id
-            poll_data['title'] = title
-            poll_data['time_start'] = start_at
-            poll_data['time_end'] = ends_at
-
-            for option in choices:
-                title = option['title']
-                choice_id = option['id']
-                votes = option['votes']
-                option_data = {
-                    "title": title, "id" : choice_id, "votes" : votes
-                }
-
-                options_list.append(option_data)
-                poll_data['options'] = options_list
-
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'w',encoding='utf-8') as poll_filedump:
-                json.dump(poll_data,poll_filedump,indent=4,ensure_ascii=False)
-            
-            send_discord_webhook(data)
-
-            aliases = {
-                '{title}' : title
-            }   
-                            
-            message_event = utils.messages_file_load('event_pool_end')
-            message_event = utils.replace_all(str(message_event), aliases)
-            
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append) 
-            
-        elif subscription_type == 'channel.prediction.begin':  
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/pred_id.json', 'r',encoding='utf-8') as pred_file:
-                pred_data = json.load(pred_file)
-
-            event = data['payload']['event']
-            
-            title = event['title']
-            outcomes = event['outcomes']
-            current_id = event['id']
-            time_start = event['started_at']
-            time_locks = event['locks_at']
-
-            
-            data = {
-                'type_id': "prediction_start",
-                "title" : title,
-                "outcomes" : outcomes
-            }
-
-            options_list = []
-            pred_data['status'] = 'running'
-            pred_data['current'] = current_id
-            pred_data['title'] = title
-            pred_data['time_start'] = time_start
-            pred_data['time_locks'] = time_locks
-
-            for outcome in outcomes:
-                title = outcome['title']
-                outcome_id = outcome['id']
-                option_data = {
-                    title : outcome_id
-                }
-
-                options_list.append(option_data)
-                pred_data['options'] = options_list
-            
-            with open(f'{appdata_path}/rewardevents/web/src/config/pred_id.json', 'w',encoding='utf-8') as pred_filedump:
-                json.dump(pred_data,pred_filedump,indent=4,ensure_ascii=False)
-
-            send_discord_webhook(data)
-
-            aliases = {
-                '{title}' : title
-            }   
-                            
-            message_event = utils.messages_file_load('event_prediction_start')
-            message_event = utils.replace_all(str(message_event), aliases)
-            
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append) 
-            
-        elif subscription_type == 'channel.prediction.progress':  
-            
-            event = data['payload']['event']
-            
-            title = event['title']
-            outcomes = event['outcomes']
-            
-            data = {
-                'type_id': "prediction_progress",
-                "title" : title,
-                "outcomes" : outcomes
-            }
-            
-            send_discord_webhook(data)
-            
-            toast('O palpite foi atualizado.')
-                            
-        elif subscription_type == 'channel.prediction.lock':
-            
-            event = data['payload']['event']
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/pred_id.json', 'r',encoding='utf-8') as pred_file:
-                pred_data = json.load(pred_file)
-
-            pred_data['status'] = 'locked'
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/pred_id.json', 'w',encoding='utf-8') as pred_filedump:
-                json.dump(pred_data,pred_filedump,indent=4,ensure_ascii=False)
-
-            title = event['title']
-            outcomes = event['outcomes']
-            
-            data = {
-                'type_id': "prediction_progress",
-                'title': title,
-                'outcomes' : outcomes
-            }
-            
-            send_discord_webhook(data)
-            
-            toast('A votação do palpite foi encerrada.')
-                                    
-        elif subscription_type == 'channel.prediction.end':    
-            
-            event = data['payload']['event']
-
-            title = event['title']
-            outcomes = event['outcomes']
-            
-            winning_outcome_id = event['winning_outcome_id']
-            
-            if winning_outcome_id != "":
-
-                for outcome in event["outcomes"]:
-                    if outcome["id"] == winning_outcome_id:
-                        winner = outcome["title"]
-                        channel_points = outcome["channel_points"]
-                        break
-            else :
-                channel_points = 0
-                winner = "Nenhum"
-                
-            data = {
-                'type_id': "prediction_end",
-                'title': title,
-                'outcome_win' : winner,
-                'channel_points' : channel_points,
-            }
-
-            pred_data = {
-                "status" : "end",
-                "winner" : winner
-            }   
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/pred_id.json', 'w',encoding='utf-8') as pred_filedump:
-                json.dump(pred_data,pred_filedump,indent=4,ensure_ascii=False)
-            
-            send_discord_webhook(data)
-            
-            
-
-            aliases = {
-                '{title}' : title
-            }   
-                            
-            message_event = utils.messages_file_load('event_prediction_end')
-            message_event = utils.replace_all(str(message_event), aliases)
-            
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append) 
-            
-        elif subscription_type == 'channel.goal.begin':  
-                
-            event = data['payload']['event']
-                
-            goal_type = event['type']
-            description = event['description']
-            current_amount = event['current_amount']
-            target_amount = event['target_amount']
-            started_at = event['started_at']
-
-            if goal_type == "subscription":
-                goal_type = 'subscription_count'
-
-            with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"r", encoding="utf-8" ) as goal_file_r:
-                data_goal = json.load(goal_file_r)
-
-            data_goal[goal_type] = {
-                "type" : goal_type,
-                "description" : description,
-                "current_amount" : current_amount,
-                "target_amount" : target_amount,
-                "started_at" : started_at
-            }
-
-            with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"w", encoding="utf-8" ) as goal_file:
-                json.dump(data_goal,goal_file,indent=4,ensure_ascii=False)
-            
-            if goal_type == "subscription_count":
-                goal_type = 'Inscrições'
-
-            elif goal_type == "follow":
-                goal_type = 'Seguidores'
-
-            aliases = {
-                '{type}' : goal_type
-            }   
-                            
-            message_event = utils.messages_file_load('event_goal_begin')
-            message_event = utils.replace_all(str(message_event), aliases)
-            
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append) 
-
-        elif subscription_type == 'channel.goal.progress':  
-                
-            event = data['payload']['event']
-            
-            goal_type = event['type']
-            description = event['description']
-            current_amount = event['current_amount']
-            target_amount = event['target_amount']
-            started_at = event['started_at']
-
-            if goal_type == "subscription":
-                goal_type = 'subscription_count'
-
-            with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"r", encoding="utf-8" ) as goal_file_r:
-                data_goal = json.load(goal_file_r)
-
-            data_goal[goal_type] = {
-                "type" : goal_type,
-                "description" : description,
-                "current_amount" : current_amount,
-                "target_amount" : target_amount,
-                "started_at" : started_at
-            }
-
-            with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"w", encoding="utf-8" ) as goal_file:
-                json.dump(data_goal,goal_file,indent=4,ensure_ascii=False)
-              
-        elif subscription_type == 'channel.goal.end':  
-                
-            event = data['payload']['event']
-            
-            goal_type = event['type']
-            description = event['description']
-            current_amount = event['current_amount']
-            target_amount = event['target_amount']
-            started_at = event['started_at']
-            ended_at = event['ended_at']
-            
-            if goal_type == "subscription":
-                goal_type = 'subscription_count'
-
-            with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"r", encoding="utf-8" ) as goal_file_r:
-                data_goal = json.load(goal_file_r)
-
-            data_goal[goal_type] = {
-                "type" : goal_type,
-                "description" : description,
-                "current_amount" : current_amount,
-                "target_amount" : target_amount,
-                "started_at" : started_at
-            }
-
-            with open(f"{appdata_path}/rewardevents/web/src/config/goal.json" ,"w", encoding="utf-8" ) as goal_file:
-                json.dump(data_goal,goal_file,indent=4,ensure_ascii=False)
-
-            if goal_type == "subscription_count":
-                goal_type = 'Inscrições'
-
-            elif goal_type == "follow":
-                goal_type = 'Seguidores'
-
-            aliases = {
-                '{type}' : goal_type
-            }   
-                            
-            message_event = utils.messages_file_load('event_goal_end')
-            message_event = utils.replace_all(str(message_event), aliases)
-            
-            data_append = {
-                "type" : "event",
-                "message" : message_event,
-                "user_input" : '',
-            }
-            
-            append_notice(data_append) 
-
-        else:
-            
-            event = data['payload']['event']
-       
-    elif message_type == 'session_keepalive':
-        pass
+    except Exception as e:
+        logging.error("Exception occurred", exc_info=True)
 
 
 def on_resize(width, height):
@@ -11715,16 +12289,24 @@ def start_websocket():
                 utils.error_log(message_error)
         
     def on_close(ws, close_status_code, close_msg):
+
         time.sleep(5)  # Aguarda 5 segundos antes de tentar se reconectar
+
+        print('reconectando',close_status_code,close_msg)
         ws.run_forever()
 
+    #ws://localhost:8080/ws
+    #wss://eventsub.wss.twitch.tv/ws
+    
     ws = websocket.WebSocketApp("wss://eventsub.wss.twitch.tv/ws",
                                 on_message=on_message,
                                 on_error=on_error,
-                                on_close=on_close)
+                                on_close=on_close
+                                )
+
     ws.run_forever()
-    
-    
+
+
 def start_obs():
 
     sucess_conn = obs_events.test_obs_conn()
@@ -11799,7 +12381,7 @@ def webview_start_app(app_mode):
         window.events.closed += close
         window.events.resized += on_resize
 
-        window.expose(loaded, on_message, command_fallback, timeout_user, userdata_py, chat_config, send_not_fun,
+        window.expose(loaded, on_message, command_fallback, timeout_user, userdata_py, chat_config,
             open_py, highlight_py, timer, update_check, sr_config_py, playlist_py, get_video_info,
             save_edit_redeen, get_edit_data, disclosure_py, discord_config, responses_config,
             messages_config, not_config_py, clip, obs_config_py, queue, counter, giveaway_py, 
@@ -11807,7 +12389,7 @@ def webview_start_app(app_mode):
             get_command_list, save_stream_info_py, get_stream_info_py, get_sources_obs, 
             get_filters_obs, update_scene_obs, select_file_py, get_edit_type_py, get_redeem, 
             profile_info, get_chat_list, event_log, logout_auth, get_auth_py, send_chat, send,
-            send_announcement, save_access_token, start_auth_window,webview_start_app,get_users_info,start_obs)
+            send_announcement, save_access_token, start_auth_window,webview_start_app,get_users_info,start_obs,create_source)
 
         webview.start(storage_path=extDataDir,private_mode=True,debug=debug_status,http_server=True,http_port=7000)
         
@@ -11827,7 +12409,7 @@ def webview_start_app(app_mode):
         window_chat.events.loaded += set_window_chat_open
         window_chat.events.closed += set_window_chat_close
 
-        window_chat.expose(send_chat,send,send_announcement,get_chat_list)
+        window_chat.expose(send_chat,send,send_announcement,get_chat_list,open_py)
     
     elif app_mode == "events":
         
@@ -11882,15 +12464,12 @@ def start_app(start_mode):
         websocket_thread = threading.Thread(target=start_websocket, args=(), daemon=True)
         websocket_thread.start()
 
+        websocket_server_thread = threading.Thread(target=sk.start_server, args=('localhost', 7688), daemon=True)
+        websocket_server_thread.start()
+
         webview_start_app('normal')
 
     elif start_mode == "auth":
-
-        def start_server():
-            serve(app, host="0.0.0.0", port=5555)
-
-        flask_thread = threading.Thread(target=start_server, args=(), daemon=True)
-        flask_thread.start()
 
         webview_start_app('auth')
 

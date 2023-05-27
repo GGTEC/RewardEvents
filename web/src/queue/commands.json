@@ -1,0 +1,23 @@
+{
+    "check_queue": {
+        "command": "!queue",
+        "status": 1,
+        "delay": "10",
+        "last_use": 0,
+        "user_level": "mod"
+    },
+    "rem_queue": {
+        "command": "!remqueue ",
+        "status": 1,
+        "delay": "10",
+        "last_use": 0,
+        "user_level": "mod"
+    },
+    "add_queue": {
+        "command": "!addqueue",
+        "status": 1,
+        "delay": "10",
+        "last_use": 0,
+        "user_level": "mod"
+    }
+}

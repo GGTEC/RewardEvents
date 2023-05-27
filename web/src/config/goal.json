@@ -1,0 +1,16 @@
+{
+    "subscription_count": {
+        "type": "subscription_count",
+        "description": "",
+        "current_amount": 0,
+        "target_amount": 0,
+        "started_at": "2023-03-02T13:24:35.536495726Z"
+    },
+    "follow": {
+        "type": "follow",
+        "description": "",
+        "current_amount": 0,
+        "target_amount": 0,
+        "started_at": "2023-04-14T20:13:53.797852695Z"
+    }
+}

@@ -1,0 +1,23 @@
+{
+      "reset_counter": {
+            "command": "!r_deaths",
+            "status": 1,
+            "delay": 10,
+            "last_use": 0,
+            "user_level": "mod"
+      },
+      "set_counter": {
+            "command": "!a_deaths",
+            "status": 1,
+            "delay": 10,
+            "last_use": 0,
+            "user_level": "mod"
+      },
+      "check_counter": {
+            "command": "!deaths",
+            "status": 1,
+            "delay": 10,
+            "last_use": 0,
+            "user_level": "mod"
+      }
+}

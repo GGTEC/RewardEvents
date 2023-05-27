@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+    <body>
+        <iframe id="myiframe" src="" frameborder="false" style="width: 100%;height: 100vh;"></iframe>
+        <script>
+          var iframe = document.getElementById('myiframe');
+          var socket;
+        
+          function connectWebSocket() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+              console.log("Já está conectado ao servidor");
+              return;
+            }
+        
+            socket = new WebSocket("ws://localhost:7688");
+        
+            socket.onopen = function(event) {
+              console.log("Conectado ao servidor");
+            };
+        
+            socket.onmessage = function(event) {
+                var data_parse = JSON.parse(event.data);
+                if (data_parse.type === 'high') {
+                  console.log(data_parse.html);
+                  iframe.contentDocument.documentElement.innerHTML = data_parse.html;
+                }
+            };
+
+            socket.onmessage = function(event) {
+                if (event.data === 'ping') {
+                    socket.send('pong');
+                } else {
+                  var data_parse = JSON.parse(event.data);
+                  if (data_parse.type === 'redeen') {
+                    iframe.contentDocument.documentElement.innerHTML = data_parse.html;
+                  }
+                }
+            };
+        
+            socket.onclose = function(error) {
+              console.error("Erro na conexão WebSocket:", error);
+              // Realizar a lógica de reconexão aqui, se desejado
+              reconnectWebSocket();
+            };
+          }
+        
+          function reconnectWebSocket() {
+            if (!socket || socket.readyState === WebSocket.CLOSED) {
+              // Esperar um intervalo antes de tentar reconectar
+              setTimeout(function() {
+                console.log("Tentando reconectar...");
+                connectWebSocket();
+              }, 3000); // Tempo de espera em milissegundos (3 segundos no exemplo)
+            }
+          }
+        
+          // Iniciar a conexão WebSocket
+          connectWebSocket();
+        </script>
+    </body>
+</html>

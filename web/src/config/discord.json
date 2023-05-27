@@ -1,0 +1,258 @@
+{
+      "live_start": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "<@&800068168823472128> ",
+            "title": "O streamer iniciou uma live",
+            "description": "{url}"
+      },
+      "live_cat": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "<@&800068168823472128> ",
+            "title": "O streamer alterou a categoria e/ou titulo da live",
+            "description": "{url}"
+      },
+      "live_end": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O streamer finalizou a live",
+            "description": ""
+      },
+      "follow": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "<@&800068168823472128> ",
+            "title": "O usuário {username} deu follow no canal",
+            "description": "O usuário {username} deu follow no canal"
+      },
+      "sub": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "Teste",
+            "title": "O usuário {username} virou sub no canal",
+            "description": "Teste"
+      },
+      "giftsub": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O usuário {username} enviou {total} GiftSub(s) para a comunidade",
+            "description": ""
+      },
+      "mysterygift": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "{username} Presenteou a comunidade com {count} inscrição(ões)",
+            "description": ""
+      },
+      "re-mysterygift": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "{username} Renovou o sub que recebeu de presente !! ",
+            "description": ""
+      },
+      "resub": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O usuário {username} se re-inscreveu no canal",
+            "description": ""
+      },
+      "subend": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "Fim do sub de {username}",
+            "description": ""
+      },
+      "raid": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O Streamer {username} invadiu o canal e trouxe {specs} com ele.",
+            "description": ""
+      },
+      "clips_create": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "Um novo clip foi criado, confira {url}",
+            "description": "{url}"
+      },
+      "clips_edit": {
+            "url": "https://discord.com/api/webhooks/1037164445253763184/0tB1Z6yGe4p07iWrb0G68OFjSI8IjoW8Dny6K_NSQiCppY4UIThH5KOCPDRwy16uF5bC",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "Um novo clip foi criado, confira {url}",
+            "description": "{url}"
+      },
+      "poll_start": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "Uma nova enquete foi iniciada",
+            "description": "Vá até o canal e vote o quanto antes"
+      },
+      "poll_status": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O status da enquete foi atualizado",
+            "description": "Vá até o canal e vote o quanto antes"
+      },
+      "poll_end": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "Uma enquete foi finalizada",
+            "description": "Vá até o canal e vote o quanto antes"
+      },
+      "prediction_start": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "Um novo palpite foi iniciado",
+            "description": "Vá até o canal e vote o quanto antes"
+      },
+      "prediction_progress": {
+            "url": "",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O status do palpite foi atualizado",
+            "description": "Vá até o canal e vote o quanto antes"
+      },
+      "prediction_end": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "Um palpite foi finalizado",
+            "description": "Vá até o canal e vote o quanto antes"
+      },
+      "ban": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O usuário {username} foi banido por tempo {time} pelo(a) {moderator}, motivo {reason} ",
+            "description": ""
+      },
+      "unban": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O usuário {username} foi desbanido pelo(a) {moderator}",
+            "description": ""
+      },
+      "goal_start": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "Uma meta para {current}/{target} {type} foi iniciada. ",
+            "description": ""
+      },
+      "goal_end": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "A meta para {current}/{target }{type} foi finalizada.",
+            "description": ""
+      },
+      "bits": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O usuário {username} enviou {bits} pro canal !!!",
+            "description": ""
+      },
+      "shoutout_start": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O moderador {moderator} enviou um ShotOut para o canal {to_broadcaster} com {viewer_count} specs assistindo a live agora !!!",
+            "description": ""
+      },
+      "shoutout_receive": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O streamer {from_broadcaster} enviou um ShoTout pro canal !!!",
+            "description": ""
+      },
+      "shield_start": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O moderador {moderator} ativou o modo escudo",
+            "description": ""
+      },
+      "shield_end": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O moderador {moderator} desativou o modo escudo",
+            "description": ""
+      },
+      "charity_campaign_donate": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O usuário {username} Enviou um donate para a campanha {charity_name} !!!",
+            "description": ""
+      },
+      "charity_campaign_progress": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "O Progresso da campanha {charity_name} foi atualizado",
+            "description": ""
+      },
+      "charity_campaign_start": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "Uma campanha para {charity_name} foi iniciada.",
+            "description": ""
+      },
+      "charity_campaign_stop": {
+            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "status": 1,
+            "color": "03b2f8",
+            "content": "",
+            "title": "A campanha {charity_name} foi finalizada.",
+            "description": ""
+      }
+}

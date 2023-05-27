@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+ <head>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet"/>
+  <meta charset="utf-8"/>
+  <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   highlight
+  </title>
+ </head>
+ <style>
+    body {
+            background-color: transparent;
+            margin: 0; /* Remove margens padrão do body */
+            overflow-x: hidden; /* Impede a rolagem horizontal */
+            width: 100%;
+            max-width: 100vw;
+    }
+
+
+    #highlight-block{
+            border: 2px solid #927aac;
+            width: 100%;
+            max-width: 100vw;
+            display: flex;
+            flex-wrap: wrap;
+            background-color: black;
+            padding: 1%;
+            box-sizing: border-box; /* Inclui a largura das bordas e padding no cálculo da largura total */
+            word-wrap: break-word;
+    }
+
+    p {
+            font-family: 'kanit';
+            color: #fff;
+            text-align: left;
+            margin: 0%;
+            max-width: 100%;
+    }
+
+    .fade-in {
+            animation: fade-in 5s ease-in both;
+    }
+    
+    @keyframes fade-in {
+                0% {
+                        opacity: 0;
+                }
+                10% {
+                        opacity: 1;
+                }
+                25% {
+                        opacity: 1;
+                }
+                50% {
+                        opacity: 1;
+                }
+                75% {
+                        opacity: 1;
+                }
+                90% {
+                        opacity: 1;
+                }
+                100% {
+                        opacity: 0;
+                }
+
+        }
+      
+ </style>
+ <body>
+  <div class="container-fluid d-flex justify-content-center">
+   <div class="fade-in" id="highlight-block" style="animation-duration: 9s">
+    <p id="text_style">
+     <i idclass="fa-solid fa-thumbtack">
+     </i>
+     <span id="username" style="color:white ;">
+      GG_TEC
+     </span>
+     :
+     <span id="message" style="color: white;">
+      Destaque
+     </span>
+    </p>
+   </div>
+  </div>
+ </body>
+</html>

@@ -1,12 +1,12 @@
 async function get_redeem_edit(el_id) {
 
-    var list_redem = await window.pywebview.api.get_redeem('null');
+    var list_redem_parse = await window.pywebview.api.get_redeem('null');
     
     if (list_redem_parse) {
 
         $("#" + el_id).empty();
 
-        var list_redem_parse = JSON.parse(list_redem);
+        var list_redem_parse = JSON.parse(list_redem_parse);
 
         for (var i = 0; i < list_redem_parse.redeem.length; i++) {
             var optn = list_redem_parse.redeem[i];

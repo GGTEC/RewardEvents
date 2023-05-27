@@ -214,135 +214,59 @@ def show_filter(source_name, filter_name, time_show,keep):
     except:
         pass
 
-def notification():
-
-    global is_started
+def create_source(type_id):
     
-    try:
-        
-        is_started = 1
-        
-        config_data = load_config()
-
-        with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notifc_config_file:
-            notifc_config_Data = json.load(notifc_config_file)
-
-        notifc_status = notifc_config_Data['HTML_ACTIVE']
-        source_name = notifc_config_Data['HTML_TITLE']
-        time_show = notifc_config_Data['HTML_TIME']
-
-        if notifc_status == 1:
-            
-            cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
-
-            scene_resp = cl.get_current_program_scene()
-            scene_atual = scene_resp.current_program_scene_name
-
-            resp_OBS = cl.get_scene_item_list(scene_atual)
-            itens_resp = resp_OBS.scene_items
-            source_list = {"source":[]}
-            
-            for item in itens_resp:
-
-                sources = item['sourceName']
-                source_list['source'].append(sources)
-
-            
-            if source_name in source_list['source']:
-                
-                item_id_resp = cl.get_scene_item_id(scene_atual,source_name)
-                item_id = item_id_resp.scene_item_id
-
-                cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
-                time.sleep(time_show)
-                cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
-
-    except:
-        pass
-
-def notification_player():
-
-    try:
-        
-        config_data = load_config()
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notifc_config_file:
-            notifc_config_Data = json.load(notifc_config_file)
-
-        notifc_status = notifc_config_Data['HTML_PLAYER_ACTIVE']
-        source_name = notifc_config_Data['HTML_TITLE']
-        time_show = notifc_config_Data['HTML_TIME']
-
-        if notifc_status == 1:
-            
-            cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
-
-            scene_resp = cl.get_current_program_scene()
-            scene_atual = scene_resp.current_program_scene_name
-
-            resp_OBS = cl.get_scene_item_list(scene_atual)
-            itens_resp = resp_OBS.scene_items
-            source_list = {"source":[]}
-            
-            for item in itens_resp:
-
-                sources = item['sourceName']
-                source_list['source'].append(sources)
-
-            
-            if source_name in source_list['source']:
-                
-                item_id_resp = cl.get_scene_item_id(scene_atual,source_name)
-                item_id = item_id_resp.scene_item_id
-
-                cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
-                time.sleep(time_show)
-                cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
     
-    except:
-        pass
+    config_data = load_config()
 
-def notification_event():
+    cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+
+    scene_resp = cl.get_current_program_scene()
+    scene_atual = scene_resp.current_program_scene_name
+
+
+    if type_id == 'highlight':
+
+        data_settings = {
+            'is_local_file' : True,
+            'local_file': f'{appdata_path}/rewardevents/web/src/html/highlight/iframe.html' 
+        }
+        
+        cl.create_input(scene_atual,'Highlight RewardEvents','browser_source',data_settings,True)
     
-    global is_started
-    
-    try:
+    elif type_id == 'redeem':
+
+        data_settings = {
+            'is_local_file' : True,
+            'local_file': f'{appdata_path}/rewardevents/web/src/html/redeem/iframe.html' 
+        }
         
-        is_started = 1
+        cl.create_input(scene_atual,'Redeem RewardEvents','browser_source',data_settings,True)
+
+    elif type_id == 'music':
+
+        data_settings = {
+            'is_local_file' : True,
+            'local_file': f'{appdata_path}/rewardevents/web/src/html/music/iframe.html' 
+        }
         
-        config_data = load_config()
+        cl.create_input(scene_atual,'Music RewardEvents','browser_source',data_settings,True)
 
-        with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notifc_config_file:
-            notifc_config_Data = json.load(notifc_config_file)
+    elif type_id == 'video':
 
-        notifc_status = notifc_config_Data['HTML_EVENTS_ACTIVE']
-        source_name = notifc_config_Data['HTML_EVENTS']
-        time_show = notifc_config_Data['HTML_EVENTS_TIME']
+        data_settings = {
+            'is_local_file' : True,
+            'local_file': f'{appdata_path}/rewardevents/web/src/html/video/iframe.html' 
+        }
         
-        if notifc_status == 1:
+        cl.create_input(scene_atual,'Video RewardEvents','browser_source',data_settings,True)
 
-            cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+    elif type_id == 'emote':
 
-            scene_resp = cl.get_current_program_scene()
-            scene_atual = scene_resp.current_program_scene_name
+        data_settings = {
+            'is_local_file' : True,
+            'local_file': f'{appdata_path}/rewardevents/web/src/html/emote/iframe.html' 
+        }
+        
+        cl.create_input(scene_atual,'Emote RewardEvents','browser_source',data_settings,True)
 
-            resp_OBS = cl.get_scene_item_list(scene_atual)
-            itens_resp = resp_OBS.scene_items
-            source_list = {"source":[]}
-            
-            for item in itens_resp:
-
-                sources = item['sourceName']
-                source_list['source'].append(sources)
-
-            if source_name in source_list['source']:
-                
-                item_id_resp = cl.get_scene_item_id(scene_atual,source_name)
-                item_id = item_id_resp.scene_item_id
-
-                cl.set_scene_item_enabled(scene_atual,item_id,enabled= True)
-                time.sleep(int(time_show))
-                cl.set_scene_item_enabled(scene_atual,item_id,enabled= False)
-
-    except:
-        pass

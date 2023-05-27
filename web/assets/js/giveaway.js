@@ -97,7 +97,7 @@ async function giveaway_js(event,type_id) {
 
         if (name_list_parse) {
 
-    
+            name_list_parse = JSON.parse(name_list_parse)
             $("#giveaway-modal").modal("show");
     
             var tbody_give = document.getElementById('giveaway-list-body');

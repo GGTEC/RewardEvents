@@ -53,6 +53,11 @@ body {
     background: #000000;
   }
 
+  ::-webkit-scrollbar-corner {
+    background: #594270;
+    border: 0px none transparent;
+  }
+
 .chat-col-new {
   height: 100vh;
 }

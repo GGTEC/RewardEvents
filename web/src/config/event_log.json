@@ -1,0 +1,17 @@
+{
+    "font_size": 18,
+    "color_events": "blue",
+    "data_show": 1,
+    "show_commands": 1,
+    "show_redeem": 1,
+    "show_events": 1,
+    "show_join": 1,
+    "show_leave": 1,
+    "show_commands_chat": 1,
+    "show_redeem_chat": 1,
+    "show_events_chat": 1,
+    "show_join_chat": 1,
+    "show_leave_chat": 1,
+    "show_time_events": 1,
+    "event_list": []
+}

@@ -1,0 +1,56 @@
+{
+      "command": "!duelo",
+      "command_accept": "aceitar",
+      "user_level": "mod",
+      "delay": 10,
+      "last_use": 0,
+      "time_to_accept": "15",
+      "time_to_message": "3",
+      "time_to_start": "30",
+      "create_pred": 1,
+      "challenged": "",
+      "challenger": "",
+      "accept": 0,
+      "duel_battle": {
+            "duel_1": {
+                  "start_mess": "{challenger} e {challenged} se enfrentam em um duelo épico. Quem será o vencedor?",
+                  "stage_1": "{challenger} ataca com força, mas {challenged} consegue desviar com agilidade.",
+                  "stage_2": "{challenged} tenta um contra-ataque, mas {challenger} está preparado e bloqueia facilmente.",
+                  "stage_3": "Os dois lutadores trocam golpes intensos, cada um tentando obter a vantagem.",
+                  "stage_4": "{challenger} consegue um corte superficial em {challenged}, mas este não se abala e responde com um golpe poderoso.",
+                  "stage_5": "No final, {winner} é declarado vencedor após um ataque decisivo. {Looser} é derrotado, mas sai da luta com orgulho pelo esforço dado."
+            },
+            "duel_2": {
+                  "start_mess": "O desafio foi lançado e {challenger} e {challenged} se preparam para o duelo final. O vencedor levará o título de campeão do chat.",
+                  "stage_1": "{challenger} saca sua espada e avança com determinação,{challenged} bloqueia o ataque com seu escudo.",
+                  "stage_2": "{challenged} tenta um contra-ataque, mas {challenger} é mais rápido e desvia facilmente.",
+                  "stage_3": "Os dois lutadores se encaram, tentando encontrar uma brecha na defesa do outro.",
+                  "stage_4": "{challenger} aproveita um momento de distração de {challenged} e tenta um golpe certeiro.",
+                  "stage_5": "No final em uma reviravolta supreendente {winner} é o vencedor e é coroado como o novo campeão da região, e {looser} o cumprimenta respeitosamente."
+            },
+            "duel_3": {
+                  "start_mess": "O duelo entre {challenger} e {challenged} está prestes a começar. As tensões estão altas e ambos os lados estão determinados a sair vitoriosos. Vamos ver quem sairá como o grande vencedor deste confronto.",
+                  "stage_1": "{challenger} avança com uma estratégia agressiva, tentando desequilibrar {challenged} com uma série de ataques rápidos.",
+                  "stage_2": "Mas {challenged} não se deixa abalar e contra-ataca com uma defesa sólida e precisa.",
+                  "stage_3": "As trocas de ataques continuam acirradas, mas {challenger} começa a ganhar vantagem, com suas táticas cada vez mais ousadas e eficientes.",
+                  "stage_4": "{challenger} consegue um corte superficial em {challenged}, mas este não se abala e responde com um golpe poderoso.",
+                  "stage_5": "No final, {winner} emerge vitorioso, deixando {looser} no chão. Após um duelo intenso e emocionante, {winner} levanta a mão em sinal de vitória, enquanto o público aplaude emocionado."
+            },
+            "duel_4": {
+                  "start_mess": "O duelo entre {challenger} e {challenged} estava prestes a começar. Ambos eram conhecidos por suas habilidades excepcionais com a espada, e a expectativa era alta.",
+                  "stage_1": "{challenger} partiu para cima, seu golpe rápido e preciso ,{challenged} conseguiu se esquivar por pouco.",
+                  "stage_2": "{challenged} contra-atacou com força, tentando desarmar {challenger},{challenger} bloqueou o golpe com habilidade.",
+                  "stage_3": "Os dois lutadores se enfrentavam ferozmente, suas espadas brilhando sob o sol. Nenhum deles parecia estar ganhando vantagem.",
+                  "stage_4": "{challenger} começou a ficar exausto, sua defesa começando a fraquejar. {challenged} aproveitou a oportunidade e tentou um golpe decisivo.",
+                  "stage_5": "No final, {winner} saiu vitorioso como o novo campeão, enquanto {looser} foi o perdedor. Mas ambos foram aplaudidos pelo público pelo espetáculo incrível que proporcionaram."
+            },
+            "duel_5": {
+                  "start_mess": "O duelo entre {challenger} e {challenged} promete ser épico. Ambos são guerreiros experientes e estão determinados a sair vitoriosos. Quem vencerá? Vamos descobrir nas próximas cinco fases.",
+                  "stage_1": "{challenger} e {challenged} se encaram, prontos para o primeiro ataque. O tensionamento é visível em seus rostos.",
+                  "stage_2": "{challenger} tenta um golpe surpresa, mas {challenged} consegue desviar com agilidade.",
+                  "stage_3": "{challenged} contra-ataca com uma sequência de socos, mas {challenger} consegue bloquear todos eles.",
+                  "stage_4": "Os dois guerreiros se movem com rapidez, trocando golpes e bloqueios. A multidão fica em silêncio, presenciando o emocionante confronto.",
+                  "stage_5": "Após uma luta intensa, {winner} consegue desferir o golpe final, derrubando {looser} no chão. A multidão explodiu em aplausos e {winner} é proclamado vitorioso."
+            }
+      }
+}

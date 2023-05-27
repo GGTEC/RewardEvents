@@ -16,6 +16,8 @@ import tempfile
 
 import tkinter.messagebox as messagebox
 
+import subprocess
+
 extDataDir = os.getcwd()
 
 appdata_path = os.getenv('APPDATA')
@@ -226,78 +228,101 @@ def copy_file(source, dest):
     copy = 1
     return copy
     
-def update_notif(data,type_not):
+def update_notif(data):
+
+    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notifc_config_file:
+        notifc_config_Data = json.load(notifc_config_file)
+
+    duration = notifc_config_Data['HTML_REDEEM_TIME']
 
     redeem = data['redeem_name']
+    user = data['redeem_user']
+
+    html_file = f"{appdata_path}/rewardevents/web/src/html/redeem/redeem.html"
+
+    try:
+        
+        with open(html_file, "r") as html:
+            soup = bs(html, 'html.parser')
+
+            
+        redeem_src = "../../Request.png"
+
+        main_div = soup.find("div", {"id": f"main-block"})
+        main_div['style'] = f'animation-duration: {duration}s'
+        
+        image_redeem = soup.find("img", {"class": "img-responsive"})
+        redeem_name_tag = soup.find("span", {"class": "redem_name"})
+        redeem_user_tag = soup.find("span", {"class": "redem_user"})
+
+        image_redeem['src'] = redeem_src
+        redeem_name_tag.string = redeem
+        redeem_user_tag.string = user
+                        
+
+        return str(soup)
+    
+    except Exception as e:
+
+        error_log(e)
+        return True
+
+def update_music(data):
+
+    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notifc_config_file:
+        notifc_config_Data = json.load(notifc_config_file)
+
+    duration = notifc_config_Data['HTML_MUSIC_TIME']
+
+
     user = data['redeem_user']
     artist = data['artist']
     music = data['music']
 
-
-    html_backup = f"{appdata_path}/rewardevents/web/src/html/notification/notification.html.tmp"
-    html_file = f"{appdata_path}/rewardevents/web/src/html/notification/notification.html"
+    html_file = f"{appdata_path}/rewardevents/web/src/html/music/music.html"
 
     try:
-        os.remove(html_file)
-    
-        with open(html_backup, "r") as html:
+        
+        with open(html_file, "r") as html:
             soup = bs(html, 'html.parser')
 
-        redeem_block = soup.find("div", {"class": "col-6 redem_block"})
-        music_block = soup.find("div", {"class": "col-7 music_block"})
+        album_src = "../../player/images/album.png"
+        
+        main_div = soup.find("div", {"id": f"main-block"})
+        main_div['style'] = f'animation-duration: {duration}s'
 
-        if type_not == 'redeem':
-            
-            redeem_src = "../Request.png"
-            music_block['style'] = 'display: none !important;'
-            redeem_block['style'] = 'display: block;'
-            
-            image_redeem = soup.find("img", {"class": "img-responsive"})
-            redeem_name_tag = soup.find("span", {"class": "redem_name"})
-            redeem_user_tag = soup.find("span", {"class": "redem_user"})
+        image_redeem = soup.find("img", {"class": "img-responsive"})
+        music_name_tag = soup.find("span", {"class": "music_name"})
+        artist_name_tag = soup.find("span", {"class": "artist_name"})
+        redeem_user_music_tag = soup.find("span", {"class": "redem_user_music"})
 
-            image_redeem['src'] = redeem_src
-            redeem_name_tag.string = redeem
-            redeem_user_tag.string = user
-                        
-        elif type_not == 'music':
+        image_redeem['src'] = album_src
+        music_name_tag.string = music
+        artist_name_tag.string = artist
+        redeem_user_music_tag.string = user
 
-            album_src = "../player/images/album.png"
-            music_block['style'] = 'display: block ;'
-            redeem_block['style'] = 'display: none !important;'
-            
-            image_redeem = soup.find("img", {"class": "img-responsive"})
-            music_name_tag = soup.find("span", {"class": "music_name"})
-            artist_name_tag = soup.find("span", {"class": "artist_name"})
-            redeem_user_music_tag = soup.find("span", {"class": "redem_user_music"})
-
-            image_redeem['src'] = album_src
-            music_name_tag.string = music
-            artist_name_tag.string = artist
-            redeem_user_music_tag.string = user
-                
-        with open(html_file, "wb") as f_output:
-            f_output.write(soup.prettify("utf-8"))
-
-        return True
-
-    except Exception as e:
-        error_log(e)
-
-        return True
-      
-def update_video(video):
+        return str(soup)
     
-    html_video_backup = f"{appdata_path}/rewardevents/web/src/html/video/video.html.tmp"
+    except Exception as e:
+
+        error_log(e)
+        return True
+
+
+def update_video(video,time):
+
     html_video_file = f"{appdata_path}/rewardevents/web/src/html/video/video.html"
 
     try:
 
-        with open(html_video_backup, "r") as html:
+        with open(html_video_file, "r") as html:
             soup = bs(html, 'html.parser')
 
         video_div = soup.find("div", {"id": "video_div"})
         gif_div = soup.find("div", {"id": "gif_div"})
+
+        main_div = soup.find("div", {"id": f"main-block"})
+        main_div['style'] = f'animation-duration: {time}s'
 
         if video.endswith('.gif'):
 
@@ -315,105 +340,18 @@ def update_video(video):
             video_redeem = soup.find("video")
             video_redeem['src'] = 'http://absolute/' + video
                
-        with open(html_video_file, "wb") as f_output:
-            f_output.write(soup.prettify("utf-8"))
-
-        return True
-
-
+        return str(soup)
+    
     except Exception as e:
 
         error_log(e)
 
         return True
 
-def update_event(data):
-    
-    html_event_backup = f"{appdata_path}/rewardevents/web/src/html/event/event.html.tmp"
-    html_event_file = f"{appdata_path}/rewardevents/web/src/html/event/event.html"
-    
-    type_id = data['type_id']
-    image_src = data['img_src']
-    img_px = data['img_px']
-    response_px = data['response_px']
-    duration = int(data['duration']) - 1
-    image_above = data['image_above']	
-    audio_src = data['audio_src']
-    audio_volume = data['audio_volume']
-    tts_src = f'{appdata_path}/rewardevents/web/src/player/cache/tts.mp3'
-    play_tts = data['play_tts']
-    color_highligh = data['color']
-    font_weight = data['weight']
-    
-    html_event_style_path = f"event_styles/{type_id}.css"
-
-    audio_volume = int(audio_volume)/100
-    
-    message = data['message']
-    username = data['username']
-
-    username_replace = f"<span id='username' style='color:{color_highligh};font-weight:{font_weight}'>{username}</span>"
-
-    message = message.replace(username,username_replace)
-
-    message_soup = bs(message, 'html.parser')
-    
-    try:
-
-        with open(html_event_backup, "r",encoding='utf-8') as html:
-            soup = bs(html, 'html.parser')
-
-        # Encontre todas as tags <link> que referenciam folhas de estilo CSS
-        link_tags = soup.find_all('link', rel='stylesheet')
-
-        # Altere o atributo href da segunda tag <link> para apontar para o novo arquivo CSS
-        link_tags[1]['href'] = html_event_style_path
-
-        audio_tag = soup.find("input", {"id": "path_audio1"})
-        audio_tag['value'] = f'http://absolute/{audio_src}'
-
-        audio2_tag = soup.find("input", {"id": "path_audio2"})
-        
-        if play_tts == 0:
-            audio2_tag['value'] = f''
-        else:
-            audio2_tag['value'] = f'http://absolute/{tts_src}'
-            
-        volume_tag = soup.find("input", {"id": "volume"})
-        volume_tag['value'] = audio_volume
-    
-        if image_above == 0: 
-            type_div = "above"
-        else:
-            type_div = "over"
-
-        main_div = soup.find("div", {"id": f"main_div_{type_div}"})
-        main_div['style'] = f'animation-duration: {duration}s'
-
-        img_source = soup.find("img" ,{"id":f"img_{type_div}"})
-        img_source['src'] = 'http://absolute/' + image_src
-        img_source['style'] = f'width: {img_px}px;'
-
-        message_tag = soup.find("p", {"id": f"message-{type_div}"})
-        message_tag['style'] = f'font-size: {response_px}px;'
-        message_tag.string = ""
-        message_tag.insert(1,message_soup)
-
-
-        with open(html_event_file, "wb") as f_output:
-            f_output.write(soup.prettify("utf-8"))
-
-        return True
-            
-    except Exception as e:
-        error_log(e)
-
-        return False
 
 def update_highlight(data):
     
-    html_highlight_backup = f"{appdata_path}/rewardevents/web/src/html/highlight/highlight.html.tmp"
-    html_highlight_file = f"{appdata_path}/rewardevents/web/src/html/highlight/highlight.html"
+    html_highlight = f"{appdata_path}/rewardevents/web/src/html/highlight/highlight.html"
     
     duration = int(data['duration']) - 1
 
@@ -427,29 +365,30 @@ def update_highlight(data):
 
     try:
 
-        with open(html_highlight_backup, "r",encoding='utf-8') as html:
+        with open(html_highlight, "r",encoding='utf-8') as html:
             soup = bs(html, 'html.parser')
 
         main_div = soup.find("div", {"id": f"highlight-block"})
         main_div['style'] = f'animation-duration: {duration}s'
 
+        font_style = soup.find("p", {"id": f"text_style"})
+        font_style['style'] = f'font-size: {font_size};font-weight: {font_weight};'
+
         username_tag = soup.find("span", {"id": f"username"})
-        username_tag['style'] = f'font-size: {font_size};font-weight: {font_weight};color: {color_highligh_username};'
+        username_tag['style'] = f'color: {color_highligh_username};'
         username_tag.string = username
 
         message_tag = soup.find("span", {"id": f"message"})
-        message_tag['style'] = f'font-size: {font_size};font-weight: {font_weight};color: {color_highligh_message};'
+        message_tag['style'] = f'color: {color_highligh_message};'
         message_tag.string = message
 
-        with open(html_highlight_file, "wb") as f_output:
-            f_output.write(soup.prettify("utf-8"))
-
-        return True
+        return str(soup)
             
     except Exception as e:
-        
+
         error_log(e)
-        return False
+        return True
+        
 
 def update_emote(data):
 
@@ -459,17 +398,14 @@ def update_emote(data):
     width = obs_not_data['EMOTE_PX']
     height = obs_not_data['EMOTE_PX']
 
-    html_emote_backup = f"{appdata_path}/rewardevents/web/src/html/emote/emote.html.tmp"
     html_emote_file = f"{appdata_path}/rewardevents/web/src/html/emote/emote.html"
 
     try:
 
-        with open(html_emote_backup, "r",encoding='utf-8') as html:
+        with open(html_emote_file, "r",encoding='utf-8') as html:
             soup = bs(html, 'html.parser')
 
         main_div = soup.find("div", {"id": f"emojis"})
-        
-        
 
         for emote in data:
 
@@ -479,43 +415,13 @@ def update_emote(data):
             element_style['style'] = f'width:{width}px;height:{height}px;animation-delay:{random}s'
             main_div.append(element)
 
-        with open(html_emote_file, "wb") as f_output:
-            f_output.write(soup.prettify("utf-8"))
-
-        return True
+        return str(soup)
             
     except Exception as e:
         
         error_log(e)
         return False
 
-def update_person(data):
-
-    person_src = data['src']
-
-    with open(f'{appdata_path}/rewardevents/web/src/config/person.json', 'r', encoding='utf-8') as person_file:
-        person_data = json.load(person_file)
-
-    html_person_backup = f"{appdata_path}/rewardevents/web/src/html/person/person.html.tmp"
-    html_person_file = f"{appdata_path}/rewardevents/web/src/html/person/person.html"
-
-    try:
-
-        with open(html_person_backup, "r",encoding='utf-8') as html:
-            soup = bs(html, 'html.parser')
-
-        person_img_tag = soup.find("img")
-        person_img_tag['src'] = 'http://absolute/' + person_src
-
-        with open(html_person_file, "wb") as f_output:
-            f_output.write(soup.prettify("utf-8"))
-
-        return True
-            
-    except Exception as e:
-        
-        error_log(e)
-        return False
 
 def replace_all(text, dic_res):
     
@@ -530,6 +436,7 @@ def replace_all(text, dic_res):
         
         return ''
 
+
 def messages_file_load(key):
     
     with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
@@ -539,6 +446,66 @@ def messages_file_load(key):
 
     return message
  
+
+def comparar_e_inserir_chaves(diretorio_origem, diretorio_destino, arquivos_ignorados):
+    
+    for diretorio_raiz, _, arquivos in os.walk(diretorio_origem):
+        for arquivo in arquivos:
+            if arquivo.endswith('.json') and arquivo not in arquivos_ignorados:
+                caminho_arquivo_origem = os.path.join(diretorio_raiz, arquivo)
+                caminho_arquivo_destino = caminho_arquivo_origem.replace(diretorio_origem, diretorio_destino)
+
+                if not os.path.exists(caminho_arquivo_destino):
+                    print(f"Arquivo ausente no diretório de destino: {caminho_arquivo_destino}")
+                    shutil.copy2(caminho_arquivo_origem, caminho_arquivo_destino)
+
+                with open(caminho_arquivo_origem, 'r',encoding='utf-8') as f1, open(caminho_arquivo_destino, 'r+',encoding='utf-8') as f2:
+                    try:
+                        dados1 = json.load(f1)
+                        dados2 = json.load(f2)
+
+                        if isinstance(dados1, list) and isinstance(dados2, list):
+                            conteudo_atualizado = dados1 + [item for item in dados2 if item not in dados1]
+                            f2.seek(0)
+                            json.dump(conteudo_atualizado, f2, indent=4,ensure_ascii=False)
+                            f2.truncate()
+                            print(f"Conteúdo atualizado no arquivo {caminho_arquivo_destino}")
+
+
+                        elif isinstance(dados1, dict) and isinstance(dados2, dict):
+                            chaves1 = set(dados1.keys())
+                            chaves2 = set(dados2.keys())
+
+                            chaves_ausentes = chaves1 - chaves2
+
+                            if chaves_ausentes:
+                                print(f"Chaves ausentes no arquivo {caminho_arquivo_destino}:")
+                                for chave in chaves_ausentes:
+                                    print(chave)
+
+                                f2.seek(0)
+                                conteudo = json.load(f2)
+
+                                for chave in chaves_ausentes:
+                                    conteudo[chave] = dados1[chave]
+
+                                f2.seek(0)
+                                json.dump(conteudo, f2, indent=4,ensure_ascii=False)
+                                f2.truncate()
+
+                        else:
+                            print(f"Erro: Arquivo {caminho_arquivo_origem} ou {caminho_arquivo_destino} contém um formato incompatível.")
+
+                    except json.JSONDecodeError as e:
+                        print(f"Erro: Falha ao decodificar o arquivo JSON: {caminho_arquivo_origem} ou {caminho_arquivo_destino}")
+                        print(e)
+
+diretorio_origem = f'{extDataDir}/web'
+diretorio_destino = f'{appdata_path}/rewardevents/web'
+arquivos_ignorados = ['games.json','tags.json','bot_list.json','bot_list.json','badges_global.json','badges_global.json','icon-families.json']
+
+
+
 def get_files_list():
     
     dir = f"{appdata_path}/rewardevents/web/src/auth"
@@ -551,12 +518,13 @@ def get_files_list():
         is_writable = os.access(dir1, os.W_OK)
 
         if not is_writable:
+
             os.chmod(dir1, 0o700)
             is_writable = os.access(dir1, os.W_OK)
 
         if is_writable:
 
-            url = "https://ggtec.github.io/GGTECApps/assets/web.zip"
+            url = "https://github.com/GGTEC/GGCORETEC/raw/main/assets/web.zip"
 
             zip_path = f"{appdata_path}/rewardevents/web.zip"
             unzip_path = f"{appdata_path}/rewardevents"
@@ -589,6 +557,7 @@ def get_files_list():
     else:
 
         try:
+            comparar_e_inserir_chaves(diretorio_origem, diretorio_destino,arquivos_ignorados)
 
             response = requests.get('https://api.twitchinsights.net/v1/bots/all')
 
@@ -627,71 +596,47 @@ def get_files_list():
             else:
 
                 error_log(e)
-        
-        with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'r', encoding='utf-8') as poll_file:
-            poll_data = json.load(poll_file)
 
-            if poll_data["status"] == "":
+    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notif_file:
+        notif_data = json.load(notif_file)
 
-                poll_data["status"] = "archived"
+        if not 'HTML_REDEEM_ACTIVE' in notif_data:
 
-                with open(f'{appdata_path}/rewardevents/web/src/config/poll_id.json', 'w', encoding='utf-8') as poll_file:
-                    json.dump(poll_data, poll_file, indent=6, ensure_ascii=False)  
-
-        with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
-            messages_data = json.load(messages_file)
-
-            if not "command_skip_inlist" in messages_data:
-                messages_data['command_skip_inlist'] = '/me {username} --> Você já votou para pular, espere mais votos ou a musica acabar.'
-                messages_data['command_skip_noplaying'] = '/me {username} --> Nenhuma musica em reprodução no momento..'
-
-        with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "w", encoding='utf-8') as messages_file:
-            json.dump(messages_data, messages_file, indent=6, ensure_ascii=False)  
-
-        with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', "r", encoding="utf-8") as player_file:
-            player_data = json.load(player_file)
-
-        if not "skip_users" in player_data:
-
-            new_data = {
-                "STATUS": player_data['STATUS'],
-                "STATUS_MUSIC_ENABLE": player_data['STATUS_MUSIC_ENABLE'],
-                "skip_users" : [],
-                "skip_votes" : 3,
-                "skip_mod" : 1,
-                "skip_requests" : 0,
-                "max_duration": player_data['max_duration'],
-                "blacklist": player_data['blacklist'],
+            data = {
+                "HTML_PLAYER_ACTIVE": 1,
+                "HTML_EMOTE_ACTIVE": 1,
+                "HTML_REDEEM_ACTIVE": 1,
+                "HTML_REDEEM_TIME": 5,
+                "HTML_MUSIC_TIME": 5,
+                "EMOTE_PX": "40"
             }
 
-            with open(f'{appdata_path}/rewardevents/web/src/player/config/config.json', "w", encoding="utf-8") as player_file_w:
-                json.dump(new_data,player_file_w,indent=4,ensure_ascii=False)
+            with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','w',encoding='utf-8') as notif_file:
+                json.dump(data,notif_file,indent=4,ensure_ascii=False)
+    
 
-        with open(f'{appdata_path}/rewardevents/web/src/config/event_log.json', "r", encoding="utf-8") as event_file:
-            event_data = json.load(event_file)
+    notif_path = f'{appdata_path}/rewardevents/web/src/html/notification'
+    remove_path = f'{appdata_path}\\rewardevents\\web\\src\\html'
 
-        if not "show_commands_chat" in event_data:
 
-            new_data = {
-                "font_size": event_data['font_size'],
-                "color_events": event_data['color_events'],
-                "data_show": event_data['data_show'],
-                "show_commands": event_data['show_commands'],
-                "show_redeem": event_data['show_redeem'],
-                "show_events": event_data['show_events'],
-                "show_join": event_data['show_join'],
-                "show_leave": event_data['show_leave'],
-                "show_commands_chat": 0,
-                "show_redeem_chat": 0,
-                "show_events_chat": 0,
-                "show_join_chat": 0,
-                "show_leave_chat": 0,
-                "show_time_events":0,
-                "event_list" : event_data['event_list']
-            }
+    if os.path.exists(notif_path):
 
-            with open(f'{appdata_path}/rewardevents/web/src/config/event_log.json', "w", encoding="utf-8") as event_file_w:
-                json.dump(new_data,event_file_w,indent=4,ensure_ascii=False)
+        shutil.rmtree(remove_path)
+
+        url = "https://github.com/GGTEC/GGCORETEC/raw/main/assets/html.zip"
+
+        zip_path = f"{appdata_path}/rewardevents/html.zip"
+        unzip_path = f"{appdata_path}/rewardevents/web/src"
+
+        urllib.request.urlretrieve(url, zip_path)
+
+        if os.path.exists(zip_path):
+
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(unzip_path)
+
+            if os.path.exists(f'{appdata_path}\\rewardevents\\web\\src\\html\\redeem'):
+                os.remove(zip_path)
 
 
 get_files_list()

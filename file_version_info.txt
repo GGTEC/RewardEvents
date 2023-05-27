@@ -1,7 +1,7 @@
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(0, 5, 5, 5),
-    prodvers=(0, 5, 5, 5),
+    filevers=(0, 5, 6, 0),
+    prodvers=(0, 5, 6, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -15,12 +15,12 @@ VSVersionInfo(
         u'040904B0',
         [StringStruct(u'CompanyName', u'GGTEC'),
         StringStruct(u'FileDescription', u'RewardEvents'),
-        StringStruct(u'FileVersion', u'5.5.5'),
+        StringStruct(u'FileVersion', u'5.6.0'),
         StringStruct(u'InternalName', u'RewardEvents'),
         StringStruct(u'LegalCopyright', u'\xa9 GGTEC. All rights reserved.'),
         StringStruct(u'OriginalFilename', u'RewardEvents.exe'),
         StringStruct(u'ProductName', u'RewardRedeem '),
-        StringStruct(u'ProductVersion', u'5.5.5')])
+        StringStruct(u'ProductVersion', u'5.6.0')])
       ]), 
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
   ]

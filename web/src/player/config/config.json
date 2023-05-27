@@ -1,0 +1,10 @@
+{
+      "STATUS": 0,
+      "STATUS_MUSIC_ENABLE": 1,
+      "skip_users" : [],
+      "skip_votes" : 3,
+      "skip_mod" : 1,
+      "skip_requests" : 0,
+      "max_duration": 600,
+      "blacklist": []
+}

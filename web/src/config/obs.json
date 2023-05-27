@@ -1,0 +1,5 @@
+{
+      "OBS_HOST": "localhost",
+      "OBS_PORT": "5555",
+      "OBS_PASSWORD": "123456"
+}
