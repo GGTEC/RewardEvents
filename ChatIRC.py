@@ -5,8 +5,6 @@ import time
 
 appdata_path = os.getenv('APPDATA')
 
-log_file = f'{appdata_path}/rewardevents/web/src/chat.log'
-
 def error_log(ex):
 
     now = datetime.now()
@@ -140,10 +138,6 @@ class TwitchBot():
                 readbuffer = self.IRC.recv(4096).decode()
                 
                 for line in readbuffer.split("\r\n"):
-
-                    now = datetime.now()
-                    with open(log_file, 'a') as f:
-                        f.write(f"{now} - {line.encode('unicode_escape').decode()}  \n\n")
 
                     if "PING" in line:
                         message = "PONG tmi.twitch.tv\r\n".encode()

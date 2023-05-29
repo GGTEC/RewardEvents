@@ -261,7 +261,7 @@ function show_config_div(div_id) {
     } else if (div_id == "config-chat-messages-div") {
         messages_config_js('get');
     } else if (div_id == "config-discord-div") {
-        discord_js('event','get');
+        discord_js('event','get-profile');
     } else if (div_id == "config-music-div"){
         get_redeem_js_config('redeem-select-music')
         sr_config_js('event','get')
@@ -1690,29 +1690,6 @@ async function show_error_log(type_id){
 
         window.pywebview.api.open_py('errolog_clear','null')
 
-    }else if (type_id == 'get-debug'){
-
-        $("#debug-modal").modal("show");
-
-        $('#debug-textarea').val('');
-
-        var errors_data = await window.pywebview.api.open_py('log','null')
-    
-        if (errors_data){
-    
-            var textarea = document.getElementById('debug-textarea');
-    
-            $('#debug-textarea').val(errors_data);
-            
-            textarea.scrollTop = textarea.scrollHeight;
-        }
-
-    } else if (type_id == 'clear-debug'){
-
-        $("#debug-modal").modal("hide");
-        $('#debug-textarea').val('');
-
-        window.pywebview.api.open_py('log_clear','null')
     }
 
 }

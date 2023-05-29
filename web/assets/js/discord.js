@@ -35,6 +35,43 @@ async function discord_js(event,type_id) {
     
         window.pywebview.api.discord_config(formData_discord, 'save', input_type_edit.value);
 
+    } else if (type_id == 'save-profile'){
+    
+        var webhook_profile_status = document.getElementById('profile-webhook-status');
+        var webhook_profile_image_url = document.getElementById('url-profile-image-webhook');
+        var webhook_profile_name  = document.getElementById('profile-name-webhook');
+
+        webhook_profile_status.checked = webhook_profile_status ? 1 : 0;
+    
+        data_discord_save = {
+            
+            webhook_profile_status: webhook_profile_status,
+            webhook_profile_image_url: webhook_profile_image_url.value,
+            webhook_profile_name : webhook_profile_name.value
+        }
+    
+        var formData_discord = JSON.stringify(data_discord_save);
+    
+        window.pywebview.api.discord_config(formData_discord, 'save-profile', 'none');
+
+    } else if (type_id == 'get-profile'){
+    
+        var webhook_profile_status = document.getElementById('profile-webhook-status');
+        var webhook_profile_image_url = document.getElementById('url-profile-image-webhook');
+        var webhook_profile_name  = document.getElementById('profile-name-webhook');
+        
+        var data_discord_parse = await window.pywebview.api.discord_config('none', 'get-profile','none');
+
+        if (data_discord_parse) {
+
+            data_discord_parse = JSON.parse(data_discord_parse)
+
+            webhook_profile_status.checked  = data_discord_parse.webhook_profile_status == 1 ? true : false;
+            webhook_profile_image_url.value =  data_discord_parse.webhook_profile_image_url;
+            webhook_profile_name.value = data_discord_parse.webhook_profile_name;
+
+        }
+
     } else if (type_id == 'select_edit'){
 
         var select = document.getElementById('select_edit_not');

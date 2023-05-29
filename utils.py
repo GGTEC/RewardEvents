@@ -16,8 +16,6 @@ import tempfile
 
 import tkinter.messagebox as messagebox
 
-import subprocess
-
 extDataDir = os.getcwd()
 
 appdata_path = os.getenv('APPDATA')
@@ -26,37 +24,38 @@ if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     if getattr(sys, 'frozen', False):
         extDataDir = sys._MEIPASS
 
-def find_between( s, first, last ):
+
+def find_between(s, first, last):
 
     try:
-        start = s.index( first ) + len( first )
-        end = s.index( last, start )
+        start = s.index(first) + len(first)
+        end = s.index(last, start)
         return s[start:end]
-    
+
     except ValueError:
-        
+
         return False
 
+
 def calculate_time(started):
-    
+
     try:
-        
+
         utc_now = datetime.utcnow().replace(tzinfo=pytz.utc)
         utc_date = datetime.fromisoformat(started).replace(tzinfo=pytz.utc)
 
         gmt_minus_3_now = utc_now.astimezone(pytz.timezone("Etc/GMT+3"))
         gmt_minus_3_date = utc_date.astimezone(pytz.timezone("Etc/GMT+3"))
-        
 
         difference = gmt_minus_3_now - gmt_minus_3_date
-    
+
         days = difference.days
         hours = difference.seconds//3600
-        minutes = (difference.seconds//60)%60
-        sec = difference.seconds%60
-        
+        minutes = (difference.seconds//60) % 60
+        sec = difference.seconds % 60
+
         time_in_live = {
-            'days' : str(days),
+            'days': str(days),
             'hours': str(hours),
             'minutes': str(minutes),
             'sec': str(sec)
@@ -69,6 +68,7 @@ def calculate_time(started):
         error_log(e)
 
         return 'none'
+
 
 def error_log(ex):
 
@@ -86,69 +86,73 @@ def error_log(ex):
         })
         tb = tb.tb_next
 
-    error = str(f'Erro = type: {type(ex).__name__} | message: {str(ex)} | trace: {trace} | time: {time_error} \n')
+    error = str(
+        f'Erro = type: {type(ex).__name__} | message: {str(ex)} | trace: {trace} | time: {time_error} \n')
 
     with open(f"{appdata_path}/rewardevents/web/src/error_log.txt", "a+", encoding='utf-8') as log_file_r:
         log_file_r.write(error)
 
-def check_delay(delay_command,last_use):
-    
-    with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8')  as messages_file:
-        messages_data = json.load(messages_file) 
+
+def check_delay(delay_command, last_use):
+
+    with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
+        messages_data = json.load(messages_file)
 
     message_error = messages_data['response_delay_error']
 
     last_command_time = last_use
     delay_compare = int(delay_command)
-    
+
     current_time = int(time.time())
 
     if current_time >= last_command_time + delay_compare:
 
         message = 'OK'
         value = True
-        
+
         return message, value, current_time
-    
+
     else:
-        
+
         remaining_time = last_command_time + delay_compare - current_time
-    
+
         message = message_error.replace('{seconds}', str(remaining_time))
         value = False
         current_time = ''
-        
+
         return message, value, current_time
-    
-def check_delay_duel(delay_command,last_use):
-    
+
+
+def check_delay_duel(delay_command, last_use):
+
     last_command_time = last_use
     delay_compare = int(delay_command)
-    
+
     current_time = int(time.time())
 
     if current_time >= last_command_time + delay_compare:
 
         message = 'OK'
         value = True
-        
+
         return message, value, current_time
-    
+
     else:
-        
+
         remaining_time = last_command_time + delay_compare - current_time
-    
+
         value = False
         current_time = ''
-        
+
         return remaining_time, value, current_time
 
+
 def send_message(type_message):
-    
+
     try:
         with open(f'{appdata_path}/rewardevents/web/src/config/commands_config.json') as status_commands_check:
             status_commands_data = json.load(status_commands_check)
-        
+
         status_error_time = status_commands_data['STATUS_ERROR_TIME']
         status_error_user = status_commands_data['STATUS_ERROR_USER']
         status_response = status_commands_data['STATUS_RESPONSE']
@@ -160,61 +164,60 @@ def send_message(type_message):
         status_music_confirm = status_commands_data['STATUS_MUSIC_CONFIRM']
 
         if type_message == 'CHAT':
-                return True
-        
+            return True
+
         elif type_message == 'ERROR_TIME':
-            
+
             if status_error_time == 1:
                 return True
-                    
+
         elif type_message == 'RESPONSE':
 
             if status_response == 1:
                 return True
-                
+
         elif type_message == 'ERROR_USER':
-            
+
             if status_error_user == 1:
                 return True
-                    
+
         elif type_message == 'CLIP':
-            
+
             if status_clip == 1:
                 return True
-                    
+
         elif type_message == 'STATUS_TTS':
-            
+
             if status_tts == 1:
                 return True
-                
+
         elif type_message == 'TIMER':
-            
+
             if status_timer == 1:
                 return True
 
         elif type_message == 'STATUS_MUSIC':
-            
+
             if status_music == 1:
                 return True
-                
+
         elif type_message == 'STATUS_MUSIC_CONFIRM':
-            
+
             if status_music_confirm == 1:
                 return True
-                
+
         elif type_message == 'STATUS_MUSIC_ERROR':
-            
+
             if status_music_error == 1:
                 return True
-        
-
 
     except Exception as e:
         error_log(e)
- 
+
+
 def copy_file(source, dest):
     copy = 0
-    
+
     try:
 
         shutil.copy2(source, dest)
@@ -224,13 +227,14 @@ def copy_file(source, dest):
         error_log(e)
         copy = 1
         return copy
-    
+
     copy = 1
     return copy
-    
+
+
 def update_notif(data):
 
-    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notifc_config_file:
+    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding='utf-8') as notifc_config_file:
         notifc_config_Data = json.load(notifc_config_file)
 
     duration = notifc_config_Data['HTML_REDEEM_TIME']
@@ -241,16 +245,15 @@ def update_notif(data):
     html_file = f"{appdata_path}/rewardevents/web/src/html/redeem/redeem.html"
 
     try:
-        
+
         with open(html_file, "r") as html:
             soup = bs(html, 'html.parser')
 
-            
         redeem_src = "../../Request.png"
 
         main_div = soup.find("div", {"id": f"main-block"})
         main_div['style'] = f'animation-duration: {duration}s'
-        
+
         image_redeem = soup.find("img", {"class": "img-responsive"})
         redeem_name_tag = soup.find("span", {"class": "redem_name"})
         redeem_user_tag = soup.find("span", {"class": "redem_user"})
@@ -258,22 +261,21 @@ def update_notif(data):
         image_redeem['src'] = redeem_src
         redeem_name_tag.string = redeem
         redeem_user_tag.string = user
-                        
 
         return str(soup)
-    
+
     except Exception as e:
 
         error_log(e)
         return True
 
+
 def update_music(data):
 
-    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notifc_config_file:
+    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding='utf-8') as notifc_config_file:
         notifc_config_Data = json.load(notifc_config_file)
 
     duration = notifc_config_Data['HTML_MUSIC_TIME']
-
 
     user = data['redeem_user']
     artist = data['artist']
@@ -282,19 +284,20 @@ def update_music(data):
     html_file = f"{appdata_path}/rewardevents/web/src/html/music/music.html"
 
     try:
-        
+
         with open(html_file, "r") as html:
             soup = bs(html, 'html.parser')
 
         album_src = "../../player/images/album.png"
-        
+
         main_div = soup.find("div", {"id": f"main-block"})
         main_div['style'] = f'animation-duration: {duration}s'
 
         image_redeem = soup.find("img", {"class": "img-responsive"})
         music_name_tag = soup.find("span", {"class": "music_name"})
         artist_name_tag = soup.find("span", {"class": "artist_name"})
-        redeem_user_music_tag = soup.find("span", {"class": "redem_user_music"})
+        redeem_user_music_tag = soup.find(
+            "span", {"class": "redem_user_music"})
 
         image_redeem['src'] = album_src
         music_name_tag.string = music
@@ -302,14 +305,14 @@ def update_music(data):
         redeem_user_music_tag.string = user
 
         return str(soup)
-    
+
     except Exception as e:
 
         error_log(e)
         return True
 
 
-def update_video(video,time):
+def update_video(video, time):
 
     html_video_file = f"{appdata_path}/rewardevents/web/src/html/video/video.html"
 
@@ -331,7 +334,7 @@ def update_video(video,time):
 
             video_redeem = soup.find("img")
             video_redeem['src'] = 'http://absolute/' + video
-        
+
         else:
 
             gif_div['style'] = 'display: none !important;'
@@ -339,9 +342,9 @@ def update_video(video,time):
 
             video_redeem = soup.find("video")
             video_redeem['src'] = 'http://absolute/' + video
-               
+
         return str(soup)
-    
+
     except Exception as e:
 
         error_log(e)
@@ -350,22 +353,22 @@ def update_video(video,time):
 
 
 def update_highlight(data):
-    
+
     html_highlight = f"{appdata_path}/rewardevents/web/src/html/highlight/highlight.html"
-    
+
     duration = int(data['duration']) - 1
 
     color_highligh_username = data['color_username']
     color_highligh_message = data['color_message']
     font_weight = data['weight']
     font_size = data['size']
-    
+
     message = data['user_input']
     username = data['username']
 
     try:
 
-        with open(html_highlight, "r",encoding='utf-8') as html:
+        with open(html_highlight, "r", encoding='utf-8') as html:
             soup = bs(html, 'html.parser')
 
         main_div = soup.find("div", {"id": f"highlight-block"})
@@ -383,12 +386,12 @@ def update_highlight(data):
         message_tag.string = message
 
         return str(soup)
-            
+
     except Exception as e:
 
         error_log(e)
         return True
-        
+
 
 def update_emote(data):
 
@@ -402,75 +405,81 @@ def update_emote(data):
 
     try:
 
-        with open(html_emote_file, "r",encoding='utf-8') as html:
+        with open(html_emote_file, "r", encoding='utf-8') as html:
             soup = bs(html, 'html.parser')
 
         main_div = soup.find("div", {"id": f"emojis"})
 
         for emote in data:
 
-            random = randint(0,5)
+            random = randint(0, 5)
             element = bs(emote, 'html.parser')
             element_style = element.find("img", {"class": f"emoji"})
             element_style['style'] = f'width:{width}px;height:{height}px;animation-delay:{random}s'
             main_div.append(element)
 
         return str(soup)
-            
+
     except Exception as e:
-        
+
         error_log(e)
         return False
 
 
 def replace_all(text, dic_res):
-    
+
     try:
         for i, j in dic_res.items():
             text = text.replace(i, j)
 
         return text
-    
+
     except Exception as e:
         error_log(e)
-        
+
         return ''
 
 
 def messages_file_load(key):
-    
+
     with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
         messages_data = json.load(messages_file)
 
     message = messages_data[key]
 
     return message
- 
+
 
 def comparar_e_inserir_chaves(diretorio_origem, diretorio_destino, arquivos_ignorados):
-    
+
     for diretorio_raiz, _, arquivos in os.walk(diretorio_origem):
         for arquivo in arquivos:
             if arquivo.endswith('.json') and arquivo not in arquivos_ignorados:
                 caminho_arquivo_origem = os.path.join(diretorio_raiz, arquivo)
-                caminho_arquivo_destino = caminho_arquivo_origem.replace(diretorio_origem, diretorio_destino)
+                caminho_arquivo_destino = caminho_arquivo_origem.replace(
+                    diretorio_origem, diretorio_destino)
 
                 if not os.path.exists(caminho_arquivo_destino):
-                    print(f"Arquivo ausente no diretório de destino: {caminho_arquivo_destino}")
-                    shutil.copy2(caminho_arquivo_origem, caminho_arquivo_destino)
+                    print(
+                        f"Arquivo ausente no diretório de destino: {caminho_arquivo_destino}")
+                    shutil.copy2(caminho_arquivo_origem,
+                                 caminho_arquivo_destino)
 
-                with open(caminho_arquivo_origem, 'r',encoding='utf-8') as f1, open(caminho_arquivo_destino, 'r+',encoding='utf-8') as f2:
+                with open(caminho_arquivo_origem, 'r', encoding='utf-8') as f1, open(caminho_arquivo_destino, 'r+', encoding='utf-8') as f2:
                     try:
                         dados1 = json.load(f1)
                         dados2 = json.load(f2)
 
                         if isinstance(dados1, list) and isinstance(dados2, list):
-                            conteudo_atualizado = dados1 + [item for item in dados2 if item not in dados1]
-                            f2.seek(0)
-                            json.dump(conteudo_atualizado, f2, indent=4,ensure_ascii=False)
-                            f2.truncate()
-                            print(f"Conteúdo atualizado no arquivo {caminho_arquivo_destino}")
-
+                            conteudo_atualizado = dados1 + \
+                                [item for item in dados2 if item not in dados1]
+                            if conteudo_atualizado != dados2:
+                                f2.seek(0)
+                                json.dump(conteudo_atualizado, f2,
+                                          indent=4, ensure_ascii=False)
+                                f2.truncate()
+                                print(
+                                    f"Conteúdo atualizado no arquivo {caminho_arquivo_destino}")
 
                         elif isinstance(dados1, dict) and isinstance(dados2, dict):
                             chaves1 = set(dados1.keys())
@@ -479,35 +488,48 @@ def comparar_e_inserir_chaves(diretorio_origem, diretorio_destino, arquivos_igno
                             chaves_ausentes = chaves1 - chaves2
 
                             if chaves_ausentes:
-                                print(f"Chaves ausentes no arquivo {caminho_arquivo_destino}:")
+                                print(
+                                    f"Chaves ausentes no arquivo {caminho_arquivo_destino}:")
                                 for chave in chaves_ausentes:
                                     print(chave)
 
                                 f2.seek(0)
                                 conteudo = json.load(f2)
 
-                                for chave in chaves_ausentes:
-                                    conteudo[chave] = dados1[chave]
+                                alterado = False
 
-                                f2.seek(0)
-                                json.dump(conteudo, f2, indent=4,ensure_ascii=False)
-                                f2.truncate()
+                                for chave in chaves_ausentes:
+                                    if chave not in conteudo or conteudo[chave] != dados1[chave]:
+                                        conteudo[chave] = dados1[chave]
+                                        alterado = True
+
+                                if alterado:  # Verifica se houve alterações antes de atualizar
+                                    f2.seek(0)
+                                    json.dump(conteudo, f2, indent=4,
+                                              ensure_ascii=False)
+                                    f2.truncate()
+                                    print(
+                                        f"Conteúdo atualizado no arquivo {caminho_arquivo_destino}")
 
                         else:
-                            print(f"Erro: Arquivo {caminho_arquivo_origem} ou {caminho_arquivo_destino} contém um formato incompatível.")
+                            print(
+                                f"Erro: Arquivo {caminho_arquivo_origem} ou {caminho_arquivo_destino} contém um formato incompatível.")
 
                     except json.JSONDecodeError as e:
-                        print(f"Erro: Falha ao decodificar o arquivo JSON: {caminho_arquivo_origem} ou {caminho_arquivo_destino}")
+                        print(
+                            f"Erro: Falha ao decodificar o arquivo JSON: {caminho_arquivo_origem} ou {caminho_arquivo_destino}")
                         print(e)
 
-diretorio_origem = f'{extDataDir}/web'
-diretorio_destino = f'{appdata_path}/rewardevents/web'
-arquivos_ignorados = ['games.json','tags.json','bot_list.json','bot_list.json','badges_global.json','badges_global.json','icon-families.json']
 
+diretorio_origem = f'{extDataDir}/web/src'
+
+diretorio_destino = f'{appdata_path}/rewardevents/web/src'
+
+arquivos_ignorados = ['games.json','tags.json','bot_list.json', 'bot_list.json', 'badges_global.json', 'badges_global.json']
 
 
 def get_files_list():
-    
+
     dir = f"{appdata_path}/rewardevents/web/src/auth"
     dir1 = f"{appdata_path}/rewardevents/"
 
@@ -532,7 +554,6 @@ def get_files_list():
             # Baixar o arquivo zip
             urllib.request.urlretrieve(url, zip_path)
 
-
             if os.path.exists(zip_path):
 
                 with tempfile.TemporaryDirectory() as temp_dir:
@@ -553,13 +574,14 @@ def get_files_list():
         else:
             print("Não foi possível conceder permissão para escrever na pasta:", dir1)
 
-
     else:
 
         try:
-            comparar_e_inserir_chaves(diretorio_origem, diretorio_destino,arquivos_ignorados)
+            comparar_e_inserir_chaves(
+                diretorio_origem, diretorio_destino, arquivos_ignorados)
 
-            response = requests.get('https://api.twitchinsights.net/v1/bots/all')
+            response = requests.get(
+                'https://api.twitchinsights.net/v1/bots/all')
 
             data = json.loads(response.text)
             data_save = []
@@ -570,26 +592,31 @@ def get_files_list():
                 data_save.append(name)
 
             with open(f"{appdata_path}/rewardevents/web/src/user_info/bot_list.json", "w") as outfile:
-                json.dump(data_save, outfile,indent=6)
+                json.dump(data_save, outfile, indent=6)
 
-            respo_tags = requests.get("https://ggtec.github.io/list_games_tags_tw/tags.json")
+            respo_tags = requests.get(
+                "https://ggtec.github.io/list_games_tags_tw/tags.json")
             data_save_tags = json.loads(respo_tags.text)
 
-            with open(f'{appdata_path}/rewardevents/web/src/games/tags.json', "w" , encoding="UTF-8") as tags_file:
-                json.dump(data_save_tags,tags_file,indent=4,ensure_ascii=False)
+            with open(f'{appdata_path}/rewardevents/web/src/games/tags.json', "w", encoding="UTF-8") as tags_file:
+                json.dump(data_save_tags, tags_file,
+                          indent=4, ensure_ascii=False)
 
-            respo_games = requests.get("https://ggtec.github.io/list_games_tags_tw/games.json")
+            respo_games = requests.get(
+                "https://ggtec.github.io/list_games_tags_tw/games.json")
             data_save_games = json.loads(respo_games.text)
 
-            with open(f'{appdata_path}/rewardevents/web/src/games/games.json', "w" , encoding="UTF-8") as games_file:
-                json.dump(data_save_games,games_file,indent=4,ensure_ascii=False)
+            with open(f'{appdata_path}/rewardevents/web/src/games/games.json', "w", encoding="UTF-8") as games_file:
+                json.dump(data_save_games, games_file,
+                          indent=4, ensure_ascii=False)
 
         except Exception as e:
 
-            if type(e).__name__ ==  "ConnectionError":
+            if type(e).__name__ == "ConnectionError":
 
-                ask = messagebox.showerror("Erro", "Erro de conexão, verifique a conexão com a internet e tente novamente.")
-            
+                ask = messagebox.showerror(
+                    "Erro", "Erro de conexão, verifique a conexão com a internet e tente novamente.")
+
                 if ask == 'ok':
                     sys.exit(0)
 
@@ -597,7 +624,7 @@ def get_files_list():
 
                 error_log(e)
 
-    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','r',encoding='utf-8') as notif_file:
+    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding='utf-8') as notif_file:
         notif_data = json.load(notif_file)
 
         if not 'HTML_REDEEM_ACTIVE' in notif_data:
@@ -611,13 +638,11 @@ def get_files_list():
                 "EMOTE_PX": "40"
             }
 
-            with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json','w',encoding='utf-8') as notif_file:
-                json.dump(data,notif_file,indent=4,ensure_ascii=False)
-    
+            with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'w', encoding='utf-8') as notif_file:
+                json.dump(data, notif_file, indent=4, ensure_ascii=False)
 
     notif_path = f'{appdata_path}/rewardevents/web/src/html/notification'
     remove_path = f'{appdata_path}\\rewardevents\\web\\src\\html'
-
 
     if os.path.exists(notif_path):
 
@@ -638,6 +663,18 @@ def get_files_list():
             if os.path.exists(f'{appdata_path}\\rewardevents\\web\\src\\html\\redeem'):
                 os.remove(zip_path)
 
+    with open(f'{appdata_path}/rewardevents/web/src/config/websocket_param.json', 'r', encoding='utf-8') as websocket_param_file:
+        websocket_param_data = json.load(websocket_param_file)
+
+    if 'channel.charity_campaign.donate' in websocket_param_data:
+
+        websocket_param_data.remove('channel.charity_campaign.donate')
+        websocket_param_data.remove('channel.charity_campaign.progress')
+        websocket_param_data.remove('channel.charity_campaign.start')
+        websocket_param_data.remove('channel.charity_campaign.stop')
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/websocket_param.json', 'w', encoding='utf-8') as websocket_param_file_w:
+            json.dump(websocket_param_data, websocket_param_file_w, indent=4, ensure_ascii=False)
+
 
 get_files_list()
-

@@ -70,8 +70,7 @@ def start_log_files():
 
     MAX_LOG_SIZE = 1024 * 1024 * 10  # 10 MB
 
-    log_file_path = f'{appdata_path}/rewardevents/web/src/output.log'
-    chat_file_path = os.path.join(appdata_path, 'rewardevents', 'web', 'src', 'chat_log.txt')
+    log_file_path = f'{appdata_path}/rewardevents/web/src/error_log.txt'
 
     logging.basicConfig(
         filename=log_file_path,
@@ -84,14 +83,6 @@ def start_log_files():
             with open(log_file_path, 'r') as f:
                 lines = f.readlines()
             with open(log_file_path, 'w') as f:
-                f.writelines(lines[-1000:]) 
-
-    if os.path.exists(chat_file_path):
-        log_file_size = os.path.getsize(chat_file_path)
-        if log_file_size > MAX_LOG_SIZE:
-            with open(chat_file_path, 'r') as f:
-                lines = f.readlines()
-            with open(chat_file_path, 'w') as f:
                 f.writelines(lines[-1000:]) 
 
 
@@ -616,12 +607,17 @@ def send_discord_webhook(data):
         webhook_title = discord_config_data[type_id]['title']
         webhook_description = discord_config_data[type_id]['description']
 
-        if webhook_status == 1 and not webhook_url == "":
-        
-            if type_id == 'clips_create':
+        webhook_profile_status = discord_config_data['profile_status']
+        webhook_profile_image = discord_config_data['profile_image']
+        webhook_profile_name = discord_config_data['profile_name']
 
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+        if webhook_status == 1 and not webhook_url == "":
+
+            webhook = DiscordWebhook(url=webhook_url)
+            webhook.content = webhook_content 
+
+
+            if type_id == 'clips_create':  
                 
                 clip_id = data['clip_id']
                 username = data['username']
@@ -640,13 +636,8 @@ def send_discord_webhook(data):
                     color= webhook_color
                 )
 
-                webhook.add_embed(embed)
-                webhook.execute() 
 
-            if type_id == 'clips_edit':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'clips_edit':  
 
                 clip_id = data['clip_id']
                 username = data['username']
@@ -665,13 +656,8 @@ def send_discord_webhook(data):
                     color= webhook_color
                 )
 
-                webhook.add_embed(embed)
-                webhook.execute() 
 
-            elif type_id == 'follow':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'follow':  
 
                 username = data['follow_name']
                 
@@ -688,13 +674,8 @@ def send_discord_webhook(data):
                     color= webhook_color
                 )
 
-                webhook.add_embed(embed)
-                webhook.execute() 
 
-            elif type_id == 'sub':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'sub':  
 
                 username = data['username']
                 
@@ -712,15 +693,8 @@ def send_discord_webhook(data):
                     color= webhook_color
                 )
                 
-
-
-                webhook.add_embed(embed)
-                webhook.execute() 
             
-            elif type_id == 'resub':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'resub':  
 
                 username = data['username']
                 
@@ -742,13 +716,8 @@ def send_discord_webhook(data):
                     color= webhook_color
                 )
 
-                webhook.add_embed(embed)
-                webhook.execute() 
 
-            elif type_id == 'bits':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'bits':  
 
 
                 aliases = {
@@ -766,14 +735,8 @@ def send_discord_webhook(data):
                 )
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute() 
-
             elif type_id == 'live_start':
-                
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+              
 
                 response = twitch_api.get_streams(first=1,user_id=authdata.BROADCASTER_ID())
                 
@@ -803,13 +766,8 @@ def send_discord_webhook(data):
                 embed.add_embed_field(name='Espectadores', value=viewer_count,inline=True)
                 embed.add_embed_field(name='+18?', value=is_mature,inline=True)
 
-                webhook.add_embed(embed)
-                webhook.execute() 
                                     
-            elif type_id == 'live_cat':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'live_cat':  
                 
                 title = data['title']
                 tag = data['tag']  
@@ -834,13 +792,8 @@ def send_discord_webhook(data):
                 embed.add_embed_field(name='Titulo', value=title,inline=False)
                 embed.add_embed_field(name='Jogo', value=tag,inline=False)
 
-                webhook.add_embed(embed)
-                webhook.execute()
-                
-            elif type_id == 'live_end':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+     
+            elif type_id == 'live_end':  
 
                 username = data['username']
                         
@@ -858,14 +811,7 @@ def send_discord_webhook(data):
                 webhook_description = utils.replace_all(webhook_description, aliases)
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute()     
-
-            elif type_id == 'poll_start':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'poll_start':  
 
                 title = data['title']
                 choices = data['choices']
@@ -916,14 +862,9 @@ def send_discord_webhook(data):
                     op_count += 1
                     embed.add_embed_field(name=f'Opção {op_count}', value=title_op,inline=False)
 
-                webhook.add_embed(embed)
-                webhook.execute() 
 
             elif type_id == 'poll_status':
-                
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
-
+              
                 title = data['title']
                 choices = data['choices']
                 bits_voting = data['bits_status']
@@ -981,10 +922,8 @@ def send_discord_webhook(data):
                     webhook.add_embed(embed)
                     webhook.execute()   
 
-            elif type_id == 'poll_end':
 
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'poll_end':  
 
                 title = data['title']
                 choices = data['choices']
@@ -1038,13 +977,8 @@ def send_discord_webhook(data):
                     op_count += 1
                     embed.add_embed_field(name=f'{title_op}', value=f"Votos : {votes_op} | Votos com pontos do canal : {points_votes_op} | Votos com bits : {bits_votes_op}",inline=False)
                 
-                webhook.add_embed(embed)
-                webhook.execute() 
 
-            elif type_id == 'prediction_start':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'prediction_start':  
 
                 title = data['title']
                 options = data['outcomes']
@@ -1070,14 +1004,7 @@ def send_discord_webhook(data):
                 webhook_description = utils.replace_all(webhook_description, aliases)
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute()
-
-            elif type_id == 'prediction_progress':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'prediction_progress':  
 
                 title = data['title']
                 options = data['outcomes']
@@ -1105,14 +1032,7 @@ def send_discord_webhook(data):
                 webhook_description = utils.replace_all(webhook_description, aliases)
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute()
-
-            elif type_id == 'prediction_end':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'prediction_end':  
 
                 title = data['title']
                 outcome_win = data['outcome_win']
@@ -1136,13 +1056,7 @@ def send_discord_webhook(data):
                 embed.add_embed_field(name=f'Vencedor', value=f"{outcome_win} | Pontos do canal: {channel_points}",inline=False)
 
 
-                webhook.add_embed(embed)
-                webhook.execute()
-
-            elif type_id == 'giftsub':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'giftsub':  
         
                 aliases = {
                     '{tier}' : str(data['tier']),
@@ -1162,14 +1076,7 @@ def send_discord_webhook(data):
                 )
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute()
-
-            elif type_id == 'subend':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'subend':  
         
                 aliases = {
                     '{username}' : str(data['user_name'])
@@ -1185,14 +1092,7 @@ def send_discord_webhook(data):
                 )
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute()
-
-            elif type_id == 'raid':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'raid':  
         
                 aliases = {
                     '{username}' : str(data['username']),
@@ -1209,14 +1109,7 @@ def send_discord_webhook(data):
                 )
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute()
-    
-            elif type_id == 'ban':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'ban':  
         
                 aliases = {
                     '{reason}' : data['reason'],
@@ -1235,14 +1128,7 @@ def send_discord_webhook(data):
                 )
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute()
-
-            elif type_id == 'unban':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'unban':  
         
                 aliases = {
                     '{moderator}' : data['moderator'],
@@ -1259,14 +1145,7 @@ def send_discord_webhook(data):
                 )
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute()
-
-            elif type_id == 'goal_start':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'goal_start':  
         
                 aliases = {
                     '{target}' : str(data['target']),
@@ -1285,14 +1164,7 @@ def send_discord_webhook(data):
                 )
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute()
-
-            elif type_id == 'goal_end':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'goal_end':  
         
                 aliases = {
                     '{target}' : str(data['target']),
@@ -1311,14 +1183,7 @@ def send_discord_webhook(data):
                 )
                 
 
-
-                webhook.add_embed(embed)
-                webhook.execute()
-
-            elif type_id == 'shoutout_start':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'shoutout_start':  
         
                 aliases = {
                     '{broadcaster}' : str(data['broadcaster']),
@@ -1336,13 +1201,8 @@ def send_discord_webhook(data):
                     color= webhook_color
                 )
                 
-                webhook.add_embed(embed)
-                webhook.execute()
             
-            elif type_id == 'shoutout_receive':
-
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+            elif type_id == 'shoutout_receive':  
         
                 aliases = {
                     '{broadcaster}' : str(data['broadcaster']),
@@ -1358,13 +1218,9 @@ def send_discord_webhook(data):
                     color= webhook_color
                 )
                 
-                webhook.add_embed(embed)
-                webhook.execute()
-            
+   
             elif type_id == 'shield_start':
-            
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+          
         
                 aliases = {
                     '{broadcaster}' : str(data['broadcaster']),
@@ -1380,13 +1236,9 @@ def send_discord_webhook(data):
                     color= webhook_color
                 )
 
-                webhook.add_embed(embed)
-                webhook.execute()
-            
+      
             elif type_id == 'shield_end':
-            
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+          
         
                 aliases = {
                     '{broadcaster}' : str(data['broadcaster']),
@@ -1402,13 +1254,9 @@ def send_discord_webhook(data):
                     color= webhook_color
                 )
 
-                webhook.add_embed(embed)
-                webhook.execute()
             
             elif type_id == 'charity_campaign_donate':
-            
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+          
         
                 aliases = {
                     '{username}': data['username'],
@@ -1433,103 +1281,14 @@ def send_discord_webhook(data):
                 embed.set_thumbnail(url=data['charity_logo'])
 
 
-                webhook.add_embed(embed)
-                webhook.execute()
-            
-            elif type_id == 'charity_campaign_progress':
-            
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
-                        
-                aliases = {
-                    "{charity_name}": data['charity_name'],
-                    "{charity_logo}": data['charity_logo'],
-                    "{current_amount_value}": str(data['current_amount_value']),
-                    "{current_amount_currency}": data['current_amount_currency'],
-                    "{target_amount_value}": str(data['target_amount_value']),
-                    "{target_amount_currency}": data['target_amount_currency']
-                }
+            if webhook_profile_status == 1 and webhook_profile_image.endswith('.png'):
 
-                webhook_description = utils.replace_all(webhook_description, aliases)
-                webhook_title = utils.replace_all(webhook_title, aliases)
-
-                embed = DiscordEmbed(
-                    title=webhook_title,
-                    description= webhook_description,
-                    color= webhook_color,
-                    
-                )
-
-                embed.add_embed_field(name=f'Valor atual', value=f"{data['current_amount_currency']} {str(data['current_amount_value'])}",inline=True)
-                embed.add_embed_field(name=f'Meta', value=f"{data['target_amount_currency']} {str(data['target_amount_value'])}",inline=True)
-                
-                embed.set_thumbnail(url=data['charity_logo'])
-
-                webhook.add_embed(embed)
-                webhook.execute()
-            
-            elif type_id == 'charity_campaign_start':
-            
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
+                embed.set_author(name=webhook_profile_name, url=f'https://www.twitch.tv/{authdata.USERNAME()}', icon_url=webhook_profile_image)
         
-                aliases = {
-                    "{charity_name}": data['charity_name'],
-                    "{charity_logo}": data['charity_logo'],
-                    "{current_amount_value}": str(data['current_amount_value']),
-                    "{current_amount_currency}": data['current_amount_currency'],
-                    "{target_amount_value}": str(data['target_amount_value']),
-                    "{target_amount_currency}": data['target_amount_currency']
-                }
-                
-                webhook_description = utils.replace_all(webhook_description, aliases)
-                webhook_title = utils.replace_all(webhook_title, aliases)
-                
-                embed = DiscordEmbed(
-                    title=webhook_title,
-                    description= webhook_description,
-                    color= webhook_color
-                )
-                
-                embed.add_embed_field(name=f'Valor atual', value=f"{data['current_amount_currency']} {str(data['current_amount_value'])}",inline=True)
-                embed.add_embed_field(name=f'Meta', value=f"{data['target_amount_currency']} {str(data['target_amount_value'])}",inline=True)
-                
-                embed.set_thumbnail(url=data['charity_logo'])
 
-                webhook.add_embed(embed)
-                webhook.execute()
+            webhook.add_embed(embed)
+            webhook.execute() 
             
-            elif type_id == 'charity_campaign_stop':
-    
-                webhook = DiscordWebhook(url=webhook_url)
-                webhook.content = webhook_content   
-        
-                aliases = {
-                    "{charity_name}": data['charity_name'],
-                    "{charity_logo}": data['charity_logo'],
-                    "{current_amount_value}": str(data['current_amount_value']),
-                    "{current_amount_currency}": data['current_amount_currency'],
-                    "{target_amount_value}": str(data['target_amount_value']),
-                    "{target_amount_currency}": data['target_amount_currency']
-                }
-                
-                webhook_description = utils.replace_all(webhook_description, aliases)
-                webhook_title = utils.replace_all(webhook_title, aliases)
-                
-                embed = DiscordEmbed(
-                    title=webhook_title,
-                    description= webhook_description,
-                    color= webhook_color
-                )
-                
-                embed.add_embed_field(name=f'Valor atual', value=f"{data['current_amount_currency']} {str(data['current_amount_value'])}",inline=True)
-                embed.add_embed_field(name=f'Meta', value=f"{data['target_amount_currency']} {str(data['target_amount_value'])}",inline=True)
-                
-                embed.set_thumbnail(url=data['charity_logo'])
-
-                webhook.add_embed(embed)
-                webhook.execute()
-
     except Exception as e:
         logging.error("Exception occurred", exc_info=True)
 
@@ -4079,7 +3838,7 @@ def discord_config(data_discord_save, mode,type_id):
             toast('error')
             utils.error_log(e)
 
-    if mode == 'get':
+    elif mode == 'get':
         
         with open(f'{appdata_path}/rewardevents/web/src/config/discord.json', 'r', encoding='utf-8') as discord_data_file:
             discord_data = json.load(discord_data_file)
@@ -4111,6 +3870,35 @@ def discord_config(data_discord_save, mode,type_id):
             "status": status,
             'not': notifc,
             'response_chat': response_chat,
+        }
+
+        data_get_sent = json.dumps(data_get, ensure_ascii=False)
+
+        return data_get_sent
+
+    elif mode == 'save-profile':
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/discord.json', 'r', encoding='utf-8') as discord_data_file:
+            discord_data = json.load(discord_data_file)
+        
+        data_receive = json.loads(data_discord_save)
+
+        discord_data['profile_status'] = data_receive['webhook_profile_status']
+        discord_data['profile_image'] = data_receive['webhook_profile_image_url']
+        discord_data['profile_name'] = data_receive['webhook_profile_name']
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/discord.json', 'w', encoding='utf-8') as discord_data_file:
+            json.dump(discord_data, discord_data_file, indent=6, ensure_ascii=False)
+
+    elif mode == 'get-profile':
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/discord.json', 'r', encoding='utf-8') as discord_data_file:
+            discord_data = json.load(discord_data_file)
+
+        data_get = {
+            "webhook_profile_status" : discord_data['profile_status'],
+            "webhook_profile_image_url" : discord_data['profile_image'],
+            "webhook_profile_name": discord_data['profile_name']
         }
 
         data_get_sent = json.dumps(data_get, ensure_ascii=False)
@@ -5386,7 +5174,7 @@ def update_check(type_id):
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'v5.6.0':
+        if version != 'v5.6.1':
 
             return 'true'
         
@@ -6743,40 +6531,11 @@ def open_py(type_id,link_profile):
 
         toast('Relatório de erros limpo')
     
-    elif type_id == "log":
-
-        try:
-            arquivo = f'{appdata_path}/rewardevents/web/src/output.log'
-
-            with open(arquivo, 'r') as debug_file:
-                debug_data = debug_file.read()
-
-            return debug_data
-        
-        except Exception as e:
-
-            utils.error_log(e)
-            toast('Ocorreu um erro.')
-    
-    elif type_id == "log_clear":
-        
-        try:
-            arquivo = f'{appdata_path}/rewardevents/web/src/output.log'
-
-            with open(arquivo, 'w', encoding='utf-8') as debug_file:
-                debug_file.write('')
-
-            toast('Relatório de debug limpo')
-        
-        except Exception as e:
-            utils.error_log(e)
-            toast('Ocorreu um erro.')
-
     elif type_id == "discord":
         webbrowser.open('https://discord.io/ggtec', new=0, autoraise=True)
     
     elif type_id == "wiki":
-        webbrowser.open('https://ggtec.netlify.app', new=0, autoraise=True)
+        webbrowser.open('https://ggtec.netlify.app/apps/re/', new=0, autoraise=True)
 
     elif type_id == "debug-get":
 
@@ -6801,42 +6560,6 @@ def open_py(type_id,link_profile):
             toast(f'Configuração salva, reinicie o programa para iniciar no modo Debug Visual...')
         elif link_profile == 0: 
             toast(f'Configuração salva, reinicie o programa para sair do modo Debug Visual...')
-
-    elif type_id == "dir_event":
-
-        try:
-            subprocess.Popen(f'explorer "{appdata_path}\\rewardevents\\web\\src\\html\\event"')
-            toast('Abrindo diretório.')
-        except subprocess.CalledProcessError as e:
-            utils.error_log(e)
-            toast('Ocorreu um erro.')
-    
-    elif type_id == "dir_not":
-
-        try:
-            subprocess.Popen(f'explorer "{appdata_path}\\rewardevents\\web\\src\\html\\notification"')
-            toast('Abrindo diretório.')
-        except subprocess.CalledProcessError as e:
-            utils.error_log(e)
-            toast('Ocorreu um erro.')
-
-    elif type_id == "dir_video":
-
-        try:
-            subprocess.Popen(f'explorer "{appdata_path}\\rewardevents\\web\\src\\html\\video"')
-            toast('Abrindo diretório.')
-        except subprocess.CalledProcessError as e:
-            utils.error_log(e)
-            toast('Ocorreu um erro.')
-
-    elif type_id == "dir_emote":
-
-        try:
-            subprocess.Popen(f'explorer "{appdata_path}\\rewardevents\\web\\src\\html\\emote"')
-            toast('Abrindo diretório.')
-        except subprocess.CalledProcessError as e:
-            utils.error_log(e)
-            toast('Ocorreu um erro.')
 
  
 def chat_config(data_save,type_config):
@@ -10739,27 +10462,51 @@ def close():
 
     try:
 
-        authdata = auth.auth_data(f'{appdata_path}/rewardevents/web/src/auth/auth.json')
+        url = 'https://api.twitch.tv/helix/eventsub/subscriptions'
 
-        url = "https://api.twitch.tv/helix/eventsub/subscriptions"
+        header = CaseInsensitiveDict()
+        header["Authorization"] = f"Bearer {authdata.TOKEN()}"
+        header["Client-Id"] = clientid
+        header['Content-Type'] = 'application/json'
 
-        headers = CaseInsensitiveDict()
-        headers["Authorization"] = "Bearer " + authdata.TOKEN()
-        headers["Client-Id"] = clientid
+        response = req.get(url, headers=header)
+        data = response.json()
 
-        resp = req.get(url, headers=headers)
+        if response.status_code == 200:
 
-        respo_dic = resp.json()
+            subscriptions = data['data']
 
-        for item in respo_dic["data"]:
+            for subscription in subscriptions:
 
-            url = f"https://api.twitch.tv/helix/eventsub/subscriptions?id={item['id']}"
+                status = subscription['status']
+                subscription_id = subscription['id']
 
-            headers = CaseInsensitiveDict()
-            headers["Authorization"] = "Bearer " + authdata.TOKEN()
-            headers["Client-Id"] = clientid
+                if status != 'websocket_disconnected' and status != 'websocket_failed_ping_pong':
 
-            req.delete(url, headers=headers)
+                    url = 'https://api.twitch.tv/helix/eventsub/subscriptions'
+
+                    header = CaseInsensitiveDict()
+                    header["Authorization"] = f"Bearer {authdata.TOKEN()}"
+                    header["Client-Id"] = clientid
+                    header['Content-Type'] = 'application/json'
+
+                    params = {
+                        'id': subscription_id
+                    }
+
+                    response = req.delete(url, headers=header, params=params)
+
+                    if response.status_code == 204:
+                        print("A inscrição foi excluída com sucesso.")
+                    elif response.status_code == 404:
+                        print("A inscrição não foi encontrada.")
+                    else:
+                        data = response.json()
+                        print(f"Erro ao fazer a solicitação: {response.status_code} - {data['message']}")
+
+                
+        else:
+            print(f"Erro ao fazer a solicitação: {response.status_code} - {data['message']}")
 
     except Exception as e:
 

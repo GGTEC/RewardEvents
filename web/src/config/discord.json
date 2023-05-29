@@ -1,22 +1,25 @@
 {
+      "profile_status" : 1,
+      "profile_image" : "None",
+      "profile_name" : "None",
       "live_start": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
-            "content": "<@&800068168823472128> ",
+            "content": "",
             "title": "O streamer iniciou uma live",
             "description": "{url}"
       },
       "live_cat": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
-            "content": "<@&800068168823472128> ",
+            "content": "",
             "title": "O streamer alterou a categoria e/ou titulo da live",
             "description": "{url}"
       },
       "live_end": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -24,15 +27,15 @@
             "description": ""
       },
       "follow": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
-            "content": "<@&800068168823472128> ",
+            "content": "",
             "title": "O usuário {username} deu follow no canal",
             "description": "O usuário {username} deu follow no canal"
       },
       "sub": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "Teste",
@@ -40,7 +43,7 @@
             "description": "Teste"
       },
       "giftsub": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -48,7 +51,7 @@
             "description": ""
       },
       "mysterygift": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -56,7 +59,7 @@
             "description": ""
       },
       "re-mysterygift": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -64,7 +67,7 @@
             "description": ""
       },
       "resub": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -72,7 +75,7 @@
             "description": ""
       },
       "subend": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -80,7 +83,7 @@
             "description": ""
       },
       "raid": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -88,7 +91,7 @@
             "description": ""
       },
       "clips_create": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -96,7 +99,7 @@
             "description": "{url}"
       },
       "clips_edit": {
-            "url": "https://discord.com/api/webhooks/1037164445253763184/0tB1Z6yGe4p07iWrb0G68OFjSI8IjoW8Dny6K_NSQiCppY4UIThH5KOCPDRwy16uF5bC",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -104,7 +107,7 @@
             "description": "{url}"
       },
       "poll_start": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -112,7 +115,7 @@
             "description": "Vá até o canal e vote o quanto antes"
       },
       "poll_status": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -120,7 +123,7 @@
             "description": "Vá até o canal e vote o quanto antes"
       },
       "poll_end": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -128,7 +131,7 @@
             "description": "Vá até o canal e vote o quanto antes"
       },
       "prediction_start": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -144,7 +147,7 @@
             "description": "Vá até o canal e vote o quanto antes"
       },
       "prediction_end": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -152,7 +155,7 @@
             "description": "Vá até o canal e vote o quanto antes"
       },
       "ban": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -160,7 +163,7 @@
             "description": ""
       },
       "unban": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -168,7 +171,7 @@
             "description": ""
       },
       "goal_start": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -176,7 +179,7 @@
             "description": ""
       },
       "goal_end": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -184,7 +187,7 @@
             "description": ""
       },
       "bits": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -192,7 +195,7 @@
             "description": ""
       },
       "shoutout_start": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -200,7 +203,7 @@
             "description": ""
       },
       "shoutout_receive": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -208,7 +211,7 @@
             "description": ""
       },
       "shield_start": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
@@ -216,43 +219,11 @@
             "description": ""
       },
       "shield_end": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
+            "url": "",
             "status": 1,
             "color": "03b2f8",
             "content": "",
             "title": "O moderador {moderator} desativou o modo escudo",
-            "description": ""
-      },
-      "charity_campaign_donate": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
-            "status": 1,
-            "color": "03b2f8",
-            "content": "",
-            "title": "O usuário {username} Enviou um donate para a campanha {charity_name} !!!",
-            "description": ""
-      },
-      "charity_campaign_progress": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
-            "status": 1,
-            "color": "03b2f8",
-            "content": "",
-            "title": "O Progresso da campanha {charity_name} foi atualizado",
-            "description": ""
-      },
-      "charity_campaign_start": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
-            "status": 1,
-            "color": "03b2f8",
-            "content": "",
-            "title": "Uma campanha para {charity_name} foi iniciada.",
-            "description": ""
-      },
-      "charity_campaign_stop": {
-            "url": "https://discord.com/api/webhooks/1075869807204896778/anDQRGu-jwdgIumluiQqBcV-xgcRob9FuhoeY-fhGbaczgCFc6BFTrTKFnEUoJQUbxHF",
-            "status": 1,
-            "color": "03b2f8",
-            "content": "",
-            "title": "A campanha {charity_name} foi finalizada.",
             "description": ""
       }
 }

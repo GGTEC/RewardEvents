@@ -4368,6 +4368,37 @@
                     </div>
                   </div>
                   <input id="type_edit" type="text" hidden />
+                  <div id="profile_discord_embed" class="bg-dark form-block mt-0">
+                    <div class="mt-5">
+                      <div class="form-group">
+                        <h5>Nome de usuário e foto de perfil para todos os blocos de notificação</h5>
+                      </div>
+                      <div class="row mt-5">
+                        <div class="col">
+                          <p class="form-check-label">Ativar Exibição de foto de perfil e nome de usuário nos blocos?</p>
+                        </div>
+                        <div class="col-2">
+                          <div class="material-switch bg-white d-flex justify-content-end">
+                            <input id="profile-webhook-status" type="checkbox" />
+                            <label for="profile-webhook-status" class="form-check-label"></label>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="form-group mt-3">
+                        <label for="url-profile-image-webhook">Url da imagem de perfil do Bloco Webhook (Apenas url .png)</label>
+                        <input type="text" class="form-control bg-dark mt-3" id="url-profile-image-webhook">
+                      </div>
+                      <div class="form-group mt-3">
+                        <label for="profile-name-webhook">Nome de perfil para o Bloco Webhook</label>
+                        <input type="text" class="form-control bg-dark mt-3" id="profile-name-webhook">
+                      </div>
+                      <div class="form-group mt-5 w-100">
+                        <button type="button" class="btn bt-submit mt-4" onclick="discord_js(event,'save-profile')">
+                          Salvar Perfil
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   <div id="event_not_divs" class="bg-dark form-block mt-0" hidden>
                     <div id="aliases-form" >
                       <div class="form-group mt-3">
@@ -5584,7 +5615,7 @@
               <div class="d-flex card bg-dark form-block align-self-center">
                 <img src="./src/profile.png" class="rounded mx-auto d-block" width="150px" />
                 <div class="card-body text-center">
-                  <h4 class="card-title m-3">RewardEvents V5.6.0</h4>
+                  <h4 class="card-title m-3">RewardEvents V5.6.1</h4>
                   <button class="bt-submit btn m-3" onclick="update_modal('get')">
                     Verificar Atualização
                   </button>
@@ -5622,10 +5653,6 @@
                     onclick="show_error_log('get-errorlog')">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                   </button>
-                  <button type="button" class="btn bt-submit m-3 mt-0 me-0" title="Log Geral"
-                    onclick="show_error_log('get-debug')">
-                    <i class="fa-solid fa-bug"></i>
-                  </button>
                   <button type="button" class="btn bt-submit m-3 mt-0" title="Suporte no discord"
                     onclick="window.pywebview.api.open_py('discord','null')">
                     <i class="fa-brands fa-discord"></i>
@@ -5654,33 +5681,6 @@
                           <div class="form-group w-100">
                             <textarea class="form-control bg-black w-100 h-100" id="errorlog-textarea"
                               readonly></textarea>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="modal" id="debug-modal" data-backdrop="static" tabindex="-1">
-                  <div class="modal-dialog modal-dialog-centered modal-fullscreen">
-                    <div class="modal-content bg-dark custom-border-modal">
-                      <div class="modal-header">
-                        <div>
-                          <h5>
-                            Relatório de Debug
-                            <button type="button" class="btn bt-submit btn-sm" onclick="show_error_log('clear-debug')">
-                              Limpar Relatório<i class="fa-solid fa-brush ms-1"></i>
-                            </button>
-                          </h5>
-                        </div>
-                        <div>
-                          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
-                        </div>
-                      </div>
-                      <div class="modal-body">
-                        <div class="d-flex" style="height: 80vh;">
-                          <div class="form-group w-100">
-                            <textarea class="form-control bg-black w-100 h-100" id="debug-textarea" readonly></textarea>
                           </div>
                         </div>
                       </div>
@@ -5804,75 +5804,75 @@
         </div>
       </div>
       <div class="modal fade" id="edit-stream-info" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
-      <div class="modal-dialog modal-fullscreen">
-        <div class="modal-content bg-dark custom-border-modal">
-          <div class="modal-header">
-            <h4>Editar informações da stream</h4>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-              aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div id="loading_title">
-              <div class="d-flex justify-content-center w-100 vh-75">
-                <div class="lds-ellipsis align-self-center">
-                  <div></div>
-                  <div></div>
-                  <div></div>
-                  <div></div>
+        <div class="modal-dialog modal-fullscreen">
+          <div class="modal-content bg-dark custom-border-modal">
+            <div class="modal-header">
+              <h4>Editar informações da stream</h4>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div id="loading_title">
+                <div class="d-flex justify-content-center w-100 vh-75">
+                  <div class="lds-ellipsis align-self-center">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div id="title_body" hidden>
-              <div class="d-flex flex-column bg-dark p-2">
-                <form class="form-group w-100">
-                  <input type="text" id="stream-game-inp" hidden>
-                  <div class="form-group w-100">
-                    <label for="stream-title">Titulo da stream</label>
-                    <input type="text" class="form-control bg-dark mt-3 w-100" id="stream-title"
-                      placeholder="Digite o novo titulo da stream" value="Carregando...">
-                  </div>
-                  <div class="row">
-                    <div class="col-9">
-                      <div id="stream-game_selcdiv">
+              <div id="title_body" hidden>
+                <div class="d-flex flex-column bg-dark p-2">
+                  <form class="form-group w-100">
+                    <input type="text" id="stream-game-inp" hidden>
+                    <div class="form-group w-100">
+                      <label for="stream-title">Titulo da stream</label>
+                      <input type="text" class="form-control bg-dark mt-3 w-100" id="stream-title"
+                        placeholder="Digite o novo titulo da stream" value="Carregando...">
+                    </div>
+                    <div class="row">
+                      <div class="col-9">
+                        <div id="stream-game_selcdiv">
+                          <div class="form-group mb-3 mt-2">
+                            <label for="stream-game">Selecione o jogo</label>
+                            <select class="form-control bg-dark mt-3" id="stream-game">
+                              <option value="carregando" selected>
+                                Carregando...
+                              </option>
+                            </select>
+                          </div>
+                        </div>
                         <div class="form-group mb-3 mt-2">
-                          <label for="stream-game">Selecione o jogo</label>
-                          <select class="form-control bg-dark mt-3" id="stream-game">
+                          <label for="stream-tags mt-2">Marcadores/Tags (Pode ser necessário editar
+                            no painel da twitch)</label>
+                          <div class="d-block w-100" id="tags"></div>
+                          <select class="form-control bg-dark" id="stream-tags">
                             <option value="carregando" selected>
                               Carregando...
                             </option>
                           </select>
                         </div>
                       </div>
-                      <div class="form-group mb-3 mt-2">
-                        <label for="stream-tags mt-2">Marcadores/Tags (Pode ser necessário editar
-                          no painel da twitch)</label>
-                        <div class="d-block w-100" id="tags"></div>
-                        <select class="form-control bg-dark" id="stream-tags">
-                          <option value="carregando" selected>
-                            Carregando...
-                          </option>
-                        </select>
+                      <div class="col-3">
+                        <img class="m-3 mt-5" src="" alt="" id="game_img" />
                       </div>
                     </div>
-                    <div class="col-3">
-                      <img class="m-3 mt-5" src="" alt="" id="game_img" />
-                    </div>
-                  </div>
-                </form>
+                  </form>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" id="submit-stream-info" class="btn bt-submit" onclick="save_stream_info()"
-              disabled>
-              Salvar
-            </button>
-            <button type="button" class="btn bt-submit" data-bs-dismiss="modal">
-              Fechar
-            </button>
+            <div class="modal-footer">
+              <button type="button" id="submit-stream-info" class="btn bt-submit" onclick="save_stream_info()"
+                disabled>
+                Salvar
+              </button>
+              <button type="button" class="btn bt-submit" data-bs-dismiss="modal">
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
-      </div>
       </div>
       <div class="modal fade" id="create-poll" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
