@@ -1,7 +1,131 @@
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-BlackItalic.ttf') format('truetype');
+  font-weight: 900;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-BoldItalic.ttf') format('truetype');
+  font-weight: bold;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-ExtraBoldItalic.ttf') format('truetype');
+  font-weight: 800;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-ExtraLight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-ExtraLightItalic.ttf') format('truetype');
+  font-weight: 200;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-Italic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-LightItalic.ttf') format('truetype');
+  font-weight: 300;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Kanit';
+  src: url('./Kanit/Kanit-ThinItalic.ttf') format('truetype');
+  font-weight: 100;
+  font-style: italic;
+}
 body {
   max-height: 100vh;
   font-family: 'Kanit';
-  font-weight: 100 !important;
   color: white;
   background-repeat: no-repeat;
   background-size: cover;
@@ -19,8 +143,8 @@ body {
   
 }
 
-h1, h2, h3, h4, h5{
-  font-weight: 100;
+.h1,h2,h3,h4,h5,h6 {
+  color: #fff !important;
 }
 
 .bg-dark {
@@ -31,10 +155,13 @@ h1, h2, h3, h4, h5{
   color: rgb(244, 244, 244) !important;
 }
 
-.btn {
-  font-weight: 100 !important;
+.card-body {
+  color: #fff;
 }
 
+.card {
+  color: #fff;
+}
 .main {
   max-height: 100vh;
 }
@@ -277,7 +404,11 @@ span {
 .dropdown-menu .no-results {
   background-color: #000 !important;
   color: white !important;
-  }
+}
+
+.dropdown-item.active, .dropdown-item:active {
+  background-color: #710299 !important;
+}
 
 select ,input {
   color: white;
@@ -798,6 +929,20 @@ table{
 }
 
 table td {
+  background-color: #000 !important;
+  color: #fff !important;
+  white-space: nowrap;
+}
+
+table th {
+  background-color: #000 !important;
+  color: #fff !important;
+  white-space: nowrap;
+}
+
+table tr {
+  background-color: #000 !important;
+  color: #fff !important;
   white-space: nowrap;
 }
 
@@ -931,9 +1076,9 @@ hr {
 }
 
 .player-controlls-div {
-  position: absolute;
   bottom: 0;
   width: 100%;
+  height: auto;
 }
 
 .plyr__controls {
@@ -1545,3 +1690,16 @@ and (min-width : 1900px) {
 }
 
 
+img.emoji {
+  height: 1em;
+  width: 1em;
+  margin: 0 .05em 0 .1em;
+  vertical-align: -0.1em;
+}
+.inner-sidebar {
+  display: flex;
+  flex-wrap: wrap
+}
+.inner-sidebar button {
+  padding: 0.5rem 1rem;
+}

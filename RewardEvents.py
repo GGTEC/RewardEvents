@@ -5,8 +5,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 import logging
 import difflib
-import msvcrt
-import signal
+import win32file
 import subprocess
 from collections import namedtuple
 import utils
@@ -29,14 +28,17 @@ import yt_dlp
 import datetime
 import pytz
 import re
-import emoji
 import tkinter.messagebox as messagebox
 import sk
+
+
+
 
 from ChatIRC import TwitchBot
 from dotenv import load_dotenv
 from io import BytesIO
 from gtts import gTTS
+from tkinter import messagebox
 from tkinter import filedialog as fd
 from requests.structures import CaseInsensitiveDict
 from random import randint
@@ -55,15 +57,26 @@ load_dotenv(dotenv_path=os.path.join(extDataDir, '.env'))
 appdata_path = os.getenv('APPDATA')
 clientid = os.getenv('CLIENTID')
 
+lock_file_path = f"{appdata_path}/rewardevents/web/my_program.lock"
+
 try:
-    lock_file_path = os.path.join(f"{appdata_path}/rewardevents/web", 'my_program.lock')
 
-    with open(lock_file_path, 'w') as lock_file:
-        msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+    file_handle = win32file.CreateFile(
+        lock_file_path,
+        win32file.GENERIC_WRITE,
+        0,
+        None,
+        win32file.CREATE_ALWAYS,
+        win32file.FILE_ATTRIBUTE_NORMAL,
+        None
+    )
 
-except IOError:
-    
-    logging.info("Program already running.")
+    win32file.LockFile(file_handle, 0, 0, 0, 0x2)
+
+except win32file.error as e:
+
+    error_message = "O programa já está em execução, aguarde."
+    messagebox.showerror("Erro", error_message)
     sys.exit(0)
 
 def start_log_files():
@@ -75,16 +88,16 @@ def start_log_files():
     logging.basicConfig(
         filename=log_file_path,
         level=logging.ERROR,
-        format='%(asctime)s - %(levelname)s - %(name)s  - %(message)s'
+        format='%(asctime)s - %(levelname)s - %(name)s  - %(message)s',
+        encoding='utf-8'
     )
     if os.path.exists(log_file_path):
         log_file_size = os.path.getsize(log_file_path)
         if log_file_size > MAX_LOG_SIZE:
-            with open(log_file_path, 'r') as f:
+            with open(log_file_path, 'r',encoding='UTF-8') as f:
                 lines = f.readlines()
-            with open(log_file_path, 'w') as f:
+            with open(log_file_path, 'w',encoding='UTF-8') as f:
                 f.writelines(lines[-1000:]) 
-
 
     user_data_sess_load = {}
 
@@ -112,23 +125,6 @@ def start_log_files():
 
 start_log_files()
     
-
-lock_file = None
-def remove_lock_file(signum, frame):
-
-    global lock_file
-
-    lock_file_path = os.path.join(f"{appdata_path}/rewardevents/web", 'my_program.lock')
-
-    if lock_file:
-        msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
-        lock_file.close()
-        os.remove(lock_file_path)
-
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, remove_lock_file)
-
 
 global caching, loaded_status, window, window_chat_open, window_chat, window_events, window_events_open, twitch_api
 
@@ -1146,6 +1142,25 @@ def send_discord_webhook(data):
                 
 
             elif type_id == 'goal_start':  
+        
+                aliases = {
+                    '{target}' : str(data['target']),
+                    '{current}' : str(data['current']),
+                    '{description}' : str(data['description']),
+                    '{type}' : data['goal_type']
+                }
+
+                webhook_description = utils.replace_all(webhook_description, aliases)
+                webhook_title = utils.replace_all(webhook_title, aliases)
+                
+                embed = DiscordEmbed(
+                    title=webhook_title,
+                    description= webhook_description,
+                    color= webhook_color
+                )
+                
+
+            elif type_id == 'goal_progress':  
         
                 aliases = {
                     '{target}' : str(data['target']),
@@ -5174,7 +5189,7 @@ def update_check(type_id):
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'v5.6.1':
+        if version != 'v5.6.2':
 
             return 'true'
         
@@ -9815,7 +9830,6 @@ def parse_to_dict(message):
         message_split = message.split(f'PRIVMSG #{authdata.USERNAME()} :')
         
         parameters = message_split[1]
-        parameters = emoji.demojize(parameters)
 
         message = message_split[0]
         
@@ -10560,8 +10574,8 @@ def close():
     with open(f'{appdata_path}/rewardevents/web/src/user_info/users_database.json','w',encoding='utf-8') as user_data_file_w:
         json.dump(user_data_load,user_data_file_w,indent=6,ensure_ascii=False)
         
-    remove_lock_file("None","None")
-           
+    win32file.CloseHandle(file_handle)
+
 
 def download_badges():
 
@@ -10741,6 +10755,7 @@ def on_message(ws, message):
     try:
         data = json.loads(message)
 
+
         with open(f"{appdata_path}/rewardevents/web/src/config/event_not.json", "r", encoding='utf-8') as message_file:
             message_data = json.load(message_file)
         
@@ -10753,6 +10768,10 @@ def on_message(ws, message):
             
         elif message_type == 'notification':
             
+            with open(f'{appdata_path}/rewardevents/web/src/error_log.txt', 'a+',encoding='utf-8') as f:
+                f.write(f"{message} \n")
+
+
             subscription_type = data["metadata"]["subscription_type"]
             
             if subscription_type == 'channel.follow':
@@ -11725,6 +11744,7 @@ def on_message(ws, message):
                     "user_input" : '',
                 }
                 
+
                 data_discord = {
                     'type_id' : 'goal_begin',
                     'target' : target_amount,
@@ -12184,7 +12204,7 @@ def bot():
 
         else:
             
-            time.sleep(10)
+            time.sleep(5)
  
 
 def start_app(start_mode):

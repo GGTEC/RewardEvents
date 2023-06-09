@@ -88,13 +88,13 @@ class TwitchBot():
             except socket.gaierror:
                 self.IRC.close()
                 self.callback(f"REERRORCONNCHAT | Erro de conexão: 'socket.gaierror connect()'. Tentando novamente em 10 segundos...")
-                time.sleep(10)
+                time.sleep(5)
                 continue
 
             except ConnectionError as e:
                 self.IRC.close()
                 self.callback(f"REERRORCONNCHAT | Erro de conexão: 'ConnectionError connect()'. Tentando novamente em 10 segundos...")
-                time.sleep(10)
+                time.sleep(5)
                 continue
             else:
                 self.callback(f"REERRORCONNCHAT | Conectado!")

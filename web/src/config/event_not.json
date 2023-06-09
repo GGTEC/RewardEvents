@@ -78,6 +78,10 @@
       },
       "goal_end": {
             "status": 1,
-            "response_chat": "/me A meta para {current}/{target }{type} foi finalizada"
+            "response_chat": "/me A meta para {current}/{target}{type} foi finalizada"
+      },
+      "goal_progress": {
+            "status": 1,
+            "response_chat": "/me A meta para {current}/{target}{type} foi atualizada"
       }
 }

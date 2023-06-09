@@ -10,42 +10,41 @@
   <!-- Favicons -->
   <link href="assets/img/favicon.png" rel="icon">
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.1/css/dataTables.bootstrap5.min.css">
-  <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"></script>
-  <script src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap5.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.4.0/css/responsive.dataTables.min.css">
-  <script src="https://cdn.datatables.net/responsive/2.4.0/js/dataTables.responsive.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/css/bootstrap-select.min.css" rel="stylesheet">
-
-  <script src="https://cdn.jsdelivr.net/gh/farhadmammadli/bootstrap-select@main/js/bootstrap-select.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-  <script src="assets/js/Bs5Utils.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.3/plyr.css">
-  <link href="assets/css/style.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/flickity@2.3.0/dist/flickity.min.css">
-  <script src="https://unpkg.com/flickity@2.3.0/dist/flickity.pkgd.min.js"></script>
-  <link href="assets/css/fontawesome-free-6.4.0-web/css/all.css" rel="stylesheet" type="text/css" />
-  <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet">
-  <script src="https://cdn.plyr.io/3.7.3/plyr.polyfilled.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dragscroll/0.0.8/dragscroll.js"></script>
-  <script src="https://twemoji.maxcdn.com/v/latest/twemoji.min.js"></script>
-  <script src="assets/js/jquery-ui.js"></script>
+  
+  <link rel="stylesheet" href="assets/css/datatables.css">
+  <link rel="stylesheet" href="assets/css/responsive.dataTables.css">
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css" >
+  <link rel="stylesheet" href="assets/css/bootstrap-select.css" >
+  <link rel="stylesheet" href="assets/css/bootstrap-icons-1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="assets/css/plyr-3.7.8/plyr.scss">
+  <link rel="stylesheet" href="assets/css/style.css" >
+  <link rel="stylesheet" href="assets/css/flickity.css">
+  <link rel="stylesheet" href="assets/css/fontawesome-free-6.4.0-web/css/all.css" />
   <link rel="stylesheet" href="assets/css/jquery-ui.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/showdown@2.0/dist/showdown.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <script src="assets/js/jquery-3.7.0.min.js"></script>
+  <script src="assets/js/datatables.js"></script>
+  <script src="assets/js/dataTables.responsive.js"></script>
+  <script src="assets/js/popper.min.js"></script>
+  <script src="assets/js/bootstrap.min.js"></script>
+  <script src="assets/js/bootstrap-select.js"></script>
+  <script src="assets/js/Bs5Utils.js"></script>
+  <script src="assets/js/flickity.js"></script>
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+  <script src="assets/js/dragscroll.js"></script>
+  <script src="assets/js/twemoji.js"></script>
+  <script src="assets/js/jquery-ui.js"></script>
+
+
 </head>
 <body class="main" id="body-pd">
   <div class="loading" id="loading">
     <div class="container">
         <div class="row vh-100">
             <div class="col-sm-12 my-auto">
-                <div class="card card-block w-50 mx-auto text-center">
-                    <div class="card-body">
-                        <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+                <div class="card card-block w-50 mx-auto">
+                    <div class="card-body text-center">
+                        <div class="lds-ellipsis "><div></div><div></div><div></div><div></div></div>
                         <h5 class="card-title">Carregando... <span id="progress-span"></span></h5>
                         <div id="progress-start" class="progress h-auto bg-black">
                           <div class="progress-bar progress-bar-striped progress-bar-animated"
@@ -60,7 +59,7 @@
   <div id="main" class="d-none">
       <div class="row d-flex">
         <nav id="sidebarMenu-hidden" class=" sidebar">
-          <div class="nav  w-100">
+          <div class="nav  w-100 ">
             <button class="nav-link item active" id="v-pills-resgates-tab" data-bs-toggle="pill" data-bs-target="#v-pills-resgates" type="button" role="tab" aria-controls="v-pills-resgates" aria-selected="true">
               <i class="fa-sharp fa-solid fa-cart-arrow-down m-2"></i>
                 <span>Resgates</span>
@@ -112,7 +111,7 @@
           </div>
         </nav>
         <nav id="sidebarMenu" class="sidebar">
-          <div class="w-100">
+          <div class="w-100 inner-sidebar">
             <button class="nav-link item active">
               <i class="fa-sharp fa-solid fa-cart-arrow-down m-2"></i>
             </button>
@@ -220,7 +219,7 @@
                             class="fa-solid fa-square-arrow-up-right"></i></span>
                       </div>
                     </div>
-                    <div class="collapse div-events" id="colapse-recent">
+                    <div class="div-events" id="colapse-recent">
                       <div class="h-scroll-events dragscroll" id="div-events"></div>
                     </div>
                   </div>
@@ -532,7 +531,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -608,7 +607,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -675,7 +674,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -745,7 +744,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -842,7 +841,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -906,7 +905,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -1015,7 +1014,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -1108,7 +1107,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -1371,7 +1370,7 @@
 
                     <div class="form-group mt-3">
                       <label for="command-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-delay"
                         required />
                     </div>
 
@@ -1427,7 +1426,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-delay-highlight">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-delay-highlight"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-delay-highlight"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -1546,7 +1545,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-audio-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-audio-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-audio-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -1630,7 +1629,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-video-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-video-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-video-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -1713,7 +1712,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-tts-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-tts-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-tts-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -1791,7 +1790,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-scene-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-scene-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-scene-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -1900,7 +1899,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-response-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5"
                         id="command-response-delay" required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -1973,7 +1972,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-filter-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-filter-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-filter-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -2094,7 +2093,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-source-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-source-delay"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-source-delay"
                         required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -2198,7 +2197,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-keypress-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5"
                         id="command-keypress-delay" required />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -2469,7 +2468,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-clip-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0"
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5"
                         id="command-clip-delay" />
                     </div>
                     <div class="form-group mb-3 mt-4">
@@ -2532,7 +2531,7 @@
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-highlight-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" min="0" value="0" id="command-highlight-delay" />
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="command-highlight-delay" />
                     </div>
                     <div class="form-group mb-3 mt-4">
                       <label for="user-level-highlight-edit">Permissão</label>
@@ -2650,7 +2649,7 @@
                     </div>
                     <div class="form-group mt-2">
                       <label for="new-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" value="0" id="new-delay" required />
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="new-delay" required />
                     </div>
                     <div class="form-group mb-3 mt-4">
                       <label for="user-level-command">Permissão</label>
@@ -2714,7 +2713,7 @@
                     </div>
                     <div class="form-group mt-2">
                       <label for="edit-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" value="0" id="edit-delay" required />
+                      <input type="number" class="form-control bg-dark mt-3" min="5" value="5" id="edit-delay" required />
                     </div>
                     <div class="form-group mt-4">
                       <label for="user-level-command-edit">Permissão</label>
@@ -2829,7 +2828,7 @@
                     </div>
                     <div class="form-group mt-2">
                       <label for="command-duel-delay">Tempo de recarga para iniciar um novo duelo</label>
-                      <input type="number" class="form-control bg-dark mt-3" id="command-duel-delay" />
+                      <input type="number" min="5" value="5" class="form-control bg-dark mt-3" id="command-duel-delay" />
                     </div>
                     <div class="form-group mt-3">
                       <label for="time-duel-accept">Tempo para aceitar o duelo</label>
@@ -3003,7 +3002,7 @@
                     </div>
                     <div class="form-group mt-2">
                       <label for="command-default-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" id="command-default-delay" />
+                      <input type="number" min="5" value="5" class="form-control bg-dark mt-3" id="command-default-delay" />
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-default-perm">Permissão</label>
@@ -3092,7 +3091,7 @@
                     </div>
                     <div class="form-group mt-2">
                       <label for="command-player-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" id="command-player-delay" />
+                      <input type="number" min="5" value="5" class="form-control bg-dark mt-3" id="command-player-delay" />
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-player-perm">Permissão</label>
@@ -3175,7 +3174,7 @@
                     </div>
                     <div class="form-group mt-2">
                       <label for="command-player-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" id="command-counter-delay" />
+                      <input type="number" min="5" value="5" class="form-control bg-dark mt-3" id="command-counter-delay" />
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-player-perm">Permissão</label>
@@ -3259,7 +3258,7 @@
                     </div>
                     <div class="form-group mt-2">
                       <label for="command-player-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" id="command-queue-delay" />
+                      <input type="number" min="5" value="5" class="form-control bg-dark mt-3" id="command-queue-delay" />
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-player-perm">Permissão</label>
@@ -3348,7 +3347,7 @@
                     </div>
                     <div class="form-group mt-2">
                       <label for="command-player-delay">Tempo de recarga</label>
-                      <input type="number" class="form-control bg-dark mt-3" id="command-giveaway-delay" />
+                      <input type="number" min="5" value="5" class="form-control bg-dark mt-3" id="command-giveaway-delay" />
                     </div>
                     <div class="form-group mt-3">
                       <label for="command-player-perm">Permissão</label>
@@ -3862,10 +3861,10 @@
               <div class="internal-top">
                 <span>Player</span>
               </div>
-              <div class="h-scroll flex-wrap justify-content-center align-content-center">
+              <div class="h-scroll justify-content-center align-content-center">
                 <div class="w-75 bg-dark form-block" id="player-div">
                   <div id="song-img" class="d-flex flex-column song-img">
-                    <div class="p-5 m-5 text-center">
+                    <div class="m-5 text-center h-100 d-flex flex-column justify-content-center">
                       <p id="music-name" class="music-name"></p>
                       <p id="music-artist" class="music-artist"></p>
                     </div>
@@ -4360,6 +4359,15 @@
                         </option>
                         <option value="shoutout_receive">
                           Notificações para ShotOut Recebido
+                        </option>
+                        <option value="goal_start">
+                          Notificações para inicio de meta
+                        </option>
+                        <option value="goal_progress">
+                          Notificações para progesso de meta
+                        </option>
+                        <option value="goal_end">
+                          Notificações para fim de meta
                         </option>
                       </select>
                       <button class="btn bt-submit" type="button" onclick="discord_js('event','select_edit')">
@@ -5615,7 +5623,7 @@
               <div class="d-flex card bg-dark form-block align-self-center">
                 <img src="./src/profile.png" class="rounded mx-auto d-block" width="150px" />
                 <div class="card-body text-center">
-                  <h4 class="card-title m-3">RewardEvents V5.6.1</h4>
+                  <h4 class="card-title m-3">RewardEvents V5.6.2</h4>
                   <button class="bt-submit btn m-3" onclick="update_modal('get')">
                     Verificar Atualização
                   </button>

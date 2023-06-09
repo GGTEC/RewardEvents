@@ -755,7 +755,7 @@ function append_message(message_data_parse){
             span_username.setAttribute('onclick','pywebview.api.open_py("user","'+user_rec+'")');
     
             message_rec = twemoji.parse(message_rec);
-            
+
             var span_message = document.createElement("span");
             span_message.id = 'message-chat';
             span_message.innerHTML = message_rec;
