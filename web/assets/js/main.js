@@ -598,9 +598,9 @@ function update_div_redeem(data_redem_parse) {
     var name_redeem = document.getElementById("name_redeem");
     var user_redeem = document.getElementById("user_redeem");
 
-    var image_redeem_new = image_redeem.src;
-    image_redeem.src = image_redeem_new; 
-
+    if (data_redem_parse.redeem_image != 'None'){
+      image_redeem.src = data_redem_parse.redeem_image
+    }
     name_redeem.innerText = data_redem_parse.redeem_name
     user_redeem.innerText = data_redem_parse.redeem_user
 }

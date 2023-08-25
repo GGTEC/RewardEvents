@@ -262,8 +262,9 @@ function append_announce(message_data_parse){
     span_badges.innerHTML = badges_data;
 
     var message_name = document.createElement('span');
-    message_name.id = "message-chat";
+    message_name.id = "user-chat";
     message_name.style.color = color_get;
+    message_name.style.cursor = 'pointer';
     message_name.innerHTML = name + ' :';
 
     var message_span = document.createElement('span');
@@ -364,8 +365,9 @@ function append_announce_out(message_data_parse){
         span_badges.innerHTML = badges_data;
     
         var message_name = document.createElement('span');
-        message_name.id = "message-chat";
+        message_name.id = "user-chat";
         message_name.style.color = color_get;
+        message_name.style.cursor = 'pointer';
         message_name.innerHTML = name + ' :';
     
         var message_span = document.createElement('span');
@@ -751,6 +753,7 @@ function append_message(message_data_parse){
             var span_username = document.createElement("span");
             span_username.id = 'user-chat';
             span_username.style.color = color_rec;
+            span_username.style.cursor = 'pointer';
             span_username.innerHTML = user_rec + ' :';
             span_username.setAttribute('onclick','pywebview.api.open_py("user","'+user_rec+'")');
     
@@ -892,6 +895,7 @@ function append_message(message_data_parse){
             span_username.id = 'user-chat';
             span_username.style.color = color_rec;
             span_username.innerHTML = user_rec + ' :';
+            span_username.style.cursor = 'pointer';
             span_username.setAttribute('onclick','pywebview.api.open_py("user","'+user_rec+'")');
     
             message_rec = twemoji.parse(message_rec);
@@ -1030,6 +1034,7 @@ function append_message(message_data_parse){
             var span_username = document.createElement("span");
             span_username.id = 'user-chat';
             span_username.style.color = color_rec;
+            span_username.style.cursor = 'pointer';
             span_username.innerHTML = user_rec + ' :';
             span_username.setAttribute('onclick','pywebview.api.open_py("user","'+user_rec+'")');
     
@@ -1179,6 +1184,7 @@ function append_message_out(message_data_parse){
         var span_username = document.createElement("span");
         span_username.id = 'user-chat';
         span_username.style.color = color_rec;
+        span_username.style.cursor = 'pointer';
         span_username.innerHTML = user_rec + ' :';
         span_username.setAttribute('onclick','pywebview.api.open_py("user","'+user_rec+'")');
 

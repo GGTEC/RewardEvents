@@ -330,6 +330,10 @@ body {
     user-select: text;
 }
 
+#user-chat:hover {
+  text-decoration: underline;
+}
+
 #message-chat {
     margin-left: 3px;
     user-select: text;

@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="assets/css/jquery-ui.css">
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <script src="assets/js/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/showdown@1.9.0/dist/showdown.min.js"></script>
   <script src="assets/js/datatables.js"></script>
   <script src="assets/js/dataTables.responsive.js"></script>
   <script src="assets/js/popper.min.js"></script>
@@ -4054,7 +4055,7 @@
                     <div class="row mt-3">
                       <div class="col">
                         <p class="form-check-label">
-                          Ativar Notificações para resgate de recompensas
+                          Ativar resgate de recompensas
                         </p>
                       </div>
                       <div class="col-2">
@@ -4067,7 +4068,7 @@
                     <div class="row mt-3">
                       <div class="col">
                         <p class="form-check-label">
-                          Ativar Notificações para pedidos de música
+                          Ativar pedidos de música
                         </p>
                       </div>
                       <div class="col-2">
@@ -4094,7 +4095,7 @@
                       Utilize os botões abaixo para criar as fontes HTML no OBS studio necessáras para cada função descrita.
                     </div>
                     <div class="form-group mt-5">
-                      <p>Notificações de resgates de recompensa.</p>
+                      <p>Resgates de recompensa.</p>
                       <button class="btn bt-submit btn-sm mt-1" type="button" onclick="window.pywebview.api.create_source('redeem')">
                         Criar Fonte
                       </button>
@@ -4292,82 +4293,82 @@
                     <div class="input-group none-flex mt-3">
                       <select class="form-control bg-dark" id="select_edit_not">
                         <option value="live_start">
-                          Notificações de inicio de lives
+                          Inicio de lives
                         </option>
                         <option value="live_cat">
-                          Notificações de edição de categoria de lives
+                          Edição de categoria de lives
                         </option>
                         <option value="live_end">
-                          Notificações de fim de lives
+                          Fim de lives
                         </option>
                         <option value="follow">
-                          Notificações de follow
+                          Follow
                         </option>
                         <option value="clips_create">
-                          Notificações de criação de clipes
+                          Criação de clipes
                         </option>
                         <option value="clips_edit">
-                          Notificações para editar clipes
+                          Editar clipes
                         </option>
                         <option value="sub">
-                          Notificações de novo Sub
+                          Novo Sub
                         </option>
-                        <option value="endsub">
-                          Notificações para Fim de Sub
+                        <option value="subend">
+                          Fim de Sub
                         </option>
                         <option value="giftsub">
-                          Notificações para GiftSub
+                          GiftSub
                         </option>
                         <option value="resub">
-                          Notificações de renovação de sub
+                          Renovação de sub
                         </option>
                         <option value="bits">
-                          Notificações de bits
+                          Bits
                         </option>
                         <option value="poll_start">
-                          Notificações para inicio de enquetes
+                          Inicio de enquetes
                         </option>
                         <option value="poll_status">
-                          Notificações para status de enquetes
+                          Status de enquetes
                         </option>
                         <option value="poll_end">
-                          Notificações para fim de enquetes
+                          Fim de enquetes
                         </option>
                         <option value="prediction_start">
-                          Notificações para inicio de palpites
+                          Inicio de palpites
                         </option>
                         <option value="prediction_status">
-                          Notificações para status de palpites
+                          Status de palpites
                         </option>
                         <option value="prediction_end">
-                          Notificações para fim de palpites
+                          Fim de palpites
                         </option>
                         <option value="raid">
-                          Notificações para Raids
+                          Raids
                         </option>
                         <option value="ban">
-                          Notificações para banimentos
+                          Banimentos
                         </option>
                         <option value="shield_start">
-                          Notificações para modo escudo ativado
+                          Modo escudo ativado
                         </option>
                         <option value="shield_end">
-                          Notificações para modo escudo desativado
+                          Modo escudo desativado
                         </option>
                         <option value="shoutout_start">
-                          Notificações para ShotOut Enviado
+                          ShotOut Enviado
                         </option>
                         <option value="shoutout_receive">
-                          Notificações para ShotOut Recebido
+                          ShotOut Recebido
                         </option>
                         <option value="goal_start">
-                          Notificações para inicio de meta
+                          Inicio de meta
                         </option>
                         <option value="goal_progress">
-                          Notificações para progesso de meta
+                          Progesso de meta
                         </option>
                         <option value="goal_end">
-                          Notificações para fim de meta
+                          Fim de meta
                         </option>
                       </select>
                       <button class="btn bt-submit" type="button" onclick="discord_js('event','select_edit')">
@@ -4876,7 +4877,7 @@
                     <div class="row">
                       <div class="col">
                         <p class="form-check-label">
-                          Ativar Notificações para pedidos de música.
+                          Ativar pedidos de música.
                         </p>
                       </div>
                       <div class="col-2">
@@ -5623,7 +5624,7 @@
               <div class="d-flex card bg-dark form-block align-self-center">
                 <img src="./src/profile.png" class="rounded mx-auto d-block" width="150px" />
                 <div class="card-body text-center">
-                  <h4 class="card-title m-3">RewardEvents V5.6.2</h4>
+                  <h4 class="card-title m-3">RewardEvents V5.6.8</h4>
                   <button class="bt-submit btn m-3" onclick="update_modal('get')">
                     Verificar Atualização
                   </button>

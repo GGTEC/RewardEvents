@@ -133,7 +133,7 @@ async function discord_js(event,type_id) {
             unban : '{moderator},{username}',
             sub: '{username}, {type}, {plan}, {months}, {cumulative}',
             resub: ' {username}, {tier}, {total_months}, {streak_months}, {months}, {user_message}',
-            subnd: '{username}',
+            subend: '{username}',
             giftsub: ' {username}, {months}, {rec_username}, {plan}',
             mysterygift: '{username}, {count}, {plan}',
             're-mysterygift': ' {username}',

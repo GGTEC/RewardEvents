@@ -91,6 +91,7 @@
     "event_pool_start": "Enquete iniciada : {title}",
     "event_pool_end": "Enquete finalizada : {title}",
     "event_prediction_start": "Palpite iniciado : {title}",
+    "event_prediction_progress": "Palpite atualizado : {title}",
     "event_prediction_end": "Palpite finalizado : {title}",
     "event_goal_begin": "Meta de {type} iniciada",
     "event_goal_progress": "O progresso da meta {type} foi atualizado",

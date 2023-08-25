@@ -1,12 +1,15 @@
 import obsws_python as obs
 import time
 import json
-import utils
 import os
+import sys
+
+sys.tracebacklimit = 0
 
 appdata_path = os.getenv('APPDATA')
 is_started = 0
 showing = 0
+
 
 def load_config():
     
@@ -14,20 +17,21 @@ def load_config():
         config_data = json.load(config_file)
         
     return config_data
-    
+
 def test_obs_conn():
 
     try:
         config_data = load_config()
 
-        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+        obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
         
         return True
 
-    except:
-        
+    except ConnectionRefusedError:
+
+
         return False
-    
+
 def get_scenes():
 
     try:

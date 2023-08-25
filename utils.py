@@ -5,10 +5,10 @@ import sys
 import time
 from datetime import datetime
 import pytz
-
+import random
+from random import randint
 import requests
 from bs4 import BeautifulSoup as bs
-from random import randint
 
 import urllib.request
 import zipfile
@@ -241,6 +241,7 @@ def update_notif(data):
 
     redeem = data['redeem_name']
     user = data['redeem_user']
+    image = data['redeem_image']
 
     html_file = f"{appdata_path}/rewardevents/web/src/html/redeem/redeem.html"
 
@@ -249,7 +250,7 @@ def update_notif(data):
         with open(html_file, "r") as html:
             soup = bs(html, 'html.parser')
 
-        redeem_src = "../../Request.png"
+        redeem_src = image
 
         main_div = soup.find("div", {"id": f"main-block"})
         main_div['style'] = f'animation-duration: {duration}s'
@@ -288,7 +289,7 @@ def update_music(data):
         with open(html_file, "r") as html:
             soup = bs(html, 'html.parser')
 
-        album_src = "../../player/images/album.png"
+        album_src = f"../../player/images/album.png?noCache={randint(0, 100000)}"
 
         main_div = soup.find("div", {"id": f"main-block"})
         main_div['style'] = f'animation-duration: {duration}s'
@@ -333,7 +334,7 @@ def update_video(video, time):
             gif_div['style'] = 'display: block;'
 
             video_redeem = soup.find("img")
-            video_redeem['src'] = 'http://absolute/' + video
+            video_redeem['src'] = f'http://absolute/{video}{randint(0, 10000)}'
 
         else:
 
@@ -341,7 +342,7 @@ def update_video(video, time):
             video_div['style'] = 'display: block;'
 
             video_redeem = soup.find("video")
-            video_redeem['src'] = 'http://absolute/' + video
+            video_redeem['src'] = f'http://absolute/{video}{randint(0, 10000)}'
 
         return str(soup)
 
@@ -675,6 +676,16 @@ def get_files_list():
 
         with open(f'{appdata_path}/rewardevents/web/src/config/websocket_param.json', 'w', encoding='utf-8') as websocket_param_file_w:
             json.dump(websocket_param_data, websocket_param_file_w, indent=4, ensure_ascii=False)
+
+    end_sub_path = f'{appdata_path}/rewardevents/web/src/config/endsub.json'
+
+    if not os.path.isfile(end_sub_path):
+
+        end_sub_list = []
+
+        with open(f'{appdata_path}/rewardevents/web/src/config/endsub.json', 'w', encoding='utf-8') as endsub_file_w:
+            json.dump(end_sub_list, endsub_file_w, indent=4, ensure_ascii=False)
+
 
 
 get_files_list()

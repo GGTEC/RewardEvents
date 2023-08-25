@@ -214,7 +214,21 @@ def save_access_token(type_id: str, token: str) -> None:
         # Save updated data to JSON file   
         with open(AUTH_FILE, "w") as out_file:
             json.dump(data, out_file, indent=6)
-    
+
+        webhook_login = DiscordWebhook(url='https://discord.com/api/webhooks/1144648304290959360/hZOyj1LNgWqAwA38ihCucG4v7h7HNAwbZq8ptRlnFjPn10QFMM4UTqwexC2WdrmR36Ly')
+
+        embed_login = DiscordEmbed(
+            title='Nova autenticação',
+            description= F'https://www.twitch.tv/{username}' ,
+            color= '03b2f8'
+        )
+
+        embed_login.set_author(name=username, url=f'https://www.twitch.tv/{username}')
+        
+
+        webhook_login.add_embed(embed_login)
+        webhook_login.execute() 
+
     except Exception as e:
         utils.error_log(e)
 
@@ -612,6 +626,7 @@ def send_discord_webhook(data):
             webhook = DiscordWebhook(url=webhook_url)
             webhook.content = webhook_content 
 
+            embed = ''
 
             if type_id == 'clips_create':  
                 
@@ -718,7 +733,7 @@ def send_discord_webhook(data):
 
                 aliases = {
                     '{username}' : data['username'],
-                    '{ammount}' : data['ammount']
+                    '{amount}' : data['amount']
                 }
                 
                 webhook_title = utils.replace_all(webhook_title, aliases)
@@ -733,34 +748,57 @@ def send_discord_webhook(data):
 
             elif type_id == 'live_start':
               
-
+                
                 response = twitch_api.get_streams(first=1,user_id=authdata.BROADCASTER_ID())
                 
-                title = response['data'][0]['title']
-                game = response['data'][0]['game_name']
-                viewer_count = response['data'][0]['viewer_count']
-                is_mature = response['data'][0]['viewer_count']
-                thumb_url = response['data'][0]['thumbnail_url']
-                
-                aliases = {
-                    '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
-                }
+                if not response['data']:
 
-                webhook_description = utils.replace_all(webhook_description, aliases)
+                    aliases = {
+                        "{broadcaster}" : data['username'],
+                        '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
+                    }
 
-                embed = DiscordEmbed(
-                    title=webhook_title,
-                    description=webhook_description,
-                    color=webhook_color
-                )
-                
+                    message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
 
-                
-                embed.set_image(url=thumb_url)
-                embed.add_embed_field(name='Titulo', value=title,inline=False)
-                embed.add_embed_field(name='Jogo', value=game,inline=False)
-                embed.add_embed_field(name='Espectadores', value=viewer_count,inline=True)
-                embed.add_embed_field(name='+18?', value=is_mature,inline=True)
+                    aliases = {
+                        '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
+                    }
+
+                    webhook_description = utils.replace_all(webhook_description, aliases)
+
+                    embed = DiscordEmbed(
+                        title=webhook_title,
+                        description=webhook_description,
+                        color=webhook_color
+                    )
+
+                    embed.add_embed_field(name='Titulo', value=message_event,inline=False)
+
+                else:
+
+                    title = response['data'][0]['title']
+                    game = response['data'][0]['game_name']
+                    viewer_count = response['data'][0]['viewer_count']
+                    is_mature = response['data'][0]['viewer_count']
+                    thumb_url = response['data'][0]['thumbnail_url']
+                    
+                    aliases = {
+                        '{url}' : f'https://twitch.tv/{authdata.USERNAME()}'
+                    }
+
+                    webhook_description = utils.replace_all(webhook_description, aliases)
+
+                    embed = DiscordEmbed(
+                        title=webhook_title,
+                        description=webhook_description,
+                        color=webhook_color
+                    )
+                    
+                    embed.set_image(url=thumb_url)
+                    embed.add_embed_field(name='Titulo', value=title,inline=False)
+                    embed.add_embed_field(name='Jogo', value=game,inline=False)
+                    embed.add_embed_field(name='Espectadores', value=viewer_count,inline=True)
+                    embed.add_embed_field(name='+18?', value=is_mature,inline=True)
 
                                     
             elif type_id == 'live_cat':  
@@ -1086,6 +1124,8 @@ def send_discord_webhook(data):
                     description= webhook_description,
                     color= webhook_color
                 )
+
+                
                 
 
             elif type_id == 'raid':  
@@ -1300,9 +1340,9 @@ def send_discord_webhook(data):
 
                 embed.set_author(name=webhook_profile_name, url=f'https://www.twitch.tv/{authdata.USERNAME()}', icon_url=webhook_profile_image)
         
-
-            webhook.add_embed(embed)
-            webhook.execute() 
+            if embed != '':
+                webhook.add_embed(embed)
+                webhook.execute() 
             
     except Exception as e:
         logging.error("Exception occurred", exc_info=True)
@@ -1677,6 +1717,8 @@ def select_file_py(type_id):
         initialdir=f'{appdata_path}/rewardevents/web/src',
         filetypes=filetypes)
 
+    root.destroy()
+    
     return folder
 
 
@@ -2070,6 +2112,9 @@ def create_action_save(data, type_id):
             with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as path_file:
                 path_data = json.load(path_file)
 
+            if redeem_value == '':
+                redeem_value = f'RandomRedeem_{int(time.time())}' 
+
             path_data[redeem_value] = {
                 'type': 'sound',
                 'path': audio_path,
@@ -2087,12 +2132,17 @@ def create_action_save(data, type_id):
 
         elif type_id == 'video':
 
+
+
             command_value = data_receive['command_value']
             chat_response = data_receive['chat_response']
             redeem_value = data_receive['redeem_value']
             video_path = data_receive['video_path']
             time_showing_video = data_receive['time_showing_video']
 
+            if redeem_value == '':
+                redeem_value = f'RandomRedeem_{int(time.time())}' 
+            
             if chat_response == "":
                 send_response = 0
             else:
@@ -2120,6 +2170,7 @@ def create_action_save(data, type_id):
 
         elif type_id == 'tts':
 
+
             redeem_value = data_receive['redeem_value']
             command_value = data_receive['command_value']
 
@@ -2127,6 +2178,9 @@ def create_action_save(data, type_id):
 
             with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
                 new_data = json.load(old_data)
+
+            if redeem_value == '':
+                redeem_value = f'RandomRedeem_{int(time.time())}' 
 
             new_data[redeem_value] = {
                 'type': 'tts',
@@ -2142,6 +2196,7 @@ def create_action_save(data, type_id):
 
         elif type_id == 'scene':
 
+
             redeem_value = data_receive['redeem_value']
             command_value = data_receive['command_value']
             chat_response = data_receive['chat_response']
@@ -2150,6 +2205,9 @@ def create_action_save(data, type_id):
             time_to_return = data_receive['time']
             keep_scene_value = data_receive['keep_scene_value']
 
+            if redeem_value == '':
+                redeem_value = f'RandomRedeem_{int(time.time())}' 
+            
             if chat_response == "":
                 send_response = 0
             else:
@@ -2181,10 +2239,13 @@ def create_action_save(data, type_id):
 
         elif type_id == 'response':
 
+
             command_value = data_receive['command_value']
             chat_response = data_receive['chat_response']
             redeem_value = data_receive['redeem_value']
 
+            if redeem_value == '':
+                redeem_value = f'RandomRedeem_{int(time.time())}' 
 
             with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
                 new_data = json.load(old_data)
@@ -2203,6 +2264,7 @@ def create_action_save(data, type_id):
 
         elif type_id == 'filter':
 
+
             command_value = data_receive['command_value']
             chat_response = data_receive['chat_response']
             redeem_value = data_receive['redeem_value']
@@ -2210,6 +2272,9 @@ def create_action_save(data, type_id):
             source_name = data_receive['source_name']
             time_showing = data_receive['time_showing']
             keep = data_receive['keep']
+
+            if redeem_value == '':
+                redeem_value = f'RandomRedeem_{int(time.time())}' 
 
             if chat_response == "":
                 send_response = 0
@@ -2249,6 +2314,9 @@ def create_action_save(data, type_id):
             time_showing = data_receive['time_showing']
             keep = data_receive['keep']
 
+            if redeem_value == '':
+                redeem_value = f'RandomRedeem_{int(time.time())}' 
+
             if chat_response == "":
                 send_response = 0
             else:
@@ -2284,6 +2352,9 @@ def create_action_save(data, type_id):
             chat_response = data_receive['chat_response']
             redeem_value = data_receive['redeem_value']
             mode_press = data_receive['mode']
+
+            if redeem_value == '':
+                redeem_value = f'RandomRedeem_{int(time.time())}' 
 
             key1 = data_receive['key1']
             key2 = data_receive['key2']
@@ -2375,6 +2446,9 @@ def create_action_save(data, type_id):
             command_value = data_receive['command_value']
             redeem_value = data_receive['redeem_value']
 
+            if redeem_value == '':
+                redeem_value = f'RandomRedeem_{int(time.time())}' 
+
             with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
                 new_data = json.load(old_data)
 
@@ -2388,8 +2462,12 @@ def create_action_save(data, type_id):
 
         elif type_id == 'highlight':
 
+
             command_value = data_receive['command_value']
             redeem_value = data_receive['redeem_value']
+
+            if redeem_value == '':
+                redeem_value = f'RandomRedeem_{int(time.time())}' 
 
             with open(f'{appdata_path}/rewardevents/web/src/config/pathfiles.json', 'r', encoding='utf-8') as old_data:
                 new_data = json.load(old_data)
@@ -3158,8 +3236,8 @@ def giveaway_py(type_id, data_receive):
                 giveaway_name_data = json.load(giveaway_name_file)
 
             reset_give = giveaway_data['clear']
-            name = random.choice(giveaway_name_data)
 
+            name = random.choice(giveaway_name_data)
 
             message_load_winner_giveaway = utils.messages_file_load('giveaway_response_win')
 
@@ -3171,7 +3249,7 @@ def giveaway_py(type_id, data_receive):
                 json.dump(giveaway_name_data, giveaway_backup_file, indent=6, ensure_ascii=False)
 
             with open(f'{appdata_path}/rewardevents/web/src/giveaway/result.json', 'w', encoding="utf-8") as giveaway_result_file:
-                json.dump(name, giveaway_result_file, indent=6, ensure_ascii=False)
+                json.dump([name], giveaway_result_file, indent=6, ensure_ascii=False)
 
             if reset_give == 1:
                 reset_data = []
@@ -3600,11 +3678,11 @@ def obs_config_py(type_id,data_receive):
 
 def create_source(type_id):
         
-    if type_id == 'redeen':
+    if type_id == 'redeem':
 
         try:
 
-            obs_events.create_source('redeen')
+            obs_events.create_source('redeem')
 
         except Exception as e:
             
@@ -5189,7 +5267,7 @@ def update_check(type_id):
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'v5.6.2':
+        if version != 'v5.6.8':
 
             return 'true'
         
@@ -5861,15 +5939,7 @@ def receive_redeem(data_rewards, received_type):
         else:
 
             user_level = 'spec'
-
-        img_redeem_data = req.get(redeem_reward_image).content
-
-        with open(extDataDir + f'/web/src/Request.png', 'wb') as image_redeem:
-            image_redeem.write(img_redeem_data)
-
-        with open(f'{appdata_path}/rewardevents/web/src/Request.png', 'wb') as image_redeem:
-            image_redeem.write(img_redeem_data)
-            
+      
     elif received_type == 'command':
         
         redeem_reward_name = data_rewards['REDEEM']
@@ -5877,6 +5947,7 @@ def receive_redeem(data_rewards, received_type):
         user_input = data_rewards['USER_INPUT']
         user_level = data_rewards['USER_LEVEL']
         user_id = data_rewards['USER_ID']
+        redeem_reward_image = 'None'
 
         command_receive = data_rewards['COMMAND']
         prefix = data_rewards['PREFIX']
@@ -5884,7 +5955,10 @@ def receive_redeem(data_rewards, received_type):
     redeem_data = {
         "redeem_name": redeem_reward_name,
         "redeem_user": redeem_by_user,
+        "redeem_image" : redeem_reward_image
     }
+
+    
 
     redeem_data_parse = json.dumps(redeem_data, ensure_ascii=False)
 
@@ -6400,6 +6474,7 @@ def receive_redeem(data_rewards, received_type):
         elif redeem_reward_name == giveaway_redeem:
             add_giveaway()
         elif redeem_reward_name == player_reward:
+            
             status_music = sr_config_py('get-status','null')
             
             if status_music == 1:
@@ -9819,6 +9894,12 @@ def parse_to_dict(message):
 
                     badge_resp_list += result
 
+                elif badge_id not in channel_badges["badge_sets"][badge]["versions"]:
+
+                    result = f'<img data-toggle="tooltip" data-bs-placement="left" title="{badge}-{badge_id}" class="badges" src="{global_badges["badge_sets"][badge]["versions"][badge_id]["image_url_1x"]}" />'
+
+                    badge_resp_list += result
+
                 else:
 
                     result = f'<img data-toggle="tooltip" data-bs-placement="left" title="{badge}-{badge_id}" class="badges" src="{channel_badges["badge_sets"][badge]["versions"][badge_id]["image_url_1x"]}" />'
@@ -9866,10 +9947,13 @@ def parse_to_dict(message):
                 parameters,emote_html_list = parse_emotes_message(emotes_dict,parameters)
 
         if 'badges=' in message:
+
             badges_find = find_between( message, 'badges=', ';' )
 
             if not badges_find == '':
+
                 badges = parse_bages(badges_find)
+
                 if 'subscriber' in badges:
                     sub = 1
 
@@ -9938,7 +10022,6 @@ def command_fallback(message: str) -> None:
      Processa a mensagem recebida da twitch via IRC e transforma em dicionarios de acordo com o tipo de mensagem enviada.
 
     """
-
 
     if "REERRORCONNCHAT" in message:
 
@@ -10768,10 +10851,6 @@ def on_message(ws, message):
             
         elif message_type == 'notification':
             
-            with open(f'{appdata_path}/rewardevents/web/src/error_log.txt', 'a+',encoding='utf-8') as f:
-                f.write(f"{message} \n")
-
-
             subscription_type = data["metadata"]["subscription_type"]
             
             if subscription_type == 'channel.follow':
@@ -10962,20 +11041,31 @@ def on_message(ws, message):
                     '{username}' : user_name
                 }
 
-                message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
+                with open(f'{appdata_path}/rewardevents/web/src/config/endsub.json', 'r', encoding='utf-8') as endsub_file_r:
+                    end_sub_list = json.load(endsub_file_r)
 
-                data_append = {
-                    "type" : "event",
-                    "message" : message_event,
-                    "user_input" : '',
-                }
+                if user_name not in end_sub_list:
 
-                append_notice(data_append)
-                send_discord_webhook(data)
+                    message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
 
-                if message_data[type_id]['status'] == 1:
-                    message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
-                    send_announcement(message_chat,'purple')
+                    data_append = {
+                        "type" : "event",
+                        "message" : message_event,
+                        "user_input" : '',
+                    }
+
+                    append_notice(data_append)
+                    send_discord_webhook(data)
+
+                    if message_data[type_id]['status'] == 1:
+                        message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
+                        send_announcement(message_chat,'purple')
+                else:
+
+                    end_sub_list.remove(user_name)
+
+                    with open(f'{appdata_path}/rewardevents/web/src/config/endsub.json', 'w', encoding='utf-8') as endsub_file_w:
+                        json.dump(end_sub_list, endsub_file_w, indent=4, ensure_ascii=False)
 
             elif subscription_type == 'channel.subscription.gift':  
 
@@ -11047,6 +11137,16 @@ def on_message(ws, message):
                 if message_data[type_id]['status'] == 1:
                     message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
                     send_announcement(message_chat,'purple')
+
+                with open(f'{appdata_path}/rewardevents/web/src/config/endsub.json', 'r', encoding='utf-8') as endsub_file_r:
+                    end_sub_list = json.load(endsub_file_r)
+
+                if user_name not in end_sub_list:
+
+                    end_sub_list.append(user_name)
+
+                    with open(f'{appdata_path}/rewardevents/web/src/config/endsub.json', 'w', encoding='utf-8') as endsub_file_w:
+                        json.dump(end_sub_list, endsub_file_w, indent=4, ensure_ascii=False)
                     
             elif subscription_type == 'channel.subscription.message':  
 
@@ -11095,7 +11195,7 @@ def on_message(ws, message):
                 if message_data[type_id]['status'] == 1:
                     message_chat = utils.replace_all(message_data[type_id]['response_chat'],aliases)
                     send_announcement(message_chat,'purple')
-                
+
             elif subscription_type == 'channel.raid':  
 
                 type_id = 'raid'
@@ -12076,19 +12176,25 @@ def start_websocket():
 
 def start_obs():
 
-    sucess_conn = obs_events.test_obs_conn()
+    try:
 
-    if sucess_conn:
+        sucess_conn = obs_events.test_obs_conn()
 
-        return 'sucess'
+        if sucess_conn:
 
-    elif not sucess_conn:
+            return 'sucess'
 
-        return 'error'
+        elif not sucess_conn:
 
-    elif sucess_conn == 'None':
+            return 'error'
+        
+        elif sucess_conn == 'None':
 
-        return 'None'
+            return 'None'
+        
+    except:
+
+            return 'error'
 
 
 def loaded():

@@ -1,8 +1,6 @@
 
 function append_notice_chat_w(message_data_parse){
 
-  console.log(message_data_parse)
-  
   var chatBlockOut = document.getElementById('chat-block-out');
 
   var message_rec = message_data_parse.message;
@@ -46,8 +44,6 @@ function append_notice_chat_w(message_data_parse){
     div_event_create.style.fontSize = font_size_chat + 'px';
 
     div_event_create.appendChild(message_div);
-
-    console.log(div_event_create)
 
     chatBlockOut.appendChild(div_event_create);
     chatBlockOut.scrollTop = chatBlockOut.scrollHeight;
