@@ -5850,19 +5850,6 @@ def process_redem_music(user_input, redem_by_user):
 
 def receive_redeem(data_rewards, received_type):
     
-    def check_user_level(user_levels):
-    
-        if "mod" in user_levels:
-            return "mod"
-        elif "subs" in user_levels:
-            return "subs"
-        elif "vip" in user_levels:
-            return "vip"
-        elif "top_chatter" in user_levels:
-            return "top_chatter"
-        else:
-            return "spec"
-        
     with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "r",  encoding='utf-8') as counter_file_r:
         counter_file_r.seek(0)
         digit = counter_file_r.read()
@@ -5906,33 +5893,10 @@ def receive_redeem(data_rewards, received_type):
             user_input = data_rewards['user_input']
             redeem_reward_image = data_rewards['image']
 
-            perms_map = {
-                'mod': 'mod',
-                'vip': 'vip',
-                'sub': 'subs',
-                'regular': 'regular',
-                'top_chatter': 'top_chatter'
-            }
-
-            perms_list = []
-
-            if user_id == authdata.BROADCASTER_ID():
-
-                perms_list.append('streamer')
-
-            user_data = user_data_load.get(redeem_by_user.lower())
-
-            if user_data:
-
-                for key in perms_map.keys():
-                    if user_data.get(key):
-                        perms_list.append(perms_map[key])
-
-                user_level = check_user_level(perms_list)
-
+            if redeem_by_user in user_data_load:
+                user_level = user_data_load[redeem_by_user]['roles']
             else:
-
-                user_level = 'spec'
+                user_level = ['spec']
         
         elif received_type == 'command':
             
@@ -5941,7 +5905,7 @@ def receive_redeem(data_rewards, received_type):
             user_input = data_rewards['USER_INPUT']
             user_level = data_rewards['USER_LEVEL']
             user_id = data_rewards['USER_ID']
-            redeem_reward_image = 'None'
+            redeem_reward_image = f"http://127.0.0.1:7000/src/defaultreward.png"
 
             command_receive = data_rewards['COMMAND']
             prefix = data_rewards['PREFIX']
@@ -6738,10 +6702,25 @@ def commands_module(data) -> None:
     if authdata.TOKEN() and authdata.USERNAME():
         
         def send_error_level(user,user_level, command):
+            
+            if isinstance(user_level, str):
+                result = user_level.strip("[]").replace("'", "")
+                user_level = result.split(", ")
+
+            user_level_string = ""
+
+            if len(user_level) == 1:
+                user_level_string = user_level[0]
+            elif len(user_level) == 2:
+                user_level_string = f"{user_level[0]} ou {user_level[1]}"
+            else:
+                for i in range(len(user_level) - 1):
+                    user_level_string += user_level[i] + ", "
+                user_level_string += "ou " + user_level[-1]
 
             aliases = {
                 '{username}': str(user),
-                '{user_level}' : str(user_level),
+                '{user_level}' : str(user_level_string),
                 '{command}' : str(command)
             }
 
@@ -6754,10 +6733,13 @@ def commands_module(data) -> None:
             list_1 = set(user_list)
             list_2 = set(command_list)
 
-            if list_1.intersection(list_2):
+            if 'mod' in user_list:
                 return True
             else:
-                return False
+                if list_1.intersection(list_2):
+                    return True
+                else:
+                    return False
 
         def compare_strings(s1, s2):
 
@@ -6792,7 +6774,7 @@ def commands_module(data) -> None:
         command_data_queue = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/commands.json", "load")
         
         
-        user_type = user_data_load[user]["roles"]
+        user_type = user_data_load[user.lower()]["roles"]
         command_string = message_text
         command_lower = command_string.lower()
 
@@ -9501,6 +9483,9 @@ def parse_to_dict(message):
             if 'mod=1' in message:
                 roles.append('mod')
                 
+            if user_id == authdata.BROADCASTER_ID() or user_id == authdata.BOT_ID():
+                roles.append('mod')
+
             if 'subscriber=1' in message:
                 roles.append('sub')
             
@@ -9650,7 +9635,6 @@ def command_fallback(message: str) -> None:
                     'time_w': user_data_load[data['username']]['time_w']
                 }
                 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database_sess.json", "save",user_data_load)
             utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)
                                         
         try:
@@ -9873,7 +9857,6 @@ def command_fallback(message: str) -> None:
                             
                             user_data_load[user_join]['last_join'] = last_join
     
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database_sess.json", "save",user_data_load)
                             utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)
                 
                         if event_log_data['show_join']:
@@ -9903,7 +9886,7 @@ def command_fallback(message: str) -> None:
                         
                         if name not in bot_list and name not in bot_list_user:
                             
-                            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database_sess.json", "load")
+                            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
 
                             now = datetime.datetime.now()
                             last_join = now.strftime('%H:%M:%S %d/%m/%Y')
@@ -9912,7 +9895,6 @@ def command_fallback(message: str) -> None:
                                 
                                 user_data_load[name]['last_join'] = last_join
                                 
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database_sess.json", "save",user_data_load)
                                 utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)         
                         
                             if name not in users_sess_join_data['spec']:
@@ -9949,7 +9931,6 @@ def command_fallback(message: str) -> None:
                         
                         user_data_load[user_part]['time_w'] = int(total_min)
                             
-                        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database_sess.json", "save",user_data_load)
                         utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)   
 
                     if user_part not in bot_list and user_part not in bot_list_user:
@@ -10085,12 +10066,11 @@ def close():
             
             regular_min = chat_data['regular_min']
             
-            if total_min > int(regular_min):
-                regular = 1
-            else:
-                regular = 0
+            if 'roles' in user_data_load[name].keys():
+                if total_min > int(regular_min) and "regular" not in user_data_load[name]['roles']:
+                    user_data_load[name]['roles'].append('regular')
                 
-            user_data_load[name]['regular'] = regular
+            
                 
     utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)
 
@@ -11652,7 +11632,7 @@ def bot():
             time.sleep(5)
  
 
-def start_app(start_mode):
+def start_app():
 
     def lock_file():
     
@@ -11696,8 +11676,6 @@ def start_app(start_mode):
                 with open(log_file_path, 'w',encoding='UTF-8') as f:
                     f.writelines(lines[-1000:]) 
 
-        user_data_sess_load = {}
-
         user_join_sess_load = {
             'spec': [],
             'bot' :[]
@@ -11709,31 +11687,29 @@ def start_app(start_mode):
             event_list = event_log_data['event_list'][-100:]
             event_log_data['event_list'] = event_list
             
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database_sess.json", "save",user_data_sess_load) 
         utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "save",user_join_sess_load)
         utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "save",event_log_data)
 
-    if start_mode == "normal":
         
-        if utils.get_files_list():
-            lock_file()
-            download_badges()
-            start_log_files()
-            
-            pygame.init()
-            pygame.mixer.init()
-            
-            threading.Thread(target=bot, args=(), daemon=True).start()
-            threading.Thread(target=get_spec, args=(), daemon=True).start()
-            threading.Thread(target=loopcheck, args=(), daemon=True).start()
-            threading.Thread(target=timer, args=(), daemon=True).start()
-            threading.Thread(target=start_websocket, args=(), daemon=True).start()
-            threading.Thread(target=sk.start_server, args=('localhost', 7688), daemon=True).start()
+    if utils.get_files_list():
+        lock_file()
+        download_badges()
+        start_log_files()
+        
+        pygame.init()
+        pygame.mixer.init()
+        
+        threading.Thread(target=bot, args=(), daemon=True).start()
+        threading.Thread(target=get_spec, args=(), daemon=True).start()
+        threading.Thread(target=loopcheck, args=(), daemon=True).start()
+        threading.Thread(target=timer, args=(), daemon=True).start()
+        threading.Thread(target=start_websocket, args=(), daemon=True).start()
+        threading.Thread(target=sk.start_server, args=('localhost', 7688), daemon=True).start()
 
-            if getattr(sys, 'frozen', False):
-                utils.splash_close()
+        if getattr(sys, 'frozen', False):
+            utils.splash_close()
 
-            webview_start_app('normal')
+        webview_start_app('normal')
 
 
-start_app("normal")
+start_app()

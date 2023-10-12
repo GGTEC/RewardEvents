@@ -26,19 +26,11 @@
             };
         
             socket.onmessage = function(event) {
-                var data_parse = JSON.parse(event.data);
-                if (data_parse.type === 'video') {
-                  console.log(data_parse.html);
-                  iframe.contentDocument.documentElement.innerHTML = data_parse.html;
-                }
-            };
-
-            socket.onmessage = function(event) {
                 if (event.data === 'ping') {
                     socket.send('pong');
                 } else {
                   var data_parse = JSON.parse(event.data);
-                  if (data_parse.type === 'music') {
+                  if (data_parse.type === 'video') {
                     iframe.contentDocument.documentElement.innerHTML = data_parse.html;
                   }
                 }
@@ -46,7 +38,6 @@
         
             socket.onclose = function(error) {
               console.error("Erro na conexão WebSocket:", error);
-              // Realizar a lógica de reconexão aqui, se desejado
               reconnectWebSocket();
             };
           }

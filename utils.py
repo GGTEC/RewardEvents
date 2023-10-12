@@ -328,6 +328,7 @@ def update_notif(data):
         redeem_name_tag.string = redeem
         redeem_user_tag.string = user
 
+        print(str(soup))
         return str(soup)
 
     except Exception as e:
@@ -642,6 +643,11 @@ def get_files_list():
             
         manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/games/games.json", "save", data_save_games)
 
+        html_roaming = f"{local_work('appdata_path')}/rewardevents/web/src/html/video/iframe.html"
+        html_internal = f"{local_work('data_dir')}/web/src/html/video/iframe.html"
+
+        shutil.copy(html_internal, html_roaming)
+
         return True
     
     except Exception as e:
@@ -657,5 +663,6 @@ def get_files_list():
 
             error_log(e)
 
+get_files_list()
 
 

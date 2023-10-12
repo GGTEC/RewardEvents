@@ -10,7 +10,7 @@
     "clip_error_clip": "/me Erro ao criar o clip",
     "error_tts_disabled": "/me {username} --> O modulo de texto-para-fala está desativado.",
     "error_tts_no_text": "/me {username} -->  Você deve fornecer um texto para ser falado",
-    "error_user_level": "/me {username} --> Somente usuários com permissão {user_level} ou maior podem usar o comando = '{command}'.",
+    "error_user_level": "/me {username} --> Somente usuários com permissão {user_level} podem usar o comando = '{command}'.",
     "giveaway_response_win": "/me Parabéns {username} você ganhou o sorteio.",
     "giveaway_response_user_add": "/me O usuário {username} foi adicionado no sorteio.",
     "giveaway_status_enable": "/me Um sorteio ('{giveaway_name}') foi iniciado, resgate a recompensa para entrar.",
