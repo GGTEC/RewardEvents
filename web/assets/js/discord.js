@@ -16,7 +16,7 @@ async function discord_js(event,type_id) {
         var response_chat = document.getElementById(`response-chat`);
 
 
-        enable_status = webhook_status ? 1 : 0;
+        enable_status = webhook_status.checked ? 1 : 0;
         not = not.checked ? 1 : 0,
     
         data_discord_save = {
@@ -87,6 +87,7 @@ async function discord_js(event,type_id) {
         var ignore_list = [
             'clips_create',
             'clips_edit',
+            'live_start_ttk'
         ]
 
         input_type_edit.value = select.value
@@ -126,6 +127,7 @@ async function discord_js(event,type_id) {
 
         const responses_aliases = {
             live_start: '{url}',
+            live_start_ttk: '{url}',
             live_cat : '',
             live_end : '',
             follow: '{username}',

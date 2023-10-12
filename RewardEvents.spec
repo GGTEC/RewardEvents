@@ -19,6 +19,14 @@ a = Analysis(
     cipher=block_cipher,
     noarchive=False,
 )
+
+
+splash = Splash('splash.png',
+                binaries=a.binaries,
+                datas=a.datas,
+                always_on_top=False,
+                text_pos=None)
+
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
@@ -27,6 +35,8 @@ exe = EXE(
     a.binaries,
     a.zipfiles,
     a.datas,
+    splash,
+    splash.binaries,   
     [],
     name='RewardEvents',
     debug=False,

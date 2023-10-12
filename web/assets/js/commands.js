@@ -24,16 +24,22 @@ function hide_commands_div(div_id, modal) {
 async function commands_fun(event,type_id){
 
     if (type_id == 'create'){
+
         event.preventDefault();
 
         var form = document.querySelector("#command-create-form");
-        var mod_value = form.querySelector('select[id="user-level-command"]').value;
+
+        var roles = []; 
+
+        $('#user-level-command :selected').each(function(i, selected){ 
+            roles[i] = $(selected).val(); 
+        });
     
         data = {
             new_command: form.querySelector('input[id="new-command"]').value,
             new_message: form.querySelector('input[id="new-message"]').value,
             new_delay: form.querySelector('input[id="new-delay"]').value,
-            new_user_level: mod_value,
+            new_user_level: roles,
         };
     
         var formData = JSON.stringify(data);
@@ -47,7 +53,6 @@ async function commands_fun(event,type_id){
         event.preventDefault();
 
         var form = document.querySelector("#command-edit-form");
-        var mod_value = form.querySelector('select[id="user-level-command-edit"]').value;
         var status_command = form.querySelector('#command-simple-status');
 
         if (status_command.checked == true) {
@@ -56,6 +61,12 @@ async function commands_fun(event,type_id){
             status_command = 0
         }
 
+        var roles = []; 
+
+        $('#user-level-command-edit :selected').each(function(i, selected){ 
+            roles[i] = $(selected).val(); 
+        });
+        
 
         data = {
             old_command: form.querySelector('select[id="command-select-edit"]').value,
@@ -63,7 +74,7 @@ async function commands_fun(event,type_id){
             status_command: status_command,
             edit_message: form.querySelector('input[id="edit-message"]').value,
             edit_delay:form.querySelector('input[id="edit-delay"]').value,
-            edit_user_level: mod_value,
+            edit_user_level: roles,
         };
 
         var formData = JSON.stringify(data);
@@ -130,6 +141,14 @@ async function commands_fun(event,type_id){
             document.getElementById("edit-message").value = message_edit;
             document.getElementById("edit-delay").value = delay_edit;
 
+            $('#user-level-command-edit option').forEach(function(option) {
+                if (command_info_parse.edit_level.includes(option.value)) {
+                    option.selected = true;
+                } else {
+                    option.selected = false;
+                }
+            });
+
         }
     } else if (type_id == 'get_duel'){
 
@@ -137,6 +156,7 @@ async function commands_fun(event,type_id){
         var command_duel = form_duel.querySelector('#command-duel');
         var command_accept = form_duel.querySelector('#command-duel-accept');
         var user_level_duel = form_duel.querySelector('#user-level-duel');
+
         var delay_duel = form_duel.querySelector('#command-duel-delay');
         var time_to_accept = form_duel.querySelector('#time-duel-accept');
         var time_to_message = form_duel.querySelector('#time-duel-message');
@@ -147,11 +167,11 @@ async function commands_fun(event,type_id){
         var duel_info_parse = await window.pywebview.api.commands_py(type_id,'null');
 
         if (duel_info_parse){
+
             duel_info_parse = JSON.parse(duel_info_parse)
 
             command_duel.value = duel_info_parse.command_duel;
             command_accept.value = duel_info_parse.command_accept;
-            user_level_duel.value = duel_info_parse.user_level;
             delay_duel.value = duel_info_parse.delay;
             time_to_accept.value = duel_info_parse.time_to_accept;
             time_to_message.value = duel_info_parse.time_to_message;
@@ -171,6 +191,14 @@ async function commands_fun(event,type_id){
                 $("#select-message-duel").append('<option style="background: #000; color: #fff;" value="'+ item +'">Duelo'+count_ba +'</option>');
                 $("#select-message-duel").selectpicker("refresh");
             }
+
+            $('#user-level-duel option').each(function(option) {
+                if (duel_info_parse.user_level.includes(option.value)) {
+                    option.selected = true;
+                } else {
+                    option.selected = false;
+                }
+            });
 
         }
 
@@ -194,7 +222,9 @@ async function commands_fun(event,type_id){
             var duel_battle_parse = await window.pywebview.api.commands_py(type_id,select_battle.value);
 
             if (duel_battle_parse){
+
                 duel_battle_parse = JSON.parse(duel_battle_parse)
+
                 message_0.value = duel_battle_parse.message_0;
                 message_1.value = duel_battle_parse.message_1;
                 message_2.value = duel_battle_parse.message_2;
@@ -215,7 +245,13 @@ async function commands_fun(event,type_id){
         var command_duel = form_duel.querySelector('#command-duel');
         var command_accept = form_duel.querySelector('#command-duel-accept');
         var delay_duel = form_duel.querySelector('#command-duel-delay');
-        var user_level_duel = form_duel.querySelector('#user-level-duel');
+        
+        var roles = []; 
+
+        $('#user-level-duel :selected').each(function(i, selected){ 
+            roles[i] = $(selected).val(); 
+        });
+
         var time_to_accept = form_duel.querySelector('#time-duel-accept');
         var time_to_message = form_duel.querySelector('#time-duel-message');
         var time_to_start = form_duel.querySelector('#time-duel-start');
@@ -241,13 +277,13 @@ async function commands_fun(event,type_id){
         data = {
             command_duel : command_duel.value,
             command_accept : command_accept.value,
-            user_level_duel : user_level_duel.value,
+            user_level_duel : roles,
             delay : delay_duel.value,
             time_to_accept : time_to_accept.value,
             time_to_message : time_to_message.value,
             time_to_start : time_to_start.value,
             create_pred : create_pred,
-            new_user_level: mod_value,
+            new_user_level: roles,
             select_batle : select_batle.value,
             message_0 : message_0.value,
             message_1 : message_1.value,
@@ -281,7 +317,9 @@ async function commands_fun(event,type_id){
         var resp_default_parse = await window.pywebview.api.commands_py(type_id,select_editor.value);
 
         if (resp_default_parse) {
+
             resp_default_parse = JSON.parse(resp_default_parse)
+
             fomr_command_default.hidden = false;
 
             if (cmd_type.value == 'cmd'){
@@ -343,7 +381,13 @@ async function commands_fun(event,type_id){
                 cmd_aliases.value = "";
             }
 
-            $("#command-default-perm").selectpicker('val', resp_default_parse.user_level)
+            $('#command-default-perm option').forEach(function(option) {
+                if (resp_default_parse.user_level.includes(option.value)) {
+                    option.selected = true;
+                } else {
+                    option.selected = false;
+                }
+            });
 
         }
 
@@ -354,8 +398,13 @@ async function commands_fun(event,type_id){
         var cmd_status = document.getElementById('command-default-status');
         var cmd_delay = document.getElementById('command-default-delay');
         var cmd_respo = document.getElementById('command-default-respo');
-        var cmd_perm = document.getElementById('command-default-perm');
         var cmd_type = document.getElementById('command-default-type');
+
+        var roles = []; 
+
+        $('#command-default-perm :selected').each(function(i, selected){ 
+            roles[i] = $(selected).val(); 
+        });
 
         cmd_status = cmd_status.checked ? 1 : 0
 
@@ -365,7 +414,7 @@ async function commands_fun(event,type_id){
             status: cmd_status,
             delay: cmd_delay.value,
             response : cmd_respo.value,
-            perm : cmd_perm.value,
+            perm : roles,
         }
 
         var formData = JSON.stringify(data);
@@ -379,6 +428,7 @@ async function commands_fun(event,type_id){
 
         if (command_list_parse){
 
+            command_list_parse = JSON.parse(command_list_parse)
 
             var command_list_redeem = command_list_parse.commands_redeem[0]
             var command_list_simple = command_list_parse.commands_simple[0]

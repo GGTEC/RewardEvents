@@ -5,7 +5,7 @@
     "response_type" : "token",
     "redirect": "http://localhost:7000/auth_sucess.html",
     "url": "https://id.twitch.tv/",
-    "debug" : 0,
+    "debug" : false,
     "scopes" :[
         "moderator:read:followers",
         "analytics:read:extensions",

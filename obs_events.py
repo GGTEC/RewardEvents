@@ -2,9 +2,9 @@ import obsws_python as obs
 import time
 import json
 import os
-import sys
+import utils
 
-sys.tracebacklimit = 0
+
 
 appdata_path = os.getenv('APPDATA')
 is_started = 0
@@ -23,12 +23,14 @@ def test_obs_conn():
     try:
         config_data = load_config()
 
-        obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+        obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'],timeout=1)
         
         return True
 
-    except ConnectionRefusedError:
+    except Exception as e:
 
+        if not isinstance(e, TimeoutError):
+            utils.error_log(e)
 
         return False
 
@@ -38,7 +40,7 @@ def get_scenes():
         
         config_data = load_config()
     
-        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'],timeout=1)
 
         resp_OBS = cl.get_scene_list()
 
@@ -66,7 +68,7 @@ def get_sources():
 
         config_data = load_config()
         
-        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'],timeout=1)
 
         actual_scene_name_resp = cl.get_current_program_scene()
 
@@ -96,7 +98,7 @@ def get_filters(source_name):
 
     config_data = load_config()
     
-    cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+    cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'],timeout=1)
 
     resp_OBS = cl.get_source_filter_list(source_name)
 
@@ -117,7 +119,7 @@ def show_scene(scene_name, time_show, keep):
     try:
         config_data = load_config()
         
-        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'],timeout=1)
 
         actual_scene_name_resp = cl.get_current_program_scene()
 
@@ -146,7 +148,7 @@ def show_source(source_name, time_show, keep):
 
         config_data = load_config()
         
-        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'],timeout=1)
 
         scene_resp = cl.get_current_program_scene()
         scene_atual = scene_resp.current_program_scene_name
@@ -176,7 +178,7 @@ def show_source_video(source_name, time_show):
     
         config_data = load_config()
         
-        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'],timeout=1)
 
         scene_resp = cl.get_current_program_scene()
         scene_atual = scene_resp.current_program_scene_name
@@ -201,7 +203,7 @@ def show_filter(source_name, filter_name, time_show,keep):
         
         config_data = load_config()
 
-        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+        cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'],timeout=1)
 
         if keep == 1:
 
@@ -223,7 +225,7 @@ def create_source(type_id):
     
     config_data = load_config()
 
-    cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'])
+    cl = obs.ReqClient(host=config_data['OBS_HOST'], port=config_data['OBS_PORT'], password=config_data['OBS_PASSWORD'],timeout=1)
 
     scene_resp = cl.get_current_program_scene()
     scene_atual = scene_resp.current_program_scene_name

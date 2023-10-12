@@ -6,19 +6,21 @@ async function queue_js(type_id){
         var response_queue = document.getElementById('queue-response');
         var response_add_queue = document.getElementById('queue-add-response');
 
-        var queue_parse = await window.pywebview.api.queue(type_id,'none');
+        var queue_data = await window.pywebview.api.queue(type_id,'none');
 
-        if (queue_parse) {
-            
-            var list_redem_parse = await window.pywebview.api.get_redeem('queue');
+        if (queue_data) {
 
-            if (list_redem_parse) {
+            queue_parse = JSON.parse(queue_data)
+
+            var list_redem = await window.pywebview.api.get_redeem('queue');
+
+            if (list_redem) {
 
                 var el_id = "redeem-select-queue";
 
-                $("#" + el_id).empty();
+                list_redem_parse = JSON.parse(list_redem)
 
-                $("#" + el_id).append('<option class="bg-dark" style="color: #fff;" value="None">Sem recompensa</option>');
+                $("#" + el_id).empty();
                 $("#" + el_id).selectpicker("refresh");
 
                 for (var i = 0; i < list_redem_parse.redeem.length; i++) {
@@ -214,7 +216,8 @@ async function queue_js(type_id){
             command_queue_command.value = queue_parse.command
             command_queue_delay.value = queue_parse.delay
 
-            $("#command-queue-perm").selectpicker('val',queue_parse.user_level)
+            $('#command-queue-perm').selectpicker('val', queue_parse.user_level);
+            $('#command-queue-perm').selectpicker('refresh');
 
         }
 
@@ -229,12 +232,18 @@ async function queue_js(type_id){
 
         var command_status = command_queue_status.checked ? 1 : 0;
 
+        var roles = []; 
+
+        $('#command-queue-perm :selected').each(function(i, selected){ 
+            roles[i] = $(selected).val(); 
+        });
+
         data  = {
             type_command: command_queue_select.value,
             command: command_queue_command.value,
             status: command_status,
             delay: command_queue_delay.value,
-            user_level: command_queue_perm.value
+            user_level: roles
         }
 
         var formData = JSON.stringify(data);

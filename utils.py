@@ -3,26 +3,74 @@ import os
 import shutil
 import sys
 import time
-from datetime import datetime
-import pytz
-import random
-from random import randint
 import requests
-from bs4 import BeautifulSoup as bs
-
-import urllib.request
-import zipfile
-import tempfile
-
 import tkinter.messagebox as messagebox
+import pytz
+
+import importlib
+
+from datetime import datetime
+from random import randint
+from bs4 import BeautifulSoup as bs
+from dotenv import load_dotenv
 
 extDataDir = os.getcwd()
-
 appdata_path = os.getenv('APPDATA')
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     if getattr(sys, 'frozen', False):
+        if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
+            import pyi_splash
         extDataDir = sys._MEIPASS
+
+
+def local_work(type_id):
+
+    if type_id == 'data_dir':
+
+        extDataDir = os.getcwd()
+
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            if getattr(sys, 'frozen', False):
+                if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
+                    import pyi_splash
+                extDataDir = sys._MEIPASS
+
+        return extDataDir
+    
+    elif type_id == 'appdata_path':
+
+        appdata_path = os.getenv('APPDATA')
+
+        return appdata_path
+
+
+load_dotenv(dotenv_path=os.path.join(local_work('data_dir'), '.env'))
+
+
+def splash_close():
+    pyi_splash.close()
+
+
+def manipulate_json(custom_path, type_id, data=None):
+
+    try:
+
+        if type_id == 'load':
+            with open(custom_path, 'r',encoding='utf-8') as file:
+                loaded_data = json.load(file)
+            return loaded_data
+        elif type_id == 'save':
+            with open(custom_path, 'w',encoding='utf-8') as file:
+                json.dump(data, file, indent=4, ensure_ascii=False)
+
+    except FileNotFoundError as e:
+        error_log(e)
+        print(f'The file {custom_path} was not found.')
+
+    except Exception as e:
+
+        error_log(e)
 
 
 def find_between(s, first, last):
@@ -95,8 +143,7 @@ def error_log(ex):
 
 def check_delay(delay_command, last_use):
 
-    with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
-        messages_data = json.load(messages_file)
+    messages_data = manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/messages/messages_file.json", "load")
 
     message_error = messages_data['response_delay_error']
 
@@ -147,11 +194,29 @@ def check_delay_duel(delay_command, last_use):
         return remaining_time, value, current_time
 
 
+def time_date():
+    
+    chat_data = manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/config/chat_config.json", "load")
+
+    now = datetime.now()
+    
+    if chat_data['data-show'] == 1:
+        format = chat_data['time-format']
+        if chat_data['type-data'] == "passed":
+            chat_time = now.strftime('%Y-%m-%dT%H:%M:%S')
+        elif chat_data['type-data'] == "current":
+            chat_time = now.strftime(format)
+    else: 
+        chat_time = ''
+        
+    return chat_time
+
+
 def send_message(type_message):
 
     try:
-        with open(f'{appdata_path}/rewardevents/web/src/config/commands_config.json') as status_commands_check:
-            status_commands_data = json.load(status_commands_check)
+            
+        status_commands_data = manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/config/commands_config.json", "load")
 
         status_error_time = status_commands_data['STATUS_ERROR_TIME']
         status_error_user = status_commands_data['STATUS_ERROR_USER']
@@ -216,6 +281,7 @@ def send_message(type_message):
 
 
 def copy_file(source, dest):
+    
     copy = 0
 
     try:
@@ -234,8 +300,7 @@ def copy_file(source, dest):
 
 def update_notif(data):
 
-    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding='utf-8') as notifc_config_file:
-        notifc_config_Data = json.load(notifc_config_file)
+    notifc_config_Data = manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "load")
 
     duration = notifc_config_Data['HTML_REDEEM_TIME']
 
@@ -272,9 +337,8 @@ def update_notif(data):
 
 
 def update_music(data):
-
-    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding='utf-8') as notifc_config_file:
-        notifc_config_Data = json.load(notifc_config_file)
+    
+    notifc_config_Data = manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "load")
 
     duration = notifc_config_Data['HTML_MUSIC_TIME']
 
@@ -396,8 +460,7 @@ def update_highlight(data):
 
 def update_emote(data):
 
-    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding='utf-8') as obs_not_file:
-        obs_not_data = json.load(obs_not_file)
+    obs_not_data = manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "load")
 
     width = obs_not_data['EMOTE_PX']
     height = obs_not_data['EMOTE_PX']
@@ -431,7 +494,7 @@ def replace_all(text, dic_res):
 
     try:
         for i, j in dic_res.items():
-            text = text.replace(i, j)
+            text = text.replace(str(i), str(j))
 
         return text
 
@@ -443,249 +506,156 @@ def replace_all(text, dic_res):
 
 def messages_file_load(key):
 
-    with open(f'{appdata_path}/rewardevents/web/src/messages/messages_file.json', "r", encoding='utf-8') as messages_file:
-        messages_data = json.load(messages_file)
+    messages_data = manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/messages/messages_file.json", "load")
 
-    message = messages_data[key]
-
-    return message
+    return messages_data[key]
 
 
-def comparar_e_inserir_chaves(diretorio_origem, diretorio_destino, arquivos_ignorados):
+def compare_and_insert_keys():
+    
+    source_directory = f"{local_work('data_dir')}/web/src"
+    destination_directory = f"{local_work('appdata_path')}/rewardevents/web/src"
+    ignored_files = ['games.json','tags.json','bot_list.json', 'bot_list.json', 'badges_global.json', 'badges_global.json']
 
-    for diretorio_raiz, _, arquivos in os.walk(diretorio_origem):
-        for arquivo in arquivos:
-            if arquivo.endswith('.json') and arquivo not in arquivos_ignorados:
-                caminho_arquivo_origem = os.path.join(diretorio_raiz, arquivo)
-                caminho_arquivo_destino = caminho_arquivo_origem.replace(
-                    diretorio_origem, diretorio_destino)
+    if not os.path.exists(destination_directory):
 
-                if not os.path.exists(caminho_arquivo_destino):
-                    print(
-                        f"Arquivo ausente no diretório de destino: {caminho_arquivo_destino}")
-                    shutil.copy2(caminho_arquivo_origem,
-                                 caminho_arquivo_destino)
+        shutil.copytree(source_directory, destination_directory)
 
-                with open(caminho_arquivo_origem, 'r', encoding='utf-8') as f1, open(caminho_arquivo_destino, 'r+', encoding='utf-8') as f2:
-                    try:
-                        dados1 = json.load(f1)
-                        dados2 = json.load(f2)
+    for root_directory, _, files in os.walk(source_directory):
+        
+        for file in files:
+            
+            if file.endswith('.json') and file not in ignored_files:
+                
+                source_file_path = os.path.join(root_directory, file)
+                destination_file_path = source_file_path.replace(source_directory, destination_directory)
 
-                        if isinstance(dados1, list) and isinstance(dados2, list):
-                            conteudo_atualizado = dados1 + \
-                                [item for item in dados2 if item not in dados1]
-                            if conteudo_atualizado != dados2:
-                                f2.seek(0)
-                                json.dump(conteudo_atualizado, f2,
-                                          indent=4, ensure_ascii=False)
-                                f2.truncate()
-                                print(
-                                    f"Conteúdo atualizado no arquivo {caminho_arquivo_destino}")
+                if not os.path.exists(destination_file_path):
+                    print(f"File missing in the destination directory: {destination_file_path}")
+                    shutil.copy2(source_file_path, destination_file_path)
 
-                        elif isinstance(dados1, dict) and isinstance(dados2, dict):
-                            chaves1 = set(dados1.keys())
-                            chaves2 = set(dados2.keys())
+                try:
+                    
+                    with open(source_file_path, 'r', encoding='utf-8') as src_file, open(destination_file_path, 'r+', encoding='utf-8') as dest_file:
+                        data1 = json.load(src_file)
+                        dest_file.seek(0)
+                        
+                        try:
+                            data2 = json.load(dest_file)
 
-                            chaves_ausentes = chaves1 - chaves2
+                            if isinstance(data1, list) and isinstance(data2, list):
+                                updated_content = data1 + [item for item in data2 if item not in data1]
 
-                            if chaves_ausentes:
-                                print(
-                                    f"Chaves ausentes no arquivo {caminho_arquivo_destino}:")
-                                for chave in chaves_ausentes:
-                                    print(chave)
+                                if updated_content != data2:
+                                    
+                                    dest_file.seek(0)
+                                    
+                                    json.dump(updated_content, dest_file, indent=4, ensure_ascii=False)
+                                    
+                                    dest_file.truncate()
+                                    
+                                    print(f"Content updated in the file {destination_file_path}")
 
-                                f2.seek(0)
-                                conteudo = json.load(f2)
+                            elif isinstance(data1, dict) and isinstance(data2, dict):
+                                
+                                keys1 = set(data1.keys())
+                                keys2 = set(data2.keys())
+                                
+                                missing_keys = keys1 - keys2
 
-                                alterado = False
+                                if missing_keys:
+                                    
+                                    print(f"Keys missing in the file {destination_file_path}:")
+                                    
+                                    for key in missing_keys:
+                                        print(key)
+                                        
+                                    content = data2
+                                    altered = False
 
-                                for chave in chaves_ausentes:
-                                    if chave not in conteudo or conteudo[chave] != dados1[chave]:
-                                        conteudo[chave] = dados1[chave]
-                                        alterado = True
+                                    for key in missing_keys:
+                                        
+                                        if key not in content or content[key] != data1[key]:
+                                            content[key] = data1[key]
+                                            altered = True
 
-                                if alterado:  # Verifica se houve alterações antes de atualizar
-                                    f2.seek(0)
-                                    json.dump(conteudo, f2, indent=4,
-                                              ensure_ascii=False)
-                                    f2.truncate()
-                                    print(
-                                        f"Conteúdo atualizado no arquivo {caminho_arquivo_destino}")
+                                    if altered:
+                                        
+                                        dest_file.seek(0)
+                                        json.dump(content, dest_file, indent=4, ensure_ascii=False)
+                                        dest_file.truncate()
+                                        print(f"Content updated in the file {destination_file_path}")
 
-                        else:
-                            print(
-                                f"Erro: Arquivo {caminho_arquivo_origem} ou {caminho_arquivo_destino} contém um formato incompatível.")
+                            else:
+                                
+                                print(f"Error: File {source_file_path} or {destination_file_path} contains an incompatible format.")
 
-                    except json.JSONDecodeError as e:
-                        print(
-                            f"Erro: Falha ao decodificar o arquivo JSON: {caminho_arquivo_origem} ou {caminho_arquivo_destino}")
-                        print(e)
-
-
-diretorio_origem = f'{extDataDir}/web/src'
-
-diretorio_destino = f'{appdata_path}/rewardevents/web/src'
-
-arquivos_ignorados = ['games.json','tags.json','bot_list.json', 'bot_list.json', 'badges_global.json', 'badges_global.json']
+                        except json.JSONDecodeError as e:
+                            
+                            print(f"Error decoding the destination JSON file: {destination_file_path}")
+                            print(e)
+                            
+                            # If a read error occurs, copy the source file to the destination file
+                            
+                            shutil.copy2(source_file_path, destination_file_path)
+                            print(f"Destination file copied to resolve the issue: {destination_file_path}")
+                            
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding the source JSON file: {source_file_path}")
+                    print(e)
 
 
 def get_files_list():
 
-    dir = f"{appdata_path}/rewardevents/web/src/auth"
-    dir1 = f"{appdata_path}/rewardevents/"
+    dir = f"{local_work('appdata_path')}/rewardevents/web/src/auth"
+    dir1 = f"{local_work('data_dir')}/web/src"
 
     if not os.path.exists(dir):
 
-        os.makedirs(dir1)
+        shutil.copytree(dir1, dir)
 
-        is_writable = os.access(dir1, os.W_OK)
+    try:
 
-        if not is_writable:
+        compare_and_insert_keys()
+        
+        response = requests.get('https://api.twitchinsights.net/v1/bots/all')
 
-            os.chmod(dir1, 0o700)
-            is_writable = os.access(dir1, os.W_OK)
+        data = json.loads(response.text)
+        data_save = []
+        data = data['bots']
 
-        if is_writable:
+        for idx, i in enumerate(data):
+            name = data[idx][0]
+            data_save.append(name)
+            
+        manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/user_info/bot_list.json", "save",data_save)
+        
+        
+        respo_tags = requests.get("https://ggtec.github.io/list_games_tags_tw/tags.json")
+        data_save_tags = json.loads(respo_tags.text)
 
-            url = "https://github.com/GGTEC/GGCORETEC/raw/main/assets/web.zip"
+        manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/games/tags.json", "save",data_save_tags)
 
-            zip_path = f"{appdata_path}/rewardevents/web.zip"
-            unzip_path = f"{appdata_path}/rewardevents"
 
-            # Baixar o arquivo zip
-            urllib.request.urlretrieve(url, zip_path)
+        respo_games = requests.get("https://ggtec.github.io/list_games_tags_tw/games.json")
+        data_save_games = json.loads(respo_games.text)
+            
+        manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/games/games.json", "save", data_save_games)
 
-            if os.path.exists(zip_path):
+        return True
+    
+    except Exception as e:
 
-                with tempfile.TemporaryDirectory() as temp_dir:
+        if type(e).__name__ == "ConnectionError":
 
-                    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                        zip_ref.extractall(temp_dir)
+            ask = messagebox.showerror("Erro", "Erro de conexão, verifique a conexão com a internet e tente novamente.")
 
-                    extracted_dir = os.path.join(temp_dir, "web")
+            if ask == 'ok':
+                sys.exit(0)
 
-                    if os.path.exists(extracted_dir):
-                        shutil.move(extracted_dir, unzip_path)
-                        os.remove(zip_path)
-
-                    else:
-                        print("Diretório extraído não encontrado:", extracted_dir)
-            else:
-                print("Extração do arquivo zip falhou:", zip_path)
         else:
-            print("Não foi possível conceder permissão para escrever na pasta:", dir1)
 
-    else:
-
-        try:
-            comparar_e_inserir_chaves(
-                diretorio_origem, diretorio_destino, arquivos_ignorados)
-
-            response = requests.get(
-                'https://api.twitchinsights.net/v1/bots/all')
-
-            data = json.loads(response.text)
-            data_save = []
-            data = data['bots']
-
-            for idx, i in enumerate(data):
-                name = data[idx][0]
-                data_save.append(name)
-
-            with open(f"{appdata_path}/rewardevents/web/src/user_info/bot_list.json", "w") as outfile:
-                json.dump(data_save, outfile, indent=6)
-
-            respo_tags = requests.get(
-                "https://ggtec.github.io/list_games_tags_tw/tags.json")
-            data_save_tags = json.loads(respo_tags.text)
-
-            with open(f'{appdata_path}/rewardevents/web/src/games/tags.json', "w", encoding="UTF-8") as tags_file:
-                json.dump(data_save_tags, tags_file,
-                          indent=4, ensure_ascii=False)
-
-            respo_games = requests.get(
-                "https://ggtec.github.io/list_games_tags_tw/games.json")
-            data_save_games = json.loads(respo_games.text)
-
-            with open(f'{appdata_path}/rewardevents/web/src/games/games.json', "w", encoding="UTF-8") as games_file:
-                json.dump(data_save_games, games_file,
-                          indent=4, ensure_ascii=False)
-
-        except Exception as e:
-
-            if type(e).__name__ == "ConnectionError":
-
-                ask = messagebox.showerror(
-                    "Erro", "Erro de conexão, verifique a conexão com a internet e tente novamente.")
-
-                if ask == 'ok':
-                    sys.exit(0)
-
-            else:
-
-                error_log(e)
-
-    with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'r', encoding='utf-8') as notif_file:
-        notif_data = json.load(notif_file)
-
-        if not 'HTML_REDEEM_ACTIVE' in notif_data:
-
-            data = {
-                "HTML_PLAYER_ACTIVE": 1,
-                "HTML_EMOTE_ACTIVE": 1,
-                "HTML_REDEEM_ACTIVE": 1,
-                "HTML_REDEEM_TIME": 5,
-                "HTML_MUSIC_TIME": 5,
-                "EMOTE_PX": "40"
-            }
-
-            with open(f'{appdata_path}/rewardevents/web/src/config/notfic.json', 'w', encoding='utf-8') as notif_file:
-                json.dump(data, notif_file, indent=4, ensure_ascii=False)
-
-    notif_path = f'{appdata_path}/rewardevents/web/src/html/notification'
-    remove_path = f'{appdata_path}\\rewardevents\\web\\src\\html'
-
-    if os.path.exists(notif_path):
-
-        shutil.rmtree(remove_path)
-
-        url = "https://github.com/GGTEC/GGCORETEC/raw/main/assets/html.zip"
-
-        zip_path = f"{appdata_path}/rewardevents/html.zip"
-        unzip_path = f"{appdata_path}/rewardevents/web/src"
-
-        urllib.request.urlretrieve(url, zip_path)
-
-        if os.path.exists(zip_path):
-
-            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(unzip_path)
-
-            if os.path.exists(f'{appdata_path}\\rewardevents\\web\\src\\html\\redeem'):
-                os.remove(zip_path)
-
-    with open(f'{appdata_path}/rewardevents/web/src/config/websocket_param.json', 'r', encoding='utf-8') as websocket_param_file:
-        websocket_param_data = json.load(websocket_param_file)
-
-    if 'channel.charity_campaign.donate' in websocket_param_data:
-
-        websocket_param_data.remove('channel.charity_campaign.donate')
-        websocket_param_data.remove('channel.charity_campaign.progress')
-        websocket_param_data.remove('channel.charity_campaign.start')
-        websocket_param_data.remove('channel.charity_campaign.stop')
-
-        with open(f'{appdata_path}/rewardevents/web/src/config/websocket_param.json', 'w', encoding='utf-8') as websocket_param_file_w:
-            json.dump(websocket_param_data, websocket_param_file_w, indent=4, ensure_ascii=False)
-
-    end_sub_path = f'{appdata_path}/rewardevents/web/src/config/endsub.json'
-
-    if not os.path.isfile(end_sub_path):
-
-        end_sub_list = []
-
-        with open(f'{appdata_path}/rewardevents/web/src/config/endsub.json', 'w', encoding='utf-8') as endsub_file_w:
-            json.dump(end_sub_list, endsub_file_w, indent=4, ensure_ascii=False)
+            error_log(e)
 
 
 
-get_files_list()

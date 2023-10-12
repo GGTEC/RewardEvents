@@ -3,7 +3,9 @@ async function giveaway_js(event,type_id) {
     if (type_id == 'get_config') {
 
         var giveaway_name_inp = document.getElementById("giveaway-name");
+
         var giveaway_user_level = document.getElementById("user-level-giveaway");
+
         var giveaway_clear = document.getElementById("giveaway-clear-names-end");
         var giveaway_enable = document.getElementById('giveaway-enable');
         var giveaway_mult = document.getElementById('giveaway-mult');
@@ -61,7 +63,11 @@ async function giveaway_js(event,type_id) {
             }
     
             giveaway_name_inp.value = giveaway_info_parse.giveaway_name;
-            giveaway_user_level.value = giveaway_info_parse.giveaway_level;
+
+
+            $('#user-level-giveaway').selectpicker('val', queue_parse.user_level);
+            $('#user-level-giveaway').selectpicker('refresh');
+
 
         }
 
@@ -87,7 +93,13 @@ async function giveaway_js(event,type_id) {
             command_giveaway_command.value = giveaway_parse.command
             command_giveaway_delay.value = giveaway_parse.delay
 
-            $("#command-giveaway-perm").selectpicker('val',giveaway_parse.user_level)
+            $("#command-giveaway-perm option").forEach(function(option) {
+                if (giveaway_parse.user_level.includes(option.value)) {
+                    option.selected = true;
+                } else {
+                    option.selected = false;
+                }
+            });
 
         }
 
@@ -139,11 +151,19 @@ async function giveaway_js(event,type_id) {
         } else {
             giveaway_mult_value = 0;
         }
+
+        
+        var roles = []; 
+
+        $('#user-level-giveaway :selected').each(function(i, selected){ 
+            roles[i] = $(selected).val(); 
+        });
+
     
         data = {
             giveaway_name: form.querySelector('input[id="giveaway-name"]').value,
             giveaway_redeem: form.querySelector('select[id="redeem-select-giveaway"]').value,
-            giveaway_user_level: form.querySelector('select[id="user-level-giveaway"]').value,
+            giveaway_user_level: roles,
             giveaway_clear_check: giveaway_clear_check_value,
             giveaway_enable: giveaway_enable_value,
             giveaway_mult: giveaway_mult_value,
@@ -165,12 +185,18 @@ async function giveaway_js(event,type_id) {
 
         var command_status = command_giveaway_status.checked ? 1 : 0;
 
+        var roles = []; 
+
+        $('#command-giveaway-perm :selected').each(function(i, selected){ 
+            roles[i] = $(selected).val(); 
+        });
+
         data  = {
             type_command: command_giveaway_select.value,
             command: command_giveaway_command.value,
             status: command_status,
             delay: command_giveaway_delay.value,
-            user_level: command_giveaway_perm.value
+            user_level: roles
         }
 
         var formData = JSON.stringify(data);

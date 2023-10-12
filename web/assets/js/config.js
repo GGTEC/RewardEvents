@@ -4,28 +4,6 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function get_redeem_js_config(el_id) {
-
-    var list_redem_parse = await window.pywebview.api.get_redeem('player');
-
-    if (list_redem_parse) {
-
-        list_redem_parse = JSON.parse(list_redem_parse)
-        
-        $("#" + el_id).empty();
-
-        $("#" + el_id).append('<option style="background: #000; color: #fff;" value="None">Sem recompensa</option>');
-        $("#" + el_id).selectpicker("refresh");
-
-        for (var i = 0; i < list_redem_parse.redeem.length; i++) {
-            var optn = list_redem_parse.redeem[i];
-
-            $("#" + el_id).append('<option style="background: #000; color: #fff;" value="'+ optn +'">'+ optn +'</option>');
-            $("#" + el_id).selectpicker("refresh");
-        }
-    }
-}
-
 async function messages_config_js(type_id) {
     
     var enable_tts_command = document.getElementById("enable-tts-module");
@@ -188,7 +166,7 @@ async function config_responses_js(event,fun_id_responses) {
             button_el.removeAttribute("disabled");
             in_reponse_el.value = messages;
     
-            }
+        }
 
         const responses_aliases_respo = {
             giveaway_clear : '',
@@ -263,7 +241,6 @@ function show_config_div(div_id) {
     } else if (div_id == "config-discord-div") {
         discord_js('event','get-profile');
     } else if (div_id == "config-music-div"){
-        get_redeem_js_config('redeem-select-music')
         sr_config_js('event','get')
     } else if (div_id == "chat-config-div"){
         chat_config('get')
@@ -299,6 +276,7 @@ async function sr_config_js(event,type_id){
     
         var music_config = await window.pywebview.api.sr_config_py(type_id,'null');
     
+        
         if(music_config){
             
             music_config = JSON.parse(music_config)
@@ -321,9 +299,28 @@ async function sr_config_js(event,type_id){
 
             skip_votes.value = music_config.skip_votes;
 
+            var list_redem_parse = await window.pywebview.api.get_redeem('player');
+
+            if (list_redem_parse) {
+
+                list_redem_parse = JSON.parse(list_redem_parse)
+                
+                $("#redeem-select-music").empty();
+
+                $("#redeem-select-music").append('<option style="background: #000; color: #fff;" value="None">Sem recompensa</option>');
+                $("#redeem-select-music").selectpicker("refresh");
+
+                for (var i = 0; i < list_redem_parse.redeem.length; i++) {
+                    var optn = list_redem_parse.redeem[i];
+                    
+                    $("#redeem-select-music").append('<option style="background: #000; color: #fff;" value="'+ optn +'">'+ optn +'</option>');
+                    $("#redeem-select-music").selectpicker("refresh");
+                }
+            }
+
             $("#redeem-select-music").selectpicker('val', music_config.redeem);
+            $("#redeem-select-music").selectpicker("refresh");
     
-            
         }
 
     } else if (type_id == 'get_command'){
@@ -347,8 +344,8 @@ async function sr_config_js(event,type_id){
             command_player_status.checked = command_data_parse.status == 1 ? true : false
             command_player_delay.value = command_data_parse.delay
 
-            $("#command-player-perm").selectpicker('val', command_data_parse.user_level);
-            $("#command-player-perm").selectpicker("refresh");
+            $('#command-player-perm').selectpicker('val', command_data_parse.user_level);
+            $('#command-player-perm').selectpicker('refresh');
 
         }
 
@@ -362,12 +359,18 @@ async function sr_config_js(event,type_id){
         var command_player_status = document.getElementById('command-player-status');
         var command_player_delay = document.getElementById('command-player-delay');
         var command_player_perm = document.getElementById('command-player-perm');
+
+        var roles = []; 
+
+        $('#command-player-perm :selected').each(function(i, selected){ 
+            roles[i] = $(selected).val(); 
+        });
         
         data = {
             type_command : select_command_player.value,
             command: command_player_command.value,
             delay: command_player_delay.value,
-            user_level: command_player_perm.value,
+            user_level: roles,
             status: command_player_status = command_player_status.checked ? 1 : 0
         }
 
@@ -1516,24 +1519,31 @@ async function goal() {
 
             data_goal_parse = JSON.parse(data_goal_parse)
 
+            var goal_follow_div = document.getElementById('goal-follow-div')
+            var goal_sub_div = document.getElementById('goal-sub-div')
+
+            var goal_follow_div_none = document.getElementById('goal-follow-div-none')
+            var goal_sub_div_none = document.getElementById('goal-sub-div-none')
+
             var goal_follow_status = document.getElementById('status-goal-follows-small')
             var goal_sub_status = document.getElementById('status-goal-subs-small')
     
             var goal_follow_status_bar_value = document.getElementById('progress-goal-follows-small-int')
             var goal_sub_status_bar_value = document.getElementById('progress-goal-subs-small-int')
+            
+            var follow_status = data_goal_parse.follow.status
+            var sub_status = data_goal_parse.subscription_count.status
 
-            var goal_follow_status_bar = document.getElementById('progress-goal-follows-small')
-            var goal_sub_status_bar = document.getElementById('progress-goal-subs-small')
-    
             var follow_current = data_goal_parse.follow.current_amount
             var follow_target = data_goal_parse.follow.target_amount
     
             var sub_current = data_goal_parse.subscription_count.current_amount
             var sub_target = data_goal_parse.subscription_count.target_amount
-    
-            if (follow_target != 0){
-                
-                goal_follow_status_bar.hidden = false
+            
+            if (follow_status != 'end'){
+
+                goal_follow_div.hidden = false
+                goal_follow_div_none.hidden = true
 
                 goal_follow_status.innerHTML = `${follow_current}/${follow_target}`
     
@@ -1541,14 +1551,16 @@ async function goal() {
                 
                 goal_follow_status_bar_value.value = value_follow;
                 goal_follow_status_bar_value.style.width = `${(value_follow)}%`;
-    
+
             } else {
-                goal_follow_status_bar.hidden = true
+                goal_follow_div.hidden = true
+                goal_follow_div_none.hidden = false
             }
             
-            if (sub_target != 0){
+            if (sub_status != 'end'){
 
-                goal_sub_status_bar.hidden = false 
+                goal_sub_div.hidden = false
+                goal_sub_div_none.hidden = true
 
                 goal_sub_status.innerHTML = `${sub_current}/${sub_target}`
     
@@ -1558,8 +1570,8 @@ async function goal() {
                 goal_sub_status_bar_value.style.width = `${(value_subs)}%`;
 
             } else {
-
-                goal_sub_status_bar.hidden = true
+                goal_sub_div.hidden = true
+                goal_sub_div_none.hidden = false
             }
         }
 

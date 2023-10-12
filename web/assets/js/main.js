@@ -1,165 +1,187 @@
 window.addEventListener('pywebviewready',async function() {
 
-  var progressBar_start = document.getElementById("progress-bar-start");
-  var progress_span = document.getElementById("progress-span");
-  
-  progressBar_start.style.width = `0%`;
-
-  var functionsCount = 18; //defina a quantidade de funções a serem executadas
-  var functionsExecuted = 0; //inicialize o contador de funções executadas
-
-
-  $('[data-toggle="tooltip"]').tooltip();
-  $("input, select, textarea").attr("autocomplete", "off");
-  $("input, select, textarea").attr("spellcheck", "false");
-
-  functionsExecuted++;
-  progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-  progress_span.innerHTML = 'Tooltips, inputs.'
-
   loaded = await window.pywebview.api.loaded();
   
   if (loaded){
 
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-    progress_span.innerHTML = 'Start chat.'
+    loaded = JSON.parse(loaded)
 
-    var disclosure = await window.pywebview.api.disclosure_py('get','null');
-    if (disclosure){
-        document.getElementById('message-disclosure-send').value = disclosure
-
-        progress_span.innerHTML = 'disclosure.'
-        functionsExecuted++;
-        progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-    }
-
-    get_users = await window.pywebview.api.get_users_info('save','null');
-    if (get_users){
-
-      functionsExecuted++;
-      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-      progress_span.innerHTML = 'Update users data.'
-
-    }
-
-    start_obs = await window.pywebview.api.start_obs();
-    if (start_obs){
-
-      if(start_obs == 'sucess'){
-        document.getElementById('obs_conn_status').innerHTML = 'Conectado'
-      } else if (start_obs == 'error'){
-        document.getElementById('obs_conn_status').innerHTML = 'Desconectado'
-      } else if (start_obs == 'None'){
-        document.getElementById('obs_conn_status').innerHTML = 'Desconhecido'
-      }
-
-      functionsExecuted++;
-      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-      progress_span.innerHTML = 'start obs.'
-
-    }
-
-
-    start_selectpicker()
-
-    progress_span.innerHTML = 'selectpicker.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-
-    start_sidebar()
-
-    progress_span.innerHTML = 'sidebar.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-
-    start_scroll()
-
-    progress_span.innerHTML = 'scroll.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-
-    start_resizable()
-
-    progress_span.innerHTML = 'resizable.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-
-    start_update_time_chat()
-
-    progress_span.innerHTML = 'auto update time chat.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-    start_events_log('div-events')
-
-    progress_span.innerHTML = 'get event logs.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-    start_event_updatetime()
-
-    progress_span.innerHTML = 'auto update time events.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-    prediction_small()
-
-    progress_span.innerHTML = 'predicitons status.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-    poll_small()
-
-    progress_span.innerHTML = 'polls status.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-    goal()
-
-    progress_span.innerHTML = 'goal status.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-
-    start_profile_info()
-
-    progress_span.innerHTML = 'streamer profile info.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
-
-    $('#main').removeClass('d-none')
-    $('#loading').addClass('remove-loading')
-
-    setTimeout(function() {
+    if (loaded.autenticated == "false"){
+      
+      $('#body-pd').addClass('ps-0');
       $('#loading').addClass('d-none');
       
-      update_modal('get_start')
-    }, 1000);
+      $('#loading').addClass('remove-loading')
 
-    progress_span.innerHTML = 'remove loading.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+      $('#auth').removeClass('d-none')
 
-    start_carousel()
+    } else {
 
-    progress_span.innerHTML = 'start info carroucel.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+      var progressBar_start = document.getElementById("progress-bar-start");
+      var progress_span = document.getElementById("progress-span");
 
-    progress_span.innerHTML = 'Finish start.'
-    functionsExecuted++;
-    progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+      progressBar_start.style.width = `0%`;
 
-    $("#tags").on("click", "p", function() {
-      $(this).remove(); 
-    });
-    
+      var functionsCount = 18;
+      var functionsExecuted = 0;
 
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`;
+      progress_span.innerHTML = 'Tooltips, inputs.'
+
+      
+      const tooltipTriggerList = document.querySelectorAll('[title]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+      
+      $("input, select, textarea").attr("autocomplete", "off");
+      $("input, select, textarea").attr("spellcheck", "false");
+      
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+      progress_span.innerHTML = 'Start chat.'
+
+      var disclosure = await window.pywebview.api.disclosure_py('get','null');
+
+      if (disclosure){
+
+          document.getElementById('message-disclosure-send').value = disclosure
+
+          progress_span.innerHTML = 'disclosure.'
+          functionsExecuted++;
+          progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+      }
+
+      get_users = await window.pywebview.api.get_users_info('save','null');
+
+      if (get_users){
+
+        functionsExecuted++;
+        progress_span.innerHTML = 'Update users data.'
+        progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+        
+      }
+
+      start_obs = await window.pywebview.api.start_obs();
+
+      if (start_obs){
+
+        document.getElementById('obs_conn_status').innerHTML = 'Conectado'
+        functionsExecuted++;
+        progress_span.innerHTML = 'start obs.'
+        progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+        
+      } else {
+
+        document.getElementById('obs_conn_status').innerHTML = 'Desconectado'
+        functionsExecuted++;
+        progress_span.innerHTML = 'start obs.'
+        progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+        
+      }
+
+
+      start_selectpicker()
+
+      progress_span.innerHTML = 'selectpicker.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+      start_sidebar()
+
+      progress_span.innerHTML = 'sidebar.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+      start_scroll()
+
+      progress_span.innerHTML = 'scroll.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+      start_resizable()
+
+      progress_span.innerHTML = 'resizable.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+      start_update_time_chat()
+
+      
+      progress_span.innerHTML = 'auto update time chat.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+      start_events_log('div-events')
+
+      progress_span.innerHTML = 'get event logs.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+      start_event_updatetime()
+
+      progress_span.innerHTML = 'auto update time events.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+      prediction_small()
+
+      progress_span.innerHTML = 'predicitons status.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+      poll_small()
+
+      progress_span.innerHTML = 'polls status.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+      goal()
+
+      progress_span.innerHTML = 'goal status.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+
+      start_profile_info()
+
+      progress_span.innerHTML = 'streamer profile info.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+      $('#main').removeClass('d-none')
+      $('#loading').addClass('remove-loading')
+
+      setTimeout(function() {
+        $('#loading').addClass('d-none');
+        
+        update_modal('get_start')
+      }, 1000);
+
+      progress_span.innerHTML = 'remove loading.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+      start_carousel()
+
+      progress_span.innerHTML = 'start info carroucel.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+      progress_span.innerHTML = 'Finish start.'
+      functionsExecuted++;
+      progressBar_start.style.width = `${functionsExecuted * (100 / functionsCount)}%`; //atualize o progresso
+
+      
+
+      $("#tags").on("click", "p", function() {
+        $(this).remove(); 
+      });
+      
+    }
   }
 
 });
@@ -180,6 +202,7 @@ function start_selectpicker(){
     noneSelectedText : 'Selecione um item'
   });
 }
+
 function start_carousel(){
 
   const carousel = document.querySelector('.carousel');
@@ -191,7 +214,18 @@ function start_carousel(){
     pageDots: false,
     setGallerySize: false
   });
+
+  const carousel_1 = document.querySelector('.carousel-1');
+  const flkty_1 = new Flickity(carousel_1, {
+    contain: true,
+    wrapAround: true,
+    autoPlay: true,
+    prevNextButtons: false,
+    pageDots: false,
+    setGallerySize: false
+  });
 }
+
 function start_scroll(){
 
   const scrollToBottomButton = document.querySelector("#scrollBtn");
@@ -249,24 +283,31 @@ function start_scroll(){
 }
 
 function start_sidebar(){
-  const hoverDiv = document.querySelector('#sidebarMenu');
-  const showDiv = document.querySelector('#sidebarMenu-hidden');
-  
-  function show_navbar(type_id){
-    if(type_id == 'show'){
-      showDiv.classList.add('sidebarMenu-show');
-    } else if (type_id == 'hidden'){
-      showDiv.classList.remove('sidebarMenu-show');
-    }
-  }
-  
-  hoverDiv.addEventListener('mouseenter',() => {
-    show_navbar('show');
-  });
 
-  showDiv.addEventListener('mouseleave',() => {
-    show_navbar('hidden');
-  });
+  const linkname = document.querySelectorAll('.nav_name')
+
+  const showNavbar = (toggleId, navId, bodyId) => {
+    const toggle = document.getElementById(toggleId),
+        nav = document.getElementById(navId),
+        bodypd = document.getElementById(bodyId)
+
+    // Validate that all variables exist
+    if (toggle && nav && bodypd) {
+        toggle.addEventListener('click', () => {
+            // show navbar
+            nav.classList.toggle('show_navbar')
+            // change icon
+            toggle.classList.toggle('bx-x')
+            // add padding to body
+            bodypd.classList.toggle('body-pd')
+
+            linkname.forEach(name => name.classList.toggle('show_link'))
+        })
+    }
+}
+
+showNavbar('header-toggle', 'nav-bar', 'body-pd')
+
 
 }
 
@@ -326,16 +367,35 @@ function start_resizable(){
   
 }
 
-function receive_live_info(data){
+function start_search_rewards(){
 
-    document.getElementById('text-counter').innerText = " " + data.specs;
-    document.getElementById('time-in-live').innerText = data.time;
+  const search_bar = document.getElementById('search-bar');
+  const cards = document.querySelectorAll('.card_reward');
 
-    if (data.specs != 'Offline'){
-        document.getElementById('live-dot').style.color = 'red';
-    }
+  search_bar.addEventListener('input', function() {
+      const search_term = search_bar.value.toLowerCase();
+
+      cards.forEach(card => {
+          const dataTitle = card.getAttribute('data-title').toLowerCase();
+          if (search_term === '' || dataTitle.includes(search_term)) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+      });
+  });
 }
 
+function receive_live_info(data){
+
+    if (data.specs != 'Offline'){
+        document.getElementById('twitch-spec').hidden = false;
+        document.getElementById('live-dot').style.color = 'red';
+        document.getElementById('text-counter').innerText = " " + data.specs;
+        document.getElementById('time-in-live').innerText = data.time;
+    }
+
+}
 
 async function start_profile_info(){
 
@@ -605,7 +665,6 @@ function update_div_redeem(data_redem_parse) {
     user_redeem.innerText = data_redem_parse.redeem_user
 }
 
-
 async function getFolder(id,type_id) {
   var dosya_path = await window.pywebview.api.select_file_py(type_id);
   if (dosya_path) {
@@ -766,11 +825,3 @@ function mode_change(){
 }
 
 
-function openNav() {
-  document.getElementById("sidebarMenu").style.width = "20%";
-}
-
-/* Set the width of the sidebar to 0 and the left margin of the page content to 0 */
-function closeNav() {
-  document.getElementById("sidebarMenu").style.width = "0";
-}

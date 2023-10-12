@@ -67,7 +67,14 @@ async function counter_js(type_id,event) {
             command_counter_command.value = counter_parse.command
             command_counter_delay.value = counter_parse.delay
 
-            $("#command-counter-perm").selectpicker('val',counter_parse.user_level)
+
+            $('#command-counter-perm option').each(function(option) {
+                if (counter_parse.user_level.includes(option.value)) {
+                    option.selected = true;
+                } else {
+                    option.selected = false;
+                }
+            });
 
         }
 
@@ -99,6 +106,11 @@ async function counter_js(type_id,event) {
         var command_counter_delay = document.getElementById('command-counter-delay');
         var command_counter_perm = document.getElementById('command-counter-perm');
 
+        var roles = []; 
+
+        $('#command-counter-perm :selected').each(function(i, selected){ 
+            roles[i] = $(selected).val(); 
+        });
         var command_status = command_counter_status.checked ? 1 : 0;
 
         data  = {
@@ -106,7 +118,7 @@ async function counter_js(type_id,event) {
             command: command_counter_command.value,
             status: command_status,
             delay: command_counter_delay.value,
-            user_level: command_counter_perm.value
+            user_level: roles
         }
 
         var formData = JSON.stringify(data);

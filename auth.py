@@ -5,6 +5,9 @@ class auth_data:
         with open(filename) as f:
             self.data = json.load(f)
 
+    def USERNAME_TTK(self):
+        return self.data['USERNAME_TTK']
+
     def USERNAME(self):
         return self.data['USERNAME']
 

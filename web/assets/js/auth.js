@@ -2,85 +2,95 @@ function send_auth_info(event, fomrid) {
 
     event.preventDefault();
 
-    div_user_auth = document.getElementById("div-user-auth");
-    input_streamer_username = document.getElementById("streamer-name");
-    streamer_token = document.getElementById("streamer-token");
-    div_user_token = document.getElementById("div-user-token");
+    page1 = document.getElementById("page-1");
+    page2 = document.getElementById("page-2");
+    page3 = document.getElementById("page-3");
+    page4 = document.getElementById("page-4");
+    page5 = document.getElementById("page-5");
+    page6 = document.getElementById("page-6");
 
-    div_bot_auth = document.getElementById("div-bot-auth");
-    input_bot_username = document.getElementById("bot-name");
+    streamer_username = document.getElementById("streamer-name");
 
-    bot_token = document.getElementById("bot-token");
-    div_bot_token = document.getElementById("div-bot-token");
+    bot_username = document.getElementById("bot-name");
 
     selector_streamer_asbot = document.getElementById("streamer_as_bot");
-    
-    input_streamer_bot_username = document.getElementById("streamer-bot-token");
-    div_streamer_bot_token = document.getElementById("div-user-bot-token");
-
-    sucess_div = document.getElementById("div-auth-sucess");
 
     if (fomrid == 'submit-auth-user') {
 
-        var user_name = input_streamer_username.value;
+        var user_name = streamer_username.value;
 
         if (selector_streamer_asbot.checked == true) {
 
-            div_user_auth.hidden = true;
-            div_streamer_bot_token.hidden = false;
+            page3.hidden = true;
+            page5.hidden = false;
 
             window.pywebview.api.start_auth_window(user_name, 'streamer_asbot');
 
         } else {
 
-            div_user_auth.hidden = true;
-            div_user_token.hidden = false;
+            page3.hidden = true;
+            page5.hidden = false;
+
             window.pywebview.api.start_auth_window(user_name, 'streamer');
         }
 
-    } else if (fomrid == 'submit-user-token') {
+    } else if (fomrid == 'submit-auth-bot') {
 
-        var token = streamer_token.value;
-        
-        window.pywebview.api.save_access_token('streamer',token)
-
-        div_user_token.hidden = true;
-        div_bot_auth.hidden = false;
-
-    } else if (fomrid == 'submit-user-bot-token') {
-
-        var token = input_streamer_bot_username.value;
-        window.pywebview.api.save_access_token('streamer_asbot',token)
-
-        div_streamer_bot_token.hidden = true;
-        sucess_div.hidden = false;
-
-    }  else if (fomrid == 'submit-auth-bot') {
-
-        var user_name = input_bot_username.value;
+        var user_name = bot_username.value;
 
         window.pywebview.api.start_auth_window(user_name, 'bot');
 
-        div_bot_auth.hidden = true;
-        div_bot_token.hidden = false;
+        page4.hidden = true;
+        page5.hidden = false;
 
-    } else if (fomrid == 'submit-bot-token') {
-
-        var token = bot_token.value;
-        window.pywebview.api.save_access_token('bot',token)
-
-        div_bot_token.hidden = true;
-        sucess_div.hidden = false;
-
-    } else if (fomrid == 'next') {
-
-        document.getElementById("div-auth-terms").hidden = true;
-        document.getElementById("div-user-auth").hidden = false;
-
-    } else if (fomrid == 'next-terms'){
-
-        document.getElementById("div-auth-start").hidden = true;
-        document.getElementById("div-auth-terms").hidden = false;
     }
 
+}
+
+
+var currentPage = 1;
+
+function changePage() {
+
+    var currentPageElement = document.getElementById('page-' + currentPage);
+    if (currentPageElement) {
+        currentPageElement.hidden = true;
+    }
+
+    currentPage = currentPage % 3 + 1;
+
+    var nextPageElement = document.getElementById('page-' + currentPage);
+    if (nextPageElement) {
+        nextPageElement.hidden = false;
+    }
+}
+
+document.getElementById('page-1').hidden = false;
+
+function toggle_auth(type_id){
+
+    page4 = document.getElementById("page-4");
+    page5 = document.getElementById("page-5");
+    page6 = document.getElementById("page-6");
+
+    if (type_id == 'submit-user-token') {
+
+        page5.hidden = true;
+        page4.hidden = false;
+
+    } else if (type_id == 'submit-bot-token') {
+
+        page5.hidden = true;
+        page6.hidden = false;
+
+        location.reload();
+
+    } else if (type_id == 'submit-user-bot-token') {
+
+        page5.hidden = true;
+        page6.hidden = false;
+
+        location.reload();
+
+    } 
 }

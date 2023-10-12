@@ -100,5 +100,31 @@
       "prediction_progress": {
             "status": 1,
             "response_chat": "Palpite {title} atualizado"
+      },
+      "ttk_gift" : {
+            "status": 1,
+            "response_chat": "Usuário {username} enviou {amount} {giftname}"
+      },
+      "ttk_join" : {
+            "status": 1,
+            "response_chat": "Usuário {username} Entrou na live do TikTok"
+      },
+      "ttk_like" : {
+            "status": 1,
+            "sound": 1,
+            "sound_loc": "",
+            "sound_volume": "27",
+            "response_chat": "Usuário {username} deu Like na live"
+      },
+      "ttk_share" : {
+            "status": 1,
+            "response_chat": "Usuário {username} compartilhou a live"
+      },
+      "ttk_follow" : {
+            "status": 1,
+            "sound": 1,
+            "sound_loc": "",
+            "sound_volume": "27",
+            "response_chat": "Usuário {username} Seguiu o canal no TikTok!"
       }
 }

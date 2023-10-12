@@ -10,6 +10,7 @@
       "not-sound-path": "",
       "user_not_display": [],
       "send-greetings": 1,
+      "receive-tiktok" : 0,
       "greetings": "Seja bem vindo ao chat {user}",
       "data-show": 1,
       "type-data": "current",

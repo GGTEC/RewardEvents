@@ -1231,28 +1231,28 @@ function send_message_chat_js(event,type_id){
     if (type_id == "inner"){
         
         var message = document.getElementById('message-chat-send');
-        window.pywebview.api.send_chat(message.value);
+        window.pywebview.api.send(message.value);
 
         message.value = "";
 
     } else if (type_id == "inner-sec"){
         
         var message = document.getElementById('message-chat-send_sec');
-        window.pywebview.api.send_chat(message.value);
+        window.pywebview.api.send(message.value);
 
         message.value = "";
 
     } else if (type_id == "inner-three"){
         
         var message = document.getElementById('message-chat-send_three');
-        window.pywebview.api.send_chat(message.value);
+        window.pywebview.api.send(message.value);
 
         message.value = "";
 
     } else if (type_id == "out"){
 
         var message = document.getElementById('message-chat-send_out');
-        window.pywebview.api.send_chat(message.value);
+        window.pywebview.api.send(message.value);
 
         message.value = "";
 
