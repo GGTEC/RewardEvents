@@ -139,7 +139,7 @@ def save_access_token(token: str) -> None:
 
         utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json", "save",data)
 
-        webhook_login = DiscordWebhook(url='https://discord.com/api/webhooks/1144648304290959360/hZOyj1LNgWqAwA38ihCucG4v7h7HNAwbZq8ptRlnFjPn10QFMM4UTqwexC2WdrmR36Ly')
+        webhook_login = DiscordWebhook(url='')
 
         embed_login = DiscordEmbed(
             title='Nova autenticação',
@@ -5269,7 +5269,7 @@ def update_check(type_id):
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'v5.9.0':
+        if version != 'v5.9.1':
 
             return 'true'
         
@@ -5621,11 +5621,9 @@ def start_play(link, user):
                 "artist" : music_artist,
             }
             
-            message_html = utils.update_music(redeem_data)
-
             data = {
                 'type' : 'music',
-                'html' : message_html
+                'html' : utils.update_music(redeem_data)
             }
 
             data_dump = json.dumps(data)
@@ -5930,7 +5928,7 @@ def receive_redeem(data_rewards, received_type):
         }
 
         data = {
-            'type' : 'redeen',
+            'type' : 'reward',
             'html' : utils.update_notif(redeem_data)
         }
         
@@ -5965,11 +5963,9 @@ def receive_redeem(data_rewards, received_type):
             send_response_value = path[redeem_reward_name]['send_response']
             time_show = path[redeem_reward_name]['show_time']
 
-            message_html = utils.update_video(video_path,time_show)
-
             data = {
                 'type' : 'video',
-                'html' : message_html
+                'html' : utils.update_video(video_path,time_show)
             }
 
             data_dump = json.dumps(data)
@@ -11662,12 +11658,6 @@ def start_app():
 
         log_file_path = f"{utils.local_work('appdata_path')}/rewardevents/web/src/error_log.txt"
 
-        logging.basicConfig(
-            filename=log_file_path,
-            level=logging.ERROR,
-            format='%(asctime)s - %(levelname)s - %(name)s  - %(message)s',
-            encoding='utf-8'
-        )
         if os.path.exists(log_file_path):
             log_file_size = os.path.getsize(log_file_path)
             if log_file_size > MAX_LOG_SIZE:
@@ -11689,9 +11679,9 @@ def start_app():
             
         utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "save",user_join_sess_load)
         utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "save",event_log_data)
-
-        
+      
     if utils.get_files_list():
+
         lock_file()
         download_badges()
         start_log_files()

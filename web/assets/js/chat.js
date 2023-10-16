@@ -604,6 +604,7 @@ async function chat_config(type_config){
 async function start_update_time_chat() {
 
     while (true){
+
         let dateTimeObjs = [];
 
         let messageTimeElements = document.querySelectorAll(".message-time");
@@ -613,11 +614,11 @@ async function start_update_time_chat() {
             dateTimeObjs.push(new Date(dateString));
         });
 
-        //Data e hora atual
         let now = new Date();
+
         messageTimeElements.forEach(function(element, index) {
             let dateTimeObj = dateTimeObjs[index];
-            //Calculando a diferença entre as datas
+
             let delta = now - dateTimeObj;
             let minutes = Math.floor(delta / (1000 * 60));
             let hours = Math.floor(delta / (1000 * 60 * 60));
@@ -677,10 +678,12 @@ function append_message(message_data_parse){
             var random_color =  choose(['Blue', 'Coral', 'DodgerBlue', 'SpringGreen', 'YellowGreen', 'Green', 'OrangeRed', 'Red', 'GoldenRod', 'HotPink', 'CadetBlue', 'SeaGreen', 'Chocolate', 'BlueViolet','Firebrick'])
             
             if (apply_color == 1) {
-                if (color_rec == null && fix_color == 1){
-                    color_rec = select_color
-                } else if ((color_rec == null && fix_color == 0)){
-                    color_rec = random_color
+                if (color_rec == null){
+                    if (fix_color == 1){
+                        color_rec = select_color
+                    } else {
+                        color_rec = random_color
+                    }
                 }
             } else {
                 color_rec = "white"
@@ -1181,6 +1184,7 @@ function append_message_out(message_data_parse){
         span_badges.id = 'user-badges';
         span_badges.innerHTML = badges_data;
 
+
         var span_username = document.createElement("span");
         span_username.id = 'user-chat';
         span_username.style.color = color_rec;
@@ -1188,11 +1192,9 @@ function append_message_out(message_data_parse){
         span_username.innerHTML = user_rec + ' :';
         span_username.setAttribute('onclick','pywebview.api.open_py("user","'+user_rec+'")');
 
-        message_rec = twemoji.parse(message_rec);
-        
         var span_message = document.createElement("span");
         span_message.id = 'message-chat';
-        span_message.innerHTML = message_rec;
+        span_message.innerHTML = twemoji.parse(message_rec);
         
         var new_line = document.createElement("br");
 
@@ -1219,7 +1221,6 @@ function append_message_out(message_data_parse){
                 div_chat_out.removeChild(div_chat_out.firstChild);
             }
         }
-
     }
 
 }

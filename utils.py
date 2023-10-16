@@ -280,24 +280,6 @@ def send_message(type_message):
         error_log(e)
 
 
-def copy_file(source, dest):
-    
-    copy = 0
-
-    try:
-
-        shutil.copy2(source, dest)
-
-    except Exception as e:
-
-        error_log(e)
-        copy = 1
-        return copy
-
-    copy = 1
-    return copy
-
-
 def update_notif(data):
 
     notifc_config_Data = manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "load")
@@ -308,11 +290,9 @@ def update_notif(data):
     user = data['redeem_user']
     image = data['redeem_image']
 
-    html_file = f"{appdata_path}/rewardevents/web/src/html/redeem/redeem.html"
-
     try:
 
-        with open(html_file, "r") as html:
+        with open(f"{local_work('appdata_path')}/rewardevents/web/src/html/redeem/redeem.html", "r") as html:
             soup = bs(html, 'html.parser')
 
         redeem_src = image
@@ -328,7 +308,6 @@ def update_notif(data):
         redeem_name_tag.string = redeem
         redeem_user_tag.string = user
 
-        print(str(soup))
         return str(soup)
 
     except Exception as e:
@@ -347,11 +326,9 @@ def update_music(data):
     artist = data['artist']
     music = data['music']
 
-    html_file = f"{appdata_path}/rewardevents/web/src/html/music/music.html"
-
     try:
 
-        with open(html_file, "r") as html:
+        with open(f"{local_work('appdata_path')}/rewardevents/web/src/html/music/music.html", "r") as html:
             soup = bs(html, 'html.parser')
 
         album_src = f"../../player/images/album.png?noCache={randint(0, 100000)}"
@@ -380,11 +357,9 @@ def update_music(data):
 
 def update_video(video, time):
 
-    html_video_file = f"{appdata_path}/rewardevents/web/src/html/video/video.html"
-
     try:
 
-        with open(html_video_file, "r") as html:
+        with open(f"{local_work('appdata_path')}/rewardevents/web/src/html/video/video.html", "r") as html:
             soup = bs(html, 'html.parser')
 
         video_div = soup.find("div", {"id": "video_div"})
@@ -420,8 +395,6 @@ def update_video(video, time):
 
 def update_highlight(data):
 
-    html_highlight = f"{appdata_path}/rewardevents/web/src/html/highlight/highlight.html"
-
     duration = int(data['duration']) - 1
 
     color_highligh_username = data['color_username']
@@ -434,7 +407,7 @@ def update_highlight(data):
 
     try:
 
-        with open(html_highlight, "r", encoding='utf-8') as html:
+        with open(f"{local_work('appdata_path')}/rewardevents/web/src/html/highlight/highlight.html", "r", encoding='utf-8') as html:
             soup = bs(html, 'html.parser')
 
         main_div = soup.find("div", {"id": f"highlight-block"})
@@ -466,11 +439,9 @@ def update_emote(data):
     width = obs_not_data['EMOTE_PX']
     height = obs_not_data['EMOTE_PX']
 
-    html_emote_file = f"{appdata_path}/rewardevents/web/src/html/emote/emote.html"
-
     try:
 
-        with open(html_emote_file, "r", encoding='utf-8') as html:
+        with open(f"{local_work('appdata_path')}/rewardevents/web/src/html/emote/emote.html", "r", encoding='utf-8') as html:
             soup = bs(html, 'html.parser')
 
         main_div = soup.find("div", {"id": f"emojis"})
@@ -662,6 +633,7 @@ def get_files_list():
         else:
 
             error_log(e)
+
 
 get_files_list()
 

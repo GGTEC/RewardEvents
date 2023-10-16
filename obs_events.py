@@ -1,19 +1,16 @@
 import obsws_python as obs
 import time
 import json
-import os
 import utils
 
 
-
-appdata_path = os.getenv('APPDATA')
 is_started = 0
 showing = 0
 
 
 def load_config():
     
-    with open(f'{appdata_path}/rewardevents/web/src/config/obs.json','r',encoding='utf-8') as config_file:
+    with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/obs.json",'r',encoding='utf-8') as config_file:
         config_data = json.load(config_file)
         
     return config_data

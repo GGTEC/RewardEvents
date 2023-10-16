@@ -22,14 +22,7 @@
         
             socket.onopen = function(event) {
               console.log("Conectado ao servidor");
-            };
-        
-            socket.onmessage = function(event) {
-                var data_parse = JSON.parse(event.data);
-                if (data_parse.type === 'high') {
-                  console.log(data_parse.html);
-                  iframe.contentDocument.documentElement.innerHTML = data_parse.html;
-                }
+              socket.send('reward')
             };
 
             socket.onmessage = function(event) {
@@ -37,7 +30,7 @@
                     socket.send('pong');
                 } else {
                   var data_parse = JSON.parse(event.data);
-                  if (data_parse.type === 'redeen') {
+                  if (data_parse.type === 'reward') {
                     iframe.contentDocument.documentElement.innerHTML = data_parse.html;
                   }
                 }
@@ -45,7 +38,6 @@
         
             socket.onclose = function(error) {
               console.error("Erro na conexão WebSocket:", error);
-              // Realizar a lógica de reconexão aqui, se desejado
               reconnectWebSocket();
             };
           }

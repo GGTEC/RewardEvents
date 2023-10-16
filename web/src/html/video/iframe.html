@@ -23,6 +23,7 @@
         
             socket.onopen = function(event) {
               console.log("Conectado ao servidor");
+              socket.send('video')
             };
         
             socket.onmessage = function(event) {
