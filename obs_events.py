@@ -10,7 +10,7 @@ showing = 0
 
 def load_config():
     
-    with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/obs.json",'r',encoding='utf-8') as config_file:
+    with open(f"{utils.local_work('appdata_path')}/config/obs.json",'r',encoding='utf-8') as config_file:
         config_data = json.load(config_file)
         
     return config_data
@@ -232,7 +232,7 @@ def create_source(type_id):
 
         data_settings = {
             'is_local_file' : True,
-            'local_file': f'{appdata_path}/rewardevents/web/src/html/highlight/iframe.html' 
+            'local_file': f"{utils.local_work('appdata_path')}/html/highlight/iframe.html"
         }
         
         cl.create_input(scene_atual,'Highlight RewardEvents','browser_source',data_settings,True)
@@ -241,7 +241,7 @@ def create_source(type_id):
 
         data_settings = {
             'is_local_file' : True,
-            'local_file': f'{appdata_path}/rewardevents/web/src/html/redeem/iframe.html' 
+            'local_file': f"{utils.local_work('appdata_path')}/html/redeem/iframe.html"
         }
         
         cl.create_input(scene_atual,'Redeem RewardEvents','browser_source',data_settings,True)
@@ -250,7 +250,7 @@ def create_source(type_id):
 
         data_settings = {
             'is_local_file' : True,
-            'local_file': f'{appdata_path}/rewardevents/web/src/html/music/iframe.html' 
+            'local_file': f"{utils.local_work('appdata_path')}/html/music/iframe.html"
         }
         
         cl.create_input(scene_atual,'Music RewardEvents','browser_source',data_settings,True)
@@ -259,7 +259,7 @@ def create_source(type_id):
 
         data_settings = {
             'is_local_file' : True,
-            'local_file': f'{appdata_path}/rewardevents/web/src/html/video/iframe.html' 
+            'local_file': f"{utils.local_work('appdata_path')}/html/video/iframe.html"
         }
         
         cl.create_input(scene_atual,'Video RewardEvents','browser_source',data_settings,True)
@@ -268,7 +268,7 @@ def create_source(type_id):
 
         data_settings = {
             'is_local_file' : True,
-            'local_file': f'{appdata_path}/rewardevents/web/src/html/emote/iframe.html' 
+            'local_file': f"{utils.local_work('appdata_path')}/html/emote/iframe.html"
         }
         
         cl.create_input(scene_atual,'Emote RewardEvents','browser_source',data_settings,True)

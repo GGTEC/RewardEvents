@@ -443,7 +443,7 @@ function toast_notifc(text){
 
   Bs5Utils.registerStyle('dark-purple', {
     btnClose: ['btn-close-white'],
-    main: ['bg-dark', 'text-white'],
+    main: ['bg-black', 'text-white'],
     border: ['custom-border-modal']
   });
 

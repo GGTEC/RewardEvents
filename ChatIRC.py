@@ -23,7 +23,7 @@ def error_log(ex):
 
     error = str(f'Erro = type: {type(ex).__name__} | message: {str(ex)} | trace: {trace} | time: {time_error} \n')
 
-    with open(f"{appdata_path}/rewardevents/web/src/error_log.txt", "a+", encoding='utf-8') as log_file_r:
+    with open(f"{appdata_path}/error_log.txt", "a+", encoding='utf-8') as log_file_r:
         log_file_r.write(error)
 
 class TwitchBot():

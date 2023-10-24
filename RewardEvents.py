@@ -5,7 +5,6 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
 import logging
 import difflib
-import win32file
 import subprocess
 import utils
 import webview
@@ -29,6 +28,7 @@ import tkinter.messagebox as messagebox
 import sk
 import pygame
 
+from lockfile import LockManager
 from collections import namedtuple
 from auth import auth_data
 from ChatIRC import TwitchBot
@@ -49,6 +49,9 @@ window_chat_open = False
 window_events_open = False
 window_auth_open = False
 streaming = False
+
+lock_manager = LockManager('RewardEvents')
+lock_manager.lock()
 
 def toast(message):
 
@@ -83,12 +86,12 @@ def save_access_token(token: str) -> None:
             AuthScope.CHAT_READ
         ]
 
-        data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json", "load")
+        data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/auth.json", "load")
         
         twitch_api = Twitch(CLIENT_ID, authenticate_app=False)
         twitch_api.auto_refresh_auth = False
 
-        scope_auth = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/scopes.json", "load")
+        scope_auth = utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/scopes.json", "load")
         
         type_id = scope_auth['auth_type']
 
@@ -137,9 +140,10 @@ def save_access_token(token: str) -> None:
             data["BOT_ID"] = user_id_resp 
             data["TOKENBOT"] = token
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json", "save",data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/auth.json", "save",data)
 
-        webhook_login = DiscordWebhook(url='')
+        WEBHOOKURL = os.getenv('WEBHOOKURL')
+        webhook_login = DiscordWebhook(url=WEBHOOKURL)
 
         embed_login = DiscordEmbed(
             title='Nova autenticação',
@@ -182,7 +186,7 @@ def start_auth_window(username,type_id):
 
     try:
 
-        data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json", "load")
+        data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/auth.json", "load")
 
         type_id = sys.intern(type_id)
         
@@ -197,9 +201,9 @@ def start_auth_window(username,type_id):
             data['BOTUSERNAME'] = username
 
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json", "save", data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/auth.json", "save", data)
         
-        scope_auth = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/scopes.json", "load")
+        scope_auth = utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/scopes.json", "load")
         
         redirect_uri = scope_auth['redirect']
         url = scope_auth['url']
@@ -212,7 +216,7 @@ def start_auth_window(username,type_id):
 
         scope_auth['auth_type'] = type_id
                  
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/scopes.json", "save",scope_auth)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/scopes.json", "save",scope_auth)
 
         oauth_uri = f"{url}oauth2/authorize?response_type={response_type}&force_verify={force_verify}&client_id={os.getenv('CLIENTID')}&redirect_uri={redirect_uri}&scope={scope}"
         
@@ -232,7 +236,7 @@ def start_twitch():
 
     global twitch_api
 
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
     
     if authdata.TOKEN() and authdata.TOKENBOT():
 
@@ -292,7 +296,7 @@ def send_announcement(message,color):
         requests.exceptions.RequestException: If the request failed for any reason.
     """
     
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
     
     if loaded_status and authdata.TOKEN() and authdata.USERNAME() and authdata.TOKENBOT():
         
@@ -328,11 +332,11 @@ def send(message):
     
     global chat
     
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
     
     def add_user_database(data): 
         
-        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
         
         if data not in user_data_load:
 
@@ -347,7 +351,7 @@ def send(message):
                 'time_w': 0
             }
             
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "save",user_data_load)
         
 
     if loaded_status and authdata.TOKEN() and authdata.USERNAME() and authdata.TOKENBOT():
@@ -367,7 +371,7 @@ def send(message):
 
             chat.send(message)
             
-            chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/chat_config.json", "load")
+            chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/chat_config.json", "load")
             chat_time = utils.time_date()
 
             data_res = {
@@ -412,8 +416,8 @@ def append_notice(data_receive):
     message = data_receive['message']
     user_input = data_receive['user_input']
 
-    event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "load")
-    chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/chat_config.json", "load")
+    event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_log.json", "load")
+    chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/chat_config.json", "load")
     
     now = datetime.datetime.now()
 
@@ -441,7 +445,7 @@ def append_notice(data_receive):
     
     event_log_data['event_list'].append(f"{now} | {type_id} | {message} | {user_input}")
 
-    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "save",event_log_data)
+    utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_log.json", "save",event_log_data)
 
     if type_id == 'command':
 
@@ -525,13 +529,13 @@ def send_discord_webhook(data):
 
     try:
         
-        authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+        authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
         
         if loaded_status and authdata.TOKEN() and authdata.USERNAME() and authdata.TOKENBOT():
 
             type_id = data['type_id']
 
-            discord_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/discord.json", "load")
+            discord_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/discord.json", "load")
 
             webhook_status = discord_config_data[type_id]['status']
             webhook_color = discord_config_data[type_id]['color']
@@ -1283,7 +1287,7 @@ def get_auth_py(type_id):
         ValueError: If the type_id is not valid.
     """
     
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
     
     if loaded_status and authdata.TOKEN() and authdata.USERNAME() and authdata.TOKENBOT():
         
@@ -1313,7 +1317,7 @@ def logout_auth():
         'TOKENBOT':'',
     }
 
-    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json", "save", data)
+    utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/auth.json", "save", data)
     
     close()
 
@@ -1322,7 +1326,7 @@ def event_log(type_id,data_save):
 
     if type_id == "get" :
 
-        event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "load")
+        event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_log.json", "load")
         
         data = {
             "messages" : event_log_data['event_list'],
@@ -1347,7 +1351,7 @@ def event_log(type_id,data_save):
     
     elif type_id == "get_config" :
 
-        event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "load")
+        event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_log.json", "load")
         
         data = {
             "font_size" : event_log_data['font_size'],
@@ -1371,7 +1375,7 @@ def event_log(type_id,data_save):
         
         try:
 
-            event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "load")
+            event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_log.json", "load")
             
             data_save = json.loads(data_save)
 
@@ -1389,7 +1393,7 @@ def event_log(type_id,data_save):
             event_log_data['show_join_chat'] = data_save['show_join_chat']
             event_log_data['show_leave_chat'] = data_save['show_leave_chat']
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "save",event_log_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_log.json", "save",event_log_data)
 
             toast('Salvo')
             
@@ -1406,7 +1410,7 @@ def get_spec():
         
         try:
             
-            authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+            authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
             
             if loaded_status and authdata.TOKEN() and authdata.USERNAME() and authdata.TOKENBOT():
                 
@@ -1463,7 +1467,7 @@ def get_spec():
     
 def get_chat_list():
     
-    user_list_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "load")
+    user_list_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_sess_join.json", "load")
     
     data = {
         'user_list': user_list_data['spec'],
@@ -1475,7 +1479,7 @@ def get_chat_list():
         
 def profile_info():
     
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
     
     if loaded_status and authdata.TOKEN() and authdata.USERNAME() and authdata.TOKENBOT():
         
@@ -1489,7 +1493,7 @@ def profile_info():
 
         profile_img = req.get(resp_profile_img).content
 
-        with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/profile.png", 'wb') as profile_image:
+        with open(f"{utils.local_work('appdata_path')}/profile.png", 'wb') as profile_image:
             profile_image.write(profile_img)
             profile_image.close()
 
@@ -1518,17 +1522,17 @@ def profile_info():
  
 def get_redeem(type_id):
 
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
     
     if loaded_status and authdata.TOKEN() and authdata.USERNAME() and authdata.TOKENBOT():
         
         list_titles = {"redeem": []}
 
-        path = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
-        path_counter = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/config.json", "load")
-        path_giveaway = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/config.json", "load")
-        path_player = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "load")
-        path_queue = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/config.json", "load")
+        path = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
+        path_counter = utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/config.json", "load")
+        path_giveaway = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/config.json", "load")
+        path_player = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "load")
+        path_queue = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/config.json", "load")
         
         counter_redeem = path_counter['redeem']
         giveaway_redeem = path_giveaway['redeem']
@@ -1575,7 +1579,7 @@ def get_redeem(type_id):
 
 def get_edit_data(redeen, type_action):
     
-    redeem_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+    redeem_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
     if type_action == 'sound':
 
@@ -1586,7 +1590,7 @@ def get_edit_data(redeen, type_action):
         response = redeem_data[redeen]['chat_response']
         audio_volume = redeem_data[redeen]['volume']
 
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
         if command in command_data.keys():
             
@@ -1622,7 +1626,7 @@ def get_edit_data(redeen, type_action):
         response = redeem_data[redeen]['chat_response']
         time_showing_video = redeem_data[redeen]['show_time']
 
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
 
         if command in command_data.keys():
@@ -1653,7 +1657,7 @@ def get_edit_data(redeen, type_action):
         characters = redeem_data[redeen]['characters']
         command = redeem_data[redeen]['command']
 
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json","load")
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json","load")
 
         if command in command_data.keys():
             command_level = command_data[command]['user_level']
@@ -1680,7 +1684,7 @@ def get_edit_data(redeen, type_action):
         command = redeem_data[redeen]['command']
         response = redeem_data[redeen]['chat_response']
 
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
         if command in command_data.keys():
             command_level = command_data[command]['user_level']
@@ -1710,7 +1714,7 @@ def get_edit_data(redeen, type_action):
         keep = redeem_data[redeen]['keep']
         time_scene = redeem_data[redeen]['time']
 
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
         if command in command_data.keys():
             command_level = command_data[command]['user_level']
@@ -1744,7 +1748,7 @@ def get_edit_data(redeen, type_action):
         keep = redeem_data[redeen]['keep']
         time_filter = redeem_data[redeen]['time']
 
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
         if command in command_data.keys():
             command_level = command_data[command]['user_level']
@@ -1776,7 +1780,7 @@ def get_edit_data(redeen, type_action):
         keep = redeem_data[redeen]['keep']
         time = redeem_data[redeen]['time']
 
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
         if command in command_data.keys():
             command_level = command_data[command]['user_level']
@@ -1811,7 +1815,7 @@ def get_edit_data(redeen, type_action):
         key3 = redeem_data[redeen]['key3']
         key4 = redeem_data[redeen]['key4']
 
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
         if command in command_data.keys():
             command_level = command_data[command]['user_level']
@@ -1892,7 +1896,7 @@ def get_edit_data(redeen, type_action):
 
         command = redeem_data[redeen]['command']
 
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
         if command in command_data.keys():
             command_level = command_data[command]['user_level']
@@ -1916,7 +1920,7 @@ def get_edit_data(redeen, type_action):
 
         command = redeem_data[redeen]['command']
 
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
         if command in command_data.keys():
             command_level = command_data[command]['user_level']
@@ -1940,17 +1944,17 @@ def get_edit_data(redeen, type_action):
 def reward(data):
 
     data = json.loads(data)
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
 
     type_id = data['type_id']
 
     def check_action(reward):
 
-        path = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
-        path_counter = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/config.json", "load")
-        path_giveaway = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/config.json", "load")
-        path_player = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "load")
-        path_queue = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/config.json", "load")
+        path = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
+        path_counter = utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/config.json", "load")
+        path_giveaway = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/config.json", "load")
+        path_player = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "load")
+        path_queue = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/config.json", "load")
         
         counter_redeem = path_counter['redeem']
         giveaway_redeem = path_giveaway['redeem']
@@ -1992,7 +1996,7 @@ def reward(data):
 
     if type_id == 'get_list':
 
-        authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+        authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
         
         if authdata.TOKEN() and authdata.USERNAME():
             
@@ -2028,7 +2032,7 @@ def reward(data):
     
     elif type_id == 'edit_reward':
 
-        reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
         
         reward_name = data['reward_name']
         reward_id = data['reward_id']
@@ -2088,7 +2092,7 @@ def reward(data):
     elif type_id == "save_reward":
 
 
-        reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
         
         data_received = data
 
@@ -2109,7 +2113,7 @@ def reward(data):
                 else:
                     send_message = 0
 
-                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
                 
                 reward_data[redeem] = {
                     'type': "sound",
@@ -2120,7 +2124,7 @@ def reward(data):
                     'chat_response': chat_message,
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",reward_data )
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",reward_data )
 
                 create_command_redeem(data_received,'edit')
 
@@ -2147,7 +2151,7 @@ def reward(data):
                 else:
                     send_message = 0
 
-                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
                 reward_data[redeem] = {
                     'type': "video",
@@ -2158,7 +2162,7 @@ def reward(data):
                     'show_time' : time_showing_video
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
                 
                 create_command_redeem(data_received,'edit')
 
@@ -2179,7 +2183,7 @@ def reward(data):
                 characters = data_received['characters']
 
 
-                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
                 reward_data[redeem] = {
                     'type': "tts",
@@ -2187,7 +2191,7 @@ def reward(data):
                     'command': command
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
                 create_command_redeem(data_received,'edit')
 
@@ -2214,7 +2218,7 @@ def reward(data):
                 else:
                     send_message = 0
 
-                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
                 reward_data[redeem] = {
                     'type': "scene",
@@ -2226,7 +2230,7 @@ def reward(data):
                     'time': time
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
                 create_command_redeem(data_received,'edit')
 
@@ -2251,7 +2255,7 @@ def reward(data):
                 else:
                     send_message = 0
 
-                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
                 reward_data[redeem] = {
                     'type': "response",
@@ -2260,7 +2264,7 @@ def reward(data):
                     'chat_response': chat_message,
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
                 create_command_redeem(data_received,'edit')
 
@@ -2289,7 +2293,7 @@ def reward(data):
                 else:
                     send_message = 0
 
-                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
                 reward_data[redeem] = {
                     'type': "filter",
@@ -2302,7 +2306,7 @@ def reward(data):
                     'time': time
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
                 create_command_redeem(data_received,'edit')
 
@@ -2329,7 +2333,7 @@ def reward(data):
                 else:
                     send_message = 0
 
-                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
                 reward_data[redeem] = {
 
@@ -2342,7 +2346,7 @@ def reward(data):
                     'time': time
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
                 create_command_redeem(data_received,'edit')
 
@@ -2372,7 +2376,7 @@ def reward(data):
                 else:
                     send_message = 0
 
-                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
                 if mode_press == 'mult':
 
@@ -2430,7 +2434,7 @@ def reward(data):
                         'key4': key4
                     }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
                 create_command_redeem(data_received,'edit')
 
@@ -2448,14 +2452,14 @@ def reward(data):
                 redeem = data_received['redeem']
                 command = data_received['command']
 
-                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
                 reward_data[redeem] = {
                     'type': "clip",
                     'command': command,
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
                 create_command_redeem(data_received,'edit')
 
@@ -2473,14 +2477,14 @@ def reward(data):
                 redeem = data_received['redeem']
                 command = data_received['command']
 
-                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+                reward_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
                 reward_data[redeem] = {
                     'type': "highlight",
                     'command': command,
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
                 create_command_redeem(data_received,'edit')
 
@@ -2508,7 +2512,7 @@ def reward(data):
             else:
                 send_response = 1
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             if redeem_value == '':
                 redeem_value = f'RandomRedeem_{int(time.time())}' 
@@ -2522,7 +2526,7 @@ def reward(data):
                 'chat_response': chat_response
             }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2543,7 +2547,7 @@ def reward(data):
             else:
                 send_response = 1
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             reward_data[redeem_value] = {
 
@@ -2555,7 +2559,7 @@ def reward(data):
                 'show_time': time_showing_video
             }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2568,7 +2572,7 @@ def reward(data):
 
             characters = data_receive['characters']
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             if redeem_value == '':
                 redeem_value = f'RandomRedeem_{int(time.time())}' 
@@ -2579,7 +2583,7 @@ def reward(data):
                 'characters': characters
             }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
             
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2605,7 +2609,7 @@ def reward(data):
             if time_to_return == "":
                 time_to_return = 0
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             reward_data[redeem_value] = {
 
@@ -2618,7 +2622,7 @@ def reward(data):
                 'time': time_to_return
             }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             
             if command_value != "":
@@ -2633,7 +2637,7 @@ def reward(data):
             if redeem_value == '':
                 redeem_value = f'RandomRedeem_{int(time.time())}' 
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             reward_data[redeem_value] = {
                 'type': 'response',
@@ -2641,7 +2645,7 @@ def reward(data):
                 'chat_response': chat_response
             }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2668,7 +2672,7 @@ def reward(data):
             if time_showing == "":
                 time_showing = 0
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             reward_data[redeem_value] = {
 
@@ -2682,7 +2686,7 @@ def reward(data):
                 'time': int(time_showing)
             }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2707,7 +2711,7 @@ def reward(data):
             if time_showing == "":
                 time_showing = 0
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             reward_data[redeem_value] = {
 
@@ -2721,7 +2725,7 @@ def reward(data):
 
             }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
 
             if command_value != "":
@@ -2756,7 +2760,7 @@ def reward(data):
             else:
                 send_response = 1
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             if mode_press == 'mult':
 
@@ -2815,7 +2819,7 @@ def reward(data):
                 }
 
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             if command_value != "":
                 create_command_redeem(data_receive,'create')
@@ -2828,11 +2832,11 @@ def reward(data):
             if redeem_value == '':
                 redeem_value = f'RandomRedeem_{int(time.time())}' 
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             reward_data[redeem_value] = {'type': 'clip', 'command': command_value.lower(), }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
 
             if command_value != "":
@@ -2846,11 +2850,11 @@ def reward(data):
             if redeem_value == '':
                 redeem_value = f'RandomRedeem_{int(time.time())}' 
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             reward_data[redeem_value] = {'type': 'highlight', 'command': command_value.lower(), }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
 
             if command_value != "":
@@ -2860,20 +2864,20 @@ def reward(data):
 
             data = data_receive['redeem']
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
 
             command = reward_data[data]['command']
 
-            data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+            data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
             if command in data_command.keys():
                 del data_command[command]
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "save",data_command)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "save",data_command)
 
             del reward_data[data]
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", reward_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", reward_data)
     
     elif type_id == "remove_action":
 
@@ -2881,8 +2885,8 @@ def reward(data):
 
             reward = data['reward']
                 
-            data_event = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
-            data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+            data_event = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
+            data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
             command = data_event[reward]['command']
 
@@ -2891,8 +2895,8 @@ def reward(data):
      
             del data_event[reward]
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "save",data_command)  
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",data_event)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "save",data_command)  
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",data_event)
             
             toast(f'Evento removido da recompensa ${reward}')
 
@@ -2931,7 +2935,7 @@ def select_file_py(type_id):
     root.wm_attributes('-topmost', 1)
 
     folder = fd.askopenfilename(
-        initialdir= f"{utils.local_work('appdata_path')}/rewardevents/web/src",
+        initialdir= f"{utils.local_work('appdata_path')}",
         filetypes= filetypes)
 
     root.destroy()
@@ -2963,7 +2967,7 @@ def get_stream_info_py():
     
     try:
         
-        authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+        authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
         
         if authdata.TOKEN() and authdata.USERNAME():
 
@@ -3005,7 +3009,7 @@ def save_stream_info_py(data):
     
     try:
         
-        authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+        authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
         
         if authdata.TOKEN() and authdata.USERNAME():
             
@@ -3061,7 +3065,7 @@ def create_command_redeem(data,type_id):
         redeem_value = data['redeem_value']
         user_level_value = data['user_level_value']
 
-        new_data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")  
+        new_data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")  
         
         new_data_command[command_value.lower().strip()] = {
             'status' : command_status,
@@ -3071,11 +3075,11 @@ def create_command_redeem(data,type_id):
             'user_level': user_level_value
         }
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "save", new_data_command)  
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "save", new_data_command)  
        
     elif type_id == "edit":
         
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")  
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")  
         
         command_old = data['old_command']
         command_new = data['command']
@@ -3096,17 +3100,17 @@ def create_command_redeem(data,type_id):
                 'user_level': command_user_level
             }
                 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "save", command_data)  
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "save", command_data)  
 
 
 def get_command_list():
     
-    command_redem_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
-    command_simple_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "load")
-    command_default_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/default_commands.json", "load")
-    command_data_counter = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/commands.json", "load")
-    command_data_giveaway = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "load")
-    command_data_player = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "load")
+    command_redem_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
+    command_simple_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "load")
+    command_default_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/default_commands.json", "load")
+    command_data_counter = utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/commands.json", "load")
+    command_data_giveaway = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "load")
+    command_data_player = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "load")
     
     data = {
         'commands_redeem' : [command_redem_data],
@@ -3125,7 +3129,7 @@ def prediction_py(data):
     data_receive = json.loads(data)
     type_id = data_receive['type_id']
     
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
     
     if authdata.TOKEN() and authdata.USERNAME():
         
@@ -3136,13 +3140,13 @@ def prediction_py(data):
             duration = int(data_receive['duration'])
             discord = int(data_receive['discord'])
 
-            discord_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/discord.json", "load")
+            discord_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/discord.json", "load")
             
             discord_data['prediction_start']['status'] = discord
             discord_data['prediction_progress']['status'] = discord
             discord_data['prediction_end']['status'] = discord
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/discord.json", "save",discord_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/discord.json", "save",discord_data)
 
             twitch_api.create_prediction(
                 authdata.BROADCASTER_ID(),
@@ -3153,7 +3157,7 @@ def prediction_py(data):
             
         elif type_id == 'get':
 
-            pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pred_id.json", "load")
+            pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pred_id.json", "load")
             
             if pred_data['status'] == 'running':
 
@@ -3193,19 +3197,19 @@ def prediction_py(data):
 
         elif type_id == 'lock':
 
-            pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pred_id.json", "load")
+            pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pred_id.json", "load")
 
             twitch_api.end_prediction(authdata.BROADCASTER_ID(),prediction_id=pred_data['current'],status=PredictionStatus.LOCKED)
 
         elif type_id == 'cancel':
 
-            pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pred_id.json", "load")
+            pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pred_id.json", "load")
 
             twitch_api.end_prediction(authdata.BROADCASTER_ID(),prediction_id=pred_data['current'],status=PredictionStatus.CANCELED)
         
         elif type_id == 'send':
             
-            pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pred_id.json", "load")
+            pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pred_id.json", "load")
 
             twitch_api.end_prediction(authdata.BROADCASTER_ID(),prediction_id=data_receive['op_id'],status=PredictionStatus.RESOLVED,winning_outcome_id=pred_data['current'])
 
@@ -3219,7 +3223,7 @@ def poll_py(data):
     
     type_id = data_receive['type_id']
 
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
     
     if authdata.TOKEN() and authdata.USERNAME():
         
@@ -3232,13 +3236,13 @@ def poll_py(data):
             points = int(data_receive['points'])
             discord = int(data_receive['discord'])
         
-            discord_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/discord.json", "load")
+            discord_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/discord.json", "load")
             
             discord_data['poll_start']['status'] = discord
             discord_data['poll_status']['status'] = discord
             discord_data['poll_end']['status'] = discord
             
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/discord.json", "save",discord_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/discord.json", "save",discord_data)
             
             if points_enable:
                 points_enable == True
@@ -3262,13 +3266,13 @@ def poll_py(data):
 
         elif type_id == "end":
 
-            poll_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/poll_id.json", "load") 
+            poll_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/poll_id.json", "load") 
 
             twitch_api.end_poll(authdata.BROADCASTER_ID(),poll_id=poll_data['current'],status=PollStatus.TERMINATED)
 
         elif type_id == "get":
             
-            poll_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/poll_id.json", "load") 
+            poll_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/poll_id.json", "load") 
 
             data = {
                 "status" : poll_data['status'],
@@ -3286,7 +3290,7 @@ def poll_py(data):
 
 def goal_py():
 
-    goal_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/goal.json", "load") 
+    goal_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/goal.json", "load") 
 
     return json.dumps(goal_data)
 
@@ -3309,7 +3313,7 @@ def create_action_save(data, type_id):
             send_response = 1
 
 
-        path_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        path_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
             
 
         if redeem_value == '':
@@ -3324,7 +3328,7 @@ def create_action_save(data, type_id):
             'chat_response': chat_response
         }
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",path_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",path_data)
             
             
         if command_value != "":
@@ -3346,7 +3350,7 @@ def create_action_save(data, type_id):
         else:
             send_response = 1
 
-        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
         new_data[redeem_value] = {
 
@@ -3358,7 +3362,7 @@ def create_action_save(data, type_id):
             'show_time': time_showing_video
         }
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",new_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",new_data)
 
         if command_value != "":
             create_command_redeem(data_receive,'create')
@@ -3371,7 +3375,7 @@ def create_action_save(data, type_id):
 
         characters = data_receive['characters']
 
-        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
         if redeem_value == '':
             redeem_value = f'RandomRedeem_{int(time.time())}' 
@@ -3382,7 +3386,7 @@ def create_action_save(data, type_id):
             'characters': characters
         }
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",new_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",new_data)
         
         if command_value != "":
             create_command_redeem(data_receive,'create')
@@ -3409,7 +3413,7 @@ def create_action_save(data, type_id):
         if time_to_return == "":
             time_to_return = 0
 
-        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
         new_data[redeem_value] = {
 
@@ -3423,7 +3427,7 @@ def create_action_save(data, type_id):
         }
 
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",new_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",new_data)
         
         if command_value != "":
             create_command_redeem(data_receive,'create')
@@ -3438,7 +3442,7 @@ def create_action_save(data, type_id):
         if redeem_value == '':
             redeem_value = f'RandomRedeem_{int(time.time())}' 
 
-        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
         new_data[redeem_value] = {
             'type': 'response',
@@ -3446,7 +3450,7 @@ def create_action_save(data, type_id):
             'chat_response': chat_response
         }
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",new_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",new_data)
 
         if command_value != "":
             create_command_redeem(data_receive,'create')
@@ -3473,7 +3477,7 @@ def create_action_save(data, type_id):
         if time_showing == "":
             time_showing = 0
 
-        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
         new_data[redeem_value] = {
 
@@ -3487,7 +3491,7 @@ def create_action_save(data, type_id):
             'time': int(time_showing)
         }
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",new_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",new_data)
 
         if command_value != "":
             create_command_redeem(data_receive,'create')
@@ -3512,7 +3516,7 @@ def create_action_save(data, type_id):
         if time_showing == "":
             time_showing = 0
 
-        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
         new_data[redeem_value] = {
 
@@ -3526,7 +3530,7 @@ def create_action_save(data, type_id):
 
         }
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",new_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",new_data)
 
         if command_value != "":
             create_command_redeem(data_receive,'create')
@@ -3560,7 +3564,7 @@ def create_action_save(data, type_id):
         else:
             send_response = 1
 
-        key_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        key_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
         
         if mode_press == 'mult':
 
@@ -3618,7 +3622,7 @@ def create_action_save(data, type_id):
                 'key4': key4
             }
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", key_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", key_data)
 
         if command_value != "":
             create_command_redeem(data_receive,'create')
@@ -3631,11 +3635,11 @@ def create_action_save(data, type_id):
         if redeem_value == '':
             redeem_value = f'RandomRedeem_{int(time.time())}' 
 
-        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
         new_data[redeem_value] = {'type': 'clip', 'command': command_value.lower(), }
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",new_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",new_data)
 
         if command_value != "":
             create_command_redeem(data_receive,'create')
@@ -3649,11 +3653,11 @@ def create_action_save(data, type_id):
         if redeem_value == '':
             redeem_value = f'RandomRedeem_{int(time.time())}' 
 
-        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
 
         new_data[redeem_value] = {'type': 'highlight', 'command': command_value.lower(), }
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save",new_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save",new_data)
 
         if command_value != "":
             create_command_redeem(data_receive,'create')
@@ -3662,22 +3666,22 @@ def create_action_save(data, type_id):
 
         data = data_receive['redeem']
 
-        data_event = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
+        data_event = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
         
         command = data_event[data]['command']
 
-        data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
+        data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
 
         if command in data_command.keys():
             
             del data_command[command]
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "save", data_command)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "save", data_command)
 
         del data_event[data]
 
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "save", data_event)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "save", data_event)
    
         
 def commands_py(type_rec, data_receive):
@@ -3695,7 +3699,7 @@ def commands_py(type_rec, data_receive):
                 delay = 0
             user_level_check = data['new_user_level']
 
-            data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "load")
+            data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "load")
 
             data_command[command.lower().strip()] = {
                 'status' : 1,
@@ -3706,7 +3710,7 @@ def commands_py(type_rec, data_receive):
                 'last_use': 0,
             }
                 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "save",data_command )
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "save",data_command )
 
             toast('success')
 
@@ -3736,7 +3740,7 @@ def commands_py(type_rec, data_receive):
 
             user_level = data['edit_user_level']
 
-            command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "load")
+            command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "load")
 
             del command_data[old_command]
             command_data[new_command] = {
@@ -3748,7 +3752,7 @@ def commands_py(type_rec, data_receive):
                 "last_use" : 0
             }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "save",command_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "save",command_data)
 
             toast('success')
 
@@ -3759,11 +3763,11 @@ def commands_py(type_rec, data_receive):
     elif type_rec == 'delete':
 
         try:
-            command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "load")
+            command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "load")
 
             del command_data[data_receive]
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "save",command_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "save",command_data)
 
             toast('Comando excluido')
 
@@ -3776,7 +3780,7 @@ def commands_py(type_rec, data_receive):
         
         try:
 
-            command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "load")
+            command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "load")
             
             message = command_data[data_receive]['response']
             user_level = command_data[data_receive]['user_level']
@@ -3802,7 +3806,7 @@ def commands_py(type_rec, data_receive):
 
         try:
 
-            new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "load")
+            new_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "load")
 
             list_commands = []
 
@@ -3816,7 +3820,7 @@ def commands_py(type_rec, data_receive):
 
     elif type_rec == 'get_duel':
 
-        duel_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/duel/duel.json", "load")
+        duel_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/duel/duel.json", "load")
             
         data = {
             'command_duel' : duel_data['command'],
@@ -3834,7 +3838,7 @@ def commands_py(type_rec, data_receive):
         
     elif type_rec == 'get_battles':
         
-        duel_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/duel/duel.json", "load")
+        duel_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/duel/duel.json", "load")
             
         battle = duel_data['duel_battle'][data_receive]
         
@@ -3852,7 +3856,7 @@ def commands_py(type_rec, data_receive):
         
     elif type_rec == 'save_duel':
         
-        data_duel = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/duel/duel.json", "load")
+        data_duel = utils.manipulate_json(f"{utils.local_work('appdata_path')}/duel/duel.json", "load")
 
         data = json.loads(data_receive)
         
@@ -3874,13 +3878,13 @@ def commands_py(type_rec, data_receive):
             data_duel['duel_battle'][data['select_batle']]['stage_4'] = data['message_4']
             data_duel['duel_battle'][data['select_batle']]['stage_5'] = data['message_5']
         
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/duel/duel.json", "save",data_duel)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/duel/duel.json", "save",data_duel)
         
         toast('Duelo salvo')
     
     elif type_rec == 'get_default':
     
-        default_data_commands = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/default_commands.json", "load")
+        default_data_commands = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/default_commands.json", "load")
 
         data = {
             "command": default_data_commands[data_receive]['command'],
@@ -3899,7 +3903,7 @@ def commands_py(type_rec, data_receive):
 
             data = json.loads(data_receive)  
 
-            default_data_commands = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/default_commands.json", "load")
+            default_data_commands = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/default_commands.json", "load")
 
             type_cmd = data["default_type"]
 
@@ -3909,7 +3913,7 @@ def commands_py(type_rec, data_receive):
             default_data_commands[type_cmd]["response"] = data['response']
             default_data_commands[type_cmd]["user_level"] = data['perm']
                 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/default_commands.json", "save", default_data_commands)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/default_commands.json", "save", default_data_commands)
             
             toast('Comando salvo')
 
@@ -3921,8 +3925,8 @@ def timer_py(type_id, data_receive):
     
     if type_id == "get":
         
-        timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "load")
-        message_data_get = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands_config.json", "load")
+        timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "load")
+        message_data_get = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands_config.json", "load")
 
         status_timer = message_data_get['STATUS_TIMER']
         timer_delay_min = timer_data['TIME']
@@ -3942,7 +3946,7 @@ def timer_py(type_id, data_receive):
     
     elif type_id == "get_message":
                
-        timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "load")
+        timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "load")
         
         message = timer_data['MESSAGES'][data_receive]['message']
         type_timer = timer_data['MESSAGES'][data_receive]['type_timer']
@@ -3967,11 +3971,11 @@ def timer_py(type_id, data_receive):
             data_type = data['type_timer']
             data_color = data['color']
 
-            timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "load")
+            timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "load")
         
             timer_data['MESSAGES'][data_key] = {'message' : data_message, 'type_timer' :data_type, 'color' : data_color}
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "save", timer_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "save", timer_data)
             
             toast('success')
 
@@ -3991,7 +3995,7 @@ def timer_py(type_id, data_receive):
             data_message = data['message']
             data_type = data['type_timer']
             
-            timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "load")
+            timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "load")
         
             timer_message = timer_data['MESSAGES']
 
@@ -4005,7 +4009,7 @@ def timer_py(type_id, data_receive):
 
             timer_data['MESSAGES'][str(keytoadd)] = {"message" : data_message, "type_timer": data_type, "color" : data_color}
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "save", timer_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "save", timer_data)
             
             toast('success')
 
@@ -4019,11 +4023,11 @@ def timer_py(type_id, data_receive):
         
         try:
 
-            message_del_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "load")
+            message_del_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "load")
         
             del message_del_data['MESSAGES'][data_receive]
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "save", timer_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "save", timer_data)
             
             toast('Mensagem excluida')
 
@@ -4041,12 +4045,12 @@ def timer_py(type_id, data_receive):
             min_time = data['min_time']
             max_time = data['max_time']
                 
-            timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "load")
+            timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "load")
          
             timer_data['TIME'] = int(min_time)
             timer_data['TIME_MAX'] = int(max_time)
             
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "save", timer_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "save", timer_data)
             
             toast('success')
             
@@ -4058,11 +4062,11 @@ def timer_py(type_id, data_receive):
     elif type_id == "status":
         
         try:    
-            command_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands_config.json", "load")
+            command_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands_config.json", "load")
          
             command_config_data['STATUS_TIMER'] = data_receive
                 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands_config.json", "save", command_config_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands_config.json", "save", command_config_data)
              
             if data_receive:
 
@@ -4082,7 +4086,7 @@ def giveaway_py(type_id, data_receive):
     
     if type_id == 'get_config':
         
-            giveaway_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/config.json", "load")
+            giveaway_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/config.json", "load")
           
             data = {
                 "giveaway_name": giveaway_data['name'],
@@ -4097,7 +4101,7 @@ def giveaway_py(type_id, data_receive):
 
     elif type_id == 'get_commands':
                     
-        giveaway_commands_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "load")
+        giveaway_commands_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "load")
           
         data = {
             "command" : giveaway_commands_data[data_receive]["command"],
@@ -4111,7 +4115,7 @@ def giveaway_py(type_id, data_receive):
 
     elif type_id == 'show_names':
         
-        giveaway_commands_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/names.json", "load")
+        giveaway_commands_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/names.json", "load")
 
         return json.dumps(giveaway_commands_data, ensure_ascii=False)
 
@@ -4131,7 +4135,7 @@ def giveaway_py(type_id, data_receive):
             }
             
                 
-            giveaway_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/config.json", "load")
+            giveaway_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/config.json", "load")
 
             if giveaway_data['enable'] and data['giveaway_enable'] == 0:
                 
@@ -4142,11 +4146,11 @@ def giveaway_py(type_id, data_receive):
                 if utils.send_message("RESPONSE"):
                     send(utils.replace_all(utils.messages_file_load('giveaway_status_disable'), aliases))
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/config.json", "save", giveaway_data_new)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/config.json", "save", giveaway_data_new)
 
             toast('success')
                             
-            giveaway_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/config.json", "load")
+            giveaway_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/config.json", "load")
 
             if giveaway_data['enable']:
                 
@@ -4172,7 +4176,7 @@ def giveaway_py(type_id, data_receive):
 
         try:
 
-            giveaway_commands_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "load")
+            giveaway_commands_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "load")
 
 
             giveaway_commands_data[data['type_command']] = {
@@ -4183,7 +4187,7 @@ def giveaway_py(type_id, data_receive):
                 "user_level" : data['user_level']
             }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "save", giveaway_commands_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "save", giveaway_commands_data)
 
             toast('success')
 
@@ -4217,14 +4221,14 @@ def giveaway_py(type_id, data_receive):
 
             def append_name(new_name):
                 
-                giveaway_name_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/names.json", "load")
-                back_giveaway_name_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/backup.json", "load")
+                giveaway_name_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/names.json", "load")
+                back_giveaway_name_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/backup.json", "load")
 
                 giveaway_name_data.append(new_name)
                 back_giveaway_name_data.append(new_name)
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/names.json", "save", giveaway_name_data)
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/backup.json", "save", back_giveaway_name_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/names.json", "save", giveaway_name_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/backup.json", "save", back_giveaway_name_data)
                 
                 aliases = {
                     "{username}" : new_name
@@ -4236,8 +4240,8 @@ def giveaway_py(type_id, data_receive):
 
                 toast(f'O usuário {new_name} foi adicionado na lista')
             
-            giveaway_name_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/names.json", "load")
-            giveaway_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/config.json", "load")
+            giveaway_name_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/names.json", "load")
+            giveaway_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/config.json", "load")
 
             if giveaway_config_data['enable']:
                 
@@ -4295,8 +4299,8 @@ def giveaway_py(type_id, data_receive):
         
         try:
             
-            giveaway_name_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/names.json", "load")
-            giveaway_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/config.json", "load")
+            giveaway_name_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/names.json", "load")
+            giveaway_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/config.json", "load")
 
             reset_give = giveaway_data['clear']
 
@@ -4309,14 +4313,14 @@ def giveaway_py(type_id, data_receive):
             if utils.send_message("RESPONSE"):
                 send(utils.replace_all(utils.messages_file_load('giveaway_response_win')))
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/backup.json", "save",giveaway_name_data)
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/result.json", "save",[name])
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/backup.json", "save",giveaway_name_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/result.json", "save",[name])
             
             if reset_give:
                 
                 reset_data = []
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/names.json", "save",reset_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/names.json", "save",reset_data)
 
 
             toast(f'{name} Ganhou o sorteio !')
@@ -4332,7 +4336,7 @@ def giveaway_py(type_id, data_receive):
         try:
             reset_data = []
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/names.json", "save",reset_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/names.json", "save",reset_data)
 
             toast('Lista de sorteio limpa')
 
@@ -4345,9 +4349,9 @@ def counter(type_id, data_receive):
     
     if type_id == 'get_counter_config':
         
-        counter_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/config.json", "load")
+        counter_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/config.json", "load")
         
-        with open( f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "r") as counter_file_r:
+        with open( f"{utils.local_work('appdata_path')}/counter/counter.txt", "r") as counter_file_r:
             counter_file_r.seek(0)
             counter_value_get = counter_file_r.read()
 
@@ -4367,8 +4371,8 @@ def counter(type_id, data_receive):
         try:
             data_save = json.loads(data_receive)
             
-            counter_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/config.json", "load")
-            messages_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/messages/messages_file.json", "load")
+            counter_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/config.json", "load")
+            messages_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/messages/messages_file.json", "load")
 
             messages_data['response_counter'] = data_save['response_chat']
             messages_data['response_set_counter'] = data_save['response_set_chat']
@@ -4376,8 +4380,8 @@ def counter(type_id, data_receive):
             counter_data['redeem'] = data_save['redeem']
             counter_data['response'] = data_save['response']
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/config.json", "save", counter_data)
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/messages/messages_file.json", "save", messages_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/config.json", "save", counter_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/messages/messages_file.json", "save", messages_data)
             
 
             toast('success')
@@ -4393,7 +4397,7 @@ def counter(type_id, data_receive):
             
             data_received = json.loads(data_receive)
         
-            command_counter_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/commands.json", "load")
+            command_counter_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/commands.json", "load")
 
             command_counter_data[data_received['type_command']] = {
                 "command" : data_received['command'],
@@ -4403,7 +4407,7 @@ def counter(type_id, data_receive):
                 "user_level" : data_received['user_level']
             }
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/commands.json", "save", command_counter_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/commands.json", "save", command_counter_data)
 
             toast('success')
 
@@ -4416,7 +4420,7 @@ def counter(type_id, data_receive):
     
         try:
 
-            counter_commands_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/commands.json", "load")
+            counter_commands_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/commands.json", "load")
             
             data = {
                 "command" : counter_commands_data[data_receive]["command"],
@@ -4435,7 +4439,7 @@ def counter(type_id, data_receive):
 
     elif type_id == "set-counter-value":
         
-        with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
+        with open(f"{utils.local_work('appdata_path')}/counter/counter.txt", "w") as counter_file_w:
             counter_file_w.write(str(data_receive))
 
         aliases = {
@@ -4450,8 +4454,8 @@ def queue(type_id, data_receive):
 
     if type_id == 'get':
 
-        queue_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/config.json", "load")
-        queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "load")
+        queue_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/config.json", "load")
+        queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "load")
 
         data = {
 
@@ -4469,8 +4473,8 @@ def queue(type_id, data_receive):
         try:
             data_save = json.loads(data_receive)
 
-            queue_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/config.json", "load")
-            messages_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/messages/messages_file.json", "load")
+            queue_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/config.json", "load")
+            messages_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/messages/messages_file.json", "load")
 
             messages_data['response_queue'] = data_save['response_chat']
             messages_data['response_add_queue'] = data_save['response_add_chat']
@@ -4479,8 +4483,8 @@ def queue(type_id, data_receive):
             queue_config_data['response'] = data_save['response']
 
                 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/config.json", "save",queue_config_data)
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/messages/messages_file.json", "save",messages_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/config.json", "save",queue_config_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/messages/messages_file.json", "save",messages_data)
 
 
             toast('success')
@@ -4492,11 +4496,11 @@ def queue(type_id, data_receive):
 
     elif type_id == 'queue_add':
 
-        queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "load")
+        queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "load")
         
         if data_receive not in queue_data:
             
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "save", queue_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "save", queue_data)
             
             toast('Nome adicionado')
 
@@ -4524,13 +4528,13 @@ def queue(type_id, data_receive):
 
     elif type_id == 'queue_rem':
 
-        queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "load")
+        queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "load")
         
         if data_receive in queue_data:
         
             queue_data.remove(data_receive)
         
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "save", queue_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "save", queue_data)
         
             toast('Nome removido')
 
@@ -4560,7 +4564,7 @@ def queue(type_id, data_receive):
 
         try:
 
-            command_queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/commands.json", "load")
+            command_queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/commands.json", "load")
         
             data = {
                 "command" : command_queue_data[data_receive]["command"],
@@ -4583,7 +4587,7 @@ def queue(type_id, data_receive):
 
         try:
             
-            command_queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/commands.json", "load")
+            command_queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/commands.json", "load")
 
             command_queue_data[data_received['type_command']] = {
                 "command" : data_received['command'],
@@ -4593,7 +4597,7 @@ def queue(type_id, data_receive):
                 "user_level" : data_received['user_level']
             }
                 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/commands.json", "save",command_queue_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/commands.json", "save",command_queue_data)
 
             toast('success')
 
@@ -4607,7 +4611,7 @@ def obs_config_py(type_id,data_receive):
     
     if type_id == "get":
         
-        obs_conn_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/obs.json", "load")
+        obs_conn_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/obs.json", "load")
         
         data = {
             "host": obs_conn_data['OBS_HOST'],
@@ -4619,7 +4623,7 @@ def obs_config_py(type_id,data_receive):
     
     elif type_id == "get_not":
         
-        obs_not_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "load")
+        obs_not_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/notfic.json", "load")
         
         data = {
             'html_player_active': obs_not_data['HTML_PLAYER_ACTIVE'],
@@ -4645,7 +4649,7 @@ def obs_config_py(type_id,data_receive):
                 'OBS_PASSWORD': data['pass']
             }
         
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/obs.json", "save", data_save)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/obs.json", "save", data_save)
         
             toast('success')
 
@@ -4667,7 +4671,7 @@ def obs_config_py(type_id,data_receive):
                 'HTML_MUSIC_TIME': int(data['time_showing_music']),
                 'EMOTE_PX' : data['emote_px'],
             }
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "save", data_save)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/notfic.json", "save", data_save)
         
             toast('success')
 
@@ -4747,7 +4751,7 @@ def create_source(type_id):
 
 def not_config_py(data_receive,type_id,type_not):
     
-    event_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_not.json", "load")
+    event_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_not.json", "load")
         
     if type_id == "get":   
          
@@ -4767,7 +4771,7 @@ def not_config_py(data_receive,type_id,type_not):
             event_config_data[type_not]['status'] = data['not']
             event_config_data[type_not]['response_chat'] = data['response_chat']
             
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_not.json", "save",event_config_data )
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_not.json", "save",event_config_data )
                 
             toast('success')
             
@@ -4779,7 +4783,7 @@ def not_config_py(data_receive,type_id,type_not):
         
 def messages_config(type_id,data_receive):
 
-    message_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands_config.json", "load")
+    message_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands_config.json", "load")
      
     if type_id == "get":
 
@@ -4813,7 +4817,7 @@ def messages_config(type_id,data_receive):
             message_data['STATUS_MUSIC_CONFIRM'] = data['status_music']
             message_data['STATUS_MUSIC_ERROR'] = data['status_error_music']
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands_config.json", "save", message_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands_config.json", "save", message_data)
 
             toast('success')
 
@@ -4826,7 +4830,7 @@ def messages_config(type_id,data_receive):
 
 def responses_config(fun_id, response_key, message):
 
-    responses_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/messages/messages_file.json", "load")
+    responses_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/messages/messages_file.json", "load")
 
     if fun_id == 'get_response':
 
@@ -4837,7 +4841,7 @@ def responses_config(fun_id, response_key, message):
         try:
             responses_data[response_key] = message
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/messages/messages_file.json", "save",responses_data )
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/messages/messages_file.json", "save",responses_data )
 
             toast('success')
 
@@ -4854,8 +4858,8 @@ def discord_config(data_discord_save, mode,type_id):
         'clips_edit',
     ]
     
-    discord_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/discord.json", "load")
-    event_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_not.json", "load")
+    discord_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/discord.json", "load")
+    event_config_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_not.json", "load")
     
     if mode == 'save':
 
@@ -4884,8 +4888,8 @@ def discord_config(data_discord_save, mode,type_id):
                 event_config_data[type_id]['status'] = data_receive['not']
                 event_config_data[type_id]['response_chat'] = data_receive['response_chat']
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_not.json", "save",event_config_data)
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/discord.json", "save",discord_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_not.json", "save",event_config_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/discord.json", "save",discord_data)
             
             toast('success')
 
@@ -4933,7 +4937,7 @@ def discord_config(data_discord_save, mode,type_id):
         discord_data['profile_image'] = data_receive['webhook_profile_image_url']
         discord_data['profile_name'] = data_receive['webhook_profile_name']
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/discord.json", "save",discord_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/discord.json", "save",discord_data)
             
     elif mode == 'get-profile':
 
@@ -4948,13 +4952,13 @@ def discord_config(data_discord_save, mode,type_id):
 
 def disclosure_py(type_id,data_receive):
     
-    disclosure_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/disclosure.json", "load")
+    disclosure_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/disclosure.json", "load")
             
     if type_id == "save":
 
         disclosure_data['message'] = data_receive
     
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/disclosure.json", "save", disclosure_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/disclosure.json", "save", disclosure_data)
         
     elif type_id == "get":
 
@@ -5011,7 +5015,7 @@ def playlist_py(type_id,data):
     def start_add(playlist_url):
 
         try:
-            playlist_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/playlist.json", "load")
+            playlist_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/playlist.json", "load")
 
             check_have = any(playlist_data.keys())
 
@@ -5039,7 +5043,7 @@ def playlist_py(type_id,data):
 
                     playlist_data[last_key] = {"MUSIC": video_url, "USER": "playlist", "MUSIC_NAME": video_title}
 
-                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/playlist.json", "save", playlist_data)
+                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/playlist.json", "save", playlist_data)
 
         except Exception as e:
             utils.error_log(e)
@@ -5081,11 +5085,11 @@ def playlist_py(type_id,data):
         
     elif type_id == 'save':
         
-        playlist_stats_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
+        playlist_stats_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
 
         playlist_stats_data['STATUS'] = data
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "save", playlist_stats_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "save", playlist_stats_data)
         
         if data:
             toast('Reprodução de playlist ativada')
@@ -5094,7 +5098,7 @@ def playlist_py(type_id,data):
    
     elif type_id == 'get':
 
-        playlist_stats_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
+        playlist_stats_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
         
         return playlist_stats_data['STATUS']
 
@@ -5102,13 +5106,13 @@ def playlist_py(type_id,data):
    
         playlist_data = {}
         
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/playlist.json", "save", playlist_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/playlist.json", "save", playlist_data)
 
     elif type_id == 'queue':
         
-        queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/queue.json", "load")
+        queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/queue.json", "load")
 
-        playlist_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/playlist.json", "load")
+        playlist_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/playlist.json", "load")
 
         list_queue_list = {}
         
@@ -5133,9 +5137,9 @@ def sr_config_py(type_id,data_receive):
     
     if type_id == 'get':
         
-        commands_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "load")
-        not_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "load")
-        status_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
+        commands_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "load")
+        not_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/notfic.json", "load")
+        status_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
         
         data = {
             "allow_music" : status_music_data['STATUS_MUSIC_ENABLE'],
@@ -5151,7 +5155,7 @@ def sr_config_py(type_id,data_receive):
     if type_id == 'get_command':
         
         try:
-            commands_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "load")
+            commands_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "load")
         
             data = {
                 'command': commands_music_data[data_receive]['command'],
@@ -5174,9 +5178,9 @@ def sr_config_py(type_id,data_receive):
 
         try:
 
-            not_status_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "load")
-            commands_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "load")
-            status_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
+            not_status_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/notfic.json", "load")
+            commands_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "load")
+            status_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
             
             not_status_music_data['HTML_PLAYER_ACTIVE'] = data['music_not_status_data']
             commands_music_data['redeem'] = data['redeem_music_data']
@@ -5186,9 +5190,9 @@ def sr_config_py(type_id,data_receive):
             status_music_data['skip_votes'] = data['skip_votes']
             status_music_data['skip_mod'] = data['skip_mod']
             
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "save", not_status_music_data)
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "save", commands_music_data)
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/config.json", "save", status_music_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/notfic.json", "save", not_status_music_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "save", commands_music_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/config.json", "save", status_music_data)
                     
             toast('success')
 
@@ -5203,7 +5207,7 @@ def sr_config_py(type_id,data_receive):
 
             data = json.loads(data_receive)
                    
-            commands_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "load")
+            commands_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "load")
             
             commands_music_data[data['type_command']] = {
                 'command': data['command'],
@@ -5213,7 +5217,7 @@ def sr_config_py(type_id,data_receive):
                 'user_level' : data['user_level'],
             }
             
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save", commands_music_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save", commands_music_data)
 
             toast('Comando salvo')
 
@@ -5224,35 +5228,35 @@ def sr_config_py(type_id,data_receive):
 
     elif type_id == 'get-status':
         
-        status_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
+        status_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
 
         return status_music_data['STATUS_MUSIC_ENABLE']
 
     elif type_id == 'list_add':
 
-        config_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
+        config_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
 
         config_music_data["blacklist"].append(data_receive)
         
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/config.json", "save", config_music_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/config.json", "save", config_music_data)
         
         toast('Termo ou nome adicionado')
             
     elif type_id == 'list_get':
         
-        config_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
+        config_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
 
         return json.dumps(config_music_data["blacklist"], ensure_ascii=False)
         
     elif type_id == 'list_rem':
         
-        config_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
+        config_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
 
         if data_receive in commands_music_data:
         
             config_music_data["blacklist"].remove(data_receive)
         
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/config.json", "save", config_music_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/config.json", "save", config_music_data)
             
             toast('Termo ou nome removido') 
         
@@ -5269,7 +5273,7 @@ def update_check(type_id):
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'v5.9.2':
+        if version != 'v5.9.4':
 
             return 'true'
         
@@ -5285,7 +5289,7 @@ def update_check(type_id):
 
 def clip():
     
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
     
     if authdata.TOKEN() and authdata.USERNAME():
 
@@ -5349,7 +5353,7 @@ def timer():
 
                 if chat.Connected and loaded_status and streaming:
                                 
-                    timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "load")
+                    timer_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "load")
 
                     timer_int = timer_data['TIME']
                     timer_max_int = timer_data['TIME_MAX']
@@ -5377,7 +5381,7 @@ def timer():
 
                                     timer_data['LAST'] = message_key
 
-                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/timer.json", "save",timer_data)
+                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/timer.json", "save",timer_data)
 
                                     if timer_message[message_key]['type_timer'] == 0:
                                         send(timer_message[message_key]['message'])
@@ -5415,7 +5419,7 @@ def timer():
 
 def get_users_info(type_id, user_id):
 
-    os.makedirs(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info", exist_ok=True)
+    os.makedirs(f"{utils.local_work('appdata_path')}/user_info", exist_ok=True)
 
     def compare_dictionaries(received, saved):
 
@@ -5431,7 +5435,7 @@ def get_users_info(type_id, user_id):
 
         try:
             
-            authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+            authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
     
             if authdata.TOKEN() and authdata.USERNAME():
                 
@@ -5456,10 +5460,10 @@ def get_users_info(type_id, user_id):
                         user_name = mod_info['data'][index]['user_name']
                         mod_dict[user_id] = user_name
 
-                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/mods.json", "save",mod_dict)
+                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/mods.json", "save",mod_dict)
 
 
-                sub_dict_saved = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/subs.json", "load")
+                sub_dict_saved = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/subs.json", "load")
 
                 sub_dict_rec = {}
 
@@ -5502,7 +5506,7 @@ def get_users_info(type_id, user_id):
                             append_notice(data_append)
 
                         
-                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/subs.json", "save", sub_dict_rec)
+                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/subs.json", "save", sub_dict_rec)
 
 
 
@@ -5520,7 +5524,7 @@ def get_users_info(type_id, user_id):
 
     elif type_id == 'get_sub':
 
-        subs_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/subs.json", "load")
+        subs_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/subs.json", "load")
 
         if 'user_id' in subs_data.keys():
             return True
@@ -5529,7 +5533,7 @@ def get_users_info(type_id, user_id):
 
     elif type_id == 'get_mod':
 
-        mod_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/mods.json", "load")
+        mod_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/mods.json", "load")
 
         if 'user_id' in mod_data.keys():
             return True
@@ -5601,7 +5605,7 @@ def start_play(link, user):
         with open(f"{utils.local_work('data_dir')}/web/src/player/images/album.png", 'wb') as album_art_local:
             album_art_local.write(img_data)
 
-        with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/images/album.png", 'wb') as album_art_file:
+        with open(f"{utils.local_work('appdata_path')}/player/images/album.png", 'wb') as album_art_file:
             album_art_file.write(img_data)
 
         window.evaluate_js(f"update_image()")
@@ -5610,14 +5614,14 @@ def start_play(link, user):
 
         if download_music(music_link):
 
-            with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/currentsong.txt", "w", encoding="utf-8") as file_object:
+            with open(f"{utils.local_work('appdata_path')}/player/list_files/currentsong.txt", "w", encoding="utf-8") as file_object:
                 file_object.write(f"{media_name}")
 
             music_name_short = textwrap.shorten(media_name, width=13, placeholder="...")
 
             redeem_data = {
                 "redeem_user": user,
-                "music" : music_name_short,
+                "music" : media_name,
                 "artist" : music_artist,
             }
             
@@ -5647,12 +5651,12 @@ def start_play(link, user):
             toast(f'Reproduzindo {music_name_short} - {music_artist}')
             
                 
-            config_data_player = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
+            config_data_player = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
                 
             config_data_player['skip_requests'] = 0
             config_data_player['skip_users'] = []
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "save", config_data_player)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "save", config_data_player)
             
 
             caching = False
@@ -5680,9 +5684,9 @@ def loopcheck():
         try:
             if loaded_status and chat.Connected:
                 
-                playlist_execute_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
-                playlist_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/playlist.json", "load")
-                queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/queue.json", "load")
+                playlist_execute_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
+                playlist_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/playlist.json", "load")
+                queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/queue.json", "load")
                                  
                 playlist_execute_value = playlist_execute_data['STATUS']
                 playlist_execute = int(playlist_execute_value)
@@ -5704,7 +5708,7 @@ def loopcheck():
 
                         del queue_data[music_data_key]
 
-                        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/queue.json", "save",queue_data)
+                        utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/queue.json", "save",queue_data)
                         
                         start_play(music, user)
 
@@ -5722,7 +5726,7 @@ def loopcheck():
 
                             del playlist_data[music_data]
                                 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/playlist.json", "save",playlist_data)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/playlist.json", "save",playlist_data)
 
                             start_play(music, user)
 
@@ -5744,8 +5748,8 @@ def process_redem_music(user_input, redem_by_user):
     
     toast(f'Processando pedido {user_input} - {redem_by_user}...')
         
-    config_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
-    queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/queue.json", "load")
+    config_music_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
+    queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/queue.json", "load")
 
     blacklist = config_music_data['blacklist']
     max_duration = int(config_music_data['max_duration'])
@@ -5767,13 +5771,13 @@ def process_redem_music(user_input, redem_by_user):
                 video_url = response.url
                 music_leght = response.length
 
-                if music_leght < max_duration:
+                if int(music_leght) < int(max_duration):
 
-                    queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/queue.json", "load")
+                    queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/queue.json", "load")
 
                     queue_data[last_key] = {"MUSIC": video_url, "USER": redem_by_user, "MUSIC_NAME": music_name}
 
-                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/queue.json", "save", queue_data)
+                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/queue.json", "save", queue_data)
                     
                     aliases = {'{username}': redem_by_user, '{user_input}': video_url, '{music}': music_name}
                     
@@ -5848,20 +5852,20 @@ def process_redem_music(user_input, redem_by_user):
 
 def receive_redeem(data_rewards, received_type):
     
-    with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "r",  encoding='utf-8') as counter_file_r:
+    with open(f"{utils.local_work('appdata_path')}/counter/counter.txt", "r",  encoding='utf-8') as counter_file_r:
         counter_file_r.seek(0)
         digit = counter_file_r.read()
         counter_actual = int(digit)
 
     
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
-    path = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pathfiles.json", "load")
-    player_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "load")
-    giveaway_path = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/config.json", "load")
-    giveaway_commands = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "load")
-    counter_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/config.json", "load")
-    queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/config.json", "load")
-    queue_command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/commands.json", "load")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
+    path = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pathfiles.json", "load")
+    player_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "load")
+    giveaway_path = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/config.json", "load")
+    giveaway_commands = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "load")
+    counter_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/config.json", "load")
+    queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/config.json", "load")
+    queue_command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/commands.json", "load")
         
     counter_redeem = counter_data['redeem']
     giveaway_redeem = giveaway_path['redeem']
@@ -5883,7 +5887,7 @@ def receive_redeem(data_rewards, received_type):
                 
         if received_type == 'redeem':
 
-            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
             
             redeem_reward_name = data_rewards['reward_title']
             redeem_by_user = data_rewards['user_name']
@@ -6184,10 +6188,10 @@ def receive_redeem(data_rewards, received_type):
             
             send_response_value = counter_data['response']
 
-            with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "r") as counter_file_r:
+            with open(f"{utils.local_work('appdata_path')}/counter/counter.txt", "r") as counter_file_r:
                 if len(counter_file_r.read()) == 0:
                     
-                    with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
+                    with open(f"{utils.local_work('appdata_path')}/counter/counter.txt", "w") as counter_file_w:
                         countercount = 1 
                         counter_file_w.write(countercount)
                         window.evaluate_js(f"update_counter_value('{countercount}')")
@@ -6205,7 +6209,7 @@ def receive_redeem(data_rewards, received_type):
                     else:
                         countercount = 0
 
-                    with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
+                    with open(f"{utils.local_work('appdata_path')}/counter/counter.txt", "w") as counter_file_w:
                         counter_file_w.write(str(countercount))
                         window.evaluate_js(f"update_counter_value('{countercount}')")
 
@@ -6230,13 +6234,13 @@ def receive_redeem(data_rewards, received_type):
 
             send_response_value = queue_data['response']
                 
-            queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "load")
+            queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "load")
 
             if redeem_by_user not in queue_data:
 
                 queue_data.append(redeem_by_user)
                 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "save",queue_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "save",queue_data)
                 
                 toast('Nome adicionado')
 
@@ -6258,7 +6262,7 @@ def receive_redeem(data_rewards, received_type):
 
         def highlight():
 
-            data_highlight = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/highlight.json", "load")
+            data_highlight = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/highlight.json", "load")
             
             status = data_highlight['status']
             color_message = data_highlight['color_message']
@@ -6382,7 +6386,7 @@ def highlight_py(type_id,data):
 
     if type_id == 'get':
 
-        data_highlight = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/highlight.json", "load")
+        data_highlight = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/highlight.json", "load")
         
         status = data_highlight['status']
         color_message = data_highlight['color_message']
@@ -6408,7 +6412,7 @@ def highlight_py(type_id,data):
 
         try:
             
-            data_highlight = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/highlight.json", "load")
+            data_highlight = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/highlight.json", "load")
 
             data_highlight['status'] = data_received['status']
             data_highlight['color_message'] = data_received['color_message']
@@ -6417,7 +6421,7 @@ def highlight_py(type_id,data):
             data_highlight['font-weight'] = data_received['font_weight']
             data_highlight['durationt'] = data_received['duration']
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/highlight.json", "save", data_highlight)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/highlight.json", "save", data_highlight)
             
             toast('Salvo!')  
 
@@ -6457,14 +6461,14 @@ def open_py(type_id,link_profile):
 
     elif type_id == "errolog":
 
-        with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/error_log.txt", 'r', encoding='utf-8') as error_file:
+        with open(f"{utils.local_work('appdata_path')}/error_log.txt", 'r', encoding='utf-8') as error_file:
             error_data = error_file.read()
 
         return error_data
 
     elif type_id == "errolog_clear":
         
-        with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/error_log.txt", 'w', encoding='utf-8') as error_file:
+        with open(f"{utils.local_work('appdata_path')}/error_log.txt", 'w', encoding='utf-8') as error_file:
             error_file.write('')
 
         toast('Relatório de erros limpo')
@@ -6477,13 +6481,13 @@ def open_py(type_id,link_profile):
 
     elif type_id == "debug-get":
 
-        debug_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/scopes.json", "load")
+        debug_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/scopes.json", "load")
 
         return debug_data['debug']
     
     elif type_id == "debug-save":
 
-        debug_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/scopes.json", "load")
+        debug_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/scopes.json", "load")
         
         if link_profile: 
             
@@ -6495,12 +6499,12 @@ def open_py(type_id,link_profile):
             debug_data['debug'] = False
             toast(f'Configuração salva, reinicie o programa para sair do modo Debug Visual...')
 
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/scopes.json", "save", debug_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/scopes.json", "save", debug_data)
 
 
 def chat_config(data_save,type_config):
 
-    chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/chat_config.json", "load")
+    chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/chat_config.json", "load")
     
     if type_config == 'save':
 
@@ -6523,13 +6527,13 @@ def chat_config(data_save,type_config):
         chat_data['top_chatter_min'] = data_received['top_chatter']
         chat_data['regular_min'] = data_received['regular']
         
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/chat_config.json", "save",chat_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/chat_config.json", "save",chat_data)
         
         toast('success')  
         
     elif type_config == 'get':
 
-        chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/chat_config.json", "load")
+        chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/chat_config.json", "load")
         
         chat_data_return = {
             "appply_colors" : chat_data["appply-colors"],
@@ -6558,7 +6562,7 @@ def chat_config(data_save,type_config):
             
             chat_data["user_not_display"].append(data_save)
             
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/chat_config.json", "save",chat_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/chat_config.json", "save",chat_data)
     
             toast('Nome adicionado')
             
@@ -6572,7 +6576,7 @@ def chat_config(data_save,type_config):
         
             chat_data["user_not_display"].remove(data_save)
         
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/chat_config.json", "save",chat_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/chat_config.json", "save",chat_data)
 
             toast('Nome removido') 
         
@@ -6582,10 +6586,10 @@ def chat_config(data_save,type_config):
 
     elif type_config == 'list_bot_add':
         
-        users_sess_join_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "load")
-        userjoin_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_joined.json", "load")
-        bot_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/bot_list_add.json", "load")
-        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+        users_sess_join_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_sess_join.json", "load")
+        userjoin_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_joined.json", "load")
+        bot_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/bot_list_add.json", "load")
+        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
 
         if data_save in userjoin_data_load['spec']:
             userjoin_data_load['spec'].remove(data_save)
@@ -6593,32 +6597,32 @@ def chat_config(data_save,type_config):
         if data_save in users_sess_join_data['spec']:
             users_sess_join_data['spec'].remove(data_save)
             
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "save",users_sess_join_data)
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_joined.json", "save",userjoin_data_load)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_sess_join.json", "save",users_sess_join_data)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_joined.json", "save",userjoin_data_load)
         
         if data_save not in bot_data:
             
             bot_data.append(data_save)
             
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/bot_list_add.json", "save", bot_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/bot_list_add.json", "save", bot_data)
             
         if data_save in user_data_load:
             
             del user_data_load[data_save]
             
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save", user_data_load)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "save", user_data_load)
             
         toast('Nome adicionado')
             
     elif type_config == 'list_bot_rem':
         
-        bot_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/bot_list_add.json", "load")
+        bot_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/bot_list_add.json", "load")
         
         if data_save in bot_data:
         
             bot_data.remove(data_save)
         
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/bot_list_add.json", "save", bot_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/bot_list_add.json", "save", bot_data)
             
             toast('Nome removido') 
         
@@ -6628,7 +6632,7 @@ def chat_config(data_save,type_config):
                 
     elif type_config == 'list_bot_get':
         
-        bot_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/bot_list_add.json", "load")
+        bot_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/bot_list_add.json", "load")
 
         return json.dumps(bot_data, ensure_ascii=False)
         
@@ -6637,13 +6641,13 @@ def userdata_py(type_id,username):
     
     if type_id == 'get':
         
-        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
 
         return json.dumps(user_data_load, ensure_ascii=False)
         
     elif type_id == 'load':
         
-        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
         
         if username in user_data_load:
             
@@ -6680,20 +6684,20 @@ def userdata_py(type_id,username):
         
     elif type_id == 'remove':
         
-        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
         
         if username in user_data_load:
             
             del user_data_load[username]
             
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "save",user_data_load)
                 
             toast('Nome removido')
  
       
 def commands_module(data) -> None:
 
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
 
     if authdata.TOKEN() and authdata.USERNAME():
         
@@ -6758,16 +6762,16 @@ def commands_module(data) -> None:
         user_id_command = message_sender_id
 
         
-        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")   
-        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "load")
-        command_data_prefix = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands_config.json", "load")
-        command_data_simple = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "load")
-        command_data_counter = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/commands.json", "load")
-        command_data_giveaway = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "load")
-        command_data_player = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "load")
-        command_data_duel = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/duel/duel.json", "load")
-        command_data_default = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/default_commands.json", "load")
-        command_data_queue = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/commands.json", "load")
+        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")   
+        command_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "load")
+        command_data_prefix = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands_config.json", "load")
+        command_data_simple = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "load")
+        command_data_counter = utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/commands.json", "load")
+        command_data_giveaway = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "load")
+        command_data_player = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "load")
+        command_data_duel = utils.manipulate_json(f"{utils.local_work('appdata_path')}/duel/duel.json", "load")
+        command_data_default = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/default_commands.json", "load")
+        command_data_queue = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/commands.json", "load")
         
         
         user_type = user_data_load[user.lower()]["roles"]
@@ -6824,7 +6828,7 @@ def commands_module(data) -> None:
                             command_data[command]['last_use'] = current
                             
                                 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/commands.json", "save",command_data)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/commands.json", "save",command_data)
                             
                             data_append = {
                                 "type" : "command",
@@ -6858,7 +6862,7 @@ def commands_module(data) -> None:
                 
                 append_notice(data_append)
 
-                with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "r") as counter_file_r:
+                with open(f"{utils.local_work('appdata_path')}/counter/counter.txt", "r") as counter_file_r:
                     counter_file_r.seek(0)
                     counter = counter_file_r.read()
 
@@ -6898,7 +6902,7 @@ def commands_module(data) -> None:
                             command_data_simple[command]['counts'] = counts
                             
 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "save", command_data_simple)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "save", command_data_simple)
                             
                         else:
 
@@ -6936,7 +6940,7 @@ def commands_module(data) -> None:
                         
                         if check_time:
 
-                            with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
+                            with open(f"{utils.local_work('appdata_path')}/counter/counter.txt", "w") as counter_file_w:
                                 counter_file_w.write('0')
 
                             if utils.send_message("RESPONSE"):
@@ -6944,7 +6948,7 @@ def commands_module(data) -> None:
                                 
                             command_data_counter['reset_counter']['last_use'] = current
 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/commands.json", "save", command_data_counter)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/commands.json", "save", command_data_counter)
 
                         else:
 
@@ -6989,7 +6993,7 @@ def commands_module(data) -> None:
                                 
                                 if user_input.strip().isdigit():
 
-                                    with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "w") as counter_file_w:
+                                    with open(f"{utils.local_work('appdata_path')}/counter/counter.txt", "w") as counter_file_w:
                                         counter_file_w.write(str(user_input))
 
                                     aliases = {"{username}" : str(user)}
@@ -7015,7 +7019,7 @@ def commands_module(data) -> None:
                                     
                             command_data_counter['set_counter']['last_use'] = current
                         
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/commands.json", "save", command_data_counter)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/commands.json", "save", command_data_counter)
                                     
                                     
                         else:
@@ -7053,7 +7057,7 @@ def commands_module(data) -> None:
 
                         if check_time:
 
-                            with open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/counter.txt", "r") as counter_file_r:
+                            with open(f"{utils.local_work('appdata_path')}/counter/counter.txt", "r") as counter_file_r:
                                 counter_file_r.seek(0)
                                 digit = counter_file_r.read()
 
@@ -7064,7 +7068,7 @@ def commands_module(data) -> None:
                                 
                             command_data_counter['check_counter']['last_use'] = current
                         
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/counter/commands.json", "save", command_data_counter)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/counter/commands.json", "save", command_data_counter)
                                     
                         else:
 
@@ -7106,7 +7110,7 @@ def commands_module(data) -> None:
                             
                             command_data_giveaway['execute_giveaway']['last_use'] = current
                                 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "save", command_data_giveaway)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "save", command_data_giveaway)
                         
                         else:
 
@@ -7146,14 +7150,14 @@ def commands_module(data) -> None:
 
                             reset_data = []
                             
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/names.json", "save", reset_data)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/names.json", "save", reset_data)
 
                             if utils.send_message("RESPONSE"):
                                 send(utils.messages_file_load('giveaway_clear'))
                                 
                             command_data_giveaway['clear_giveaway']['last_use'] = current
                                 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "save", command_data_giveaway)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "save", command_data_giveaway)
 
                         else:
 
@@ -7193,7 +7197,7 @@ def commands_module(data) -> None:
                             
                             user_input = command_string.split(command_data_giveaway['check_name']['command'])
                                 
-                            giveaway_name_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/names.json", "load")
+                            giveaway_name_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/names.json", "load")
 
                             if len(user_input) > 1 and user_input[1] != "":
                                 
@@ -7221,7 +7225,7 @@ def commands_module(data) -> None:
                                     
                             giveaway_name_data['check_name']['last_use'] = current
                     
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "save", giveaway_name_data)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "save", giveaway_name_data)
                                 
                         else:
 
@@ -7282,7 +7286,7 @@ def commands_module(data) -> None:
                                     
                             command_data_giveaway['add_user']['last_use'] = current
                                 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "save", command_data_giveaway)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "save", command_data_giveaway)
                             
                         else:
 
@@ -7320,7 +7324,7 @@ def commands_module(data) -> None:
                             
                         if check_time_global:
                             
-                            giveaway_name_data =  utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/names.json", "load")
+                            giveaway_name_data =  utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/names.json", "load")
 
                             if user in giveaway_name_data:
                                 
@@ -7337,7 +7341,7 @@ def commands_module(data) -> None:
                                     
                             command_data_giveaway['check_self_name']['last_use']
 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/giveaway/commands.json", "save",command_data_giveaway)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/giveaway/commands.json", "save",command_data_giveaway)
                             
                         else:
 
@@ -7417,7 +7421,7 @@ def commands_module(data) -> None:
                                             
                                 command_data_player['volume']['last_use'] = current
                                     
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save",command_data_player)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save",command_data_player)
                             
                             else:
                                 
@@ -7433,7 +7437,7 @@ def commands_module(data) -> None:
                                 
                                 command_data_player['volume']['last_use'] = current
                         
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save",command_data_player)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save",command_data_player)
 
                         else:
                             
@@ -7450,7 +7454,7 @@ def commands_module(data) -> None:
                 
             elif compare_strings(command,command_data_player['skip']['command']):
                 
-                config_data_player =  utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "load")
+                config_data_player =  utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "load")
 
                 skip_votes = int(config_data_player['skip_votes'])
                 skip_requests = int(config_data_player['skip_requests'])
@@ -7496,8 +7500,8 @@ def commands_module(data) -> None:
                                     command_data_player['skip']['last_use'] = current
                                     config_data_player['skip_requests'] = 0
                                     
-                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save", command_data_player)
-                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "save", config_data_player)
+                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save", command_data_player)
+                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "save", config_data_player)
 
                                 else:
 
@@ -7526,12 +7530,12 @@ def commands_module(data) -> None:
                                                 
                                             command_data_player['skip']['last_use'] = current
                                         
-                                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save", command_data_player)
+                                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save", command_data_player)
                                             
                                             config_data_player['skip_requests'] = 0
                                             config_data_player['skip_users'] = []
                                             
-                                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "save", config_data_player)
+                                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "save", config_data_player)
                                             
 
                                         else:
@@ -7540,7 +7544,7 @@ def commands_module(data) -> None:
                                             config_data_player['skip_users'] = skip_users
                                             config_data_player['skip_requests'] = int(skip_requests)
 
-                                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/config.json", "save", config_data_player)
+                                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/config.json", "save", config_data_player)
                                             
                                     else:
                                         
@@ -7551,7 +7555,7 @@ def commands_module(data) -> None:
                                             
                                         command_data_player['skip']['last_use'] = current
                                 
-                                        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save", command_data_player)
+                                        utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save", command_data_player)
                                             
                             else:
 
@@ -7562,7 +7566,7 @@ def commands_module(data) -> None:
                                     
                                 command_data_player['skip']['last_use'] = current
                                     
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save", command_data_player)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save", command_data_player)
                                         
                         else:
 
@@ -7618,7 +7622,7 @@ def commands_module(data) -> None:
                                     
                                     command_data_player['request']['last_use'] = current
                                         
-                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save", command_data_player)
+                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save", command_data_player)
 
                                 else:
 
@@ -7627,7 +7631,7 @@ def commands_module(data) -> None:
                                     
                                     command_data_player['request']['last_use'] = current
                                         
-                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save", command_data_player)
+                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save", command_data_player)
                         else:
 
                             if utils.send_message("ERROR_TIME"):
@@ -7662,7 +7666,7 @@ def commands_module(data) -> None:
 
                         if check_time:
                                 
-                            f = open(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/currentsong.txt", "r+", encoding="utf-8")
+                            f = open(f"{utils.local_work('appdata_path')}/player/list_files/currentsong.txt", "r+", encoding="utf-8")
                             current_song = f.read()
 
                             aliases_commands = {'{username}': str(user), '{music}': str(current_song)}
@@ -7672,7 +7676,7 @@ def commands_module(data) -> None:
                                 
                             command_data_player['atual']['last_use'] = current
                     
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save", command_data_player)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save", command_data_player)
 
                         else:
                             if utils.send_message("ERROR_TIME"):
@@ -7707,8 +7711,8 @@ def commands_module(data) -> None:
 
                         if check_time:
                                 
-                            playlist_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/playlist.json", "load")
-                            queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/list_files/queue.json", "load")
+                            playlist_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/playlist.json", "load")
+                            queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/list_files/queue.json", "load")
 
                             check_playlist = any(playlist_data.keys())
                             check_queue = any(queue_data.keys())
@@ -7763,7 +7767,7 @@ def commands_module(data) -> None:
                                     
                             command_data_player['next']['last_use'] = current
                     
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/commands.json", "save", command_data_player)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/commands.json", "save", command_data_player)
 
                         else:
                             if utils.send_message("ERROR_TIME"):
@@ -7790,7 +7794,7 @@ def commands_module(data) -> None:
                 
                 if check_perm(user_type, user_level):
                 
-                    duel_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/duel/duel.json", "load")
+                    duel_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/duel/duel.json", "load")
                     
                     def loop_duel():
                         
@@ -7890,15 +7894,15 @@ def commands_module(data) -> None:
                             duel_data['challenger'] = ""
                             duel_data['accept'] = 0
                                 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/duel/duel.json", "save", duel_data)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/duel/duel.json", "save", duel_data)
                         
                         count = 0
                         
-                        duel_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/duel/duel.json", "load")
+                        duel_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/duel/duel.json", "load")
                         
                         while count < duel_data['time_to_accept']:
 
-                            duel_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/duel/duel.json", "load")
+                            duel_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/duel/duel.json", "load")
                                 
                             if duel_data['accept'] == 0:
                                 count = count + 1
@@ -7919,7 +7923,7 @@ def commands_module(data) -> None:
                             duel_data['challenged'] = ""
                             duel_data['challenger'] = ""
                             
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/duel/duel.json", "save", duel_data)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/duel/duel.json", "save", duel_data)
                                 
                         elif duel_data['accept']:
                             run_duel()
@@ -7953,7 +7957,7 @@ def commands_module(data) -> None:
                                             duel_data['challenger'] = user
                                             duel_data['last_use'] = current
                                     
-                                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/duel/duel.json", "save", duel_data)
+                                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/duel/duel.json", "save", duel_data)
                                                 
                                             message_duel_aliases = {
                                                 '{time}' : str(duel_data['time_to_accept']),
@@ -7998,7 +8002,7 @@ def commands_module(data) -> None:
                                     
                                         duel_data['accept'] = 1
                                         
-                                        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/duel/duel.json", "save", duel_data)
+                                        utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/duel/duel.json", "save", duel_data)
                                             
                                             
                                         message_duel_aliases = {
@@ -8055,7 +8059,7 @@ def commands_module(data) -> None:
                 
                 append_notice(data_append)
 
-                data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/simple_commands.json", "load")
+                data_command = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/simple_commands.json", "load")
             
                 delay = command_data_default['cmd']['delay']
                 last_use = command_data_default['cmd']['last_use']
@@ -8190,7 +8194,7 @@ def commands_module(data) -> None:
 
                             command_data_default['cmd']['last_use'] = current
 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/default_commands.json", "save", command_data_default)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/default_commands.json", "save", command_data_default)
                                 
                         else:
 
@@ -8234,7 +8238,7 @@ def commands_module(data) -> None:
                             
                             command_data_default['dice']['last_use'] = current
                                 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/default_commands.json", "save", command_data_default)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/default_commands.json", "save", command_data_default)
 
                             if utils.send_message("RESPONSE"):
                                 send(utils.replace_all(command_data_default['dice']['response'], aliases))
@@ -8285,7 +8289,7 @@ def commands_module(data) -> None:
                                 
                                 command_data_default['random']['last_use'] = current
                             
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/default_commands.json", "save", command_data_default)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/default_commands.json", "save", command_data_default)
                                 
                                 if utils.send_message("RESPONSE"):
                                     send(utils.replace_all(command_data_default['random']['response'], aliases))
@@ -8343,7 +8347,7 @@ def commands_module(data) -> None:
                                     
                             command_data_default['game']['last_use'] = current
 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/default_commands.json", "save",command_data_default)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/default_commands.json", "save",command_data_default)
                                     
                         else:
                             if utils.send_message("ERROR_TIME"):
@@ -8401,7 +8405,7 @@ def commands_module(data) -> None:
                                     
                             command_data_default['uptime']['last_use'] = current
                                 
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/default_commands.json", "save",command_data_default)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/default_commands.json", "save",command_data_default)
                             
                         else:
                             
@@ -8474,7 +8478,7 @@ def commands_module(data) -> None:
                                         
                                     command_data_default['followage']['last_use'] = current
                                 
-                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/default_commands.json", "save",command_data_default)
+                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/default_commands.json", "save",command_data_default)
                                         
                                 else:
                                     aliases = {
@@ -8559,7 +8563,7 @@ def commands_module(data) -> None:
 
                                 command_data_default['accountage']['last_use'] = current
                             
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/default_commands.json", "save", command_data_default)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/default_commands.json", "save", command_data_default)
 
                             else:
 
@@ -8600,7 +8604,7 @@ def commands_module(data) -> None:
 
                         if check_time:
         
-                            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+                            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
                                 
                             if user in user_data_load:
                                 
@@ -8617,7 +8621,7 @@ def commands_module(data) -> None:
 
                                 command_data_default['msgcount']['last_use'] = current
                             
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/default_commands.json", "save", command_data_default)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/default_commands.json", "save", command_data_default)
                             
                         else:
                             
@@ -8652,7 +8656,7 @@ def commands_module(data) -> None:
 
                         if check_time:
                             
-                            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+                            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
                             
                             if user in user_data_load:
                                 
@@ -8679,7 +8683,7 @@ def commands_module(data) -> None:
 
                                 command_data_default['watchtime']['last_use'] = current
                             
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/default_commands.json", "save", command_data_default)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/default_commands.json", "save", command_data_default)
 
                         else:
                             
@@ -8753,7 +8757,7 @@ def commands_module(data) -> None:
                             
                                 command_data_default['title']['last_use'] = current
                             
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/default_commands.json", "save", command_data_default)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/default_commands.json", "save", command_data_default)
 
                             else:
                                 if utils.send_message("RESPONSE"):
@@ -8798,7 +8802,7 @@ def commands_module(data) -> None:
                         
                             if sufix != "":
 
-                                data_games = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/games/games.json", "load")
+                                data_games = utils.manipulate_json(f"{utils.local_work('appdata_path')}/games/games.json", "load")
                                 
                                 games_names = [jogo["name"] for jogo in data_games.values()]
                                 best_matches = difflib.get_close_matches(sufix, games_names, n=1, cutoff=0.8)
@@ -8846,7 +8850,7 @@ def commands_module(data) -> None:
 
                                 command_data_default['setgame']['last_use'] = current
                             
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/default_commands.json", "save", command_data_default)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/default_commands.json", "save", command_data_default)
                                     
                             else:
                                 if utils.send_message("RESPONSE"):
@@ -8892,7 +8896,7 @@ def commands_module(data) -> None:
 
                             command_data_queue['check_queue']['last_use'] = current
                             
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/games/games.json", "save", command_data_queue)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/games/games.json", "save", command_data_queue)
 
                         else:
                             
@@ -8931,13 +8935,13 @@ def commands_module(data) -> None:
                         
                             if sufix != "":
 
-                                queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "load")
+                                queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "load")
 
                                 if sufix in queue_data:
                                 
                                     queue_data.remove(sufix)
 
-                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "save", queue_data)
+                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "save", queue_data)
                                     
                                     toast('Nome removido') 
 
@@ -8974,7 +8978,7 @@ def commands_module(data) -> None:
 
                                 command_data_queue['rem_queue']['last_use'] = current
                         
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/commands.json", "save", command_data_queue)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/commands.json", "save", command_data_queue)
 
                             else:
 
@@ -9018,13 +9022,13 @@ def commands_module(data) -> None:
                         
                             if sufix != "":
                                     
-                                queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "load")
+                                queue_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "load")
 
                                 if sufix not in queue_data:
 
                                     queue_data.append(sufix)
 
-                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/queue.json", "save",queue_data)
+                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/queue.json", "save",queue_data)
                                     
                                     toast('Nome adicionado')
 
@@ -9062,7 +9066,7 @@ def commands_module(data) -> None:
 
                                 command_data_queue['add_queue']['last_use'] = current
 
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/queue/commands.json", "save",command_data_queue)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/commands.json", "save",command_data_queue)
 
                             else:
 
@@ -9115,7 +9119,7 @@ def commands_module(data) -> None:
 
                                 command_data_default['emote']['last_use'] = current
                             
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/player/config/default_commands.json", "save", command_data_default)
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/player/config/default_commands.json", "save", command_data_default)
 
                             else:
 
@@ -9189,7 +9193,7 @@ def commands_module(data) -> None:
                                             
                                     command_data_default[item]['last_use'] = current
                                     
-                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/default_commands.json", "save", command_data_default)
+                                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/default_commands.json", "save", command_data_default)
                                     
                                     
                                 else:
@@ -9211,7 +9215,7 @@ def commands_module(data) -> None:
 
 def timeout_user(user,type_id):
     
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
 
     if authdata.TOKEN() and authdata.USERNAME():
         
@@ -9244,7 +9248,7 @@ def timeout_user(user,type_id):
 
 def emote_rain(emotes):
     
-    obs_not_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "load")
+    obs_not_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/notfic.json", "load")
 
     if obs_not_data['HTML_EMOTE_ACTIVE']:
 
@@ -9265,7 +9269,7 @@ def parse_to_dict(message):
 
     try:
         
-        authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+        authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
 
         if authdata.TOKEN() and authdata.USERNAME():
             
@@ -9389,8 +9393,8 @@ def parse_to_dict(message):
 
                 tags = {"badges" : badges}
 
-                channel_badges = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/badges/badges_channel.json", "load")
-                global_badges = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/badges/badges_global.json", "load")
+                channel_badges = utils.manipulate_json(f"{utils.local_work('appdata_path')}/badges/badges_channel.json", "load")
+                global_badges = utils.manipulate_json(f"{utils.local_work('appdata_path')}/badges/badges_global.json", "load")
                 
                 badges = tags["badges"]
 
@@ -9533,7 +9537,7 @@ def command_fallback(message: str) -> None:
 
     """
 
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
 
     if authdata.TOKEN() and authdata.USERNAME():
         
@@ -9546,12 +9550,12 @@ def command_fallback(message: str) -> None:
         if "Login authentication failed" in message:
             toast('Erro de autenticação, é recomendado fazer o login novamente ou reiniciar o programa, se o erro persistir contate o suporte.')
         
-        event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "load")
-        chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/chat_config.json", "load")
-        users_sess_join_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "load")
-        bot_list = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/bot_list.json", "load")
-        bot_list_user = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/bot_list_add.json", "load")
-        userjoin_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_joined.json", "load")
+        event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_log.json", "load")
+        chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/chat_config.json", "load")
+        users_sess_join_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_sess_join.json", "load")
+        bot_list = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/bot_list.json", "load")
+        bot_list_user = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/bot_list_add.json", "load")
+        userjoin_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_joined.json", "load")
         
         chat_time = utils.time_date()
                 
@@ -9577,12 +9581,12 @@ def command_fallback(message: str) -> None:
                     
                     users_sess_join_data['bot'].append(data['username'])
                     
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_joined.json", "save",userjoin_data_load)
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "save",users_sess_join_data)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_joined.json", "save",userjoin_data_load)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_sess_join.json", "save",users_sess_join_data)
                     
         def add_user_database(data): 
             
-            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
             
             if data['username'] not in user_data_load:
                 
@@ -9631,7 +9635,7 @@ def command_fallback(message: str) -> None:
                     'time_w': user_data_load[data['username']]['time_w']
                 }
                 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "save",user_data_load)
                                         
         try:
             
@@ -9642,7 +9646,7 @@ def command_fallback(message: str) -> None:
                         
                 if 'USERNOTICE' in message_data:
                         
-                    event_config_data =  utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_not.json", "load")
+                    event_config_data =  utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_not.json", "load")
                     
                     if 'msg-id' in message_data:
                         
@@ -9844,7 +9848,7 @@ def command_fallback(message: str) -> None:
                     
                     if user_join not in bot_list and user_join not in bot_list_user:       
                         
-                        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+                        user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
                         
                         now = datetime.datetime.now()
                         last_join = now.strftime('%H:%M:%S %d/%m/%Y')
@@ -9853,7 +9857,7 @@ def command_fallback(message: str) -> None:
                             
                             user_data_load[user_join]['last_join'] = last_join
     
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "save",user_data_load)
                 
                         if event_log_data['show_join']:
                             
@@ -9882,7 +9886,7 @@ def command_fallback(message: str) -> None:
                         
                         if name not in bot_list and name not in bot_list_user:
                             
-                            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+                            user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
 
                             now = datetime.datetime.now()
                             last_join = now.strftime('%H:%M:%S %d/%m/%Y')
@@ -9891,7 +9895,7 @@ def command_fallback(message: str) -> None:
                                 
                                 user_data_load[name]['last_join'] = last_join
                                 
-                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)         
+                                utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "save",user_data_load)         
                         
                             if name not in users_sess_join_data['spec']:
                                 
@@ -9903,13 +9907,13 @@ def command_fallback(message: str) -> None:
                                 
                                 users_sess_join_data['bot'].append(name)
                                 
-                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "save",users_sess_join_data)    
+                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_sess_join.json", "save",users_sess_join_data)    
                     
                 if 'PART' in message and not 'PRIVMSG' in message:
 
                     user_part = utils.find_between(message.split()[0],':','!')
 
-                    user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")  
+                    user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")  
                         
                     if user_part in user_data_load:
                         
@@ -9927,7 +9931,7 @@ def command_fallback(message: str) -> None:
                         
                         user_data_load[user_part]['time_w'] = int(total_min)
                             
-                        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)   
+                        utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "save",user_data_load)   
 
                     if user_part not in bot_list and user_part not in bot_list_user:
                         
@@ -9960,11 +9964,11 @@ def command_fallback(message: str) -> None:
                             
                             users_sess_join_data['bot'].remove(user_part)
 
-                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "save",users_sess_join_data)
+                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_sess_join.json", "save",users_sess_join_data)
                             
                 if '@ban-duration=' in message and not 'PRIVMSG' in message:
                     
-                    user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
+                    user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
             
                     timeout_time = utils.find_between(message,'@ban-duration=',';')
                     target_user = utils.find_between(message,'target-user-id=',';')
@@ -9993,7 +9997,7 @@ def close():
 
     try:
         
-        authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+        authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
 
         if authdata.TOKEN() and authdata.USERNAME():
 
@@ -10036,9 +10040,9 @@ def close():
         utils.error_log(e)
 
 
-    chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/chat_config.json", "load")
-    user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "load")
-    userjoin_sess_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "load")
+    chat_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/chat_config.json", "load")
+    user_data_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "load")
+    userjoin_sess_load = utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_sess_join.json", "load")
 
     names = userjoin_sess_load['spec']
     
@@ -10066,20 +10070,20 @@ def close():
                 if total_min > int(regular_min) and "regular" not in user_data_load[name]['roles']:
                     user_data_load[name]['roles'].append('regular')
                 
-            
-                
-    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_database.json", "save",user_data_load)
+    utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "save",user_data_load)
+    
+    lock_manager.unlock()
 
     sys.exit(0)
 
 
 def download_badges():
 
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
 
     if authdata.TOKEN() and authdata.USERNAME():
             
-        os.makedirs(f"{utils.local_work('appdata_path')}/rewardevents/web/src/badges",exist_ok=True)
+        os.makedirs(f"{utils.local_work('appdata_path')}/badges",exist_ok=True)
     
         global_badge_url = 'https://api.twitch.tv/helix/chat/badges/global'
         channel_badge_url = f'https://api.twitch.tv/helix/chat/badges?broadcaster_id={authdata.BROADCASTER_ID()}'
@@ -10114,7 +10118,7 @@ def download_badges():
 
                     new_dict["badge_sets"][set_id]["versions"][version_id] = version
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/badges/badges_global.json", "save", new_dict)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/badges/badges_global.json", "save", new_dict)
 
         response_channel_badge = req.get(channel_badge_url, headers=headers)
 
@@ -10140,14 +10144,14 @@ def download_badges():
 
                     new_dict["badge_sets"][set_id]["versions"][version_id] = version
 
-            utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/badges/badges_channel.json", "save", new_dict)
+            utils.manipulate_json(f"{utils.local_work('appdata_path')}/badges/badges_channel.json", "save", new_dict)
 
 
 def post_eventsub(id):
     
     while True:
         
-        authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+        authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
 
         if authdata.TOKEN() and authdata.USERNAME():
 
@@ -10156,7 +10160,7 @@ def post_eventsub(id):
             header["Client-Id"] = os.getenv('CLIENTID')
             header['Content-Type'] = 'application/json'
             
-            json_data_param = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/websocket_param.json", "load")
+            json_data_param = utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/websocket_param.json", "load")
 
             for type_param in json_data_param:
 
@@ -10241,11 +10245,11 @@ def on_message(ws, message):
 
     try:
 
-        authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+        authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
 
         data = json.loads(message)
 
-        message_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_not.json", "load")
+        message_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_not.json", "load")
 
         message_type = data["metadata"]["message_type"]
         
@@ -10437,7 +10441,7 @@ def on_message(ws, message):
                     '{username}' : user_name
                 }
                     
-                end_sub_list = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/endsub.json", "load")
+                end_sub_list = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/endsub.json", "load")
 
                 if user_name not in end_sub_list:
 
@@ -10456,7 +10460,7 @@ def on_message(ws, message):
 
                     end_sub_list.remove(user_name)
 
-                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/endsub.json", "save",end_sub_list)
+                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/endsub.json", "save",end_sub_list)
 
             elif subscription_type == 'channel.subscription.gift':  
 
@@ -10523,13 +10527,13 @@ def on_message(ws, message):
                 if message_data[type_id]['status']:
                     send_announcement(utils.replace_all(message_data[type_id]['response_chat'],aliases),'purple')
 
-                end_sub_list = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/endsub.json", "load")
+                end_sub_list = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/endsub.json", "load")
 
                 if user_name not in end_sub_list:
 
                     end_sub_list.append(user_name)
 
-                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/endsub.json", "save",end_sub_list)
+                    utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/endsub.json", "save",end_sub_list)
                     
             elif subscription_type == 'channel.subscription.message':  
 
@@ -10771,7 +10775,7 @@ def on_message(ws, message):
                     '{ends_at}': ends_at
                 }
 
-                poll_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/poll_id.json", "load")
+                poll_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/poll_id.json", "load")
 
                 options_list = []
                 poll_data['status'] = 'started'
@@ -10790,7 +10794,7 @@ def on_message(ws, message):
                     options_list.append(option_data)
                     poll_data['options'] = options_list
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/poll_id.json", "save",poll_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/poll_id.json", "save",poll_data)
              
                 data_append = {
                     "type" : "event",
@@ -10841,7 +10845,7 @@ def on_message(ws, message):
                     '{channel_points_voting_amount}': str(channel_points_voting_amount)
                 }
                     
-                poll_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/poll_id.json", "load")
+                poll_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/poll_id.json", "load")
 
                 options_list = []
 
@@ -10856,7 +10860,7 @@ def on_message(ws, message):
                     options_list.append(option_data)
                     poll_data['options'] = options_list
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/poll_id.json", "save",poll_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/poll_id.json", "save",poll_data)
 
                 message_event = utils.replace_all(str(utils.messages_file_load(f'event_{type_id}')), aliases)
 
@@ -10912,7 +10916,7 @@ def on_message(ws, message):
                     '{channel_points_voting_amount}': str(channel_points_voting_amount)
                 }
 
-                poll_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/poll_id.json", 'load')
+                poll_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/poll_id.json", 'load')
 
                 options_list = []
                 poll_data['status'] = poll_status
@@ -10929,7 +10933,7 @@ def on_message(ws, message):
 
                 poll_data['options'] = options_list
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/poll_id.json", "save", poll_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/poll_id.json", "save", poll_data)
 
                 data = {
                     "type_id": "poll_end",
@@ -10961,7 +10965,7 @@ def on_message(ws, message):
                 
                 type_id = 'prediction_start'
 
-                pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pred_id.json", 'load')
+                pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pred_id.json", 'load')
 
                 event = data['payload']['event']
 
@@ -10986,7 +10990,7 @@ def on_message(ws, message):
 
                 pred_data['options'] = options_list
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pred_id.json", 'save', pred_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pred_id.json", 'save', pred_data)
 
                 data = {
                     'type_id': "prediction_start",
@@ -11049,11 +11053,11 @@ def on_message(ws, message):
 
                 event = data['payload']['event']
 
-                pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pred_id.json", 'load')
+                pred_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pred_id.json", 'load')
 
                 pred_data['status'] = 'locked'
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pred_id.json", "save", pred_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pred_id.json", "save", pred_data)
 
                 title = event['title']
                 outcomes = event['outcomes']
@@ -11117,7 +11121,7 @@ def on_message(ws, message):
                     "winner": winner
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/pred_id.json", "save", pred_data)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/pred_id.json", "save", pred_data)
 
                 send_discord_webhook(data)
 
@@ -11153,7 +11157,7 @@ def on_message(ws, message):
                 if goal_type == "subscription":
                     goal_type = 'subscription_count'
 
-                data_goal = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/goal.json", "load")
+                data_goal = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/goal.json", "load")
 
                 data_goal[goal_type] = {
                     "type": goal_type,
@@ -11164,7 +11168,7 @@ def on_message(ws, message):
                     "started_at": started_at
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/goal.json", "save", data_goal)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/goal.json", "save", data_goal)
 
                 if goal_type == "subscription_count":
                     goal_type = 'Inscrições'
@@ -11216,7 +11220,7 @@ def on_message(ws, message):
                 if goal_type == "subscription":
                     goal_type = 'subscription_count'
    
-                data_goal = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/goal.json", "load")
+                data_goal = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/goal.json", "load")
 
                 data_goal[goal_type] = {
                     "type" : goal_type,
@@ -11227,7 +11231,7 @@ def on_message(ws, message):
                     "started_at" : started_at
                 }
 
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/goal.json", "save",data_goal)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/goal.json", "save",data_goal)
 
                 aliases = {
                     "{target}" : str(target_amount),
@@ -11260,7 +11264,7 @@ def on_message(ws, message):
                 if goal_type == "subscription":
                     goal_type = 'subscription_count'
 
-                data_goal = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/goal.json", "load")
+                data_goal = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/goal.json", "load")
 
                 data_goal[goal_type] = {
                     "type" : goal_type,
@@ -11271,7 +11275,7 @@ def on_message(ws, message):
                     "started_at" : started_at
                 }
                     
-                utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/goal.json", "save",data_goal)
+                utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/goal.json", "save",data_goal)
 
                 if goal_type == "subscription_count":
                     goal_type = 'Inscrições'
@@ -11471,7 +11475,7 @@ def start_websocket():
     
     while True:
         
-        authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+        authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
         
         if authdata.TOKEN() and authdata.USERNAME():
             
@@ -11526,7 +11530,7 @@ def loaded():
 
     loaded_status = True
 
-    authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+    authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
 
     if authdata.TOKEN() and authdata.USERNAME():
         
@@ -11565,7 +11569,7 @@ def webview_start_app(app_mode):
         global window_events_open
         window_events_open = False
 
-    debug_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/scopes.json", "load")
+    debug_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/auth/scopes.json", "load")
     debug_status = debug_data['debug']
         
     if app_mode == "normal":
@@ -11614,7 +11618,7 @@ def bot():
 
     while True:
         
-        authdata = auth_data(f"{utils.local_work('appdata_path')}/rewardevents/web/src/auth/auth.json")
+        authdata = auth_data(f"{utils.local_work('appdata_path')}/auth/auth.json")
         
         if loaded_status and authdata.TOKEN() and authdata.USERNAME() and authdata.TOKENBOT():
 
@@ -11630,33 +11634,12 @@ def bot():
 
 def start_app():
 
-    def lock_file():
-    
-        lock_file_path = f"{utils.local_work('appdata_path')}/VibesBot/web/my_program.lock"
-
-        try:
-            file_handle = win32file.CreateFile(
-                lock_file_path,
-                win32file.GENERIC_WRITE,
-                0,
-                None,
-                win32file.CREATE_ALWAYS,
-                win32file.FILE_ATTRIBUTE_NORMAL,
-                None,
-            )
-
-            win32file.LockFile(file_handle, 0, 0, 0, 0x2)
-
-        except win32file.error as e:
-            error_message = "O programa já está em execução, aguarde."
-            messagebox.showerror("Erro", error_message)
-            sys.exit(0)
-            
+          
     def start_log_files():
 
         MAX_LOG_SIZE = 1024 * 1024 * 10  # 10 MB
 
-        log_file_path = f"{utils.local_work('appdata_path')}/rewardevents/web/src/error_log.txt"
+        log_file_path = f"{utils.local_work('appdata_path')}/error_log.txt"
 
         if os.path.exists(log_file_path):
             log_file_size = os.path.getsize(log_file_path)
@@ -11671,18 +11654,17 @@ def start_app():
             'bot' :[]
         }  
         
-        event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "load")
+        event_log_data = utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_log.json", "load")
 
         if len(event_log_data['event_list']) > 100:
             event_list = event_log_data['event_list'][-100:]
             event_log_data['event_list'] = event_list
             
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/user_info/users_sess_join.json", "save",user_join_sess_load)
-        utils.manipulate_json(f"{utils.local_work('appdata_path')}/rewardevents/web/src/config/event_log.json", "save",event_log_data)
-      
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_sess_join.json", "save",user_join_sess_load)
+        utils.manipulate_json(f"{utils.local_work('appdata_path')}/config/event_log.json", "save",event_log_data)
+    
     if utils.get_files_list():
 
-        lock_file()
         download_badges()
         start_log_files()
         
@@ -11702,4 +11684,11 @@ def start_app():
         webview_start_app('normal')
 
 
-start_app()
+if lock_manager.already_running:
+
+    error_message = "O programa já está em execução, aguarde."
+    messagebox.showerror("Erro", error_message)
+    sys.exit(0)
+
+else:
+    start_app()

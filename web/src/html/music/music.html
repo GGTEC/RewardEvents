@@ -1,104 +1,179 @@
 <!DOCTYPE html>
 <html lang="pt-br">
- <head>
-  <meta charset="utf-8"/>
-  <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet"/>
-  <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
-  <title>Event</title>
- </head>
- <style>
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Kanit" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
+    <title>Event</title>
+</head>
+<style>
     body {
         background-color: transparent;
     }
 
-
-    .background{
-            border: 2px solid #927aac;
-            width: 100%;
-            background-color: black;
-            margin: auto;
+    .artist_name,
+    .music_name,
+    .user_name {
+        font-size: 25px;
     }
 
-    .img {  
-            margin: 10%;
-            width: 80%;
+    .enter {
+        animation: enter 10s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
     }
 
-    .music_block{
-            margin-top: 5%;
-            margin-left: 1%;
+    @keyframes enter {
+        0% {
+            -webkit-transform: translateX(1000px);
+            transform: translateX(1000px);
+            opacity: 0;
+        }
+
+        10% {
+            -webkit-transform: translateX(0);
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        90% {
+            -webkit-transform: translateX(0);
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        100% {
+            -webkit-transform: translateX(1000px);
+            transform: translateX(1000px);
+            opacity: 0;
+        }
     }
 
-    p {
-            color: #fff;
-            text-align: left;
-            margin: 0%;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+    @import url(https://fonts.googleapis.com/css?family=Open+Sans:400,700);
+
+    h1 {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 13pt;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: rgb(255, 255, 255);
+        cursor: default;
     }
 
-    .artist_name,.music_name ,.redem_user_music {
-            font-size: 45px;
+    h4 {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 8pt;
+        font-weight: 400;
+        cursor: default;
+    }
+
+    h2 {
+        font-family: 'Open Sans', sans-serif;
+        font-size: 13pt;
+        font-weight: 300;
+        color: rgb(255, 255, 255);
+        cursor: default;
+    }
+
+    .player {
+        height: 190px;
+        width: 430px;
+        margin: 1%;
+        background-color: rgb(30, 33, 37);
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        border-radius: 5px;
+        border-top-left-radius: 100px;
+        border-bottom-left-radius: 100px;
+        border-top: #927aac 3px solid;
+        border-bottom: #927aac 3px solid;
+        border-right: #927aac 3px solid;
+    }
+
+    .player ul {
+        list-style: none;
+    }
+
+    .player ul li {
+        display: inline-block;
+    }
+
+    .artwork {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 190px;
+        width: 190px;
+        background: url(https://i.imgur.com/3idGgyU.png), url(https://i.imgur.com/Fu2Oezw.png) center no-repeat;
+        background-size: 190px, 75px !important;
+    }
+
+    .artwork img {
+        position: absolute;
+        height: 72px;
+        width: 72px;
+        border-radius: 50px;
+        top: 59px;
+        left: 59px;
+    }
+
+    .info {
+        display: flex;
+        align-items: start;
+        justify-content: center;
+        flex-direction: column;
+        margin-left: 100px;
+    }
+
+    .info h1 {
+        width: 182px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+
+    }
+
+    .info h4 {
+        line-height: 20px;
+        color: #fff;
+        width: 182px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .info h2 {
+        width: 182px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
 
-    .fade-in {
-            animation: fade-in 5s ease-in both;
-    }
-    
-    @keyframes fade-in {
-            0% {
-                    opacity: 0;
-            }
-            10% {
-                    opacity: 1;
-            }
-            25% {
-                    opacity: 1;
-            }
-            50% {
-                    opacity: 1;
-            }
-            75% {
-                    opacity: 1;
-            }
-            90% {
-                    opacity: 1;
-            }
-            100% {
-                    opacity: 0;
-            }
+</style>
 
-            }
- </style>
- <body>
-  <div id="main-block"  class="row background fade-in">
-   <div class="col-4 img_block">
-    <img class="img img-responsive" src="../../player/"/>
-   </div>
-   <div class="col-7 music_block">
-    <p>
-     <span class="music_name">
-      Music name
-     </span>
-    </p>
-    <p>
-     <span class="artist_name">
-      Artist Name
-     </span>
-    </p>
-    <p>
-     <span class="redem_user_music">
-      USER
-     </span>
-    </p>
-   </div>
-  </div>
- </body>
+<body style="overflow: hidden;">
+    <div class="player enter">
+        <div class="row h-100 ">
+            <div class="col-2">
+                <div class="artwork img">
+                </div>
+            </div>
+            <div class="col-10 h-100">
+                <div class="info h-100">
+                    <h1 id="artist"><span class="music_name">loading</span></h1>
+                    <h4 id="album"><span class="artist_name">loading</span></h4>
+                    <h2 id="song"><span class="user_name">loading</span></h2>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
 </html>

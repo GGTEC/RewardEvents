@@ -6,7 +6,6 @@ import time
 import requests
 import tkinter.messagebox as messagebox
 import pytz
-
 import importlib
 
 from datetime import datetime
@@ -14,14 +13,10 @@ from random import randint
 from bs4 import BeautifulSoup as bs
 from dotenv import load_dotenv
 
-extDataDir = os.getcwd()
-appdata_path = os.getenv('APPDATA')
 
-if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-    if getattr(sys, 'frozen', False):
-        if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
-            import pyi_splash
-        extDataDir = sys._MEIPASS
+if getattr(sys, 'frozen', False):
+    if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
+        import pyi_splash
 
 
 def local_work(type_id):
@@ -30,15 +25,18 @@ def local_work(type_id):
 
         extDataDir = os.getcwd()
 
-        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-            if getattr(sys, 'frozen', False):
-                if '_PYIBoot_SPLASH' in os.environ and importlib.util.find_spec("pyi_splash"):
-                    import pyi_splash
-                extDataDir = sys._MEIPASS
+        if getattr(sys, 'frozen', False):
+            extDataDir = sys._MEIPASS
 
         return extDataDir
     
     elif type_id == 'appdata_path':
+
+        appdata_path = f"{os.getenv('APPDATA')}/rewardevents/web/src"
+
+        return appdata_path
+    
+    elif type_id == 'tempdir':
 
         appdata_path = os.getenv('APPDATA')
 
@@ -69,7 +67,7 @@ def manipulate_json(custom_path, type_id, data=None):
         print(f'The file {custom_path} was not found.')
 
     except Exception as e:
-
+        print(f'Erro no arquivo {custom_path}.')
         error_log(e)
 
 
@@ -124,20 +122,28 @@ def error_log(ex):
     time_error = now.strftime("%d/%m/%Y %H:%M:%S")
 
     trace = []
-    tb = ex.__traceback__
+    error_type = "Unknown"
+    error_message = ""
 
-    while tb is not None:
-        trace.append({
-            "filename": tb.tb_frame.f_code.co_filename,
-            "name": tb.tb_frame.f_code.co_name,
-            "lineno": tb.tb_lineno
-        })
-        tb = tb.tb_next
+    if isinstance(ex, BaseException):  # Verifica se ex é uma exceção
+        tb = ex.__traceback__
 
-    error = str(
-        f'Erro = type: {type(ex).__name__} | message: {str(ex)} | trace: {trace} | time: {time_error} \n')
+        while tb is not None:
+            trace.append({
+                "filename": tb.tb_frame.f_code.co_filename,
+                "name": tb.tb_frame.f_code.co_name,
+                "lineno": tb.tb_lineno
+            })
+            tb = tb.tb_next
 
-    with open(f"{appdata_path}/rewardevents/web/src/error_log.txt", "a+", encoding='utf-8') as log_file_r:
+        error_type = type(ex).__name__
+        error_message = str(ex)
+    else:
+        error_message = ex
+
+    error = str(f'Erro = type: {error_type} | message: {error_message} | trace: {trace} | time: {time_error} \n\n')
+
+    with open(f"{local_work('appdata_path')}/error_log.txt", "a+", encoding='utf-8') as log_file_r:
         log_file_r.write(error)
 
 
@@ -317,35 +323,40 @@ def update_notif(data):
 
 
 def update_music(data):
-    
-    notifc_config_Data = manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/config/notfic.json", "load")
 
+    notifc_config_Data = manipulate_json(f"{local_work('appdata_path')}/config/notfic.json", "load")
+    
     duration = notifc_config_Data['HTML_MUSIC_TIME']
 
     user = data['redeem_user']
     artist = data['artist']
     music = data['music']
 
+    html_file = f"{local_work('appdata_path')}/html/music/music.html"
+
     try:
 
-        with open(f"{local_work('appdata_path')}/rewardevents/web/src/html/music/music.html", "r") as html:
+        with open(html_file, "r") as html:
             soup = bs(html, 'html.parser')
 
         album_src = f"../../player/images/album.png?noCache={randint(0, 100000)}"
 
-        main_div = soup.find("div", {"id": f"main-block"})
+        main_div = soup.find("div", {"class": f"player"})
         main_div['style'] = f'animation-duration: {duration}s'
 
-        image_redeem = soup.find("img", {"class": "img-responsive"})
         music_name_tag = soup.find("span", {"class": "music_name"})
         artist_name_tag = soup.find("span", {"class": "artist_name"})
-        redeem_user_music_tag = soup.find(
-            "span", {"class": "redem_user_music"})
+        user_name_tag = soup.find("span", {"class": "user_name"})
 
-        image_redeem['src'] = album_src
         music_name_tag.string = music
         artist_name_tag.string = artist
-        redeem_user_music_tag.string = user
+        user_name_tag.string = user
+
+        artwork_tag = soup.find("div", {'class':'artwork'})
+
+        if artwork_tag:
+
+            artwork_tag['style'] = f"background: url(https://i.imgur.com/3idGgyU.png), url({album_src}) center no-repeat;"
 
         return str(soup)
 
@@ -353,6 +364,8 @@ def update_music(data):
 
         error_log(e)
         return True
+
+
 
 
 def update_video(video, time):
@@ -610,11 +623,6 @@ def get_files_list():
         data_save_games = json.loads(respo_games.text)
             
         manipulate_json(f"{local_work('appdata_path')}/rewardevents/web/src/games/games.json", "save", data_save_games)
-
-        html_roaming = f"{local_work('appdata_path')}/rewardevents/web/src/html/video/iframe.html"
-        html_internal = f"{local_work('data_dir')}/web/src/html/video/iframe.html"
-
-        shutil.copy(html_internal, html_roaming)
 
         return True
     

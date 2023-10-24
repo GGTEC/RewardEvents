@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Document</title>
     </head>
-    <body>
+    <body style="overflow: hidden;">
         <iframe id="myiframe" src="" frameborder="false" style="width: 100%;height: 100vh;"></iframe>
         <script>
           var iframe = document.getElementById('myiframe');
@@ -22,17 +22,9 @@
         
             socket.onopen = function(event) {
               console.log("Conectado ao servidor");
-              socket.send('music')
+              socket.send('music');
             };
         
-            socket.onmessage = function(event) {
-                var data_parse = JSON.parse(event.data);
-                if (data_parse.type === 'high') {
-                  console.log(data_parse.html);
-                  iframe.contentDocument.documentElement.innerHTML = data_parse.html;
-                }
-            };
-
             socket.onmessage = function(event) {
                 if (event.data === 'ping') {
                     socket.send('pong');
