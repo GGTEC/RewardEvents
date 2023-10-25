@@ -5273,7 +5273,7 @@ def update_check(type_id):
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'v5.9.4':
+        if version != 'v5.9.41':
 
             return 'true'
         

@@ -191,7 +191,7 @@ function sleep(ms) {
 }
 
 function start_selectpicker(){
-  $('select').selectpicker({
+  $('select').attr('data-container', 'body').selectpicker({
     liveSearch: true,
     showSubtext: true,
     size: 5,
