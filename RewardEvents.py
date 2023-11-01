@@ -50,8 +50,8 @@ window_events_open = False
 window_auth_open = False
 streaming = False
 
-lock_manager = LockManager('RewardEvents')
-lock_manager.lock()
+lock_manager = LockManager()
+lock_manager.check()
 
 def toast(message):
 
@@ -131,10 +131,12 @@ def save_access_token(token: str) -> None:
             data["BROADCASTER_ID"] = user_id_resp
 
         elif type_id == "bot":
+
             data["TOKENBOT"] = token
             data["BOT_ID"] = user_id_resp
 
         elif type_id == "streamer_asbot":
+
             data["TOKEN"] = token
             data["BROADCASTER_ID"] = user_id_resp 
             data["BOT_ID"] = user_id_resp 
@@ -260,7 +262,7 @@ def start_twitch():
         try:
 
             twitch_api.set_user_authentication(authdata.TOKEN(),scopes)
-            
+            print("autenticado")
             return True
 
         except Exception as e:
@@ -272,12 +274,12 @@ def start_twitch():
                     sys.exit(0)
                     
             else:
-                
+                print(f"Erro {e}")
                 utils.error_log(e)
                 return False
                 
     else:
-        
+        print(f"Nome não encontrado no login")
         return False
    
    
@@ -5273,7 +5275,7 @@ def update_check(type_id):
         response_json = json.loads(response.text)
         version = response_json['tag_name']
 
-        if version != 'v5.9.41':
+        if version != 'v5.9.5':
 
             return 'true'
         
@@ -8896,7 +8898,7 @@ def commands_module(data) -> None:
 
                             command_data_queue['check_queue']['last_use'] = current
                             
-                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/games/games.json", "save", command_data_queue)
+                            utils.manipulate_json(f"{utils.local_work('appdata_path')}/queue/commands.json", "save", command_data_queue)
 
                         else:
                             
@@ -10072,8 +10074,6 @@ def close():
                 
     utils.manipulate_json(f"{utils.local_work('appdata_path')}/user_info/users_database.json", "save",user_data_load)
     
-    lock_manager.unlock()
-
     sys.exit(0)
 
 

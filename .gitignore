@@ -6,3 +6,5 @@ ffmpeg/ffplay.exe
 .vscode/settings.json
 dist/RewardEvents.exe
 file_version_info.txt
+web/src/player/cache/music.webm
+web/src/player/images/album.png

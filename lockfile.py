@@ -1,30 +1,27 @@
-import utils
-import os
-import pathlib
+import psutil
 
 class LockManager:
-    def __init__(self, label):
-        self.lock_file_path = f"{utils.local_work('tempdir')}/instance_{label}.lock"
+
+    def __init__(self):
         self.already_running = False
-        self.fd = None
+        self.process = 0
+        self.process_name = None
+        self.process_actual = psutil.Process()
+
+    def check(self):
 
 
-    def lock(self):
+        self.process_name = self.process_actual.name()
 
-        try:
 
-            self.fd = os.open(self.lock_file_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+        for process in psutil.process_iter(attrs=['name']):
+            if process.info['name'] == self.process_name:
+                self.process += 1
 
-            self.already_running = False
-
-        except IOError:
+        if self.process > 3:
 
             self.already_running = True
 
-    def unlock(self):
-
-        if self.fd is not None:
-            os.close(self.fd)
-            file_to_rem = pathlib.Path(self.lock_file_path)
-            file_to_rem.unlink()
-            self.fd = None
+        else:
+                
+            self.already_running = False
